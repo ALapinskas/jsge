@@ -1,0 +1,5 @@
+.vscode/
+node_modules/
+src/wa/
+docs/
+optimization/tests/files/

@@ -1,0 +1,29 @@
+{
+  "name": "jsge",
+  "version": "0.0.1",
+  "description": "Javascript Game Engine",
+  "main": "dist/index.es6.min.js",
+  "type": "module",
+  "scripts": {
+    "start": "webpack serve --https --mode=development",
+    "build-dev": "webpack --mode=development",
+    "build-prod": "webpack --mode=production",
+    "jsdoc": "./node_modules/.bin/jsdoc -c ./jsdoc.conf.json",
+    "jsdoc-help": "./node_modules/.bin/jsdoc --help",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arturas-Alfredas Lapinskas",
+  "license": "MIT",
+  "dependencies": {
+    "assetsm": "0.0.7",
+    "socket.io-client": "4.5.4"
+  },
+  "devDependencies": {
+    "assemblyscript": "0.27.0",
+    "eslint": "8.36.0",
+    "jsdoc": "^4.0.2",
+    "webpack": "5.76.0",
+    "webpack-cli": "5.0.1",
+    "webpack-dev-server": "4.7.4"
+  }
+}

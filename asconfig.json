@@ -1,0 +1,24 @@
+{
+  "targets": {
+    "debug": {
+      "outFile": "optimization/tests/files/debug.wasm",
+      "textFile": "optimization/tests/files/debug.wat",
+      "sourceMap": true,
+      "debug": true
+    },
+    "release": {
+      "outFile": "src/wa/release.wasm",
+      "textFile": "src/wa/release.wat",
+      "sourceMap": false,
+      "optimize": "-Ospeed",
+      
+      "optimizeLevel": 3,
+      "shrinkLevel": 0,
+      "converge": false,
+      "noAssert": false
+    }
+  },
+  "options": {
+    "bindings": "esm"
+  }
+}

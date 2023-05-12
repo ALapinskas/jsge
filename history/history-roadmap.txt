@@ -1,0 +1,27 @@
+# Application Requirements
+    1. Platforms:
+        Web, Chrome, Firefox browsers with webgl1 support.
+        Desktop, mobile screens full support.
+    2. Engine:
+        2d primitives drawing
+        2d collisions detection
+        support tiled editor json files for images and sprites
+        images preload
+        huge images cut for a screen size
+        centering map
+        sprites animations
+        few different canvas for a page
+        canvas overlapping effects
+
+In progress:
+    *
+
+# Map
+r: code refactoring
++  added new functionality/classes
+f: fixed defects
+
+# History
+0.0.1:
+    +: Javascript Game Engine introduced
+
