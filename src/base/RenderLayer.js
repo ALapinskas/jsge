@@ -1,6 +1,3 @@
-/**
- * Represents a tilemap render layer
- */
 export class RenderLayer {
     #layerKey;
     #tileMapKey;

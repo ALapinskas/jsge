@@ -22,29 +22,51 @@ export class ScreenPageData {
      */
     #boundaries;
 
+    /**
+     * @hideconstructor
+     */
     constructor() {
         this.#xOffset = 0;
         this.#yOffset = 0;
         this.#boundaries = [];
     }
 
+    /**
+     * Add a Boundaries line
+     * @param {*} boundaries 
+     */
     addBoundaries(boundaries) {
         this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
     }
 
+    /**
+     * Add array of boundaries lines
+     * @param {Array} boundaries 
+     */
     addBoundariesArray(boundaries) {
         this.#boundaries.push(...boundaries);
     }
 
+    /**
+     * Clear map boundaries
+     */
     clearBoundaries() {
         this.#boundaries = [];
     }
 
+    /**
+     * 
+     * @param {Number} width 
+     * @param {Number} height 
+     */
     setWorldDimensions(width, height) {
         this.#worldWidth = width;
         this.#worldHeight = height;
     }
 
+    /**
+     * @type {Number}
+     */
     set xOffset(x) {
         if (!Number.isInteger(x)) {
             Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -52,6 +74,9 @@ export class ScreenPageData {
         this.#xOffset = x;
     }
 
+    /**
+     * @type {Number}
+     */
     set yOffset(y) {
         if (!Number.isInteger(y)) {
             Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -59,6 +84,9 @@ export class ScreenPageData {
         this.#yOffset = y;
     }
 
+    /**
+     * @type {Number}
+     */
     set centerX(x) {
         if (!Number.isInteger(x)) {
             Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -66,6 +94,9 @@ export class ScreenPageData {
         this.#centerX = x;
     }
 
+    /**
+     * @type {Number}
+     */
     set centerY(y) {
         if (!Number.isInteger(y)) {
             Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -77,16 +108,29 @@ export class ScreenPageData {
         this.#rotate = value;
     }
 
+    /**
+     * 
+     * @param {Number} width 
+     * @param {Number} height 
+     */
     setCanvasDimensions(width, height) {
         this.#viewWidth = width;
         this.#viewHeight = height;
     }
 
+    /**
+     * 
+     * @param {Number} width 
+     * @param {Number} height 
+     */
     setDrawDimensions(width, height) {
         this.#drawWith = width;
         this.#drawHeight = height;
     }
 
+    /**
+     * Set map borders
+     */
     setMapBoundaries() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
         if (!w || !h) {
@@ -98,6 +142,9 @@ export class ScreenPageData {
         this.addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
     }
 
+    /**
+     * Merge same boundaries
+     */
     mergeBoundaries() {
         const boundaries = this.getBoundaries(),
             boundariesSet = new Set(boundaries);
@@ -130,10 +177,17 @@ export class ScreenPageData {
         boundariesSet.clear();
     }
 
+    /**
+     * 
+     * @returns {Array}
+     */
     getBoundaries() {
         return this.#boundaries;
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get drawDimensions() {
         if (this.#drawWith && this.#drawHeight) {
             return [ this.#drawWith, this.#drawHeight ];
@@ -142,26 +196,46 @@ export class ScreenPageData {
         }
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get canvasDimensions() {
         return [this.#viewWidth, this.#viewHeight];
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get worldDimensions() {
         return [this.#worldWidth, this.#worldHeight];
     }
     
+    /**
+     * @type {Array<Number>}
+     */
     get worldOffset() {
         return [this.#xOffset, this.#yOffset];
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get mapCenter() {
         return [this.#centerX, this.#centerY];
     }
 
+    /**
+     * @type {Number}
+     */
     get mapRotate() {
         return this.#rotate;
     }
 
+    /**
+     * @method
+     * @param {Number} x 
+     * @param {Number} y 
+     */
     centerCameraPosition = (x, y) => {
         let [mapOffsetX, mapOffsetY] = this.worldOffset;
         const [canvasWidth, canvasHeight] = this.canvasDimensions,

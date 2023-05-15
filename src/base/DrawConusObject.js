@@ -12,6 +12,9 @@ export class DrawConusObject extends DrawShapeObject {
      */
     #vertices;
 
+    /**
+     * @hideconstructor
+     */
     constructor(vertices, radius, bgColor, subtractProgram) {
         super(CONST.DRAW_TYPE.CIRCLE, vertices[0], vertices[1], radius, radius, null, bgColor, subtractProgram);
         this.#vertices = vertices;

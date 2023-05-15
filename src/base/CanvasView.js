@@ -19,10 +19,6 @@ const INDEX_X1 = 0,
     INDEX_X2 = 2,
     INDEX_Y2 = 3;
 
-/**
- * Container for canvas dom element,
- * include objects and layers for rendering
- */
 export class CanvasView {
     /**
      * @type {HTMLCanvasElement}

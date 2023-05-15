@@ -25,6 +25,9 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #imageIndex;
 
+    /**
+     * @hideconstructor
+     */
     constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries) {
         super(CONST.DRAW_TYPE.IMAGE, mapX, mapY, width, height, boundaries);
         this.#key = key;

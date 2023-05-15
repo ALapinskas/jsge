@@ -37,6 +37,9 @@ export class DrawShapeObject {
      */
     #boundaries = [];
 
+    /**
+     * @hideconstructor
+     */
     constructor(type, mapX, mapY, width, height, boundaries, bgColor, subtractProgram) {
         this.#x = mapX;
         this.#y = mapY;
