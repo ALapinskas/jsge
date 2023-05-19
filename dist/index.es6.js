@@ -4173,10 +4173,6 @@ const INDEX_X1 = 0,
     INDEX_X2 = 2,
     INDEX_Y2 = 3;
 
-/**
- * Container for canvas dom element,
- * include objects and layers for rendering
- */
 class CanvasView {
     /**
      * @type {HTMLCanvasElement}
@@ -4812,7 +4808,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _Primitives_Point_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives/Point.js */ "./src/base/Primitives/Point.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
 
 
 
@@ -4827,6 +4823,9 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
      */
     #vertices;
 
+    /**
+     * @hideconstructor
+     */
     constructor(vertices, radius, bgColor, subtractProgram) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE, vertices[0], vertices[1], radius, radius, null, bgColor, subtractProgram);
         this.#vertices = vertices;
@@ -4886,6 +4885,9 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     #imageIndex;
 
+    /**
+     * @hideconstructor
+     */
     constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.DRAW_TYPE.IMAGE, mapX, mapY, width, height, boundaries);
         this.#key = key;
@@ -4995,7 +4997,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _Primitives_Point_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives/Point.js */ "./src/base/Primitives/Point.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
 
 
 
@@ -5010,6 +5012,9 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
      */
     #vertices;
 
+    /**
+     * @hideconstructor
+     */
     constructor(vertices, bgColor) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], null, null, null, bgColor);
         this.#vertices = vertices;
@@ -5045,7 +5050,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./DrawImageObject.js */ "./src/base/DrawImageObject.js");
 /* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
 /* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
-/* harmony import */ var _Primitives_Point_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Primitives/Point.js */ "./src/base/Primitives/Point.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
 
 
 
@@ -5145,7 +5150,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _Primitives_Point_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives/Point.js */ "./src/base/Primitives/Point.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
 
 
 
@@ -5159,6 +5164,9 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
      */
     #vertices;
 
+    /**
+     * @hideconstructor
+     */
     constructor(vertices, bgColor, subtractProgram) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, null, null, null, bgColor, subtractProgram);
         this.#vertices = vertices;
@@ -5197,6 +5205,9 @@ __webpack_require__.r(__webpack_exports__);
  * @augments DrawShapeObject
  */
 class DrawRectObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
+    /**
+     * @hideconstructor
+     */
     constructor(x, y, w, h, bgColor, subtractProgram) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE, x, y, w, h, null, bgColor, subtractProgram);
     }
@@ -5216,7 +5227,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
-/* harmony import */ var _Primitives_Point_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives/Point.js */ "./src/base/Primitives/Point.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
 
 
 
@@ -5256,6 +5267,9 @@ class DrawShapeObject {
      */
     #boundaries = [];
 
+    /**
+     * @hideconstructor
+     */
     constructor(type, mapX, mapY, width, height, boundaries, bgColor, subtractProgram) {
         this.#x = mapX;
         this.#y = mapY;
@@ -5401,7 +5415,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "DrawTextObject": () => (/* binding */ DrawTextObject)
 /* harmony export */ });
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _Primitives_Rectangle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Primitives/Rectangle.js */ "./src/base/Primitives/Rectangle.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 
 
@@ -5420,6 +5434,9 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     #text;
     #textMetrics;
 
+    /**
+     * @hideconstructor
+     */
     constructor(mapX, mapY, text, font, fillStyle) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.DRAW_TYPE.TEXT, mapX, mapY);
         this.#text = text;
@@ -5435,7 +5452,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     get boundariesBox() {
         const width = this.textMetrics ? this.textMetrics.width : 300,
             height = this.textMetrics ? this.textMetrics.actualBoundingBoxAscent + /*this.textMetrics.actualBoundingBoxDescent*/ 5: 30;
-        return new _Primitives_Rectangle_js__WEBPACK_IMPORTED_MODULE_1__.Rectangle(this.x, this.y - height, width, height);
+        return new _Primitives_js__WEBPACK_IMPORTED_MODULE_1__.Rectangle(this.x, this.y - height, width, height);
     }
 
     /**
@@ -5610,15 +5627,17 @@ class Logger {
 
 /***/ }),
 
-/***/ "./src/base/Primitives/Point.js":
-/*!**************************************!*\
-  !*** ./src/base/Primitives/Point.js ***!
-  \**************************************/
+/***/ "./src/base/Primitives.js":
+/*!********************************!*\
+  !*** ./src/base/Primitives.js ***!
+  \********************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Point": () => (/* binding */ Point)
+/* harmony export */   "Point": () => (/* binding */ Point),
+/* harmony export */   "Rectangle": () => (/* binding */ Rectangle),
+/* harmony export */   "Vector": () => (/* binding */ Vector)
 /* harmony export */ });
 class Point {
     #x;
@@ -5637,21 +5656,6 @@ class Point {
     }
 }
 
-/***/ }),
-
-/***/ "./src/base/Primitives/Rectangle.js":
-/*!******************************************!*\
-  !*** ./src/base/Primitives/Rectangle.js ***!
-  \******************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Rectangle": () => (/* binding */ Rectangle)
-/* harmony export */ });
-/**
- * Represents a rectangle object
- */
 class Rectangle {
     #x;
     #y;
@@ -5689,18 +5693,6 @@ class Rectangle {
     }
 }
 
-/***/ }),
-
-/***/ "./src/base/Primitives/Vector.js":
-/*!***************************************!*\
-  !*** ./src/base/Primitives/Vector.js ***!
-  \***************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Vector": () => (/* binding */ Vector)
-/* harmony export */ });
 class Vector {
     #x;
     #y;
@@ -5726,6 +5718,8 @@ class Vector {
     }
 }
 
+
+
 /***/ }),
 
 /***/ "./src/base/RenderLayer.js":
@@ -5738,9 +5732,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "RenderLayer": () => (/* binding */ RenderLayer)
 /* harmony export */ });
-/**
- * Represents a tilemap render layer
- */
 class RenderLayer {
     #layerKey;
     #tileMapKey;
@@ -6386,29 +6377,51 @@ class ScreenPageData {
      */
     #boundaries;
 
+    /**
+     * @hideconstructor
+     */
     constructor() {
         this.#xOffset = 0;
         this.#yOffset = 0;
         this.#boundaries = [];
     }
 
+    /**
+     * Add a Boundaries line
+     * @param {*} boundaries 
+     */
     addBoundaries(boundaries) {
         this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
     }
 
+    /**
+     * Add array of boundaries lines
+     * @param {Array} boundaries 
+     */
     addBoundariesArray(boundaries) {
         this.#boundaries.push(...boundaries);
     }
 
+    /**
+     * Clear map boundaries
+     */
     clearBoundaries() {
         this.#boundaries = [];
     }
 
+    /**
+     * 
+     * @param {Number} width 
+     * @param {Number} height 
+     */
     setWorldDimensions(width, height) {
         this.#worldWidth = width;
         this.#worldHeight = height;
     }
 
+    /**
+     * @type {Number}
+     */
     set xOffset(x) {
         if (!Number.isInteger(x)) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -6416,6 +6429,9 @@ class ScreenPageData {
         this.#xOffset = x;
     }
 
+    /**
+     * @type {Number}
+     */
     set yOffset(y) {
         if (!Number.isInteger(y)) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -6423,6 +6439,9 @@ class ScreenPageData {
         this.#yOffset = y;
     }
 
+    /**
+     * @type {Number}
+     */
     set centerX(x) {
         if (!Number.isInteger(x)) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -6430,6 +6449,9 @@ class ScreenPageData {
         this.#centerX = x;
     }
 
+    /**
+     * @type {Number}
+     */
     set centerY(y) {
         if (!Number.isInteger(y)) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
@@ -6441,16 +6463,29 @@ class ScreenPageData {
         this.#rotate = value;
     }
 
+    /**
+     * 
+     * @param {Number} width 
+     * @param {Number} height 
+     */
     setCanvasDimensions(width, height) {
         this.#viewWidth = width;
         this.#viewHeight = height;
     }
 
+    /**
+     * 
+     * @param {Number} width 
+     * @param {Number} height 
+     */
     setDrawDimensions(width, height) {
         this.#drawWith = width;
         this.#drawHeight = height;
     }
 
+    /**
+     * Set map borders
+     */
     setMapBoundaries() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
         if (!w || !h) {
@@ -6462,6 +6497,9 @@ class ScreenPageData {
         this.addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
     }
 
+    /**
+     * Merge same boundaries
+     */
     mergeBoundaries() {
         const boundaries = this.getBoundaries(),
             boundariesSet = new Set(boundaries);
@@ -6494,10 +6532,17 @@ class ScreenPageData {
         boundariesSet.clear();
     }
 
+    /**
+     * 
+     * @returns {Array}
+     */
     getBoundaries() {
         return this.#boundaries;
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get drawDimensions() {
         if (this.#drawWith && this.#drawHeight) {
             return [ this.#drawWith, this.#drawHeight ];
@@ -6506,26 +6551,46 @@ class ScreenPageData {
         }
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get canvasDimensions() {
         return [this.#viewWidth, this.#viewHeight];
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get worldDimensions() {
         return [this.#worldWidth, this.#worldHeight];
     }
     
+    /**
+     * @type {Array<Number>}
+     */
     get worldOffset() {
         return [this.#xOffset, this.#yOffset];
     }
 
+    /**
+     * @type {Array<Number>}
+     */
     get mapCenter() {
         return [this.#centerX, this.#centerY];
     }
 
+    /**
+     * @type {Number}
+     */
     get mapRotate() {
         return this.#rotate;
     }
 
+    /**
+     * @method
+     * @param {Number} x 
+     * @param {Number} y 
+     */
     centerCameraPosition = (x, y) => {
         let [mapOffsetX, mapOffsetY] = this.worldOffset;
         const [canvasWidth, canvasHeight] = this.canvasDimensions,
@@ -8223,7 +8288,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isSafari": () => (/* binding */ isSafari),
 /* harmony export */   "pointToCircleDistance": () => (/* binding */ pointToCircleDistance)
 /* harmony export */ });
-/* harmony import */ var _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/Primitives/Vector.js */ "./src/base/Primitives/Vector.js");
+/* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
 
 
 function isMobile() {
@@ -8235,7 +8300,7 @@ function isSafari() {
 }
 
 function pointToCircleDistance(x, y, circle) {
-    const pointToCircleCenterDistance = new _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y).length;
+    const pointToCircleCenterDistance = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y).length;
     return pointToCircleCenterDistance - circle.r;
 }
 
@@ -8334,12 +8399,12 @@ function isPointOnTheLine(point, line) {
 }
 
 function isLineShorter(line1, line2) {
-    return (new _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line1.x1, line1.y1, line1.x2, line1.y2)).length < (new _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line2.x1, line2.y1, line2.x2, line2.y2)).length;
+    return (new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line1.x1, line1.y1, line1.x2, line1.y2)).length < (new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line2.x1, line2.y1, line2.x2, line2.y2)).length;
 }
 
 function isPointLineIntersect(point, line) {
-    const lineL = new _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, line.x2, line.y2).length,
-        lengthAB = new _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, point.x, point.y).length + new _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x2, line.y2, point.x, point.y).length;
+    const lineL = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, line.x2, line.y2).length,
+        lengthAB = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, point.x, point.y).length + new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x2, line.y2, point.x, point.y).length;
 
     if (lengthAB <= lineL + 0.2) {
         //Logger.debug("point to line intersect. line len: " + lineL + ", line AB len: " + lengthAB);
@@ -8364,7 +8429,7 @@ function isPointRectIntersect(x, y, rect) {
 
 function isPointCircleIntersect(x, y, circle) {
     const radius = circle.width,
-        lineToCircleCenter = new _base_Primitives_Vector_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y),
+        lineToCircleCenter = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y),
         pointCircleLineLength = lineToCircleCenter.length;
     if (pointCircleLineLength < radius)
         return true;
@@ -8460,17 +8525,23 @@ var __webpack_exports__ = {};
   \**********************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "CONST": () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST),
+/* harmony export */   "CONST": () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_5__.CONST),
+/* harmony export */   "DrawImageObject": () => (/* reexport safe */ _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawImageObject),
+/* harmony export */   "Primitives": () => (/* reexport module object */ _base_Primitives_js__WEBPACK_IMPORTED_MODULE_3__),
 /* harmony export */   "ScreenPage": () => (/* reexport safe */ _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__.ScreenPage),
 /* harmony export */   "System": () => (/* reexport safe */ _base_System_js__WEBPACK_IMPORTED_MODULE_0__.System),
-/* harmony export */   "SystemSettings": () => (/* reexport safe */ _configs_js__WEBPACK_IMPORTED_MODULE_2__.SystemSettings),
-/* harmony export */   "utils": () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_4__)
+/* harmony export */   "SystemSettings": () => (/* reexport safe */ _configs_js__WEBPACK_IMPORTED_MODULE_4__.SystemSettings),
+/* harmony export */   "utils": () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_6__)
 /* harmony export */ });
 /* harmony import */ var _base_System_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/System.js */ "./src/base/System.js");
 /* harmony import */ var _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./base/ScreenPage.js */ "./src/base/ScreenPage.js");
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./configs.js */ "./src/configs.js");
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils.js */ "./src/utils.js");
+/* harmony import */ var _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./base/DrawImageObject.js */ "./src/base/DrawImageObject.js");
+/* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./configs.js */ "./src/configs.js");
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./utils.js */ "./src/utils.js");
+
+
 
 
 
@@ -8481,10 +8552,12 @@ __webpack_require__.r(__webpack_exports__);
 })();
 
 var __webpack_exports__CONST = __webpack_exports__.CONST;
+var __webpack_exports__DrawImageObject = __webpack_exports__.DrawImageObject;
+var __webpack_exports__Primitives = __webpack_exports__.Primitives;
 var __webpack_exports__ScreenPage = __webpack_exports__.ScreenPage;
 var __webpack_exports__System = __webpack_exports__.System;
 var __webpack_exports__SystemSettings = __webpack_exports__.SystemSettings;
 var __webpack_exports__utils = __webpack_exports__.utils;
-export { __webpack_exports__CONST as CONST, __webpack_exports__ScreenPage as ScreenPage, __webpack_exports__System as System, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
+export { __webpack_exports__CONST as CONST, __webpack_exports__DrawImageObject as DrawImageObject, __webpack_exports__Primitives as Primitives, __webpack_exports__ScreenPage as ScreenPage, __webpack_exports__System as System, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
 
 //# sourceMappingURL=index.es6.js.map
