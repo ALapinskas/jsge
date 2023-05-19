@@ -1,4 +1,4 @@
-import { Vector } from "./base/Primitives/Vector.js";
+import { Vector } from "./base/Primitives.js";
 
 function isMobile() {
     return /Android|webOS|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent) ;

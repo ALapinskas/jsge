@@ -1,6 +1,6 @@
 import { CONST } from "../constants.js";
 import { generateUniqId } from "../utils.js";
-import { Point } from "./Primitives/Point.js";
+import { Point } from "./Primitives.js";
 
 /**
  * A base draw object

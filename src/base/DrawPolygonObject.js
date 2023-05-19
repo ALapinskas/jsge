@@ -1,6 +1,6 @@
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Point } from "./Primitives/Point.js";
+import { Point } from "./Primitives.js";
 
 /**
  * @augments DrawShapeObject

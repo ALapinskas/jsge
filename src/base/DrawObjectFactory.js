@@ -4,7 +4,7 @@ import { DrawConusObject } from "./DrawConusObject.js";
 import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
-import { Point } from "./Primitives/Point.js";
+import { Point } from "./Primitives.js";
 
 /**
  * Creates drawObjects instances.

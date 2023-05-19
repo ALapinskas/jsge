@@ -1,5 +1,5 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Rectangle } from "./Primitives/Rectangle.js";
+import { Rectangle } from "./Primitives.js";
 import { CONST } from "../constants.js";
 
 /**
