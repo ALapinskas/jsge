@@ -103,17 +103,6 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {Number}
-     */
-    get direction() {
-        return this.#direction;
-    }
-
-    set direction(value) {
-        this.#direction = value;
-    }
-
-    /**
      * @type {String}
      */
     get textMetrics() {

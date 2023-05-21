@@ -516,8 +516,8 @@ export class WebGlInterface {
         // fix text edges
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         gl.depthMask(false);
-        let bind_number  = this.#images_bind.get(image_name);
-        if (!bind_number ) {
+        let bind_number = this.#images_bind.get(image_name);
+        if (!bind_number) {
             bind_number  = this.#images_bind.size + 1;
 
             gl.activeTexture(gl["TEXTURE" + bind_number]);
@@ -528,11 +528,13 @@ export class WebGlInterface {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
-            this.#images_bind.set(image_name, bind_number);
+            // As image properties such as text stroke changes, image_name still the same,
+            // and image won't replaced
+            //this.#images_bind.set(image_name, bind_number);
         } else {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
-        gl.uniform1i(u_imageLocation, bind_number );
+        gl.uniform1i(u_imageLocation, bind_number);
         //console.log("vertex attrib 1 :", gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING));
         this.executeGlslProgram();
     }

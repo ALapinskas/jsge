@@ -58,19 +58,19 @@ export class StartPage extends ScreenPage {
             isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox),
             isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox);;
         if (isNav1Traversed) {
-            this.navItemDun.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
         } else {
             this.navItemDun.strokeStyle = undefined;
         }
 
         if (isNavP2PTraversed) {
-            this.navItemPir.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            this.navItemPir.strokeStyle = "rgba(0, 0, 0, 0.3)";
         } else {
             this.navItemPir.strokeStyle = undefined;
         }
 
         if (isNav3Traversed) {
-            this.navItemRac.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            this.navItemRac.strokeStyle = "rgba(0, 0, 0, 0.3)";
         } else {
             this.navItemRac.strokeStyle = undefined;
         }
