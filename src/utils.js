@@ -1,4 +1,4 @@
-import { Vector } from "./base/Primitives.js";
+import { Vector, Vertex } from "./base/Primitives.js";
 
 function isMobile() {
     return /Android|webOS|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent) ;
@@ -103,6 +103,10 @@ function dotProduct(vec1, vec2) {
     return vec1.x * vec2.x + vec1.y * vec2.y;
 }
 
+function crossProduct(a, b) {
+    return (a.x * b.y - b.x * a.y);
+}
+
 function isPointOnTheLine(point, line) {
     return (((point.x >= line.x1) && (point.x <= line.x2)) || ((point.x <= line.x1) && (point.x >= line.x2))) && (((point.x >= line.x1) && (point.y <= line.y2)) || ((point.y <= line.y1) && (point.y >= line.y2)));
 }
@@ -150,6 +154,17 @@ function generateUniqId() {
     return Math.round(Math.random() * 1000000); 
 }
 
+function arrayNumbersToVerticesArray(array) {
+    const len = array.length,
+        vertices = [];
+    for (let i = 0; i < len; i+=2) {
+        const x = array[i],
+            y = array[i + 1];
+        vertices.push(new Vertex(x, y));
+    }
+    return vertices;
+}
+
 export { 
     isMobile, 
     isSafari, 
@@ -160,10 +175,12 @@ export {
     angle_3points,
     dotProductWithAngle,
     dotProduct,
+    crossProduct,
     isPointOnTheLine,
     isLineShorter,
     isPointLineIntersect,
     isPointPolygonIntersect,
     isPointRectIntersect,
     isPointCircleIntersect,
-    generateUniqId };
+    generateUniqId,
+    arrayNumbersToVerticesArray };

@@ -4,7 +4,7 @@ import { DrawConusObject } from "./DrawConusObject.js";
 import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
-import { Point } from "./Primitives.js";
+import { Vertex } from "./Primitives.js";
 
 /**
  * Creates drawObjects instances.
@@ -38,7 +38,7 @@ export class DrawObjectFactory {
 
     /**
      * 
-     * @param {Array<Point>} vertices 
+     * @param {Array<Vertex>} vertices 
      * @param {Number} radius 
      * @param {String} bgColor - rgba(r,g,b,a)
      * @param {String=} subtractProgram 
@@ -55,7 +55,7 @@ export class DrawObjectFactory {
      * @param {Number} height 
      * @param {String} key 
      * @param {Number} [imageIndex = 0]
-     * @param {Array<Point>=} boundaries 
+     * @param {Array<Vertex>=} boundaries 
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries) {
@@ -63,7 +63,7 @@ export class DrawObjectFactory {
     }
 
     /**
-     * @param {Array<Point>} vertices 
+     * @param {Array<Vertex>} vertices 
      * @param {String} bgColor - rgba(r,g,b,a)
      * @returns {DrawLineObject}
      */
@@ -73,7 +73,7 @@ export class DrawObjectFactory {
 
     /**
      * 
-     * @param {Array<Point>} vertices 
+     * @param {Array<Vertex>} vertices 
      * @param {String} bgColor - rgba(r,g,b,a) 
      * @param {String=} subtractProgram 
      * @returns {DrawPolygonObject}

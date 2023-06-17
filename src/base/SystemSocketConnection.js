@@ -29,7 +29,11 @@ export class SystemSocketConnection extends EventTarget {
     }
 
     get isServerConnected () {
-        return this.#socket.connected;
+        if (this.#socket && this.#socket.connected) {
+            return true;
+        } else {
+            return false;
+        }
     }
     
     get playerId() {

@@ -1,6 +1,8 @@
+import { Primitives } from "/index.es6.js";
 import { ScreenPage, CONST } from "/index.es6.js";
 import { utils } from "/index.es6.js";
 
+const Vertex = Primitives.Vertex;
 const SHIPS_KEY = "ships";
 const angle_2points = utils.angle_2points,
     isPointLineIntersect = utils.isPointLineIntersect;
@@ -27,7 +29,7 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "items", this.tilemapKey);
 
-        this.player = this.draw.image(50, 200, 33, 57, SHIPS_KEY, 0);
+        this.player = this.draw.image(50, 200, 33, 57, SHIPS_KEY, 0, [{x:0,y:-30},{x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
     }
 

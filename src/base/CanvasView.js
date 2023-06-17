@@ -6,7 +6,7 @@ import { WebGlInterface } from "./WebGlInterface.js";
 import { SystemSettings } from "../configs.js";
 import { ScreenPageData } from "./ScreenPageData.js";
 import AssetsManager from "assetsm";
-import { calculateBufferData } from "../wa/release.js";
+//import { calculateBufferData } from "../wa/release.js";
 import { CONST } from "../constants.js";
 
 const INDEX_TOP_LINE = 0,
@@ -594,13 +594,13 @@ export class CanvasView {
             } else if (renderObject.type === CONST.DRAW_TYPE.LINE) {
                 this.#webGlInterface.drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
             } else {
-                this.#webGlInterface.bindPrimitives(x, y, renderObject);
+                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation || 0, [x, y]);
             }
             if (renderObject.boundaries && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
-                const shiftX = x - renderObject.boundaries[0],
-                    shiftY = y - renderObject.boundaries[1],
-                    rotation = renderObject.rotation ? renderObject.rotation : 0;
-                this.#webGlInterface.drawLines(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                const shiftX = x,// - renderObject.boundaries[0],
+                    shiftY = y,// - renderObject.boundaries[1],
+                rotation = renderObject.rotation ? renderObject.rotation : 0;
+                this.#webGlInterface.drawPolygon(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
             }
             return resolve();
         });

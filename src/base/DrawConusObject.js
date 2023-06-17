@@ -1,6 +1,6 @@
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Point } from "./Primitives.js";
+import { Vertex } from "./Primitives.js";
 
 /**
  * Conus object to draw
@@ -8,7 +8,7 @@ import { Point } from "./Primitives.js";
  */
 export class DrawConusObject extends DrawShapeObject {
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     #vertices;
 
@@ -21,7 +21,7 @@ export class DrawConusObject extends DrawShapeObject {
     }
 
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     get vertices () {
         return this.#vertices;

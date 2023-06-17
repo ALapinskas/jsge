@@ -1,6 +1,6 @@
 import { CONST } from "../constants.js";
 import { generateUniqId } from "../utils.js";
-import { Point } from "./Primitives.js";
+import { Vertex } from "./Primitives.js";
 
 /**
  * A base draw object
@@ -33,7 +33,7 @@ export class DrawShapeObject {
      */
     #isRemoved = false;
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     #boundaries = [];
 

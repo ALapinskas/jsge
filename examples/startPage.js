@@ -25,9 +25,9 @@ export class StartPage extends ScreenPage {
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.3)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
 
-        this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans", "black"),
-        this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans", "black");
-        this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans", "black");
+        this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
+        this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");
+        this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "black");
         
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemDun);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemPir);

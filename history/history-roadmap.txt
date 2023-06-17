@@ -13,7 +13,7 @@
         few different canvas for a page
         canvas overlapping effects
 
-In progress:
+Todo:
     *
 
 # Map
@@ -22,6 +22,18 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.0.3:
+    r: Fixed drawLines() position shift
+    r: Removed drawLines() premultiply alpha
+    r: Point() renamed to Vertex()
+    r: fix isServerConnected check before network.init() runs
+    +: polygon.triangulation algorithm
+    +: polygon drawing
+    +: object boundaries drawing
+    
+0.0.2:
+    r: Fixed changing text properties render
+    
 0.0.1:
     +: Javascript Game Engine introduced
 

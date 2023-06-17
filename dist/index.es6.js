@@ -3716,6 +3716,17 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
+ * These strings must not be used as event names, as they have a special meaning.
+ */
+const RESERVED_EVENTS = [
+    "connect",
+    "connect_error",
+    "disconnect",
+    "disconnecting",
+    "newListener",
+    "removeListener", // used by the Node.js EventEmitter
+];
+/**
  * Protocol version.
  *
  * @public
@@ -3802,6 +3813,10 @@ class Encoder {
         buffers.unshift(pack); // add packet info to beginning of data list
         return buffers; // write all the buffers
     }
+}
+// see https://stackoverflow.com/questions/8511281/check-if-a-value-is-an-object-in-javascript
+function isObject(value) {
+    return Object.prototype.toString.call(value) === "[object Object]";
 }
 /**
  * A socket.io Decoder instance
@@ -3942,14 +3957,17 @@ class Decoder extends _socket_io_component_emitter__WEBPACK_IMPORTED_MODULE_0__.
     static isPayloadValid(type, payload) {
         switch (type) {
             case PacketType.CONNECT:
-                return typeof payload === "object";
+                return isObject(payload);
             case PacketType.DISCONNECT:
                 return payload === undefined;
             case PacketType.CONNECT_ERROR:
-                return typeof payload === "string" || typeof payload === "object";
+                return typeof payload === "string" || isObject(payload);
             case PacketType.EVENT:
             case PacketType.BINARY_EVENT:
-                return Array.isArray(payload) && payload.length > 0;
+                return (Array.isArray(payload) &&
+                    (typeof payload[0] === "number" ||
+                        (typeof payload[0] === "string" &&
+                            RESERVED_EVENTS.indexOf(payload[0]) === -1)));
             case PacketType.ACK:
             case PacketType.BINARY_ACK:
                 return Array.isArray(payload);
@@ -4151,7 +4169,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
 /* harmony import */ var _ScreenPageData_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ScreenPageData.js */ "./src/base/ScreenPageData.js");
 /* harmony import */ var assetsm__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! assetsm */ "./node_modules/assetsm/dist/assetsm.min.js");
-/* harmony import */ var _wa_release_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../wa/release.js */ "./src/wa/release.js");
 
 
 
@@ -4160,7 +4177,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
+//import { calculateBufferData } from "../wa/release.js";
 
 
 const INDEX_TOP_LINE = 0,
@@ -4405,7 +4422,7 @@ class CanvasView {
                     atlasWidth = atlasImage.width,
                     atlasHeight = atlasImage.height;
                     
-                const [verticesBufferData, texturesBufferData] = (0,_wa_release_js__WEBPACK_IMPORTED_MODULE_8__.calculateBufferData)(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
+                const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 
                 this.bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 if (setBoundaries) {
@@ -4748,13 +4765,13 @@ class CanvasView {
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.LINE) {
                 this.#webGlInterface.drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
             } else {
-                this.#webGlInterface.bindPrimitives(x, y, renderObject);
+                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation || 0, [x, y]);
             }
             if (renderObject.boundaries && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
-                const shiftX = x - renderObject.boundaries[0],
-                    shiftY = y - renderObject.boundaries[1],
-                    rotation = renderObject.rotation ? renderObject.rotation : 0;
-                this.#webGlInterface.drawLines(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                const shiftX = x,// - renderObject.boundaries[0],
+                    shiftY = y,// - renderObject.boundaries[1],
+                rotation = renderObject.rotation ? renderObject.rotation : 0;
+                this.#webGlInterface.drawPolygon(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
             }
             return resolve();
         });
@@ -4819,7 +4836,7 @@ __webpack_require__.r(__webpack_exports__);
  */
 class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     #vertices;
 
@@ -4832,7 +4849,7 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
     }
 
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     get vertices () {
         return this.#vertices;
@@ -5021,7 +5038,7 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
     }
 
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     get vertices () {
         return this.#vertices;
@@ -5091,7 +5108,7 @@ class DrawObjectFactory {
 
     /**
      * 
-     * @param {Array<Point>} vertices 
+     * @param {Array<Vertex>} vertices 
      * @param {Number} radius 
      * @param {String} bgColor - rgba(r,g,b,a)
      * @param {String=} subtractProgram 
@@ -5108,7 +5125,7 @@ class DrawObjectFactory {
      * @param {Number} height 
      * @param {String} key 
      * @param {Number} [imageIndex = 0]
-     * @param {Array<Point>=} boundaries 
+     * @param {Array<Vertex>=} boundaries 
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries) {
@@ -5116,7 +5133,7 @@ class DrawObjectFactory {
     }
 
     /**
-     * @param {Array<Point>} vertices 
+     * @param {Array<Vertex>} vertices 
      * @param {String} bgColor - rgba(r,g,b,a)
      * @returns {DrawLineObject}
      */
@@ -5126,7 +5143,7 @@ class DrawObjectFactory {
 
     /**
      * 
-     * @param {Array<Point>} vertices 
+     * @param {Array<Vertex>} vertices 
      * @param {String} bgColor - rgba(r,g,b,a) 
      * @param {String=} subtractProgram 
      * @returns {DrawPolygonObject}
@@ -5160,7 +5177,7 @@ __webpack_require__.r(__webpack_exports__);
  */
 class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     #vertices;
 
@@ -5173,7 +5190,7 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
     }
 
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     get vertices () {
         return this.#vertices;
@@ -5263,7 +5280,7 @@ class DrawShapeObject {
      */
     #isRemoved = false;
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     #boundaries = [];
 
@@ -5522,17 +5539,6 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {Number}
-     */
-    get direction() {
-        return this.#direction;
-    }
-
-    set direction(value) {
-        this.#direction = value;
-    }
-
-    /**
      * @type {String}
      */
     get textMetrics() {
@@ -5635,11 +5641,11 @@ class Logger {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Point": () => (/* binding */ Point),
 /* harmony export */   "Rectangle": () => (/* binding */ Rectangle),
-/* harmony export */   "Vector": () => (/* binding */ Vector)
+/* harmony export */   "Vector": () => (/* binding */ Vector),
+/* harmony export */   "Vertex": () => (/* binding */ Vertex)
 /* harmony export */ });
-class Point {
+class Vertex {
     #x;
     #y;
     constructor(x, y) {
@@ -7004,7 +7010,11 @@ class SystemSocketConnection extends EventTarget {
     }
 
     get isServerConnected () {
-        return this.#socket.connected;
+        if (this.#socket && this.#socket.connected) {
+            return true;
+        } else {
+            return false;
+        }
     }
     
     get playerId() {
@@ -7253,8 +7263,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "WebGlInterface": () => (/* binding */ WebGlInterface)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _WebGlDrawProgramData_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./WebGlDrawProgramData.js */ "./src/base/WebGlDrawProgramData.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
+/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
+/* harmony import */ var _WebGlDrawProgramData_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./WebGlDrawProgramData.js */ "./src/base/WebGlDrawProgramData.js");
+
 
 
 
@@ -7305,7 +7317,7 @@ class WebGlInterface {
 
     constructor(context, debug) {
         if (!context || !(context instanceof WebGLRenderingContext)) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " context parameter should be specified and equal to WebGLRenderingContext");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " context parameter should be specified and equal to WebGLRenderingContext");
         }
         
         this.#gl = context;
@@ -7558,7 +7570,7 @@ class WebGlInterface {
             }
 
             if (!isProgramDataMerged) {
-                this.#programsData.push(new _WebGlDrawProgramData_js__WEBPACK_IMPORTED_MODULE_2__.WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale));
+                this.#programsData.push(new _WebGlDrawProgramData_js__WEBPACK_IMPORTED_MODULE_3__.WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale));
             }
 
             resolve();
@@ -7773,8 +7785,8 @@ class WebGlInterface {
         // fix text edges
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         gl.depthMask(false);
-        let bind_number  = this.#images_bind.get(image_name);
-        if (!bind_number ) {
+        let bind_number = this.#images_bind.get(image_name);
+        if (!bind_number) {
             bind_number  = this.#images_bind.size + 1;
 
             gl.activeTexture(gl["TEXTURE" + bind_number]);
@@ -7785,16 +7797,18 @@ class WebGlInterface {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
-            this.#images_bind.set(image_name, bind_number);
+            // As image properties such as text stroke changes, image_name still the same,
+            // and image won't replaced
+            //this.#images_bind.set(image_name, bind_number);
         } else {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
-        gl.uniform1i(u_imageLocation, bind_number );
+        gl.uniform1i(u_imageLocation, bind_number);
         //console.log("vertex attrib 1 :", gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING));
         this.executeGlslProgram();
     }
 
-    bindPrimitives(x, y, renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    bindPrimitives(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.getProgram(programName),
             { 
@@ -7820,7 +7834,7 @@ class WebGlInterface {
 
         switch (renderObject.type) {
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-                this.#setSingleRectangle(x, y, renderObject.width, renderObject.height);
+                this.#setSingleRectangle(renderObject.width, renderObject.height);
                 this.#verticesNumber += 6;
                 break;
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
@@ -7829,9 +7843,14 @@ class WebGlInterface {
                 //this.#bindCircle(x, y, renderObject);
                 break;
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON: {
-                const polygonVerticesNum = renderObject.vertices.length;
-                this.#bindPolygon(renderObject, polygonVerticesNum);
-                this.#verticesNumber += polygonVerticesNum;
+                const triangles = this.#triangulatePolygon(renderObject.vertices);
+                this.#bindPolygon(triangles);
+                const len = triangles.length;
+                if (len % 3 !== 0) {
+                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
+                    return;
+                }
+                this.#verticesNumber += len / 2;
                 break;
             }
         }
@@ -7873,7 +7892,6 @@ class WebGlInterface {
             gl = this.#gl;
 
         gl.useProgram(program);
-
         // set the resolution
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
@@ -7904,8 +7922,8 @@ class WebGlInterface {
         
         gl.lineWidth(lineWidth);
 
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.blendFunc(gl.ONE, gl.DST_COLOR );
+        //gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        //gl.blendFunc(gl.ONE, gl.DST_COLOR );
         
         //disable attribute which is not used in this program
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
@@ -7914,17 +7932,57 @@ class WebGlInterface {
         this.executeGlslProgram(0, gl.LINES);
     }
 
-    #bindPolygon(renderObject, vertNum) {
-        const verticesBuffer = [];
+    drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+        const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
+            program = this.getProgram(programName),
+            { resolutionUniformLocation,
+                colorUniformLocation,
+                positionAttributeLocation,
+            
+                translationLocation,
+                rotationRotation,
+                scaleLocation} = this.#coordsLocations.get(programName),
+            gl = this.#gl;
 
-        for (let i = 0; i < vertNum; i++) {
-            const vert = renderObject.vertices[i];
-            verticesBuffer.push(vert.x, vert.y);    
+        gl.useProgram(program);
+        // set the resolution
+        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+        gl.uniform2f(translationLocation, translation[0], translation[1]);
+        gl.uniform2f(scaleLocation, 1, 1);
+        gl.uniform1f(rotationRotation, rotation);
+
+        gl.enableVertexAttribArray(positionAttributeLocation);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+
+        const triangles = this.#triangulatePolygon(vertices);
+        
+        const polygonVerticesNum = triangles.length;
+        if (polygonVerticesNum % 3 !== 0) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygon boundaries vertices are not correct, skip drawing`);
+            return;
         }
+        this.#bindPolygon(triangles);
+        this.#verticesNumber += polygonVerticesNum / 2;
+        //Tell the attribute how to get data out of positionBuffer
+        const size = 2,
+            type = gl.FLOAT, // data is 32bit floats
+            normalize = false,
+            stride = 0, // move forward size * sizeof(type) each iteration to get next position
+            offset = 0; // start of beginning of the buffer
+        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 
+        const colorArray = this.#rgbaToArray(color);
+        gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
+
+        this.executeGlslProgram(0, null);
+    }
+
+    #bindPolygon(vertices) {
         this.#gl.bufferData(
             this.#gl.ARRAY_BUFFER, 
-            new Float32Array(verticesBuffer),
+            new Float32Array(vertices),
             this.#gl.STATIC_DRAW);
     }
 
@@ -7994,11 +8052,11 @@ class WebGlInterface {
         return Math.floor(Math.random() * range);
     } 
 
-    #setSingleRectangle(x, y, width, height) {
-        const x1 = x,
-            x2 = x + width,
-            y1 = y,
-            y2 = y + height;
+    #setSingleRectangle(width, height) {
+        const x1 = 0,
+            x2 = 0 + width,
+            y1 = 0,
+            y2 = 0 + height;
         this.#gl.bufferData(this.#gl.ARRAY_BUFFER, 
             new Float32Array([
                 x1, y1,
@@ -8037,7 +8095,7 @@ class WebGlInterface {
         gl.linkProgram(program);
         if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             const info = gl.getProgramInfoLog(program);
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
         }
         return program;
     }
@@ -8081,13 +8139,66 @@ class WebGlInterface {
 
         if (!this.#gl.getShaderParameter(shader, this.#gl.COMPILE_STATUS)) {
             const info = this.#gl.getShaderInfoLog(shader);
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, "Couldn't compile webGl program. \n\n" + info);
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, "Couldn't compile webGl program. \n\n" + info);
         }
         return shader;
     }
 
     #rgbaToArray (rgbaColor) {
         return rgbaColor.replace("rgba(", "").replace(")", "").split(",").map((item) => Number(item.trim()));
+    }
+
+    #triangulatePolygon(vertices) {
+        const clonedVertices = [...vertices];
+        return this.#triangulate(clonedVertices);
+    }
+
+    #triangulate (polygonVertices, triangulatedPolygon = []) {
+        const len = polygonVertices.length,
+            vectorsCS = (a, b, c) => (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.crossProduct)({x:c.x - a.x, y: c.y - a.y}, {x:b.x - a.x, y: b.y - a.y});
+
+        if (len <= 3) {
+            polygonVertices.forEach(vertex => {
+                triangulatedPolygon.push(vertex.x);
+                triangulatedPolygon.push(vertex.y);
+            });
+            return triangulatedPolygon;
+        }
+        const verticesSortedByY = [...polygonVertices].sort((curr, next) => next.y - curr.y);
+        const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
+            startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
+        
+        for (let j = startVertexIndex; j < polygonVertices.length + startVertexIndex; j++) {
+            let i = j;
+            const len =  polygonVertices.length;
+            
+            if (i >= len) {
+                i = j - len;
+            }
+    
+            const prevVertex = i === 0 ? polygonVertices[len - 1] : polygonVertices[i - 1],
+                currentVertex = polygonVertices[i],
+                nextVertex = len === i + 1 ? polygonVertices[0] : polygonVertices[i + 1];
+
+    
+            const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
+    
+            if (cs < 0) {
+                triangulatedPolygon.push(prevVertex.x);
+                triangulatedPolygon.push(prevVertex.y);
+                triangulatedPolygon.push(currentVertex.x);
+                triangulatedPolygon.push(currentVertex.y);
+                triangulatedPolygon.push(nextVertex.x);
+                triangulatedPolygon.push(nextVertex.y);
+                polygonVertices.splice(i, 1);
+            }
+        }
+        
+        if (polygonVertices.length >= 4) {
+            return this.#triangulate(polygonVertices, triangulatedPolygon);
+        } else {
+            return triangulatedPolygon;
+        }
     }
 }
 
@@ -8111,7 +8222,7 @@ const SystemSettings = {
     
     gameOptions: {
         library: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.LIBRARY.WEBGL,
-        debugWebGl: true,
+        debugWebGl: false,
         debugMobileTouch: false,
         optimization: null,
         boundaries: {
@@ -8258,7 +8369,8 @@ const WARNING_CODES =  {
     UNHANDLED_DRAW_ISSUE: "UNHANDLED_DRAW_ISSUE",
     UNEXPECTED_WORLD_SIZE: "UNEXPECTED_WORLD_SIZE",
     AUDIO_ALREADY_REGISTERED: "AUDIO_ALREADY_REGISTERED",
-    AUDIO_NOT_REGISTERED: "AUDIO_NOT_REGISTERED"
+    AUDIO_NOT_REGISTERED: "AUDIO_NOT_REGISTERED",
+    POLYGON_VERTICES_NOT_CORRECT: "POLYGON_VERTICES_NOT_CORRECT"
 };
 
 /***/ }),
@@ -8273,8 +8385,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "angle_2points": () => (/* binding */ angle_2points),
 /* harmony export */   "angle_3points": () => (/* binding */ angle_3points),
+/* harmony export */   "arrayNumbersToVerticesArray": () => (/* binding */ arrayNumbersToVerticesArray),
 /* harmony export */   "countClosestTraversal": () => (/* binding */ countClosestTraversal),
 /* harmony export */   "countClosestTraversal2": () => (/* binding */ countClosestTraversal2),
+/* harmony export */   "crossProduct": () => (/* binding */ crossProduct),
 /* harmony export */   "dotProduct": () => (/* binding */ dotProduct),
 /* harmony export */   "dotProductWithAngle": () => (/* binding */ dotProductWithAngle),
 /* harmony export */   "generateUniqId": () => (/* binding */ generateUniqId),
@@ -8394,6 +8508,10 @@ function dotProduct(vec1, vec2) {
     return vec1.x * vec2.x + vec1.y * vec2.y;
 }
 
+function crossProduct(a, b) {
+    return (a.x * b.y - b.x * a.y);
+}
+
 function isPointOnTheLine(point, line) {
     return (((point.x >= line.x1) && (point.x <= line.x2)) || ((point.x <= line.x1) && (point.x >= line.x2))) && (((point.x >= line.x1) && (point.y <= line.y2)) || ((point.y <= line.y1) && (point.y >= line.y2)));
 }
@@ -8441,23 +8559,18 @@ function generateUniqId() {
     return Math.round(Math.random() * 1000000); 
 }
 
-
-
-/***/ }),
-
-/***/ "./src/wa/release.js":
-/*!***************************!*\
-  !*** ./src/wa/release.js ***!
-  \***************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "calculateBufferData": () => (/* binding */ calculateBufferData)
-/* harmony export */ });
-class calculateBufferData{
-
+function arrayNumbersToVerticesArray(array) {
+    const len = array.length,
+        vertices = [];
+    for (let i = 0; i < len; i+=2) {
+        const x = array[i],
+            y = array[i + 1];
+        vertices.push(new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vertex(x, y));
+    }
+    return vertices;
 }
+
+
 
 /***/ })
 

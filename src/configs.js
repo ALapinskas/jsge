@@ -5,7 +5,7 @@ export const SystemSettings = {
     
     gameOptions: {
         library: CONST.LIBRARY.WEBGL,
-        debugWebGl: true,
+        debugWebGl: false,
         debugMobileTouch: false,
         optimization: null,
         boundaries: {

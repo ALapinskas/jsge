@@ -1,13 +1,13 @@
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Point } from "./Primitives.js";
+import { Vertex } from "./Primitives.js";
 
 /**
  * @augments DrawShapeObject
  */
 export class DrawPolygonObject extends DrawShapeObject {
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     #vertices;
 
@@ -20,7 +20,7 @@ export class DrawPolygonObject extends DrawShapeObject {
     }
 
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     get vertices () {
         return this.#vertices;

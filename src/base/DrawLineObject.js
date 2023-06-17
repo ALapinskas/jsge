@@ -1,6 +1,6 @@
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Point } from "./Primitives.js";
+import { Vertex } from "./Primitives.js";
 
 /**
  * Line object to draw
@@ -21,7 +21,7 @@ export class DrawLineObject extends DrawShapeObject {
     }
 
     /**
-     * @type {Array<Point>}
+     * @type {Array<Vertex>}
      */
     get vertices () {
         return this.#vertices;

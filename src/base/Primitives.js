@@ -1,4 +1,4 @@
-class Point {
+class Vertex {
     #x;
     #y;
     constructor(x, y) {
@@ -77,4 +77,4 @@ class Vector {
     }
 }
 
-export { Point, Rectangle, Vector };
+export { Vertex, Rectangle, Vector };

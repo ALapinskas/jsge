@@ -1,5 +1,6 @@
-import { ERROR_CODES, CONST } from "../constants.js";
-import { Exception } from "./Exception.js";
+import { ERROR_CODES, CONST, WARNING_CODES } from "../constants.js";
+import { crossProduct } from "../utils.js";
+import { Exception, Warning } from "./Exception.js";
 import { WebGlDrawProgramData } from "./WebGlDrawProgramData.js";
 
 export class WebGlInterface {
@@ -539,7 +540,7 @@ export class WebGlInterface {
         this.executeGlslProgram();
     }
 
-    bindPrimitives(x, y, renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    bindPrimitives(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.getProgram(programName),
             { 
@@ -565,7 +566,7 @@ export class WebGlInterface {
 
         switch (renderObject.type) {
             case CONST.DRAW_TYPE.RECTANGLE:
-                this.#setSingleRectangle(x, y, renderObject.width, renderObject.height);
+                this.#setSingleRectangle(renderObject.width, renderObject.height);
                 this.#verticesNumber += 6;
                 break;
             case CONST.DRAW_TYPE.TEXT:
@@ -574,9 +575,14 @@ export class WebGlInterface {
                 //this.#bindCircle(x, y, renderObject);
                 break;
             case CONST.DRAW_TYPE.POLYGON: {
-                const polygonVerticesNum = renderObject.vertices.length;
-                this.#bindPolygon(renderObject, polygonVerticesNum);
-                this.#verticesNumber += polygonVerticesNum;
+                const triangles = this.#triangulatePolygon(renderObject.vertices);
+                this.#bindPolygon(triangles);
+                const len = triangles.length;
+                if (len % 3 !== 0) {
+                    Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
+                    return;
+                }
+                this.#verticesNumber += len / 2;
                 break;
             }
         }
@@ -618,7 +624,6 @@ export class WebGlInterface {
             gl = this.#gl;
 
         gl.useProgram(program);
-
         // set the resolution
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
@@ -649,8 +654,8 @@ export class WebGlInterface {
         
         gl.lineWidth(lineWidth);
 
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.blendFunc(gl.ONE, gl.DST_COLOR );
+        //gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        //gl.blendFunc(gl.ONE, gl.DST_COLOR );
         
         //disable attribute which is not used in this program
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
@@ -659,17 +664,57 @@ export class WebGlInterface {
         this.executeGlslProgram(0, gl.LINES);
     }
 
-    #bindPolygon(renderObject, vertNum) {
-        const verticesBuffer = [];
+    drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+        const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
+            program = this.getProgram(programName),
+            { resolutionUniformLocation,
+                colorUniformLocation,
+                positionAttributeLocation,
+            
+                translationLocation,
+                rotationRotation,
+                scaleLocation} = this.#coordsLocations.get(programName),
+            gl = this.#gl;
 
-        for (let i = 0; i < vertNum; i++) {
-            const vert = renderObject.vertices[i];
-            verticesBuffer.push(vert.x, vert.y);    
+        gl.useProgram(program);
+        // set the resolution
+        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+        gl.uniform2f(translationLocation, translation[0], translation[1]);
+        gl.uniform2f(scaleLocation, 1, 1);
+        gl.uniform1f(rotationRotation, rotation);
+
+        gl.enableVertexAttribArray(positionAttributeLocation);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+
+        const triangles = this.#triangulatePolygon(vertices);
+        
+        const polygonVerticesNum = triangles.length;
+        if (polygonVerticesNum % 3 !== 0) {
+            Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygon boundaries vertices are not correct, skip drawing`);
+            return;
         }
+        this.#bindPolygon(triangles);
+        this.#verticesNumber += polygonVerticesNum / 2;
+        //Tell the attribute how to get data out of positionBuffer
+        const size = 2,
+            type = gl.FLOAT, // data is 32bit floats
+            normalize = false,
+            stride = 0, // move forward size * sizeof(type) each iteration to get next position
+            offset = 0; // start of beginning of the buffer
+        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 
+        const colorArray = this.#rgbaToArray(color);
+        gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
+
+        this.executeGlslProgram(0, null);
+    }
+
+    #bindPolygon(vertices) {
         this.#gl.bufferData(
             this.#gl.ARRAY_BUFFER, 
-            new Float32Array(verticesBuffer),
+            new Float32Array(vertices),
             this.#gl.STATIC_DRAW);
     }
 
@@ -739,11 +784,11 @@ export class WebGlInterface {
         return Math.floor(Math.random() * range);
     } 
 
-    #setSingleRectangle(x, y, width, height) {
-        const x1 = x,
-            x2 = x + width,
-            y1 = y,
-            y2 = y + height;
+    #setSingleRectangle(width, height) {
+        const x1 = 0,
+            x2 = 0 + width,
+            y1 = 0,
+            y2 = 0 + height;
         this.#gl.bufferData(this.#gl.ARRAY_BUFFER, 
             new Float32Array([
                 x1, y1,
@@ -833,5 +878,58 @@ export class WebGlInterface {
 
     #rgbaToArray (rgbaColor) {
         return rgbaColor.replace("rgba(", "").replace(")", "").split(",").map((item) => Number(item.trim()));
+    }
+
+    #triangulatePolygon(vertices) {
+        const clonedVertices = [...vertices];
+        return this.#triangulate(clonedVertices);
+    }
+
+    #triangulate (polygonVertices, triangulatedPolygon = []) {
+        const len = polygonVertices.length,
+            vectorsCS = (a, b, c) => crossProduct({x:c.x - a.x, y: c.y - a.y}, {x:b.x - a.x, y: b.y - a.y});
+
+        if (len <= 3) {
+            polygonVertices.forEach(vertex => {
+                triangulatedPolygon.push(vertex.x);
+                triangulatedPolygon.push(vertex.y);
+            });
+            return triangulatedPolygon;
+        }
+        const verticesSortedByY = [...polygonVertices].sort((curr, next) => next.y - curr.y);
+        const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
+            startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
+        
+        for (let j = startVertexIndex; j < polygonVertices.length + startVertexIndex; j++) {
+            let i = j;
+            const len =  polygonVertices.length;
+            
+            if (i >= len) {
+                i = j - len;
+            }
+    
+            const prevVertex = i === 0 ? polygonVertices[len - 1] : polygonVertices[i - 1],
+                currentVertex = polygonVertices[i],
+                nextVertex = len === i + 1 ? polygonVertices[0] : polygonVertices[i + 1];
+
+    
+            const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
+    
+            if (cs < 0) {
+                triangulatedPolygon.push(prevVertex.x);
+                triangulatedPolygon.push(prevVertex.y);
+                triangulatedPolygon.push(currentVertex.x);
+                triangulatedPolygon.push(currentVertex.y);
+                triangulatedPolygon.push(nextVertex.x);
+                triangulatedPolygon.push(nextVertex.y);
+                polygonVertices.splice(i, 1);
+            }
+        }
+        
+        if (polygonVertices.length >= 4) {
+            return this.#triangulate(polygonVertices, triangulatedPolygon);
+        } else {
+            return triangulatedPolygon;
+        }
     }
 }

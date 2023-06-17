@@ -13,7 +13,13 @@ What you can do with it:
 7. Simple collision detection included.
 8. Boundaries helper drawing as debug option.
 
-How to start:
+How to run examples:
+
+1. npm i
+2. npm start
+3. visit localhost:9000
+
+How to create your own game:
 
 1. Create a System instance, passing game options, or a SystemSettings object:
 ```
