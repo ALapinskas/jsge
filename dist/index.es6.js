@@ -4758,14 +4758,11 @@ class CanvasView {
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.TEXT) {
                 this.#webGlInterface.bindText(x, y, renderObject);
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.CIRCLE) {
-                //this is a workaround to avoid objects vertices recalculations, when we changing x, or y position
-                const shiftX = renderObject.x - renderObject.vertices[0],
-                    shiftY = renderObject.y - renderObject.vertices[1];
-                this.#webGlInterface.bindConus(x, y, renderObject, 0, [shiftX, shiftY]);
+                this.#webGlInterface.bindConus(renderObject, renderObject.rotation, [x, y]);
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.LINE) {
                 this.#webGlInterface.drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
             } else {
-                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation || 0, [x, y]);
+                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }
             if (renderObject.boundaries && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                 const shiftX = x,// - renderObject.boundaries[0],
@@ -4836,6 +4833,11 @@ __webpack_require__.r(__webpack_exports__);
  */
 class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
+     * @type {Number}
+     */
+    #radius;
+
+    /**
      * @type {Array<Vertex>}
      */
     #vertices;
@@ -4843,9 +4845,10 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
     /**
      * @hideconstructor
      */
-    constructor(vertices, radius, bgColor, subtractProgram) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE, vertices[0], vertices[1], radius, radius, null, bgColor, subtractProgram);
-        this.#vertices = vertices;
+    constructor(x, y, radius, bgColor, angle, subtractProgram) {
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, subtractProgram);
+        this.#radius = radius;
+        this.#vertices = this.#calculateConusVertices(radius, angle);
     }
 
     /**
@@ -4857,6 +4860,23 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
 
     set vertices(value) {
         this.#vertices = value;
+    }
+
+    get radius() {
+        return this.#radius;
+    }
+
+    #calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/12) {
+        let conusPolygonCoords = [0, 0];
+
+        for (let r = 0; r <= angle; r += step) {
+            let x2 = Math.cos(r) * radius,
+                y2 = Math.sin(r) * radius;
+
+            conusPolygonCoords.push(x2, y2);
+        }
+
+        return conusPolygonCoords;
     }
 }
 
@@ -4885,6 +4905,14 @@ __webpack_require__.r(__webpack_exports__);
  */
 class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawShapeObject {
     /**
+     * @type {Number}
+     */
+    #w;
+    /**
+     * @type {Number}
+     */
+    #h;
+    /**
      * Image sprite key
      * @type {String}
      */
@@ -4901,16 +4929,45 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      * @type {Number}
      */
     #imageIndex;
+    /**
+     * @type {Array<Vertex> | null}
+     */
+    #boundaries = null;
 
     /**
      * @hideconstructor
      */
     constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.DRAW_TYPE.IMAGE, mapX, mapY, width, height, boundaries);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();
         this.#imageIndex = imageIndex;
+        this.#boundaries = boundaries;
+        this.#w = width;
+        this.#h = height;
+    }
+
+    /**
+     * @type {Number}
+     */
+    get width() {
+        return this.#w;
+    }
+
+    /**
+     * @type {Number}
+     */
+    get height() {
+        return this.#h;
+    }
+
+    set width(w) {
+        this.#w = w;
+    }
+
+    set height(h) {
+        this.#h = h;
     }
 
     /**
@@ -4935,6 +4992,13 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     get isAnimations() {
         return this.#animations.size > 0;
+    }
+
+     /**
+     * @type {Array<Vertex>}
+     */
+    get boundaries() {
+        return this.#boundaries;
     }
 
     _processActiveAnimations() {
@@ -5033,7 +5097,7 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], null, null, null, bgColor);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
         this.#vertices = vertices;
     }
 
@@ -5108,14 +5172,25 @@ class DrawObjectFactory {
 
     /**
      * 
-     * @param {Array<Vertex>} vertices 
+     * @param {Number} radius 
+     * @param {String} bgColor - rgba(r,g,b,a)
+     * @param {Number=2*Math.PI} angle
+     * @param {String=} subtractProgram 
+     * @returns {DrawConusObject}
+     */
+    conus(x, y, radius, bgColor, angle, subtractProgram) {
+        return new _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawConusObject(x, y, radius, bgColor, angle, subtractProgram);
+    }
+
+    /**
+     * 
      * @param {Number} radius 
      * @param {String} bgColor - rgba(r,g,b,a)
      * @param {String=} subtractProgram 
      * @returns {DrawConusObject}
      */
-    conus(vertices, radius, bgColor, subtractProgram) {
-        return new _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawConusObject(vertices, radius, bgColor, subtractProgram);
+    circle(x, y, radius, bgColor, subtractProgram) {
+        return new _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawConusObject(x, y, radius, bgColor, 2*Math.PI, subtractProgram);
     }
 
     /**
@@ -5142,8 +5217,7 @@ class DrawObjectFactory {
     }
 
     /**
-     * 
-     * @param {Array<Vertex>} vertices 
+     * @param {Array<Vertex>} vertices - should go in anticlockwise order
      * @param {String} bgColor - rgba(r,g,b,a) 
      * @param {String=} subtractProgram 
      * @returns {DrawPolygonObject}
@@ -5185,7 +5259,7 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
      * @hideconstructor
      */
     constructor(vertices, bgColor, subtractProgram) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, null, null, null, bgColor, subtractProgram);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor, subtractProgram);
         this.#vertices = vertices;
     }
 
@@ -5223,10 +5297,53 @@ __webpack_require__.r(__webpack_exports__);
  */
 class DrawRectObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
+     * @type {Number}
+     */
+    #w;
+    /**
+     * @type {Number}
+     */
+    #h;
+    /**
+     * @type {Array<Vertex>}
+     */
+    #vertices;
+
+    /**
      * @hideconstructor
      */
     constructor(x, y, w, h, bgColor, subtractProgram) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE, x, y, w, h, null, bgColor, subtractProgram);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor, subtractProgram);
+        this.#w = w;
+        this.#h = h;
+    }
+
+    /**
+     * @type {Array<Vertex>}
+     */
+    get vertices () {
+        return this.#vertices;
+    }
+    /**
+     * @type {Number}
+     */
+    get width() {
+        return this.#w;
+    }
+
+    /**
+     * @type {Number}
+     */
+    get height() {
+        return this.#h;
+    }
+
+    set width(w) {
+        this.#w = w;
+    }
+
+    set height(h) {
+        this.#h = h;
     }
 }
 
@@ -5255,14 +5372,19 @@ __webpack_require__.r(__webpack_exports__);
 class DrawShapeObject {
     #x;
     #y;
-    #w;
-    #h;
     #bg;
     /**
      * @type {CONST.DRAW_TYPE}
      */
     #type;
     #subtract;
+    /**
+     * Is used for blending pixel arithmetic
+     * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc
+     * @type {Array<WebGL_API.Types>}
+     */
+    #blendFunc;
+    
     /**
      * @type {Number}
      */
@@ -5279,20 +5401,13 @@ class DrawShapeObject {
      * @type {Boolean}
      */
     #isRemoved = false;
-    /**
-     * @type {Array<Vertex>}
-     */
-    #boundaries = [];
 
     /**
      * @hideconstructor
      */
-    constructor(type, mapX, mapY, width, height, boundaries, bgColor, subtractProgram) {
+    constructor(type, mapX, mapY, bgColor, subtractProgram) {
         this.#x = mapX;
         this.#y = mapY;
-        this.#w = width;
-        this.#h = height;
-        this.#boundaries = boundaries;
         this.#bg = bgColor;
         this.#type = type;
         this.#subtract = subtractProgram;
@@ -5320,20 +5435,6 @@ class DrawShapeObject {
     /**
      * @type {Number}
      */
-    get width() {
-        return this.#w;
-    }
-
-    /**
-     * @type {Number}
-     */
-    get height() {
-        return this.#h;
-    }
-
-    /**
-     * @type {Number}
-     */
     get x() {
         return this.#x;
     }
@@ -5343,14 +5444,6 @@ class DrawShapeObject {
      */
     get y () {
         return this.#y;
-    }
-
-    set width(w) {
-        this.#w = w;
-    }
-
-    set height(h) {
-        this.#h = h;
     }
 
     set x(posX) {
@@ -5379,6 +5472,14 @@ class DrawShapeObject {
         this.#zIndex = value;
     }
 
+    get blendFunc () {
+        return this.#blendFunc;
+    }
+
+    set blendFunc(value) {
+        this.#blendFunc = value;
+    }
+
     /**
      * @type {Number}
      */
@@ -5402,13 +5503,6 @@ class DrawShapeObject {
      */
     get isRemoved() {
         return this.#isRemoved;
-    }
-
-    /**
-     * @type {Number}
-     */
-    get boundaries() {
-        return this.#boundaries;
     }
 
     /**
@@ -5822,6 +5916,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _SystemInterface_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./SystemInterface.js */ "./src/base/SystemInterface.js");
 /* harmony import */ var _SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./SystemAudioInterface.js */ "./src/base/SystemAudioInterface.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
+
+
 
 
 
@@ -6209,6 +6307,144 @@ class ScreenPage {
         }
     }
 
+    /**
+     * 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @returns {boolean}
+     */
+    #isPointToBoundariesCollision(x, y) {
+        const mapObjects = this.screenPageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            len = mapObjects.length;
+
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i],
+                object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                };
+            if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPointLineIntersect)({x: x - mapOffsetX, y: y - mapOffsetY}, object)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Array<Vertex>} polygon
+     * @param {Number} rotation 
+     * @returns {boolean}
+     */
+    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
+        //console.log("angle: ", rotation);
+        //console.log("boundaries before calculations: ");
+        //console.log(polygon);
+        const mapObjects = this.screenPageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
+            len = mapObjects.length;
+            
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i],
+                object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                },
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, object);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
+    #calculateShiftedVertexPos(vertex, centerX, centerY, rotation) {
+        const vector = new _Primitives_js__WEBPACK_IMPORTED_MODULE_20__.Vector(0, 0, vertex.x, vertex.y),
+            vertexAngle = (0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.angle_2points)(0, 0, vertex.x, vertex.y),
+            len = vector.length;
+        //console.log("coords without rotation: ");
+        //console.log(x + vertex.x);
+        //console.log(y + vertex.y);
+        //console.log("len: ", len);
+        //console.log("angle: ", rotation);
+        const newX = centerX + (len * Math.cos(rotation + vertexAngle)),
+            newY = centerY + (len * Math.sin(rotation + vertexAngle));
+        return { x: newX, y: newY };
+    }
+
+    /**
+     * 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @param {DrawShapeObject} drawObject 
+     */
+    isBoundariesCollision(x, y, drawObject) {
+        const drawObjectType = drawObject.type;
+        switch(drawObjectType) {
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+                return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+            default:
+                if (drawObject.boundaries && drawObject.boundaries.length > 0) {
+                    return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
+                 } else {
+                     return this.#isPointToBoundariesCollision(x, y);
+                 }
+        }
+    }
+
+    #checkCollisions(renderObjects) {
+        const boundaries = this.screenPageData.getBoundaries(),
+            boundariesLen = boundaries.length,
+            objectsLen = renderObjects.length;
+        //console.log(this.screenPageData.worldOffset);
+        for (let i = 0; i < objectsLen; i++) {
+            const renderObject = renderObjects[i];
+            for (let j = 0; j < objectsLen; j++) {
+                if (i === j) {
+                    continue;
+                }
+                const renderObjectCheck = renderObjects[j];
+                // check object - object collisions
+            }
+
+            for (let k = 0; k < boundariesLen; k+=1) {
+                const item = boundaries[k],
+                    object = {
+                        x1: item[0],
+                        y1: item[1],
+                        x2: item[2],
+                        y2: item[3]
+                    };
+                const objectBoundaries = object.boundaries;
+                if (objectBoundaries) {
+                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPolygonLineIntersect)(objectBoundaries, object)) {
+                        this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
+                    }
+                } else {
+                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPointLineIntersect)({ x: renderObject.x, y: renderObject.y }, object)) {
+                        this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
+                        console.log("boundaries collision detected");
+                    }
+                }
+            }
+        }
+    }
+
     #setCanvasSize() {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
@@ -6322,6 +6558,7 @@ class ScreenPage {
                 })
                 .then(() => {
                     if (view.renderObjects.length !== 0) {
+                        //this.#checkCollisions(view.renderObjects);
                         view.prepareBindRenderObjectPromises();
                     }
                     if (key === _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.LAYERS.BOUNDARIES) {
@@ -7706,7 +7943,7 @@ class WebGlInterface {
         }
         gl.uniform1i(u_imageLocation, bind_number );
 
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // Upload the image into the texture.
         this.executeGlslProgram();
     }
@@ -7783,8 +8020,8 @@ class WebGlInterface {
         this.#verticesNumber += 6;
         // remove box
         // fix text edges
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        gl.depthMask(false);
+        //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        //gl.depthMask(false);
         let bind_number = this.#images_bind.get(image_name);
         if (!bind_number) {
             bind_number  = this.#images_bind.size + 1;
@@ -7840,7 +8077,10 @@ class WebGlInterface {
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
                 break;
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-                //this.#bindCircle(x, y, renderObject);
+                const coords = renderObject.vertices;
+                gl.bufferData(this.#gl.ARRAY_BUFFER, 
+                    new Float32Array(coords), this.#gl.STATIC_DRAW);
+                this.#verticesNumber += coords.length / 2;
                 break;
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON: {
                 const triangles = this.#triangulatePolygon(renderObject.vertices);
@@ -7865,12 +8105,11 @@ class WebGlInterface {
         const colorArray = this.#rgbaToArray(renderObject.bgColor);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.blendFunc(gl.ONE, gl.DST_COLOR );
-        
+        if (renderObject.blendFunc) {
+            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        }
         if (renderObject.subtract) {
             gl.blendEquation(gl.FUNC_SUBTRACT);
-            //gl.blendFunc(gl.ONE, gl.DST_COLOR);
         }
         //disable attribute which is not used in this program
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
@@ -7922,7 +8161,6 @@ class WebGlInterface {
         
         gl.lineWidth(lineWidth);
 
-        //gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
         //gl.blendFunc(gl.ONE, gl.DST_COLOR );
         
         //disable attribute which is not used in this program
@@ -7986,7 +8224,7 @@ class WebGlInterface {
             this.#gl.STATIC_DRAW);
     }
 
-    bindConus(x, y, renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    bindConus(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.getProgram(programName),
             { 
@@ -7999,9 +8237,8 @@ class WebGlInterface {
             } = this.#coordsLocations.get(programName),
             gl = this.#gl,
             coords = renderObject.vertices,
-            fillStyle = renderObject.bgColor,
-            cut = renderObject.subtract;
-
+            fillStyle = renderObject.bgColor;
+            
         gl.useProgram(program);
         
         // set the resolution
@@ -8026,16 +8263,20 @@ class WebGlInterface {
 
         this.#verticesNumber += coords.length / 2;
 
-        if (cut) {
+        if (renderObject.blendFunc) {
+            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        }
+
+        if (renderObject.subtract) {
             // cut bottom 
             gl.blendEquation(gl.FUNC_SUBTRACT);
             //gl.blendFunc( gl.ONE, gl.ONE );
-            gl.blendFunc(gl.ONE, gl.DST_COLOR);
-        } else {
+            //gl.blendFunc(gl.ONE, gl.DST_COLOR);
+        } //else {
             //gl.disable(gl.BLEND);
             // make transparent
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        }
+            //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //}
 
         const colorArray = this.#rgbaToArray(fillStyle);
 
@@ -8149,8 +8390,7 @@ class WebGlInterface {
     }
 
     #triangulatePolygon(vertices) {
-        const clonedVertices = [...vertices];
-        return this.#triangulate(clonedVertices);
+        return this.#triangulate(vertices);
     }
 
     #triangulate (polygonVertices, triangulatedPolygon = []) {
@@ -8168,18 +8408,19 @@ class WebGlInterface {
         const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
             startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
         
-        for (let j = startVertexIndex; j < polygonVertices.length + startVertexIndex; j++) {
+        let processedVertices = polygonVertices,
+            skipCount = 0;
+        for (let j = startVertexIndex; j < processedVertices.length + startVertexIndex; j++) {
             let i = j;
-            const len =  polygonVertices.length;
+            const len =  processedVertices.length;
             
             if (i >= len) {
                 i = j - len;
             }
     
-            const prevVertex = i === 0 ? polygonVertices[len - 1] : polygonVertices[i - 1],
-                currentVertex = polygonVertices[i],
-                nextVertex = len === i + 1 ? polygonVertices[0] : polygonVertices[i + 1];
-
+            const prevVertex = i === 0 ? processedVertices[len - 1] : processedVertices[i - 1],
+                currentVertex = processedVertices[i],
+                nextVertex = len === i + 1 ? processedVertices[0] : processedVertices[i + 1];
     
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
@@ -8190,12 +8431,17 @@ class WebGlInterface {
                 triangulatedPolygon.push(currentVertex.y);
                 triangulatedPolygon.push(nextVertex.x);
                 triangulatedPolygon.push(nextVertex.y);
-                polygonVertices.splice(i, 1);
+                processedVertices = processedVertices.filter((val, index) => index !== i);
+            } else {
+                skipCount += 1;
             }
         }
-        
-        if (polygonVertices.length >= 4) {
-            return this.#triangulate(polygonVertices, triangulatedPolygon);
+        if (skipCount === len) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "probably, vertices are not correct, skip drawing");
+            return null;
+        }
+        if (processedVertices.length >= 4) {
+            return this.#triangulate(processedVertices, triangulatedPolygon);
         } else {
             return triangulatedPolygon;
         }
@@ -8291,7 +8537,10 @@ const CONST = {
                 END: "end"
             }
         },
-        GAME: {},
+        GAME: {
+            BOUNDARIES_COLLISION: "BOUNDARIES_COLLISION",
+            OBJECTS_COLLISION: "OBJECTS_COLLISION"
+        },
         WEBSOCKET: {
             SERVER_CLIENT: {
                 CONNECTION_STATUS_CHANGED: "CONNECTION_STATUS_CHANGED",
@@ -8399,6 +8648,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isPointOnTheLine": () => (/* binding */ isPointOnTheLine),
 /* harmony export */   "isPointPolygonIntersect": () => (/* binding */ isPointPolygonIntersect),
 /* harmony export */   "isPointRectIntersect": () => (/* binding */ isPointRectIntersect),
+/* harmony export */   "isPolygonLineIntersect": () => (/* binding */ isPolygonLineIntersect),
 /* harmony export */   "isSafari": () => (/* binding */ isSafari),
 /* harmony export */   "pointToCircleDistance": () => (/* binding */ pointToCircleDistance)
 /* harmony export */ });
@@ -8457,29 +8707,28 @@ function countClosestTraversal(line, sight) {
     };
 }
 
-function countClosestTraversal2(line, sight) {
-    const x1 = sight.x1,
-        y1 = sight.y1,
-        x2 = sight.x2,
-        y2 = sight.y2;
-    const x3 = line.x1,
-        y3 = line.y1,
-        x4 = line.x2,
-        y4 = line.y2;
+function countClosestTraversal2(line1, line2) {
+    const x1 = line2.x1,
+        y1 = line2.y1,
+        x2 = line2.x2,
+        y2 = line2.y2;
+    const x3 = line1.x1,
+        y3 = line1.y1,
+        x4 = line1.x2,
+        y4 = line1.y2;
 
-    const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    if(den === 0){
+    const det = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    // lines are parallel, or coincident
+    if (det === 0){
         return;
     }
-    let x = ((x1*y2 - y1*x2) * (x3 - x4) - (x1 - x2) * (x3*y4 - y3*x4))/den;
-    let y = ((x1*y2 - y1*x2) * (y3 - y4) - (y1 - y2) * (x3*y4 - y3*x4))/den;
-    //check if this dot is a traversal
-    let a1 = (y2-y1) / (x2-x1),
-        b1 = y1 - x1*a1,
-        a2 = (y4 - y3) / (x4 - x3),
-        b2 = y3 - x3 * a2;
-    if ((a1*x + b1) === y && (a2 * x + b2) === y) {
-        return {x, y};
+    let x = ((x1*y2 - y1*x2) * (x3 - x4) - (x1 - x2) * (x3*y4 - y3*x4)) / det;
+    let y = ((x1*y2 - y1*x2) * (y3 - y4) - (y1 - y2) * (x3*y4 - y3*x4)) / det;
+    const point = {x, y};
+    
+    if (isPointOnTheLine(point, line1) && isPointOnTheLine(point, line2)) {
+        const p = Math.sqrt(Math.pow((x - line1.x1), 2) + Math.pow((y - line1.y1), 2));
+        return {x, y, p};
     } else {
         return;
     }
@@ -8513,7 +8762,7 @@ function crossProduct(a, b) {
 }
 
 function isPointOnTheLine(point, line) {
-    return (((point.x >= line.x1) && (point.x <= line.x2)) || ((point.x <= line.x1) && (point.x >= line.x2))) && (((point.x >= line.x1) && (point.y <= line.y2)) || ((point.y <= line.y1) && (point.y >= line.y2)));
+    return (((point.x >= line.x1) && (point.x <= line.x2)) || ((point.x <= line.x1) && (point.x >= line.x2))) && (((point.y >= line.y1) && (point.y <= line.y2)) || ((point.y <= line.y1) && (point.y >= line.y2)));
 }
 
 function isLineShorter(line1, line2) {
@@ -8527,6 +8776,18 @@ function isPointLineIntersect(point, line) {
     if (lengthAB <= lineL + 0.2) {
         //Logger.debug("point to line intersect. line len: " + lineL + ", line AB len: " + lengthAB);
         return true;
+    }
+    return false;
+}
+
+function isPolygonLineIntersect(polygon, line) {
+    const len = polygon.length;
+    for (let i = 0; i < len; i+=2) {
+        const edge = { x1: polygon[i].x, y1: polygon[i].y, x2: polygon[i+1].x, y2: polygon[i+1].y };
+        const intersection = countClosestTraversal2(edge, line);
+        if (intersection) {
+            return intersection;
+        }
     }
     return false;
 }

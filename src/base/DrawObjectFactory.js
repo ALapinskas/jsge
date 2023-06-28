@@ -40,7 +40,7 @@ export class DrawObjectFactory {
      * 
      * @param {Number} radius 
      * @param {String} bgColor - rgba(r,g,b,a)
-     * @param {Number=2*Math.PI} angle
+     * @param {Number=} angle
      * @param {String=} subtractProgram 
      * @returns {DrawConusObject}
      */
