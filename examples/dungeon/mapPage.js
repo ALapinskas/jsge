@@ -31,8 +31,10 @@ export class MapPage extends ScreenPage {
             this.createCanvasView(CONST.LAYERS.BOUNDARIES);
         }
 
-        this.shadowRect = this.draw.rect(0, 0, w, h, "rgba(0, 0, 0, 1)");        
+        this.shadowRect = this.draw.rect(0, 0, w, h, "rgba(0, 0, 0, 0.5)");        
         this.shadowRect.zIndex = 2;
+        this.shadowRect.blendFunc = [WebGLRenderingContext.ONE, WebGLRenderingContext.DST_COLOR];
+
         this.addRenderObject(OVERLAY_LAYER_KEY, this.shadowRect);
         this.addRenderLayer(OVERLAY_LAYER_KEY, "background", this.tilemapKey);
         this.addRenderLayer(OVERLAY_LAYER_KEY, "walls", this.tilemapKey);
@@ -41,9 +43,9 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "walls", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "decs", this.tilemapKey);
         
-        const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
+        //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);
-        this.sightView = this.draw.conus(sightViewVertices, 150, "rgba(0, 0, 0, 1)", true);
+        this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)", true);
         this.sightView.zIndex = 1;
         this.addRenderObject(OVERLAY_LAYER_KEY, this.player);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
@@ -111,32 +113,13 @@ export class MapPage extends ScreenPage {
             newCoordX = person.x + movementForce * Math.cos(direction),
             newCoordY = person.y + movementForce * Math.sin(direction);
             
-        if (!this.isCollision(newCoordX, newCoordY)) {
+        if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
             this.sightView.x = newCoordX;
             this.sightView.y = newCoordY;
         }
     }
-
-    isCollision = (x, y) => {
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-            len = mapObjects.length;
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i],
-                object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                };
-            if (isPointLineIntersect({x: x - mapOffsetX, y: y - mapOffsetY}, object)) {
-                return true;
-            }
-        }
-        return false;
-    };
 
     #removeKeyAction = (event) => {
         const code = event.code;
@@ -151,7 +134,7 @@ export class MapPage extends ScreenPage {
             cursorPosY = y + yOffset,
             rad = angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
             
-            this.player.rotation = rad - Math.PI/2;
+            this.player.rotation = rad;
     };
 
     calculateCircleVertices(renderObject, offset, angle, width, step) {

@@ -587,14 +587,11 @@ export class CanvasView {
             } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {
                 this.#webGlInterface.bindText(x, y, renderObject);
             } else if (renderObject.type === CONST.DRAW_TYPE.CIRCLE) {
-                //this is a workaround to avoid objects vertices recalculations, when we changing x, or y position
-                const shiftX = renderObject.x - renderObject.vertices[0],
-                    shiftY = renderObject.y - renderObject.vertices[1];
-                this.#webGlInterface.bindConus(x, y, renderObject, 0, [shiftX, shiftY]);
+                this.#webGlInterface.bindConus(renderObject, renderObject.rotation, [x, y]);
             } else if (renderObject.type === CONST.DRAW_TYPE.LINE) {
                 this.#webGlInterface.drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
             } else {
-                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation || 0, [x, y]);
+                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }
             if (renderObject.boundaries && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                 const shiftX = x,// - renderObject.boundaries[0],

@@ -438,7 +438,7 @@ export class WebGlInterface {
         }
         gl.uniform1i(u_imageLocation, bind_number );
 
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // Upload the image into the texture.
         this.executeGlslProgram();
     }
@@ -515,8 +515,8 @@ export class WebGlInterface {
         this.#verticesNumber += 6;
         // remove box
         // fix text edges
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        gl.depthMask(false);
+        //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        //gl.depthMask(false);
         let bind_number = this.#images_bind.get(image_name);
         if (!bind_number) {
             bind_number  = this.#images_bind.size + 1;
@@ -572,7 +572,10 @@ export class WebGlInterface {
             case CONST.DRAW_TYPE.TEXT:
                 break;
             case CONST.DRAW_TYPE.CIRCLE:
-                //this.#bindCircle(x, y, renderObject);
+                const coords = renderObject.vertices;
+                gl.bufferData(this.#gl.ARRAY_BUFFER, 
+                    new Float32Array(coords), this.#gl.STATIC_DRAW);
+                this.#verticesNumber += coords.length / 2;
                 break;
             case CONST.DRAW_TYPE.POLYGON: {
                 const triangles = this.#triangulatePolygon(renderObject.vertices);
@@ -597,12 +600,11 @@ export class WebGlInterface {
         const colorArray = this.#rgbaToArray(renderObject.bgColor);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.blendFunc(gl.ONE, gl.DST_COLOR );
-        
+        if (renderObject.blendFunc) {
+            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        }
         if (renderObject.subtract) {
             gl.blendEquation(gl.FUNC_SUBTRACT);
-            //gl.blendFunc(gl.ONE, gl.DST_COLOR);
         }
         //disable attribute which is not used in this program
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
@@ -654,7 +656,6 @@ export class WebGlInterface {
         
         gl.lineWidth(lineWidth);
 
-        //gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
         //gl.blendFunc(gl.ONE, gl.DST_COLOR );
         
         //disable attribute which is not used in this program
@@ -718,7 +719,7 @@ export class WebGlInterface {
             this.#gl.STATIC_DRAW);
     }
 
-    bindConus(x, y, renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    bindConus(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.getProgram(programName),
             { 
@@ -731,9 +732,8 @@ export class WebGlInterface {
             } = this.#coordsLocations.get(programName),
             gl = this.#gl,
             coords = renderObject.vertices,
-            fillStyle = renderObject.bgColor,
-            cut = renderObject.subtract;
-
+            fillStyle = renderObject.bgColor;
+            
         gl.useProgram(program);
         
         // set the resolution
@@ -758,16 +758,20 @@ export class WebGlInterface {
 
         this.#verticesNumber += coords.length / 2;
 
-        if (cut) {
+        if (renderObject.blendFunc) {
+            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        }
+
+        if (renderObject.subtract) {
             // cut bottom 
             gl.blendEquation(gl.FUNC_SUBTRACT);
             //gl.blendFunc( gl.ONE, gl.ONE );
-            gl.blendFunc(gl.ONE, gl.DST_COLOR);
-        } else {
+            //gl.blendFunc(gl.ONE, gl.DST_COLOR);
+        } //else {
             //gl.disable(gl.BLEND);
             // make transparent
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        }
+            //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //}
 
         const colorArray = this.#rgbaToArray(fillStyle);
 
@@ -881,8 +885,7 @@ export class WebGlInterface {
     }
 
     #triangulatePolygon(vertices) {
-        const clonedVertices = [...vertices];
-        return this.#triangulate(clonedVertices);
+        return this.#triangulate(vertices);
     }
 
     #triangulate (polygonVertices, triangulatedPolygon = []) {
@@ -900,18 +903,19 @@ export class WebGlInterface {
         const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
             startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
         
-        for (let j = startVertexIndex; j < polygonVertices.length + startVertexIndex; j++) {
+        let processedVertices = polygonVertices,
+            skipCount = 0;
+        for (let j = startVertexIndex; j < processedVertices.length + startVertexIndex; j++) {
             let i = j;
-            const len =  polygonVertices.length;
+            const len =  processedVertices.length;
             
             if (i >= len) {
                 i = j - len;
             }
     
-            const prevVertex = i === 0 ? polygonVertices[len - 1] : polygonVertices[i - 1],
-                currentVertex = polygonVertices[i],
-                nextVertex = len === i + 1 ? polygonVertices[0] : polygonVertices[i + 1];
-
+            const prevVertex = i === 0 ? processedVertices[len - 1] : processedVertices[i - 1],
+                currentVertex = processedVertices[i],
+                nextVertex = len === i + 1 ? processedVertices[0] : processedVertices[i + 1];
     
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
@@ -922,12 +926,17 @@ export class WebGlInterface {
                 triangulatedPolygon.push(currentVertex.y);
                 triangulatedPolygon.push(nextVertex.x);
                 triangulatedPolygon.push(nextVertex.y);
-                polygonVertices.splice(i, 1);
+                processedVertices = processedVertices.filter((val, index) => index !== i);
+            } else {
+                skipCount += 1;
             }
         }
-        
-        if (polygonVertices.length >= 4) {
-            return this.#triangulate(polygonVertices, triangulatedPolygon);
+        if (skipCount === len) {
+            Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "probably, vertices are not correct, skip drawing");
+            return null;
+        }
+        if (processedVertices.length >= 4) {
+            return this.#triangulate(processedVertices, triangulatedPolygon);
         } else {
             return triangulatedPolygon;
         }

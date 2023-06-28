@@ -19,7 +19,10 @@ export const CONST = {
                 END: "end"
             }
         },
-        GAME: {},
+        GAME: {
+            BOUNDARIES_COLLISION: "BOUNDARIES_COLLISION",
+            OBJECTS_COLLISION: "OBJECTS_COLLISION"
+        },
         WEBSOCKET: {
             SERVER_CLIENT: {
                 CONNECTION_STATUS_CHANGED: "CONNECTION_STATUS_CHANGED",

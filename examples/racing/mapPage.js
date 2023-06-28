@@ -130,7 +130,7 @@ export class MapPage extends ScreenPage {
             newCoordX = person.x + movementForce * Math.cos(person.rotation - Math.PI/2),
             newCoordY = person.y + movementForce * Math.sin(person.rotation - Math.PI/2);
           
-        if (!this.isCollision(newCoordX, newCoordY)) {
+        if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
             if (this.speed > 0) {
@@ -160,25 +160,6 @@ export class MapPage extends ScreenPage {
             this.player.rotation += Math.PI / 16;
         }
     }
-
-    isCollision = (x, y) => {
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-            len = mapObjects.length;
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i],
-                object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                };
-            if (isPointLineIntersect({x: x - mapOffsetX, y: y - mapOffsetY}, object)) {
-                return true;
-            }
-        }
-        return false;
-    };
 
     #removeKeyAction = (event) => {
         const code = event.code;

@@ -13,8 +13,7 @@
         few different canvas for a page
         canvas overlapping effects
 
-Todo:
-    *
+Todo: https://github.com/users/ALapinskas/projects/2
 
 # Map
 r: code refactoring
@@ -22,6 +21,19 @@ r: code refactoring
 f: fixed defects
 
 # History
+
+0.0.4:
+    r: Refactor triangulate() method
+    r: webgl render methods refactor
+    r: removed default blendFunc for primitives
+    r: DrawShapeObject width, height, boundaries properties and methods moved to DrawImageObject
+    +: DrawObjectFactory.circle()
+    +: drawConusObject.#calculateConusVertices()
+    +: ScreenPage.isBoundariesCollision() to detect object(xy/mapBoundaries) and object(boundaries/mapBoundaries) collisions
+    +: webGl.blendFunc parameters are added to the DrawShapeObject
+    +: examples: pirates - added wind direction icon, added wind direction change
+    f: fixed utils.isPointOnTheLine() and utils.countClosestTraversal2() issues
+    
 0.0.3:
     r: Fixed drawLines() position shift
     r: Removed drawLines() premultiply alpha

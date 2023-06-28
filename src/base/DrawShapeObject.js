@@ -8,14 +8,19 @@ import { Vertex } from "./Primitives.js";
 export class DrawShapeObject {
     #x;
     #y;
-    #w;
-    #h;
     #bg;
     /**
      * @type {CONST.DRAW_TYPE}
      */
     #type;
     #subtract;
+    /**
+     * Is used for blending pixel arithmetic
+     * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc
+     * @type {Array<WebGL_API.Types>}
+     */
+    #blendFunc;
+    
     /**
      * @type {Number}
      */
@@ -32,20 +37,13 @@ export class DrawShapeObject {
      * @type {Boolean}
      */
     #isRemoved = false;
-    /**
-     * @type {Array<Vertex>}
-     */
-    #boundaries = [];
 
     /**
      * @hideconstructor
      */
-    constructor(type, mapX, mapY, width, height, boundaries, bgColor, subtractProgram) {
+    constructor(type, mapX, mapY, bgColor, subtractProgram) {
         this.#x = mapX;
         this.#y = mapY;
-        this.#w = width;
-        this.#h = height;
-        this.#boundaries = boundaries;
         this.#bg = bgColor;
         this.#type = type;
         this.#subtract = subtractProgram;
@@ -73,20 +71,6 @@ export class DrawShapeObject {
     /**
      * @type {Number}
      */
-    get width() {
-        return this.#w;
-    }
-
-    /**
-     * @type {Number}
-     */
-    get height() {
-        return this.#h;
-    }
-
-    /**
-     * @type {Number}
-     */
     get x() {
         return this.#x;
     }
@@ -96,14 +80,6 @@ export class DrawShapeObject {
      */
     get y () {
         return this.#y;
-    }
-
-    set width(w) {
-        this.#w = w;
-    }
-
-    set height(h) {
-        this.#h = h;
     }
 
     set x(posX) {
@@ -132,6 +108,14 @@ export class DrawShapeObject {
         this.#zIndex = value;
     }
 
+    get blendFunc () {
+        return this.#blendFunc;
+    }
+
+    set blendFunc(value) {
+        this.#blendFunc = value;
+    }
+
     /**
      * @type {Number}
      */
@@ -155,13 +139,6 @@ export class DrawShapeObject {
      */
     get isRemoved() {
         return this.#isRemoved;
-    }
-
-    /**
-     * @type {Number}
-     */
-    get boundaries() {
-        return this.#boundaries;
     }
 
     /**

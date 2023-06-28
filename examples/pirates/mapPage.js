@@ -10,6 +10,9 @@ const angle_2points = utils.angle_2points,
 export class MapPage extends ScreenPage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
 
+    // radians
+    #windDirection = 0; // east
+    #windStrength = 0.3; //from 0 to 1
     register() {
         this.tilemapKey = "gameMapTileset";
         this.loader.addTileMap(this.tilemapKey, "/pirates/map.tmj");
@@ -29,12 +32,51 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "items", this.tilemapKey);
 
-        this.player = this.draw.image(50, 200, 33, 57, SHIPS_KEY, 0, [{x:0,y:-30},{x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
+        this.windDirectionPointer = this.draw.polygon([
+            {
+             "x":-17,
+             "y":-20
+            }, 
+            {
+             "x":17,
+             "y":0
+            }, 
+            {
+             "x":-17,
+             "y":20
+            }, 
+            {
+             "x":-10,
+             "y":0
+            }], "rgba(100,120,100,1)");
+        this.windDirectionPointer.x = 50;
+        this.windDirectionPointer.y = 50;
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.windDirectionPointer);
+
+        this.player = this.draw.image(50, 200, 33, 57, SHIPS_KEY, 0, [{x:0,y:-30}, {x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
+    }
+
+    #getRandomIntFromTo = (min, max) => (Math.random() * (max - min) + min);
+
+    #startWindDirectionChanging() {
+        // 10 - 120 sec
+        const timeToChange = this.#getRandomIntFromTo(10, 50) * 1000; //ms
+
+        setTimeout(() => {
+            const direction = this.#getRandomIntFromTo(-Math.PI, Math.PI),
+                strength = this.#getRandomIntFromTo(0, 1);
+            console.log("wind direction changed: ", direction);
+            this.#windDirection = direction;
+            this.#windStrength = strength;
+            this.windDirectionPointer.rotation = direction;
+            this.#startWindDirectionChanging();
+        }, timeToChange);
     }
 
     start() {
         this.registerEventListeners();
+        this.#startWindDirectionChanging();
     }
 
     stop() {
@@ -100,32 +142,13 @@ export class MapPage extends ScreenPage {
             
         person.isMoving = true;
         person.isAiming = false;
-        if (!this.isCollision(newCoordX, newCoordY)) {
+        if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
             //this.screenPageData.centerCameraPosition(newCoordX, newCoordY);
         }
     }
     
-    isCollision = (x, y) => {
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-            len = mapObjects.length;
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i],
-                object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                };
-            if (isPointLineIntersect({x: x - mapOffsetX, y: y - mapOffsetY}, object)) {
-                return true;
-            }
-        }
-        return false;
-    };
-
     #removeKeyAction = (event) => {
         const code = event.code;
         this.#keyPressed[code] = false;

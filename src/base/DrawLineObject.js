@@ -16,7 +16,7 @@ export class DrawLineObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], null, null, null, bgColor);
+        super(CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
         this.#vertices = vertices;
     }
 

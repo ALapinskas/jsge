@@ -52,29 +52,28 @@ function countClosestTraversal(line, sight) {
     };
 }
 
-function countClosestTraversal2(line, sight) {
-    const x1 = sight.x1,
-        y1 = sight.y1,
-        x2 = sight.x2,
-        y2 = sight.y2;
-    const x3 = line.x1,
-        y3 = line.y1,
-        x4 = line.x2,
-        y4 = line.y2;
+function countClosestTraversal2(line1, line2) {
+    const x1 = line2.x1,
+        y1 = line2.y1,
+        x2 = line2.x2,
+        y2 = line2.y2;
+    const x3 = line1.x1,
+        y3 = line1.y1,
+        x4 = line1.x2,
+        y4 = line1.y2;
 
-    const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    if(den === 0){
+    const det = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    // lines are parallel, or coincident
+    if (det === 0){
         return;
     }
-    let x = ((x1*y2 - y1*x2) * (x3 - x4) - (x1 - x2) * (x3*y4 - y3*x4))/den;
-    let y = ((x1*y2 - y1*x2) * (y3 - y4) - (y1 - y2) * (x3*y4 - y3*x4))/den;
-    //check if this dot is a traversal
-    let a1 = (y2-y1) / (x2-x1),
-        b1 = y1 - x1*a1,
-        a2 = (y4 - y3) / (x4 - x3),
-        b2 = y3 - x3 * a2;
-    if ((a1*x + b1) === y && (a2 * x + b2) === y) {
-        return {x, y};
+    let x = ((x1*y2 - y1*x2) * (x3 - x4) - (x1 - x2) * (x3*y4 - y3*x4)) / det;
+    let y = ((x1*y2 - y1*x2) * (y3 - y4) - (y1 - y2) * (x3*y4 - y3*x4)) / det;
+    const point = {x, y};
+    
+    if (isPointOnTheLine(point, line1) && isPointOnTheLine(point, line2)) {
+        const p = Math.sqrt(Math.pow((x - line1.x1), 2) + Math.pow((y - line1.y1), 2));
+        return {x, y, p};
     } else {
         return;
     }
@@ -108,7 +107,7 @@ function crossProduct(a, b) {
 }
 
 function isPointOnTheLine(point, line) {
-    return (((point.x >= line.x1) && (point.x <= line.x2)) || ((point.x <= line.x1) && (point.x >= line.x2))) && (((point.x >= line.x1) && (point.y <= line.y2)) || ((point.y <= line.y1) && (point.y >= line.y2)));
+    return (((point.x >= line.x1) && (point.x <= line.x2)) || ((point.x <= line.x1) && (point.x >= line.x2))) && (((point.y >= line.y1) && (point.y <= line.y2)) || ((point.y <= line.y1) && (point.y >= line.y2)));
 }
 
 function isLineShorter(line1, line2) {
@@ -122,6 +121,18 @@ function isPointLineIntersect(point, line) {
     if (lengthAB <= lineL + 0.2) {
         //Logger.debug("point to line intersect. line len: " + lineL + ", line AB len: " + lengthAB);
         return true;
+    }
+    return false;
+}
+
+function isPolygonLineIntersect(polygon, line) {
+    const len = polygon.length;
+    for (let i = 0; i < len; i+=2) {
+        const edge = { x1: polygon[i].x, y1: polygon[i].y, x2: polygon[i+1].x, y2: polygon[i+1].y };
+        const intersection = countClosestTraversal2(edge, line);
+        if (intersection) {
+            return intersection;
+        }
     }
     return false;
 }
@@ -182,5 +193,6 @@ export {
     isPointPolygonIntersect,
     isPointRectIntersect,
     isPointCircleIntersect,
+    isPolygonLineIntersect,
     generateUniqId,
     arrayNumbersToVerticesArray };

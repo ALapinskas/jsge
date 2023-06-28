@@ -8,6 +8,11 @@ import { Vertex } from "./Primitives.js";
  */
 export class DrawConusObject extends DrawShapeObject {
     /**
+     * @type {Number}
+     */
+    #radius;
+
+    /**
      * @type {Array<Vertex>}
      */
     #vertices;
@@ -15,9 +20,10 @@ export class DrawConusObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(vertices, radius, bgColor, subtractProgram) {
-        super(CONST.DRAW_TYPE.CIRCLE, vertices[0], vertices[1], radius, radius, null, bgColor, subtractProgram);
-        this.#vertices = vertices;
+    constructor(x, y, radius, bgColor, angle, subtractProgram) {
+        super(CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, subtractProgram);
+        this.#radius = radius;
+        this.#vertices = this.#calculateConusVertices(radius, angle);
     }
 
     /**
@@ -29,5 +35,22 @@ export class DrawConusObject extends DrawShapeObject {
 
     set vertices(value) {
         this.#vertices = value;
+    }
+
+    get radius() {
+        return this.#radius;
+    }
+
+    #calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/12) {
+        let conusPolygonCoords = [0, 0];
+
+        for (let r = 0; r <= angle; r += step) {
+            let x2 = Math.cos(r) * radius,
+                y2 = Math.sin(r) * radius;
+
+            conusPolygonCoords.push(x2, y2);
+        }
+
+        return conusPolygonCoords;
     }
 }

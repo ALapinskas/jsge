@@ -38,14 +38,25 @@ export class DrawObjectFactory {
 
     /**
      * 
-     * @param {Array<Vertex>} vertices 
+     * @param {Number} radius 
+     * @param {String} bgColor - rgba(r,g,b,a)
+     * @param {Number=2*Math.PI} angle
+     * @param {String=} subtractProgram 
+     * @returns {DrawConusObject}
+     */
+    conus(x, y, radius, bgColor, angle, subtractProgram) {
+        return new DrawConusObject(x, y, radius, bgColor, angle, subtractProgram);
+    }
+
+    /**
+     * 
      * @param {Number} radius 
      * @param {String} bgColor - rgba(r,g,b,a)
      * @param {String=} subtractProgram 
      * @returns {DrawConusObject}
      */
-    conus(vertices, radius, bgColor, subtractProgram) {
-        return new DrawConusObject(vertices, radius, bgColor, subtractProgram);
+    circle(x, y, radius, bgColor, subtractProgram) {
+        return new DrawConusObject(x, y, radius, bgColor, 2*Math.PI, subtractProgram);
     }
 
     /**
@@ -72,8 +83,7 @@ export class DrawObjectFactory {
     }
 
     /**
-     * 
-     * @param {Array<Vertex>} vertices 
+     * @param {Array<Vertex>} vertices - should go in anticlockwise order
      * @param {String} bgColor - rgba(r,g,b,a) 
      * @param {String=} subtractProgram 
      * @returns {DrawPolygonObject}

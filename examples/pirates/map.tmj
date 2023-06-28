@@ -154,9 +154,48 @@
          "width":60,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":11,
+         "name":"user_interface",
+         "objects":[
+                {
+                 "height":0,
+                 "id":1,
+                 "name":"",
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":35.2019713103934,
+                         "y":22.8812813517557
+                        }, 
+                        {
+                         "x":0,
+                         "y":40.4822670069524
+                        }, 
+                        {
+                         "x":7.04039426207868,
+                         "y":21.121182786236
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":44.8825134207516,
+                 "y":27.2815277655549
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":11,
- "nextobjectid":1,
+ "nextlayerid":12,
+ "nextobjectid":2,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.1",

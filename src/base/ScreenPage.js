@@ -17,6 +17,8 @@ import { DrawTextObject } from "./DrawTextObject.js";
 import { SystemInterface } from "./SystemInterface.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
+import { isPointLineIntersect, isPolygonLineIntersect, angle_2points } from "../utils.js";
+import { Vector, Vertex } from "./Primitives.js";
 
 /**
  * Represents the page of the game,
@@ -385,6 +387,144 @@ export class ScreenPage {
         }
     }
 
+    /**
+     * 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @returns {boolean}
+     */
+    #isPointToBoundariesCollision(x, y) {
+        const mapObjects = this.screenPageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            len = mapObjects.length;
+
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i],
+                object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                };
+            if (isPointLineIntersect({x: x - mapOffsetX, y: y - mapOffsetY}, object)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Array<Vertex>} polygon
+     * @param {Number} rotation 
+     * @returns {boolean}
+     */
+    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
+        //console.log("angle: ", rotation);
+        //console.log("boundaries before calculations: ");
+        //console.log(polygon);
+        const mapObjects = this.screenPageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
+            len = mapObjects.length;
+            
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i],
+                object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                },
+                intersect = isPolygonLineIntersect(polygonWithOffsetAndRotation, object);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
+    #calculateShiftedVertexPos(vertex, centerX, centerY, rotation) {
+        const vector = new Vector(0, 0, vertex.x, vertex.y),
+            vertexAngle = angle_2points(0, 0, vertex.x, vertex.y),
+            len = vector.length;
+        //console.log("coords without rotation: ");
+        //console.log(x + vertex.x);
+        //console.log(y + vertex.y);
+        //console.log("len: ", len);
+        //console.log("angle: ", rotation);
+        const newX = centerX + (len * Math.cos(rotation + vertexAngle)),
+            newY = centerY + (len * Math.sin(rotation + vertexAngle));
+        return { x: newX, y: newY };
+    }
+
+    /**
+     * 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @param {DrawShapeObject} drawObject 
+     */
+    isBoundariesCollision(x, y, drawObject) {
+        const drawObjectType = drawObject.type;
+        switch(drawObjectType) {
+            case CONST.DRAW_TYPE.RECTANGLE:
+                return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
+            case CONST.DRAW_TYPE.CIRCLE:
+            case CONST.DRAW_TYPE.LINE:
+            case CONST.DRAW_TYPE.TEXT:
+            default:
+                if (drawObject.boundaries && drawObject.boundaries.length > 0) {
+                    return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
+                 } else {
+                     return this.#isPointToBoundariesCollision(x, y);
+                 }
+        }
+    }
+
+    #checkCollisions(renderObjects) {
+        const boundaries = this.screenPageData.getBoundaries(),
+            boundariesLen = boundaries.length,
+            objectsLen = renderObjects.length;
+        //console.log(this.screenPageData.worldOffset);
+        for (let i = 0; i < objectsLen; i++) {
+            const renderObject = renderObjects[i];
+            for (let j = 0; j < objectsLen; j++) {
+                if (i === j) {
+                    continue;
+                }
+                const renderObjectCheck = renderObjects[j];
+                // check object - object collisions
+            }
+
+            for (let k = 0; k < boundariesLen; k+=1) {
+                const item = boundaries[k],
+                    object = {
+                        x1: item[0],
+                        y1: item[1],
+                        x2: item[2],
+                        y2: item[3]
+                    };
+                const objectBoundaries = object.boundaries;
+                if (objectBoundaries) {
+                    if (isPolygonLineIntersect(objectBoundaries, object)) {
+                        this.emit(CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
+                    }
+                } else {
+                    if (isPointLineIntersect({ x: renderObject.x, y: renderObject.y }, object)) {
+                        this.emit(CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
+                        console.log("boundaries collision detected");
+                    }
+                }
+            }
+        }
+    }
+
     #setCanvasSize() {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
@@ -498,6 +638,7 @@ export class ScreenPage {
                 })
                 .then(() => {
                     if (view.renderObjects.length !== 0) {
+                        //this.#checkCollisions(view.renderObjects);
                         view.prepareBindRenderObjectPromises();
                     }
                     if (key === CONST.LAYERS.BOUNDARIES) {

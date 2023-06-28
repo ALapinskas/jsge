@@ -8,6 +8,14 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
  */
 export class DrawImageObject extends DrawShapeObject {
     /**
+     * @type {Number}
+     */
+    #w;
+    /**
+     * @type {Number}
+     */
+    #h;
+    /**
      * Image sprite key
      * @type {String}
      */
@@ -24,16 +32,45 @@ export class DrawImageObject extends DrawShapeObject {
      * @type {Number}
      */
     #imageIndex;
+    /**
+     * @type {Array<Vertex> | null}
+     */
+    #boundaries = null;
 
     /**
      * @hideconstructor
      */
     constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries) {
-        super(CONST.DRAW_TYPE.IMAGE, mapX, mapY, width, height, boundaries);
+        super(CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();
         this.#imageIndex = imageIndex;
+        this.#boundaries = boundaries;
+        this.#w = width;
+        this.#h = height;
+    }
+
+    /**
+     * @type {Number}
+     */
+    get width() {
+        return this.#w;
+    }
+
+    /**
+     * @type {Number}
+     */
+    get height() {
+        return this.#h;
+    }
+
+    set width(w) {
+        this.#w = w;
+    }
+
+    set height(h) {
+        this.#h = h;
     }
 
     /**
@@ -58,6 +95,13 @@ export class DrawImageObject extends DrawShapeObject {
      */
     get isAnimations() {
         return this.#animations.size > 0;
+    }
+
+     /**
+     * @type {Array<Vertex>}
+     */
+    get boundaries() {
+        return this.#boundaries;
     }
 
     _processActiveAnimations() {
