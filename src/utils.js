@@ -131,7 +131,7 @@ function isPolygonLineIntersect(polygon, line) {
         let curr = polygon[i],
             next = polygon[i+1];
         //if next item not exist and current is not first
-        if (!next && curr.x !== polygon[0].x && curr.y !== polygon[1].y) {
+        if (!next && !(curr.x !== polygon[0].x && curr.y !== polygon[1].y)) {
             next = polygon[0];
         }
         const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
