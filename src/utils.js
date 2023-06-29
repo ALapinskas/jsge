@@ -128,7 +128,24 @@ function isPointLineIntersect(point, line) {
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;
     for (let i = 0; i < len; i+=2) {
-        const edge = { x1: polygon[i].x, y1: polygon[i].y, x2: polygon[i+1].x, y2: polygon[i+1].y };
+        let curr = polygon[i],
+            next = polygon[i+1];
+        //if next item not exist and current is not first
+        if (!next && curr.x !== polygon[0].x && curr.y !== polygon[1].y) {
+            next = polygon[0];
+        }
+        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
+        const intersection = countClosestTraversal2(edge, line);
+        if (intersection) {
+            return intersection;
+        }
+    }
+    const even = len % 2 === 0;
+    if (even) {
+        //check one last item
+        const curr = polygon[len - 1],
+            next = polygon[0];
+        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
         const intersection = countClosestTraversal2(edge, line);
         if (intersection) {
             return intersection;

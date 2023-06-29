@@ -1,14 +1,9 @@
 import { ScreenPage, CONST } from "/index.es6.js";
 import { utils } from "/index.es6.js";
 
-const angle_2points = utils.angle_2points,
-    isPointLineIntersect = utils.isPointLineIntersect;
+const angle_2points = utils.angle_2points;
 
 const OVERLAY_LAYER_KEY = "overlay";
-
-const AUDIO_GEAR_UP = "gear_up",
-    AUDIO_GEAR_DOWN = "gear_down",
-    AUDIO_CAR_CRUSH = "car_crush";
 
 export class MapPage extends ScreenPage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };

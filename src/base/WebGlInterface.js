@@ -437,8 +437,8 @@ export class WebGlInterface {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
         gl.uniform1i(u_imageLocation, bind_number );
-
-        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        // make image transparent parts transparent
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // Upload the image into the texture.
         this.executeGlslProgram();
     }
@@ -515,7 +515,7 @@ export class WebGlInterface {
         this.#verticesNumber += 6;
         // remove box
         // fix text edges
-        //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         //gl.depthMask(false);
         let bind_number = this.#images_bind.get(image_name);
         if (!bind_number) {

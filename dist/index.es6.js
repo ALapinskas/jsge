@@ -5174,7 +5174,7 @@ class DrawObjectFactory {
      * 
      * @param {Number} radius 
      * @param {String} bgColor - rgba(r,g,b,a)
-     * @param {Number=2*Math.PI} angle
+     * @param {Number=} angle
      * @param {String=} subtractProgram 
      * @returns {DrawConusObject}
      */
@@ -6003,7 +6003,7 @@ class ScreenPage {
      * @param {String} eventName 
      * @param  {...any} eventParams 
      */
-    emit(eventName, ...eventParams) {
+    emit = (eventName, ...eventParams) => {
         const event = new Event(eventName);
         event.data = [...eventParams];
         this.#emitter.dispatchEvent(event);
@@ -6015,7 +6015,7 @@ class ScreenPage {
      * @param {*} listener 
      * @param {*} options 
      */
-    addEventListener(eventName, listener, options) {
+    addEventListener = (eventName, listener, options) => {
         this.#emitter.addEventListener(eventName, listener, options);
     }
 
@@ -6025,7 +6025,7 @@ class ScreenPage {
      * @param {*} listener 
      * @param {*} options 
      */
-    removeEventListener(eventName, listener, options) {
+    removeEventListener = (eventName, listener, options) => {
         this.#emitter.removeEventListener(eventName, listener, options);
     }
 
@@ -6092,7 +6092,7 @@ class ScreenPage {
      * and set it to the #views
      * @param {string} name
      */
-    createCanvasView(name) {
+    createCanvasView = (name) => {
         if (name && name.trim().length > 0) {
             const newView = new _CanvasView_js__WEBPACK_IMPORTED_MODULE_6__.CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader);
             this.#views.set(name, newView);
@@ -6119,7 +6119,7 @@ class ScreenPage {
      *          DrawRectObject | DrawShapeObject | 
      *          DrawTextObject } renderObject 
      */
-    addRenderObject(canvasKey, renderObject) {
+    addRenderObject = (canvasKey, renderObject) => {
         if (!canvasKey) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
         } else if (!this.#views.has(canvasKey)) {
@@ -6138,7 +6138,7 @@ class ScreenPage {
      * @param {String} tileMapKey 
      * @param {Boolean} setBoundaries 
      */
-    addRenderLayer(canvasKey, layerKey, tileMapKey, setBoundaries) {
+    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries) => {
         if (!canvasKey) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
         } else if (!this.#views.has(canvasKey)) {
@@ -6177,7 +6177,7 @@ class ScreenPage {
      * Determines if all added files was loaded or not
      * @returns {Boolean}
      */
-    isAllFilesLoaded() {
+    isAllFilesLoaded = () => {
         return this.#loader.filesWaitingForUpload === 0;
     }
 
@@ -6390,7 +6390,7 @@ class ScreenPage {
      * @param {Number} y 
      * @param {DrawShapeObject} drawObject 
      */
-    isBoundariesCollision(x, y, drawObject) {
+    isBoundariesCollision = (x, y, drawObject) => {
         const drawObjectType = drawObject.type;
         switch(drawObjectType) {
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
@@ -7942,8 +7942,8 @@ class WebGlInterface {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
         gl.uniform1i(u_imageLocation, bind_number );
-
-        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        // make image transparent parts transparent
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // Upload the image into the texture.
         this.executeGlslProgram();
     }
@@ -8020,7 +8020,7 @@ class WebGlInterface {
         this.#verticesNumber += 6;
         // remove box
         // fix text edges
-        //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         //gl.depthMask(false);
         let bind_number = this.#images_bind.get(image_name);
         if (!bind_number) {
@@ -8783,7 +8783,24 @@ function isPointLineIntersect(point, line) {
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;
     for (let i = 0; i < len; i+=2) {
-        const edge = { x1: polygon[i].x, y1: polygon[i].y, x2: polygon[i+1].x, y2: polygon[i+1].y };
+        let curr = polygon[i],
+            next = polygon[i+1];
+        //if next item not exist and current is not first
+        if (!next && curr.x !== polygon[0].x && curr.y !== polygon[1].y) {
+            next = polygon[0];
+        }
+        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
+        const intersection = countClosestTraversal2(edge, line);
+        if (intersection) {
+            return intersection;
+        }
+    }
+    const even = len % 2 === 0;
+    if (even) {
+        //check one last item
+        const curr = polygon[len - 1],
+            next = polygon[0];
+        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
         const intersection = countClosestTraversal2(edge, line);
         if (intersection) {
             return intersection;

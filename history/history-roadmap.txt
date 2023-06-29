@@ -22,6 +22,14 @@ f: fixed defects
 
 # History
 
+0.0.42:
+    f: fixed text and images transparency
+    f: isPolygonLineIntersect() fixed polygon boundaries collision corner cases calculations
+    f: ScreenPage public functions changed to arrow functions
+
+0.0.41:
+    f: added build files, fixed jsdoc 
+    
 0.0.4:
     r: Refactor triangulate() method
     r: webgl render methods refactor

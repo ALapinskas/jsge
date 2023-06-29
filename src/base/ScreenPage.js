@@ -83,7 +83,7 @@ export class ScreenPage {
      * @param {String} eventName 
      * @param  {...any} eventParams 
      */
-    emit(eventName, ...eventParams) {
+    emit = (eventName, ...eventParams) => {
         const event = new Event(eventName);
         event.data = [...eventParams];
         this.#emitter.dispatchEvent(event);
@@ -95,7 +95,7 @@ export class ScreenPage {
      * @param {*} listener 
      * @param {*} options 
      */
-    addEventListener(eventName, listener, options) {
+    addEventListener = (eventName, listener, options) => {
         this.#emitter.addEventListener(eventName, listener, options);
     }
 
@@ -105,7 +105,7 @@ export class ScreenPage {
      * @param {*} listener 
      * @param {*} options 
      */
-    removeEventListener(eventName, listener, options) {
+    removeEventListener = (eventName, listener, options) => {
         this.#emitter.removeEventListener(eventName, listener, options);
     }
 
@@ -172,7 +172,7 @@ export class ScreenPage {
      * and set it to the #views
      * @param {string} name
      */
-    createCanvasView(name) {
+    createCanvasView = (name) => {
         if (name && name.trim().length > 0) {
             const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader);
             this.#views.set(name, newView);
@@ -199,7 +199,7 @@ export class ScreenPage {
      *          DrawRectObject | DrawShapeObject | 
      *          DrawTextObject } renderObject 
      */
-    addRenderObject(canvasKey, renderObject) {
+    addRenderObject = (canvasKey, renderObject) => {
         if (!canvasKey) {
             Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
         } else if (!this.#views.has(canvasKey)) {
@@ -218,7 +218,7 @@ export class ScreenPage {
      * @param {String} tileMapKey 
      * @param {Boolean} setBoundaries 
      */
-    addRenderLayer(canvasKey, layerKey, tileMapKey, setBoundaries) {
+    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries) => {
         if (!canvasKey) {
             Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
         } else if (!this.#views.has(canvasKey)) {
@@ -257,7 +257,7 @@ export class ScreenPage {
      * Determines if all added files was loaded or not
      * @returns {Boolean}
      */
-    isAllFilesLoaded() {
+    isAllFilesLoaded = () => {
         return this.#loader.filesWaitingForUpload === 0;
     }
 
@@ -470,7 +470,7 @@ export class ScreenPage {
      * @param {Number} y 
      * @param {DrawShapeObject} drawObject 
      */
-    isBoundariesCollision(x, y, drawObject) {
+    isBoundariesCollision = (x, y, drawObject) => {
         const drawObjectType = drawObject.type;
         switch(drawObjectType) {
             case CONST.DRAW_TYPE.RECTANGLE:
