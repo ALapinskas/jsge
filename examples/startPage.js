@@ -22,7 +22,7 @@ export class StartPage extends ScreenPage {
 
         this.createCanvasView(CONST.LAYERS.DEFAULT);
         
-        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 1)");        
+        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
 
         this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),

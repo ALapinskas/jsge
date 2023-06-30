@@ -904,19 +904,22 @@ export class WebGlInterface {
             startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
         
         let processedVertices = polygonVertices,
-            skipCount = 0;
-        for (let j = startVertexIndex; j < processedVertices.length + startVertexIndex; j++) {
-            let i = j;
-            const len =  processedVertices.length;
-            
-            if (i >= len) {
-                i = j - len;
+            processedVerticesLen = processedVertices.length,
+            skipCount = 0,
+            i = startVertexIndex;
+        
+        while(processedVertices.length > 2) {
+            // if overflowed, start from beginning
+            const currLen = processedVertices.length;
+            if (i >= currLen) {
+                i -= currLen;
             }
     
-            const prevVertex = i === 0 ? processedVertices[len - 1] : processedVertices[i - 1],
+            const prevVertex = i === 0 ? processedVertices[currLen - 1] : processedVertices[i - 1],
                 currentVertex = processedVertices[i],
-                nextVertex = len === i + 1 ? processedVertices[0] : processedVertices[i + 1];
+                nextVertex = currLen === i + 1 ? processedVertices[0] : processedVertices[i + 1];
     
+            
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
             if (cs < 0) {
@@ -929,16 +932,14 @@ export class WebGlInterface {
                 processedVertices = processedVertices.filter((val, index) => index !== i);
             } else {
                 skipCount += 1;
+                if (skipCount > processedVerticesLen) {
+                    console.warn("Can\'t extract triangles. Probably vertices input is not correct");
+                    return;
+                }
             }
+            i++;
         }
-        if (skipCount === len) {
-            Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "probably, vertices are not correct, skip drawing");
-            return null;
-        }
-        if (processedVertices.length >= 4) {
-            return this.#triangulate(processedVertices, triangulatedPolygon);
-        } else {
-            return triangulatedPolygon;
-        }
+        
+        return triangulatedPolygon;
     }
 }

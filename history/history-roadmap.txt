@@ -22,13 +22,13 @@ f: fixed defects
 
 # History
 
-0.0.43:
-    f: isPolygonLineIntersect() fix
-
-0.0.42:
+0.0.42-0.0.44:
     f: fixed text and images transparency
     f: isPolygonLineIntersect() fixed polygon boundaries collision corner cases calculations
     f: ScreenPage public functions changed to arrow functions
+    f: #triangulate() fix
+    +: "prepare-to-push" npm task
+    +: examples/racing car boundaries added
 
 0.0.41:
     f: added build files, fixed jsdoc 

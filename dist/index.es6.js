@@ -8409,19 +8409,22 @@ class WebGlInterface {
             startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
         
         let processedVertices = polygonVertices,
-            skipCount = 0;
-        for (let j = startVertexIndex; j < processedVertices.length + startVertexIndex; j++) {
-            let i = j;
-            const len =  processedVertices.length;
-            
-            if (i >= len) {
-                i = j - len;
+            processedVerticesLen = processedVertices.length,
+            skipCount = 0,
+            i = startVertexIndex;
+        
+        while(processedVertices.length > 2) {
+            // if overflowed, start from beginning
+            const currLen = processedVertices.length;
+            if (i >= currLen) {
+                i -= currLen;
             }
     
-            const prevVertex = i === 0 ? processedVertices[len - 1] : processedVertices[i - 1],
+            const prevVertex = i === 0 ? processedVertices[currLen - 1] : processedVertices[i - 1],
                 currentVertex = processedVertices[i],
-                nextVertex = len === i + 1 ? processedVertices[0] : processedVertices[i + 1];
+                nextVertex = currLen === i + 1 ? processedVertices[0] : processedVertices[i + 1];
     
+            
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
             if (cs < 0) {
@@ -8434,17 +8437,15 @@ class WebGlInterface {
                 processedVertices = processedVertices.filter((val, index) => index !== i);
             } else {
                 skipCount += 1;
+                if (skipCount > processedVerticesLen) {
+                    console.warn("Can\'t extract triangles. Probably vertices input is not correct");
+                    return;
+                }
             }
+            i++;
         }
-        if (skipCount === len) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "probably, vertices are not correct, skip drawing");
-            return null;
-        }
-        if (processedVertices.length >= 4) {
-            return this.#triangulate(processedVertices, triangulatedPolygon);
-        } else {
-            return triangulatedPolygon;
-        }
+        
+        return triangulatedPolygon;
     }
 }
 
@@ -8472,8 +8473,8 @@ const SystemSettings = {
         debugMobileTouch: false,
         optimization: null,
         boundaries: {
-            drawLayerBoundaries: false,
-            drawObjectBoundaries: false,
+            drawLayerBoundaries: true,
+            drawObjectBoundaries: true,
             boundariesColor: "rgba(224, 12, 21, 1)",
             boundariesWidth: 2
         },
@@ -8786,8 +8787,13 @@ function isPolygonLineIntersect(polygon, line) {
         let curr = polygon[i],
             next = polygon[i+1];
         //if next item not exist and current is not first
-        if (!next && curr.x !== polygon[0].x && curr.y !== polygon[1].y) {
-            next = polygon[0];
+        if (!next) {
+            // if current vertex is not the first one
+            if (!(curr.x === polygon[0].x && curr.y === polygon[0].y)) {
+                next = polygon[0];
+            } else {
+                continue;
+            }
         }
         const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
         const intersection = countClosestTraversal2(edge, line);

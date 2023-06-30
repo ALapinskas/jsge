@@ -131,8 +131,13 @@ function isPolygonLineIntersect(polygon, line) {
         let curr = polygon[i],
             next = polygon[i+1];
         //if next item not exist and current is not first
-        if (!next && !(curr.x !== polygon[0].x && curr.y !== polygon[1].y)) {
-            next = polygon[0];
+        if (!next) {
+            // if current vertex is not the first one
+            if (!(curr.x === polygon[0].x && curr.y === polygon[0].y)) {
+                next = polygon[0];
+            } else {
+                continue;
+            }
         }
         const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
         const intersection = countClosestTraversal2(edge, line);
