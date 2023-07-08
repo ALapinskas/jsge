@@ -8473,8 +8473,8 @@ const SystemSettings = {
         debugMobileTouch: false,
         optimization: null,
         boundaries: {
-            drawLayerBoundaries: true,
-            drawObjectBoundaries: true,
+            drawLayerBoundaries: false,
+            drawObjectBoundaries: false,
             boundariesColor: "rgba(224, 12, 21, 1)",
             boundariesWidth: 2
         },
@@ -8727,8 +8727,8 @@ function countClosestTraversal2(line1, line2) {
     let y = ((x1*y2 - y1*x2) * (y3 - y4) - (y1 - y2) * (x3*y4 - y3*x4)) / det;
     const point = {x, y};
     
-    if (isPointOnTheLine(point, line1) && isPointOnTheLine(point, line2)) {
-        const p = Math.sqrt(Math.pow((x - line1.x1), 2) + Math.pow((y - line1.y1), 2));
+    if (isPointOnTheLine(point, line1, 0.0000000000001) && isPointOnTheLine(point, line2, 0.0000000000001)) {
+        const p = Math.sqrt(Math.pow((x - x1), 2) + Math.pow((y - y1), 2));
         return {x, y, p};
     } else {
         return;
@@ -8762,8 +8762,14 @@ function crossProduct(a, b) {
     return (a.x * b.y - b.x * a.y);
 }
 
-function isPointOnTheLine(point, line) {
-    return (((point.x >= line.x1) && (point.x <= line.x2)) || ((point.x <= line.x1) && (point.x >= line.x2))) && (((point.y >= line.y1) && (point.y <= line.y2)) || ((point.y <= line.y1) && (point.y >= line.y2)));
+function isPointOnTheLine(point, line, m_error = 0) {
+    return  (
+                ((point.x >= (line.x1 - m_error)) && (point.x <= (line.x2 + m_error))) || 
+                ((point.x <= (line.x1 + m_error)) && (point.x >= (line.x2 - m_error)))
+            ) && (
+                ((point.y >= (line.y1 - m_error)) && (point.y <= (line.y2 + m_error))) || 
+                ((point.y <= (line.y1 + m_error)) && (point.y >= (line.y2 - m_error)))
+            );
 }
 
 function isLineShorter(line1, line2) {
