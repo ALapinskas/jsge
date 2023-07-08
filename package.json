@@ -1,6 +1,6 @@
 {
   "name": "jsge",
-  "version": "0.0.44",
+  "version": "0.0.45",
   "description": "Javascript Game Engine",
   "main": "dist/index.es6.js",
   "type": "module",

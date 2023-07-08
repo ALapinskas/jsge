@@ -22,6 +22,10 @@ f: fixed defects
 
 # History
 
+0.0.45:
+    f: countClosestTraversal2() issues
+    r: isPointOnTheLine() added a measurement error parameter
+
 0.0.42-0.0.44:
     f: fixed text and images transparency
     f: isPolygonLineIntersect() fixed polygon boundaries collision corner cases calculations

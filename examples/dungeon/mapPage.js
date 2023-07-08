@@ -42,8 +42,10 @@ export class MapPage extends ScreenPage {
         this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)", true);
         this.sightView.zIndex = 1;
+        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.2", Math.PI/8);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.player);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
+        this.addRenderObject(OVERLAY_LAYER_KEY, this.fireRange);
     }
 
     start() {
@@ -55,12 +57,12 @@ export class MapPage extends ScreenPage {
     }
 
     registerEventListeners() {
-        //this.#registerMouseListeners();
+        this.#registerMouseListeners();
         this.#registerKeyboardListeners();
     }
 
     unregisterEventListeners() {
-        //this.#unregisterMouseListeners();
+        this.#unregisterMouseListeners();
         this.#unregisterKeyboardListeners();
     }
 
@@ -113,6 +115,8 @@ export class MapPage extends ScreenPage {
             person.y = newCoordY;
             this.sightView.x = newCoordX;
             this.sightView.y = newCoordY;
+            this.fireRange.x = newCoordX;
+            this.fireRange.y = newCoordY;
         }
     }
 
@@ -129,7 +133,8 @@ export class MapPage extends ScreenPage {
             cursorPosY = y + yOffset,
             rad = angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
             
-            this.player.rotation = rad;
+        //this.player.rotation = rad;
+        this.fireRange.rotation = rad - (Math.PI/20);
     };
 
     calculateCircleVertices(renderObject, offset, angle, width, step) {
