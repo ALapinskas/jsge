@@ -133,7 +133,7 @@ function isPointLineIntersect(point, line) {
 
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;
-    for (let i = 0; i < len; i+=2) {
+    for (let i = 0; i < len; i+=1) {
         let curr = polygon[i],
             next = polygon[i+1];
         //if next item not exist and current is not first
@@ -151,8 +151,7 @@ function isPolygonLineIntersect(polygon, line) {
             return intersection;
         }
     }
-    const even = len % 2 === 0;
-    if (even) {
+    if (polygon[len-1] !== polygon[0]) {
         //check one last item
         const curr = polygon[len - 1],
             next = polygon[0];

@@ -21,6 +21,8 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.0.46:
+    f: isPolygonLineIntersect() issue
 
 0.0.45:
     f: countClosestTraversal2() issues

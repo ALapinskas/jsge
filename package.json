@@ -1,6 +1,6 @@
 {
   "name": "jsge",
-  "version": "0.0.45",
+  "version": "0.0.46",
   "description": "Javascript Game Engine",
   "main": "dist/index.es6.js",
   "type": "module",
@@ -9,7 +9,7 @@
     "build-dev": "webpack --mode=development",
     "build-prod": "webpack --mode=production",
     "jsdoc": "jsdoc -c ./jsdoc.conf.json",
-    "prepare-to-push": "npm run build-dev | npm run build-prod | npm run jsdoc"
+    "prepare-push": "npm run build-dev | npm run build-prod | npm run jsdoc"
   },
   "author": "Arturas-Alfredas Lapinskas",
   "license": "MIT",
