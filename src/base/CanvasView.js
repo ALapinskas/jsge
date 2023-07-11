@@ -28,6 +28,14 @@ export class CanvasView {
      * @type {boolean}
      */
     #isCleared;
+    /**
+     * @type {boolean}
+     */
+    #isStatic
+    /**
+     * @type {boolean}
+     */
+    #isWorldBoundariesEnabled;
 
     #drawContext;
     #webGlInterface;
@@ -63,11 +71,12 @@ export class CanvasView {
      */
     #bindRenderObjectPromises;
 
-    constructor(name, systemSettings, screenPageData, loader) {
+    constructor(name, systemSettings, screenPageData, loader, isStatic) {
         this.#canvas = document.createElement("canvas");
         this.#canvas.id = name;
         this.#canvas.style.position = "absolute";
         this.#isCleared = false;
+        this.#isStatic = isStatic;
 
         this.#screenPageData = screenPageData;
         this.#systemSettings = systemSettings;
@@ -114,6 +123,10 @@ export class CanvasView {
 
     get canvas() {
         return this.#canvas;
+    }
+
+    _enableMapBoundaries() {
+        this.#isWorldBoundariesEnabled = true;
     }
 
     getImage(key) {
@@ -275,7 +288,7 @@ export class CanvasView {
                 setBoundaries = renderLayer.setBoundaries,
                 [ globalWorldW, globalWorldH ] = this.screenPageData.worldDimensions,
                 [ canvasW, canvasH ] = this.screenPageData.drawDimensions,
-                [ xOffset, yOffset ] = this.screenPageData.worldOffset;
+                [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset;
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [];
@@ -319,6 +332,12 @@ export class CanvasView {
     
                     if (worldW !== worldWidth || worldH !== worldHeight) {
                         Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one");
+                    }
+                    
+
+                    // boundaries cleanups every draw circle, we need to set world boundaries again
+                    if (this.#isWorldBoundariesEnabled) {
+                        this.screenPageData.setMapBoundaries();
                     }
                 }
 
@@ -542,7 +561,7 @@ export class CanvasView {
 
     bindRenderObject(renderObject) {
         return new Promise((resolve) => {
-            const [ xOffset, yOffset ] = this.screenPageData.worldOffset,
+            const [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset,
                 x = renderObject.x - xOffset,
                 y = renderObject.y - yOffset;
 

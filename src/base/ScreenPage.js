@@ -171,10 +171,11 @@ export class ScreenPage {
      * Creates new canvas layer
      * and set it to the #views
      * @param {string} name
+     * @param {boolean} [isStatic = false] - determines if offset is affected on this layer or not
      */
-    createCanvasView = (name) => {
+    createCanvasView = (name, isStatic = false) => {
         if (name && name.trim().length > 0) {
-            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader);
+            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader, isStatic);
             this.#views.set(name, newView);
         } else
             Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
@@ -226,6 +227,9 @@ export class ScreenPage {
         } else {
             const view = this.#views.get(canvasKey);
             view.renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries);
+            if (setBoundaries && this.systemSettings.gameOptions.render.mapBoundariesEnabled) {
+                view._enableMapBoundaries();
+            }
         }
     }
 
@@ -381,9 +385,6 @@ export class ScreenPage {
             Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, "world size should be set");
         } else {
             this.screenPageData.setWorldDimensions(width, height);
-            if (this.systemSettings.gameOptions.render.mapBoundariesEnabled) {
-                this.screenPageData.setMapBoundaries();
-            }
         }
     }
 

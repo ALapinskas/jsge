@@ -4199,6 +4199,14 @@ class CanvasView {
      * @type {boolean}
      */
     #isCleared;
+    /**
+     * @type {boolean}
+     */
+    #isStatic
+    /**
+     * @type {boolean}
+     */
+    #isWorldBoundariesEnabled;
 
     #drawContext;
     #webGlInterface;
@@ -4234,11 +4242,12 @@ class CanvasView {
      */
     #bindRenderObjectPromises;
 
-    constructor(name, systemSettings, screenPageData, loader) {
+    constructor(name, systemSettings, screenPageData, loader, isStatic) {
         this.#canvas = document.createElement("canvas");
         this.#canvas.id = name;
         this.#canvas.style.position = "absolute";
         this.#isCleared = false;
+        this.#isStatic = isStatic;
 
         this.#screenPageData = screenPageData;
         this.#systemSettings = systemSettings;
@@ -4285,6 +4294,10 @@ class CanvasView {
 
     get canvas() {
         return this.#canvas;
+    }
+
+    _enableMapBoundaries() {
+        this.#isWorldBoundariesEnabled = true;
     }
 
     getImage(key) {
@@ -4446,7 +4459,7 @@ class CanvasView {
                 setBoundaries = renderLayer.setBoundaries,
                 [ globalWorldW, globalWorldH ] = this.screenPageData.worldDimensions,
                 [ canvasW, canvasH ] = this.screenPageData.drawDimensions,
-                [ xOffset, yOffset ] = this.screenPageData.worldOffset;
+                [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset;
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [];
@@ -4490,6 +4503,12 @@ class CanvasView {
     
                     if (worldW !== worldWidth || worldH !== worldHeight) {
                         (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one");
+                    }
+                    
+
+                    // boundaries cleanups every draw circle, we need to set world boundaries again
+                    if (this.#isWorldBoundariesEnabled) {
+                        this.screenPageData.setMapBoundaries();
                     }
                 }
 
@@ -4713,7 +4732,7 @@ class CanvasView {
 
     bindRenderObject(renderObject) {
         return new Promise((resolve) => {
-            const [ xOffset, yOffset ] = this.screenPageData.worldOffset,
+            const [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset,
                 x = renderObject.x - xOffset,
                 y = renderObject.y - yOffset;
 
@@ -6091,10 +6110,11 @@ class ScreenPage {
      * Creates new canvas layer
      * and set it to the #views
      * @param {string} name
+     * @param {boolean} [isStatic = false] - determines if offset is affected on this layer or not
      */
-    createCanvasView = (name) => {
+    createCanvasView = (name, isStatic = false) => {
         if (name && name.trim().length > 0) {
-            const newView = new _CanvasView_js__WEBPACK_IMPORTED_MODULE_6__.CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader);
+            const newView = new _CanvasView_js__WEBPACK_IMPORTED_MODULE_6__.CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader, isStatic);
             this.#views.set(name, newView);
         } else
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
@@ -6146,6 +6166,9 @@ class ScreenPage {
         } else {
             const view = this.#views.get(canvasKey);
             view.renderLayers = new _RenderLayer_js__WEBPACK_IMPORTED_MODULE_5__.RenderLayer(layerKey, tileMapKey, setBoundaries);
+            if (setBoundaries && this.systemSettings.gameOptions.render.mapBoundariesEnabled) {
+                view._enableMapBoundaries();
+            }
         }
     }
 
@@ -6301,9 +6324,6 @@ class ScreenPage {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, "world size should be set");
         } else {
             this.screenPageData.setWorldDimensions(width, height);
-            if (this.systemSettings.gameOptions.render.mapBoundariesEnabled) {
-                this.screenPageData.setMapBoundaries();
-            }
         }
     }
 
@@ -6865,8 +6885,8 @@ class ScreenPageData {
 
         this.#centerX = x;
         this.#centerY = y;
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("center camera position, offset: ", this.worldOffset);
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("center: ", this.mapCenter);   
+        //Logger.debug("center camera position, offset: ", this.worldOffset);
+        //Logger.debug("center: ", this.mapCenter);   
     }
 
     personRotatedCenterCamera = (x, y, rotationAngle) => {

@@ -267,8 +267,8 @@ export class ScreenPageData {
 
         this.#centerX = x;
         this.#centerY = y;
-        Logger.debug("center camera position, offset: ", this.worldOffset);
-        Logger.debug("center: ", this.mapCenter);   
+        //Logger.debug("center camera position, offset: ", this.worldOffset);
+        //Logger.debug("center: ", this.mapCenter);   
     }
 
     personRotatedCenterCamera = (x, y, rotationAngle) => {
