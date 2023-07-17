@@ -5,6 +5,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 /**
  * Image object to draw
  * @augments DrawShapeObject
+ * @ignore
  */
 export class DrawImageObject extends DrawShapeObject {
     /**

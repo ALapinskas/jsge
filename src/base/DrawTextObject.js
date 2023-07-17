@@ -4,6 +4,7 @@ import { CONST } from "../constants.js";
 
 /**
  * @augments DrawShapeObject
+ * @ignore
  */
 export class DrawTextObject extends DrawShapeObject {
     #font;

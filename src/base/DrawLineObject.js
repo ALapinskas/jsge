@@ -5,6 +5,7 @@ import { Vertex } from "./Primitives.js";
 /**
  * Line object to draw
  * @augments DrawShapeObject
+ * @ignore
  */
 export class DrawLineObject extends DrawShapeObject {
     /**

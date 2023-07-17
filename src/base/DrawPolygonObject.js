@@ -4,6 +4,7 @@ import { Vertex } from "./Primitives.js";
 
 /**
  * @augments DrawShapeObject
+ * @ignore
  */
 export class DrawPolygonObject extends DrawShapeObject {
     /**

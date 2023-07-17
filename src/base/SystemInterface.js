@@ -4,7 +4,12 @@ import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
 /**
- * Public interface for a system class methods
+ * Public interface for a System<br>
+ * Can be used to start/stop ScreenPage render, <br>
+ * And provides access to SystemSettings, SystemSocketConnection and SystemAudioInterface <br>
+ * accessible via ScreenPage.system and System.system
+ * @see {@link System} a part of System class instance
+ * @see {@link ScreenPage} a part of ScreenPage class instance
  */
 export class SystemInterface {
     #systemSettings;

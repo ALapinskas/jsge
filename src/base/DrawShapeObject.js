@@ -4,6 +4,7 @@ import { Vertex } from "./Primitives.js";
 
 /**
  * A base draw object
+ * @ignore
  */
 export class DrawShapeObject {
     #x;
@@ -135,7 +136,7 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {Boolean}
      */
     get isRemoved() {
         return this.#isRemoved;

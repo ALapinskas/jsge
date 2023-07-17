@@ -1,5 +1,5 @@
 .vscode/
 node_modules/
 src/wa/
-docs/
+docs/build
 optimization/tests/files/

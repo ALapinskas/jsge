@@ -21,8 +21,13 @@ import { isPointLineIntersect, isPolygonLineIntersect, angle_2points } from "../
 import { Vector, Vertex } from "./Primitives.js";
 
 /**
- * Represents the page of the game,
- * contains and rule page views
+ * Represents the page of the game,<br>
+ * Register and holds CanvasView.<br>
+ * Contains pages logic.<br>
+ * Instances should be created and registered with System.registerPage() factory method
+ * 
+ * @see {@link System} instances of this class holds by the System class
+ * @hideconstructor
  */
 export class ScreenPage {
     /**
@@ -133,10 +138,12 @@ export class ScreenPage {
     }
 
     /**
+     * @tutorial screen_pages_stages
      * Custom logic for register stage
      */
     register() {}
     /**
+     * @tutorial screen_pages_stages
      * Custom logic for init stage
      */
     init() {}
@@ -145,6 +152,7 @@ export class ScreenPage {
      */
     start() {}
     /**
+     * @tutorial screen_pages_stages
      * Custom logic for stop stage
      */
     stop() {}
@@ -154,6 +162,7 @@ export class ScreenPage {
     resize() {}
 
     /**
+     * @tutorial assets_manager
      * @type {AssetsManager}
      */
     get loader() {
@@ -185,6 +194,7 @@ export class ScreenPage {
      * Attach all canvas elements from the #views to container
      * @param {HTMLDivElement} container
      * @protected
+     * @ignore
      */
     _attachViewsToContainer(container) {
         for (const view of this.#views.values()) {
@@ -207,8 +217,8 @@ export class ScreenPage {
             Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
             const view = this.#views.get(canvasKey);
-            view.renderObject = renderObject;
-            view.sortRenderObjects();
+            view._renderObject = renderObject;
+            view._sortRenderObjectsByZIndex();
         }
     }
 
@@ -226,7 +236,7 @@ export class ScreenPage {
             Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
             const view = this.#views.get(canvasKey);
-            view.renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries);
+            view._renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries);
             if (setBoundaries && this.systemSettings.gameOptions.render.mapBoundariesEnabled) {
                 view._enableMapBoundaries();
             }
@@ -312,6 +322,7 @@ export class ScreenPage {
      * previously added to a loader query
      * @returns {Promise}
      * @protected
+     * @ignore
      */
     _loadPageAssets() {
         return this.#loader.preload();
@@ -320,6 +331,7 @@ export class ScreenPage {
     /** 
      * @returns {Promise}
      * @protected 
+     * @ignore
      */
     _registerPageAudio() {
         return this.audio._registerAllAudio(this.#loader);
@@ -329,6 +341,7 @@ export class ScreenPage {
      * Start page render
      * @param {*} options 
      * @protected
+     * @ignore
      */
     _start(options) {
         this.#isActive = true;
@@ -344,6 +357,7 @@ export class ScreenPage {
     /**
      * Stop page render
      * @protected
+     * @ignore
      */
     _stop() {
         this.#isActive = false;
@@ -357,6 +371,7 @@ export class ScreenPage {
     /**
      * Resize event
      * @protected
+     * @ignore
      */
     _resize = () => {
         this.#setCanvasSize();
@@ -379,13 +394,10 @@ export class ScreenPage {
     }
 
     #setWorldDimensions() {
-        const width = this.systemSettings.worldSize.width,
-            height = this.systemSettings.worldSize.height;
-        if (!width || !height || width <= 0 || height <= 0) {
-            Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, "world size should be set");
-        } else {
-            this.screenPageData.setWorldDimensions(width, height);
-        }
+        const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
+            height = this.systemSettings.worldSize ? this.systemSettings.worldSize.height : 0;
+            
+        this.screenPageData._setWorldDimensions(width, height);
     }
 
     /**
@@ -529,9 +541,9 @@ export class ScreenPage {
     #setCanvasSize() {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
-        this.screenPageData.setCanvasDimensions(canvasWidth, canvasHeight);
+        this.screenPageData._setCanvasDimensions(canvasWidth, canvasHeight);
         for (const view of this.#views.values()) {
-            view.setCanvasSize(canvasWidth, canvasHeight);
+            view._setCanvasSize(canvasWidth, canvasHeight);
         }
     }
 
@@ -574,7 +586,7 @@ export class ScreenPage {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
             for (const view of this.#views.values()) {
-                viewPromises.push(view.initiateWebGlContext(this.systemSettings.gameOptions.debugWebGl));
+                viewPromises.push(view._initiateWebGlContext(this.systemSettings.gameOptions.debugWebGl));
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {
                 drawingResults.forEach((result) => {
@@ -594,7 +606,7 @@ export class ScreenPage {
             minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
         let viewPromises = [];
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
-        this.screenPageData.clearBoundaries();
+        this.screenPageData._clearBoundaries();
         for (const [key, view] of this.#views.entries()) {
             viewPromises.push(this.#executeRender(key, view));
         }
@@ -620,13 +632,13 @@ export class ScreenPage {
 
     #executeRender (key, view) {
         return new Promise((resolve, reject) => {
-            if (!view.isCleared) {
-                view.clearWebGlContext();
+            if (!view._isCleared) {
+                view._clearWebGlContext();
             }
-            if (view.renderLayers.length !== 0) {
-                view.prepareBindRenderLayerPromises();
+            if (view._renderLayers.length !== 0) {
+                view._prepareBindRenderLayerPromises();
             }
-            view.executeBindRenderLayerPromises()
+            view._executeBindRenderLayerPromises()
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {
@@ -635,17 +647,17 @@ export class ScreenPage {
                             return reject(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
                         }
                     });
-                    return view.executeTileImagesDraw();
+                    return view._executeTileImagesDraw();
                 })
                 .then(() => {
-                    if (view.renderObjects.length !== 0) {
+                    if (view._renderObjects.length !== 0) {
                         //this.#checkCollisions(view.renderObjects);
-                        view.prepareBindRenderObjectPromises();
+                        view._prepareBindRenderObjectPromises();
                     }
                     if (key === CONST.LAYERS.BOUNDARIES) {
-                        view.prepareBindBoundariesPromise();
+                        view._prepareBindBoundariesPromise();
                     }
-                    return view.executeBindRenderObjectPromises();
+                    return view._executeBindRenderObjectPromises();
                 })
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
@@ -655,7 +667,7 @@ export class ScreenPage {
                         }
                     });
                     
-                    view.isCleared = false;
+                    view._isCleared = false;
                     resolve();
                 });
         });

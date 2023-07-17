@@ -4,15 +4,16 @@ import { ScreenPage } from "./ScreenPage.js";
 import { SystemInterface } from "./SystemInterface.js";
 import { SystemSettings } from "../configs.js";
 /**
- * Holder class for pages,
- * can register new pages
- * init and preload data for them
+ * A main app class, <br>
+ * Holder class for ScreenPage,<br>
+ * can register new ScreenPages,<br>
+ * init and preload data for them,<br>
  */
 export class System {
     #registeredPages;
     #system;
     /**
-     * @param {SystemSettings} systemSettings 
+     * @param {SystemSettings} systemSettings - holds system settings
      * @param {HTMLDivElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
      */
     constructor(systemSettings, canvasContainer) {
@@ -37,7 +38,8 @@ export class System {
     }
 
     /**
-     * Register page in a system and call init() stage
+     * A main factory method for create ScreenPage instances, <br>
+     * register them in a System and call ScreenPage.register() stage
      * @param {String} screenPageName
      * @param {ScreenPage} screen 
      */
@@ -64,7 +66,7 @@ export class System {
     }
 
     /**
-     * 
+     * Preloads assets data for specific page
      * @param {String} screenPageName
      * @return {Promise}
      */

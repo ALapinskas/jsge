@@ -14,7 +14,8 @@
     "templates": {
     },
     "opts": {
-        "destination": "./docs"  
+        "destination": "./docs/build",
+        "tutorials": "./docs/tutorials"
     }
 }
 

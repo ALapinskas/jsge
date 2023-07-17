@@ -19,6 +19,14 @@ const INDEX_X1 = 0,
     INDEX_X2 = 2,
     INDEX_Y2 = 3;
 
+/**
+ * Canvas view represents each canvas on the page<br> 
+ * Should be created via ScreenPage.createCanvasView(),<br>
+ * Contains draw logic and holds DrawObjects and Tile
+ * Can retrieved by ScreenPage.getView()
+ * @see {@link ScreenPage} a part of ScreenPage
+ * @hideconstructor
+ */
 export class CanvasView {
     /**
      * @type {HTMLCanvasElement}
@@ -86,7 +94,7 @@ export class CanvasView {
 
         this.#bindTileMapPromises = [];
         this.#bindRenderObjectPromises = [];
-        this.bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this.bindRenderLayerWM : this.bindRenderLayer;
+        this.bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this._bindRenderLayerWM : this._bindRenderLayer;
     }
 
     get screenPageData() {
@@ -101,122 +109,92 @@ export class CanvasView {
         return this.#loader;
     }
 
+    /**
+     * a getter to retrieve all attached renderObjects
+     */
     get renderObjects() {
         return this.#renderObjects;
-    }
-
-    get renderLayers() {
-        return this.#renderLayers;
-    }
-
-    set renderObject(object) {
-        this.#renderObjects.push(object);
-    } 
-
-    set renderObjects(objects) {
-        this.#renderObjects = objects;
-    } 
-
-    set renderLayers(layer) {
-        this.#renderLayers.push(layer);
     }
 
     get canvas() {
         return this.#canvas;
     }
 
-    _enableMapBoundaries() {
-        this.#isWorldBoundariesEnabled = true;
-    }
-
-    getImage(key) {
-        return this.loader.getImage(key);
-    }
-
-    getDrawContext(globalCompositeOperation) {
-        const ctx = this.#canvas.getContext("2d");
-        if (globalCompositeOperation) {
-            ctx.globalCompositeOperation = globalCompositeOperation;
-        } else {
-            ctx.globalCompositeOperation = "source-over";
-        }
-        return ctx;
-    }
-
-    getWebGlDrawContext() {
-        const webgl = this.#canvas.getContext("webgl");
-
-        if (webgl) {
-            return webgl;
-        } else {
-            Exception(ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
-        } 
-    }
-
-    initiate2DContext() {
-        const ctx = this.#canvas.getContext("2d");
-        this.#drawContext = ctx;
-    }
-
+    /**
+     * Retrieve specific objects instances
+     * @param {DrawShapeObject} instance - drawObjectInstance to retrieve 
+     * @returns {Array<DrawShapeObject>}
+     */
     getObjectsByInstance(instance) {
         return this.#renderObjects.filter((object) => object instanceof instance);
     }
 
-    initiateWebGlContext(debug = false) {
+    get _renderLayers() {
+        return this.#renderLayers;
+    }
+
+    set _renderObject(object) {
+        this.#renderObjects.push(object);
+    } 
+
+    set _renderObjects(objects) {
+        this.#renderObjects = objects;
+    } 
+
+    set _renderLayers(layer) {
+        this.#renderLayers.push(layer);
+    }
+
+    set _isCleared(value) {
+        this.#isCleared = value;
+    }
+
+    get _isCleared() {
+        return this.#isCleared;
+    }
+
+    /**
+     * @ignore
+     */
+    _enableMapBoundaries() {
+        this.#isWorldBoundariesEnabled = true;
+    }
+
+    _initiateWebGlContext(debug = false) {
         const webgl = this.#canvas.getContext("webgl");
         if (webgl) {
             this.#drawContext = webgl;
             this.#webGlInterface = new WebGlInterface(this.#drawContext, debug);
             
-            return Promise.all([this.#webGlInterface.initiateImagesDrawProgram(),
-                this.#webGlInterface.initPrimitivesDrawProgram()]);
+            return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
+                this.#webGlInterface._initPrimitivesDrawProgram()]);
         } else {
             Exception(ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
         } 
     }
 
-    set isCleared(value) {
-        this.#isCleared = value;
-    }
-
-    get isCleared() {
-        return this.#isCleared;
-    }
-
-    clearWebGlContext() {
-        this.#webGlInterface.clearView();
+    _clearWebGlContext() {
+        this.#webGlInterface._clearView();
         this.#isCleared = true;
     }
 
-    bindTileImages(verticesBufferData, texturesBufferData,  atlasImage, image_name, drawMask, rotation, translation) {
-        this.#webGlInterface.bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, drawMask, rotation, translation);
+    _executeTileImagesDraw() {
+        return this.#webGlInterface._executeTileImagesDraw();
     }
 
-    bindTexture(x, y, width, height, texture, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
-        this.#webGlInterface.bindTexture(x, y, width, height, texture, image_name, rotation, translation, scale);
-    }
-
-    executeTileImagesDraw() {
-        return this.#webGlInterface.executeTileImagesDraw();
-    }
-
-    #clearTileMapPromises() {
-        this.#bindTileMapPromises = [];
-    }
-
-    setCanvasSize(width, height) {
+    _setCanvasSize(width, height) {
         this.canvas.width = width;
         this.canvas.height = height;
         if (this.#webGlInterface) {
-            this.#webGlInterface.fixCanvasSize(width, height);
+            this.#webGlInterface._fixCanvasSize(width, height);
         }
     }
 
-    sortRenderObjects() {
-        this.#renderObjects = this.renderObjects.sort((obj1, obj2) => obj2.zIndex - obj1.zIndex);
+    _sortRenderObjectsByZIndex() {
+        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.zIndex - obj1.zIndex);
     }
 
-    prepareBindRenderLayerPromises() {
+    _prepareBindRenderLayerPromises() {
         for (const layer of this.renderLayers) {
             this.#bindTileMapPromises.push(this.bindRenderLayerMethod(layer).catch((err) => {
                 Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
@@ -224,18 +202,18 @@ export class CanvasView {
         }
     }
 
-    executeBindRenderLayerPromises() {
+    _executeBindRenderLayerPromises() {
         return Promise.allSettled(this.#bindTileMapPromises).then((bindResults) => {
             this.#clearTileMapPromises();
             return Promise.resolve(bindResults);
         });
     }
 
-    bindRenderLayerWM(renderLayer) {
+    _bindRenderLayerWM(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
-                tilesetImages = tilesets.map((tileset) => this.getImage(tileset.data.name)),
+                tilesetImages = tilesets.map((tileset) => this.#getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 setBoundaries = false;//, //renderLayer.setBoundaries,
@@ -266,9 +244,9 @@ export class CanvasView {
                     
                 const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 
-                this.bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
+                this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 if (setBoundaries) {
-                    this.screenPageData.mergeBoundaries();
+                    this.screenPageData._mergeBoundaries();
                     renderLayer.setBoundaries = false;
                 }
                 resolve();
@@ -276,18 +254,18 @@ export class CanvasView {
         });
     }
 
-    bindRenderLayer(renderLayer) {
+    _bindRenderLayer(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
-                tilesetImages = tilesets.map((tileset) => this.getImage(tileset.data.name)),
+                tilesetImages = tilesets.map((tileset) => this.#getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 tilewidth = dtwidth,
                 tileheight = dtheight,
                 setBoundaries = renderLayer.setBoundaries,
-                [ globalWorldW, globalWorldH ] = this.screenPageData.worldDimensions,
-                [ canvasW, canvasH ] = this.screenPageData.drawDimensions,
+                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
+                //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
                 [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset;
                 
             let boundariesRowsIndexes = new Map(),
@@ -327,17 +305,14 @@ export class CanvasView {
                     verticesBufferData = [],
                     texturesBufferData = [];
                 if (setBoundaries) {
-                    const worldWidth = layerCols * dtwidth,
-                        worldHeight = layerRows * dtheight;
-    
-                    if (worldW !== worldWidth || worldH !== worldHeight) {
-                        Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one");
+                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                        Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                        this.screenPageData._setWorldDimensions(worldW, worldH);
                     }
                     
-
                     // boundaries cleanups every draw circle, we need to set world boundaries again
                     if (this.#isWorldBoundariesEnabled) {
-                        this.screenPageData.setMapBoundaries();
+                        this.screenPageData._setMapBoundaries();
                     }
                 }
 
@@ -529,19 +504,19 @@ export class CanvasView {
                     mapIndex += skipColsRight;
                 }
                 if (verticesBufferData.length > 0 && texturesBufferData.length > 0) {
-                    this.bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
+                    this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 }
             }
             
             if (setBoundaries) {
                 const filtered = boundaries.filter(array => array);
-                this.screenPageData.addBoundariesArray(filtered);
+                this.screenPageData._addBoundariesArray(filtered);
             }
             resolve();
         });
     }
     
-    prepareBindRenderObjectPromises() {
+    _prepareBindRenderObjectPromises() {
         for (let i = 0; i < this.#renderObjects.length; i++) {
             const object = this.#renderObjects[i];
             if (object.isRemoved) {
@@ -551,7 +526,7 @@ export class CanvasView {
             if (object.isAnimations) {
                 object._processActiveAnimations();
             }
-            const promise = this.bindRenderObject(object).catch((err) => {
+            const promise = this.#bindRenderObject(object).catch((err) => {
                 Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
                 return Promise.reject(err);
             });
@@ -559,14 +534,39 @@ export class CanvasView {
         }
     }
 
-    bindRenderObject(renderObject) {
+    _prepareBindBoundariesPromise() {
+        this.#bindRenderObjectPromises.push(this.#drawBoundariesWebGl().catch((err) => {
+            Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
+        }));
+    }
+
+    _executeBindRenderObjectPromises () {
+        return Promise.allSettled(this.#bindRenderObjectPromises).then((bindResults) => {
+            this.#clearRenderObjectPromises();
+            return Promise.resolve(bindResults);
+        });
+    }
+
+    #getImage(key) {
+        return this.loader.getImage(key);
+    }
+
+    #bindTileImages(verticesBufferData, texturesBufferData,  atlasImage, image_name, drawMask, rotation, translation) {
+        this.#webGlInterface._bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, drawMask, rotation, translation);
+    }
+
+    #clearTileMapPromises() {
+        this.#bindTileMapPromises = [];
+    }
+
+    #bindRenderObject(renderObject) {
         return new Promise((resolve) => {
             const [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset,
                 x = renderObject.x - xOffset,
                 y = renderObject.y - yOffset;
 
             if (renderObject.type === CONST.DRAW_TYPE.IMAGE) {
-                const atlasImage = this.getImage(renderObject.key),
+                const atlasImage = this.#getImage(renderObject.key),
                     animationIndex = renderObject.imageIndex;
                 let imageX = 0,
                     imageY = 0;
@@ -601,37 +601,24 @@ export class CanvasView {
                         texX2, texY1,
                         texX2, texY2
                     ];
-                this.#webGlInterface.bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y]);
+                this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y]);
                 //ctx.restore();
             } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {
-                this.#webGlInterface.bindText(x, y, renderObject);
+                this.#webGlInterface._bindText(x, y, renderObject);
             } else if (renderObject.type === CONST.DRAW_TYPE.CIRCLE) {
-                this.#webGlInterface.bindConus(renderObject, renderObject.rotation, [x, y]);
+                this.#webGlInterface._bindConus(renderObject, renderObject.rotation, [x, y]);
             } else if (renderObject.type === CONST.DRAW_TYPE.LINE) {
-                this.#webGlInterface.drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
+                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
             } else {
-                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation, [x, y]);
+                this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }
             if (renderObject.boundaries && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                 const shiftX = x,// - renderObject.boundaries[0],
                     shiftY = y,// - renderObject.boundaries[1],
                 rotation = renderObject.rotation ? renderObject.rotation : 0;
-                this.#webGlInterface.drawPolygon(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                this.#webGlInterface._drawPolygon(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
             }
             return resolve();
-        });
-    }
-
-    prepareBindBoundariesPromise() {
-        this.#bindRenderObjectPromises.push(this.#drawBoundariesWebGl().catch((err) => {
-            Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
-        }));
-    }
-
-    executeBindRenderObjectPromises () {
-        return Promise.allSettled(this.#bindRenderObjectPromises).then((bindResults) => {
-            this.#clearRenderObjectPromises();
-            return Promise.resolve(bindResults);
         });
     }
 
@@ -650,7 +637,7 @@ export class CanvasView {
                 linesArray.push(item[0], item[1]);
                 linesArray.push(item[2], item[3]);
             }
-            this.#webGlInterface.drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth);
+            this.#webGlInterface._drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth);
             resolve();
         });
     }

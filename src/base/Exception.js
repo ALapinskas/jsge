@@ -3,5 +3,5 @@ export function Exception (code, message) {
 }
 
 export function Warning (code, message) {
-    console.error(code, message);
+    console.warn(code, message);
 }

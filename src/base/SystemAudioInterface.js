@@ -3,10 +3,12 @@ import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { Exception, Warning } from "./Exception.js";
 
 /**
- * An audio interface, 
- * to control all application audio,
- * hold and retrieve audio,
- * change volume 
+ * An audio interface, <br>
+ * controls all application audio,<br>
+ * holds and retrieves audio, changes volume<br> 
+ * accessible via ScreenPage.audio
+ * @see {@link ScreenPage} a part of ScreenPage
+ * @hideconstructor
  */
 export class SystemAudioInterface {
     #volume = 0.5;

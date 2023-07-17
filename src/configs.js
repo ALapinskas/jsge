@@ -1,5 +1,8 @@
 import { CONST } from "./constants.js";
 
+/**
+ * Settings object, should be passed as a parameter to System.constructor()
+ */
 export const SystemSettings = {
     mode: CONST.MODE.DEBUG,
     

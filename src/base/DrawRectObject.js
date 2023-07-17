@@ -3,6 +3,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * @augments DrawShapeObject
+ * @ignore
  */
 export class DrawRectObject extends DrawShapeObject {
     /**

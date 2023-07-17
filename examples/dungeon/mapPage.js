@@ -117,6 +117,7 @@ export class MapPage extends ScreenPage {
             this.sightView.y = newCoordY;
             this.fireRange.x = newCoordX;
             this.fireRange.y = newCoordY;
+            this.screenPageData.centerCameraPosition(newCoordX, newCoordY);
         }
     }
 

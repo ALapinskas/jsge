@@ -7,7 +7,9 @@ import { DrawPolygonObject } from "./DrawPolygonObject.js";
 import { Vertex } from "./Primitives.js";
 
 /**
- * Creates drawObjects instances.
+ * Creates drawObjects instances.<br>
+ * accessible via ScreenPage.draw <br>
+ * @see {@link ScreenPage} a part of ScreenPage
  */
 export class DrawObjectFactory {
 

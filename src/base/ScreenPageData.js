@@ -4,38 +4,30 @@ import { Logger } from "./Logger.js";
 /**
  * An interface for common views data such as
  * boundaries, world dimensions, options
+ * accessible via ScreenPage.screenPageData 
+ * @see {@link ScreenPage} a part of ScreenPage
+ * @hideconstructor
  */
 export class ScreenPageData {
     #worldWidth;
     #worldHeight;
     #viewWidth;
     #viewHeight;
-    #drawWith;
-    #drawHeight;
-    #xOffset;
-    #yOffset;
+    #xOffset = 0;
+    #yOffset = 0;
     #centerX = 0;
     #centerY = 0;
     #rotate = 0;
     /**
      * @type {Array.<Number[]>}
      */
-    #boundaries;
-
-    /**
-     * @hideconstructor
-     */
-    constructor() {
-        this.#xOffset = 0;
-        this.#yOffset = 0;
-        this.#boundaries = [];
-    }
+    #boundaries = [];
 
     /**
      * Add a Boundaries line
      * @param {*} boundaries 
      */
-    addBoundaries(boundaries) {
+    #addBoundaries(boundaries) {
         this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
     }
 
@@ -43,14 +35,14 @@ export class ScreenPageData {
      * Add array of boundaries lines
      * @param {Array} boundaries 
      */
-    addBoundariesArray(boundaries) {
+    _addBoundariesArray(boundaries) {
         this.#boundaries.push(...boundaries);
     }
 
     /**
      * Clear map boundaries
      */
-    clearBoundaries() {
+    _clearBoundaries() {
         this.#boundaries = [];
     }
 
@@ -59,49 +51,9 @@ export class ScreenPageData {
      * @param {Number} width 
      * @param {Number} height 
      */
-    setWorldDimensions(width, height) {
+    _setWorldDimensions(width, height) {
         this.#worldWidth = width;
         this.#worldHeight = height;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set xOffset(x) {
-        if (!Number.isInteger(x)) {
-            Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#xOffset = x;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set yOffset(y) {
-        if (!Number.isInteger(y)) {
-            Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#yOffset = y;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set centerX(x) {
-        if (!Number.isInteger(x)) {
-            Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#centerX = x;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set centerY(y) {
-        if (!Number.isInteger(y)) {
-            Exception(ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#centerY = y;
     }
 
     set mapRotate(value) {
@@ -113,39 +65,29 @@ export class ScreenPageData {
      * @param {Number} width 
      * @param {Number} height 
      */
-    setCanvasDimensions(width, height) {
+    _setCanvasDimensions(width, height) {
         this.#viewWidth = width;
         this.#viewHeight = height;
     }
 
     /**
-     * 
-     * @param {Number} width 
-     * @param {Number} height 
-     */
-    setDrawDimensions(width, height) {
-        this.#drawWith = width;
-        this.#drawHeight = height;
-    }
-
-    /**
      * Set map borders
      */
-    setMapBoundaries() {
+    _setMapBoundaries() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
         if (!w || !h) {
             Warning(WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
         }
-        this.addBoundaries({x1: 0, y1: 0, x2: w, y2: 0});
-        this.addBoundaries({x1: w, y1: 0, x2: w, y2: h});
-        this.addBoundaries({x1: w, y1: h, x2: 0, y2: h});
-        this.addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
+        this.#addBoundaries({x1: 0, y1: 0, x2: w, y2: 0});
+        this.#addBoundaries({x1: w, y1: 0, x2: w, y2: h});
+        this.#addBoundaries({x1: w, y1: h, x2: 0, y2: h});
+        this.#addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
     }
 
     /**
      * Merge same boundaries
      */
-    mergeBoundaries() {
+    _mergeBoundaries() {
         const boundaries = this.getBoundaries(),
             boundariesSet = new Set(boundaries);
         for (const line of boundariesSet.values()) {
@@ -183,17 +125,6 @@ export class ScreenPageData {
      */
     getBoundaries() {
         return this.#boundaries;
-    }
-
-    /**
-     * @type {Array<Number>}
-     */
-    get drawDimensions() {
-        if (this.#drawWith && this.#drawHeight) {
-            return [ this.#drawWith, this.#drawHeight ];
-        } else {
-            return this.canvasDimensions;
-        }
     }
 
     /**
@@ -248,20 +179,20 @@ export class ScreenPageData {
             if (x < mapWidth - halfScreenWidth) {
                 const newXOffset = x - halfScreenWidth;
                 if (newXOffset >= 0)
-                    this.xOffset = Math.round(newXOffset);
+                    this.#xOffset = Math.round(newXOffset);
             } else if (mapWidth > canvasWidth) {
                 const newXOffset = mapWidth - canvasWidth;
-                this.xOffset = Math.round(newXOffset);
+                this.#xOffset = Math.round(newXOffset);
             }
         }
         if (currentCenterY < y) {
             if (y < mapHeight - halfScreenHeight) {
                 const newYOffset = y - halfScreenHeight;
                 if (newYOffset >= 0)
-                    this.yOffset = Math.round(newYOffset);
+                    this.#yOffset = Math.round(newYOffset);
             } else if (mapHeight > canvasHeight) {
                 const newYOffset = mapHeight - canvasHeight;
-                this.yOffset = Math.round(newYOffset);
+                this.#yOffset = Math.round(newYOffset);
             }
         }
 
@@ -285,20 +216,20 @@ export class ScreenPageData {
             if (x < mapWidth - halfScreenWidth) {
                 const newXOffset = x - halfScreenWidth;
                 if (newXOffset >= 0)
-                    this.xOffset = Math.round(newXOffset);
+                    this.#xOffset = Math.round(newXOffset);
             } else if (mapWidth > canvasWidth) {
                 const newXOffset = mapWidth - canvasWidth;
-                this.xOffset = Math.round(newXOffset);
+                this.#xOffset = Math.round(newXOffset);
             }
         }
         if (currentCenterY < y) {
             if (y < mapHeight - halfScreenHeight) {
                 const newYOffset = y - halfScreenHeight;
                 if (newYOffset >= 0)
-                    this.yOffset = Math.round(newYOffset);
+                    this.#yOffset = Math.round(newYOffset);
             } else if (mapHeight > canvasHeight) {
                 const newYOffset = mapHeight - canvasHeight;
-                this.yOffset = Math.round(newYOffset);
+                this.#yOffset = Math.round(newYOffset);
             }
         }
 

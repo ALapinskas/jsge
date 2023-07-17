@@ -21,6 +21,13 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.0.51:
+    r: changed setting world detentions behavior
+    r: refactored encapsulation
+    r: refactored classes
+    r: refactored docs
+    r: refactored scheme
+
 0.0.5:
     r: changed mapBoundariesEnabled option behavior
     f: fixed setMapBoundaries() call

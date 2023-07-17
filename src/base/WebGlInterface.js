@@ -64,23 +64,11 @@ export class WebGlInterface {
         this.#texCoordBuffer = this.#gl.createBuffer();
     }
 
-    get count() {
-        return this.#verticesNumber;
-    }
-
-    setProgram(name, program) {
-        this.#programs.set(name, program);
-    }
-
-    getProgram(name) {
-        return this.#programs.get(name);
-    }
-
-    fixCanvasSize(width, height) {
+    _fixCanvasSize(width, height) {
         this.#gl.viewport(0, 0, width, height);
     }
 
-    initiateImagesDrawProgram() {
+    _initiateImagesDrawProgram() {
         this.#vertexShaderSource = `
         attribute vec2 a_texCoord;
 
@@ -161,10 +149,10 @@ export class WebGlInterface {
             gl_FragColor = color;
         }
         `;
-        const program = this.initProgram(),
+        const program = this.#initProgram(),
             programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES;
 
-        this.setProgram(programName, program);
+        this.#setProgram(programName, program);
 
         const gl = this.#gl,
             translationLocation = gl.getUniformLocation(program, "u_translation"),
@@ -190,7 +178,7 @@ export class WebGlInterface {
         return Promise.resolve();
     }
 
-    initPrimitivesDrawProgram() {
+    _initPrimitivesDrawProgram() {
         this.#vertexShaderSource = `
         attribute vec2 a_position;
 
@@ -263,9 +251,9 @@ export class WebGlInterface {
             gl_FragColor = u_color;
         }
         `;
-        const program = this.initProgram(),
+        const program = this.#initProgram(),
             programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES;
-        this.setProgram(programName, program);
+        this.#setProgram(programName, program);
 
         const gl = this.#gl,
             translationLocation = gl.getUniformLocation(program, "u_translation"),
@@ -286,7 +274,7 @@ export class WebGlInterface {
         return Promise.resolve();
     }
     
-    bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
                 existingProgramData = this.#programsData.filter((data) => data.programName === programName);
@@ -309,10 +297,10 @@ export class WebGlInterface {
         });
     }
     
-    executeTileImagesDraw() {
+    _executeTileImagesDraw() {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
-                program = this.getProgram(programName),
+                program = this.#getProgram(programName),
                 { translationLocation,
                     rotationRotation,
                     scaleLocation,
@@ -371,16 +359,16 @@ export class WebGlInterface {
                 gl.blendFunc(gl[data.drawMask[0]], gl[data.drawMask[1]]);
                 this.#verticesNumber = data.programVerticesNum;
                 // Upload the image into the texture.
-                this.executeGlslProgram();
+                this.#executeGlslProgram();
             }
 
             resolve();
         });
     }
 
-    bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { translationLocation,
                 rotationRotation,
                 scaleLocation,
@@ -440,12 +428,12 @@ export class WebGlInterface {
         // make image transparent parts transparent
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // Upload the image into the texture.
-        this.executeGlslProgram();
+        this.#executeGlslProgram();
     }
 
-    bindText(x, y, renderObject) {
+    _bindText(x, y, renderObject) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { translationLocation,
                 rotationRotation,
                 scaleLocation,
@@ -537,12 +525,12 @@ export class WebGlInterface {
         }
         gl.uniform1i(u_imageLocation, bind_number);
         //console.log("vertex attrib 1 :", gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING));
-        this.executeGlslProgram();
+        this.#executeGlslProgram();
     }
 
-    bindPrimitives(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindPrimitives(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { 
                 translationLocation,
                 rotationRotation,
@@ -610,12 +598,12 @@ export class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
-        this.executeGlslProgram(0, null, true);
+        this.#executeGlslProgram(0, null, true);
     }
 
-    drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { resolutionUniformLocation,
                 colorUniformLocation,
                 positionAttributeLocation,
@@ -662,12 +650,12 @@ export class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //    gl.disableVertexAttribArray(1);
         //}
-        this.executeGlslProgram(0, gl.LINES);
+        this.#executeGlslProgram(0, gl.LINES);
     }
 
-    drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { resolutionUniformLocation,
                 colorUniformLocation,
                 positionAttributeLocation,
@@ -709,19 +697,12 @@ export class WebGlInterface {
         const colorArray = this.#rgbaToArray(color);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
 
-        this.executeGlslProgram(0, null);
+        this.#executeGlslProgram(0, null);
     }
 
-    #bindPolygon(vertices) {
-        this.#gl.bufferData(
-            this.#gl.ARRAY_BUFFER, 
-            new Float32Array(vertices),
-            this.#gl.STATIC_DRAW);
-    }
-
-    bindConus(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindConus(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { 
                 translationLocation,
                 rotationRotation,
@@ -781,7 +762,31 @@ export class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
-        this.executeGlslProgram(0, gl.TRIANGLE_FAN, true);
+        this.#executeGlslProgram(0, gl.TRIANGLE_FAN, true);
+    }
+
+    _clearView() {
+        const gl = this.#gl;
+        // Set clear color to black, fully opaque
+        this.#programsData = [];
+        gl.clearColor(0, 0, 0, 0);
+        // Clear the color buffer with specified clear color
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
+
+    #setProgram(name, program) {
+        this.#programs.set(name, program);
+    }
+
+    #getProgram(name) {
+        return this.#programs.get(name);
+    }
+
+    #bindPolygon(vertices) {
+        this.#gl.bufferData(
+            this.#gl.ARRAY_BUFFER, 
+            new Float32Array(vertices),
+            this.#gl.STATIC_DRAW);
     }
 
     #randomInt(range) {
@@ -803,7 +808,7 @@ export class WebGlInterface {
                 x2, y2]), this.#gl.STATIC_DRAW);
     }
     
-    executeGlslProgram(offset = 0, primitiveType, resetEquation) {
+    #executeGlslProgram(offset = 0, primitiveType, resetEquation) {
         const primitiveTypeValue = primitiveType ? primitiveType : this.#gl.TRIANGLES,
             gl = this.#gl;
             
@@ -821,7 +826,7 @@ export class WebGlInterface {
         }
     }
 
-    initProgram() {
+    #initProgram() {
         const gl = this.#gl,
             program = gl.createProgram();
 
@@ -834,15 +839,6 @@ export class WebGlInterface {
             Exception(ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
         }
         return program;
-    }
-
-    clearView() {
-        const gl = this.#gl;
-        // Set clear color to black, fully opaque
-        this.#programsData = [];
-        gl.clearColor(0, 0, 0, 0);
-        // Clear the color buffer with specified clear color
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
     #createCanvasText(renderObject) {

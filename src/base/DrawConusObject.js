@@ -5,6 +5,7 @@ import { Vertex } from "./Primitives.js";
 /**
  * Conus object to draw
  * @augments DrawShapeObject
+ * @ignore
  */
 export class DrawConusObject extends DrawShapeObject {
     /**
