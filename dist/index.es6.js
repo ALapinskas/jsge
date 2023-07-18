@@ -4190,6 +4190,14 @@ const INDEX_X1 = 0,
     INDEX_X2 = 2,
     INDEX_Y2 = 3;
 
+/**
+ * Canvas view represents each canvas on the page<br> 
+ * Should be created via ScreenPage.createCanvasView(),<br>
+ * Contains draw logic and holds DrawObjects and Tile
+ * Can retrieved by ScreenPage.getView()
+ * @see {@link ScreenPage} a part of ScreenPage
+ * @hideconstructor
+ */
 class CanvasView {
     /**
      * @type {HTMLCanvasElement}
@@ -4257,7 +4265,7 @@ class CanvasView {
 
         this.#bindTileMapPromises = [];
         this.#bindRenderObjectPromises = [];
-        this.bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this.bindRenderLayerWM : this.bindRenderLayer;
+        this.bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this._bindRenderLayerWM : this._bindRenderLayer;
     }
 
     get screenPageData() {
@@ -4272,141 +4280,111 @@ class CanvasView {
         return this.#loader;
     }
 
+    /**
+     * a getter to retrieve all attached renderObjects
+     */
     get renderObjects() {
         return this.#renderObjects;
-    }
-
-    get renderLayers() {
-        return this.#renderLayers;
-    }
-
-    set renderObject(object) {
-        this.#renderObjects.push(object);
-    } 
-
-    set renderObjects(objects) {
-        this.#renderObjects = objects;
-    } 
-
-    set renderLayers(layer) {
-        this.#renderLayers.push(layer);
     }
 
     get canvas() {
         return this.#canvas;
     }
 
-    _enableMapBoundaries() {
-        this.#isWorldBoundariesEnabled = true;
-    }
-
-    getImage(key) {
-        return this.loader.getImage(key);
-    }
-
-    getDrawContext(globalCompositeOperation) {
-        const ctx = this.#canvas.getContext("2d");
-        if (globalCompositeOperation) {
-            ctx.globalCompositeOperation = globalCompositeOperation;
-        } else {
-            ctx.globalCompositeOperation = "source-over";
-        }
-        return ctx;
-    }
-
-    getWebGlDrawContext() {
-        const webgl = this.#canvas.getContext("webgl");
-
-        if (webgl) {
-            return webgl;
-        } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
-        } 
-    }
-
-    initiate2DContext() {
-        const ctx = this.#canvas.getContext("2d");
-        this.#drawContext = ctx;
-    }
-
+    /**
+     * Retrieve specific objects instances
+     * @param {DrawShapeObject} instance - drawObjectInstance to retrieve 
+     * @returns {Array<DrawShapeObject>}
+     */
     getObjectsByInstance(instance) {
         return this.#renderObjects.filter((object) => object instanceof instance);
     }
 
-    initiateWebGlContext(debug = false) {
+    get _renderLayers() {
+        return this.#renderLayers;
+    }
+
+    set _renderObject(object) {
+        this.#renderObjects.push(object);
+    } 
+
+    set _renderObjects(objects) {
+        this.#renderObjects = objects;
+    } 
+
+    set _renderLayers(layer) {
+        this.#renderLayers.push(layer);
+    }
+
+    set _isCleared(value) {
+        this.#isCleared = value;
+    }
+
+    get _isCleared() {
+        return this.#isCleared;
+    }
+
+    /**
+     * @ignore
+     */
+    _enableMapBoundaries() {
+        this.#isWorldBoundariesEnabled = true;
+    }
+
+    _initiateWebGlContext(debug = false) {
         const webgl = this.#canvas.getContext("webgl");
         if (webgl) {
             this.#drawContext = webgl;
             this.#webGlInterface = new _WebGlInterface_js__WEBPACK_IMPORTED_MODULE_4__.WebGlInterface(this.#drawContext, debug);
             
-            return Promise.all([this.#webGlInterface.initiateImagesDrawProgram(),
-                this.#webGlInterface.initPrimitivesDrawProgram()]);
+            return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
+                this.#webGlInterface._initPrimitivesDrawProgram()]);
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
         } 
     }
 
-    set isCleared(value) {
-        this.#isCleared = value;
-    }
-
-    get isCleared() {
-        return this.#isCleared;
-    }
-
-    clearWebGlContext() {
-        this.#webGlInterface.clearView();
+    _clearWebGlContext() {
+        this.#webGlInterface._clearView();
         this.#isCleared = true;
     }
 
-    bindTileImages(verticesBufferData, texturesBufferData,  atlasImage, image_name, drawMask, rotation, translation) {
-        this.#webGlInterface.bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, drawMask, rotation, translation);
+    _executeTileImagesDraw() {
+        return this.#webGlInterface._executeTileImagesDraw();
     }
 
-    bindTexture(x, y, width, height, texture, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
-        this.#webGlInterface.bindTexture(x, y, width, height, texture, image_name, rotation, translation, scale);
-    }
-
-    executeTileImagesDraw() {
-        return this.#webGlInterface.executeTileImagesDraw();
-    }
-
-    #clearTileMapPromises() {
-        this.#bindTileMapPromises = [];
-    }
-
-    setCanvasSize(width, height) {
+    _setCanvasSize(width, height) {
         this.canvas.width = width;
         this.canvas.height = height;
         if (this.#webGlInterface) {
-            this.#webGlInterface.fixCanvasSize(width, height);
+            this.#webGlInterface._fixCanvasSize(width, height);
         }
     }
 
-    sortRenderObjects() {
-        this.#renderObjects = this.renderObjects.sort((obj1, obj2) => obj2.zIndex - obj1.zIndex);
+    _sortRenderObjectsByZIndex() {
+        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.zIndex - obj1.zIndex);
     }
 
-    prepareBindRenderLayerPromises() {
-        for (const layer of this.renderLayers) {
+    _prepareBindRenderLayerPromises() {
+        for (const layer of this.#renderLayers) {
             this.#bindTileMapPromises.push(this.bindRenderLayerMethod(layer).catch((err) => {
                 (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
             }));
         }
     }
 
-    executeBindRenderLayerPromises() {
+    _executeBindRenderLayerPromises() {
         return Promise.allSettled(this.#bindTileMapPromises).then((bindResults) => {
             this.#clearTileMapPromises();
             return Promise.resolve(bindResults);
         });
     }
 
-    bindRenderLayerWM(renderLayer) {
+    _bindRenderLayerWM(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
-                tilesetImages = tilesets.map((tileset) => this.getImage(tileset.data.name)),
+                tilesetImages = tilesets.map((tileset) => this.#getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 setBoundaries = false;//, //renderLayer.setBoundaries,
@@ -4437,9 +4415,9 @@ class CanvasView {
                     
                 const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 
-                this.bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
+                this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 if (setBoundaries) {
-                    this.screenPageData.mergeBoundaries();
+                    this.screenPageData._mergeBoundaries();
                     renderLayer.setBoundaries = false;
                 }
                 resolve();
@@ -4447,18 +4425,18 @@ class CanvasView {
         });
     }
 
-    bindRenderLayer(renderLayer) {
+    _bindRenderLayer(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
-                tilesetImages = tilesets.map((tileset) => this.getImage(tileset.data.name)),
+                tilesetImages = tilesets.map((tileset) => this.#getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 tilewidth = dtwidth,
                 tileheight = dtheight,
                 setBoundaries = renderLayer.setBoundaries,
-                [ globalWorldW, globalWorldH ] = this.screenPageData.worldDimensions,
-                [ canvasW, canvasH ] = this.screenPageData.drawDimensions,
+                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
+                //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
                 [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset;
                 
             let boundariesRowsIndexes = new Map(),
@@ -4498,17 +4476,14 @@ class CanvasView {
                     verticesBufferData = [],
                     texturesBufferData = [];
                 if (setBoundaries) {
-                    const worldWidth = layerCols * dtwidth,
-                        worldHeight = layerRows * dtheight;
-    
-                    if (worldW !== worldWidth || worldH !== worldHeight) {
-                        (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one");
+                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                        (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                        this.screenPageData._setWorldDimensions(worldW, worldH);
                     }
                     
-
                     // boundaries cleanups every draw circle, we need to set world boundaries again
                     if (this.#isWorldBoundariesEnabled) {
-                        this.screenPageData.setMapBoundaries();
+                        this.screenPageData._setMapBoundaries();
                     }
                 }
 
@@ -4700,19 +4675,19 @@ class CanvasView {
                     mapIndex += skipColsRight;
                 }
                 if (verticesBufferData.length > 0 && texturesBufferData.length > 0) {
-                    this.bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
+                    this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 }
             }
             
             if (setBoundaries) {
                 const filtered = boundaries.filter(array => array);
-                this.screenPageData.addBoundariesArray(filtered);
+                this.screenPageData._addBoundariesArray(filtered);
             }
             resolve();
         });
     }
     
-    prepareBindRenderObjectPromises() {
+    _prepareBindRenderObjectPromises() {
         for (let i = 0; i < this.#renderObjects.length; i++) {
             const object = this.#renderObjects[i];
             if (object.isRemoved) {
@@ -4722,7 +4697,7 @@ class CanvasView {
             if (object.isAnimations) {
                 object._processActiveAnimations();
             }
-            const promise = this.bindRenderObject(object).catch((err) => {
+            const promise = this.#bindRenderObject(object).catch((err) => {
                 (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
                 return Promise.reject(err);
             });
@@ -4730,14 +4705,39 @@ class CanvasView {
         }
     }
 
-    bindRenderObject(renderObject) {
+    _prepareBindBoundariesPromise() {
+        this.#bindRenderObjectPromises.push(this.#drawBoundariesWebGl().catch((err) => {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
+        }));
+    }
+
+    _executeBindRenderObjectPromises () {
+        return Promise.allSettled(this.#bindRenderObjectPromises).then((bindResults) => {
+            this.#clearRenderObjectPromises();
+            return Promise.resolve(bindResults);
+        });
+    }
+
+    #getImage(key) {
+        return this.loader.getImage(key);
+    }
+
+    #bindTileImages(verticesBufferData, texturesBufferData,  atlasImage, image_name, drawMask, rotation, translation) {
+        this.#webGlInterface._bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, drawMask, rotation, translation);
+    }
+
+    #clearTileMapPromises() {
+        this.#bindTileMapPromises = [];
+    }
+
+    #bindRenderObject(renderObject) {
         return new Promise((resolve) => {
             const [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset,
                 x = renderObject.x - xOffset,
                 y = renderObject.y - yOffset;
 
             if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.IMAGE) {
-                const atlasImage = this.getImage(renderObject.key),
+                const atlasImage = this.#getImage(renderObject.key),
                     animationIndex = renderObject.imageIndex;
                 let imageX = 0,
                     imageY = 0;
@@ -4772,37 +4772,24 @@ class CanvasView {
                         texX2, texY1,
                         texX2, texY2
                     ];
-                this.#webGlInterface.bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y]);
+                this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y]);
                 //ctx.restore();
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.TEXT) {
-                this.#webGlInterface.bindText(x, y, renderObject);
+                this.#webGlInterface._bindText(x, y, renderObject);
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.CIRCLE) {
-                this.#webGlInterface.bindConus(renderObject, renderObject.rotation, [x, y]);
+                this.#webGlInterface._bindConus(renderObject, renderObject.rotation, [x, y]);
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.LINE) {
-                this.#webGlInterface.drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
+                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
             } else {
-                this.#webGlInterface.bindPrimitives(renderObject, renderObject.rotation, [x, y]);
+                this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }
             if (renderObject.boundaries && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                 const shiftX = x,// - renderObject.boundaries[0],
                     shiftY = y,// - renderObject.boundaries[1],
                 rotation = renderObject.rotation ? renderObject.rotation : 0;
-                this.#webGlInterface.drawPolygon(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                this.#webGlInterface._drawPolygon(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
             }
             return resolve();
-        });
-    }
-
-    prepareBindBoundariesPromise() {
-        this.#bindRenderObjectPromises.push(this.#drawBoundariesWebGl().catch((err) => {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
-        }));
-    }
-
-    executeBindRenderObjectPromises () {
-        return Promise.allSettled(this.#bindRenderObjectPromises).then((bindResults) => {
-            this.#clearRenderObjectPromises();
-            return Promise.resolve(bindResults);
         });
     }
 
@@ -4821,7 +4808,7 @@ class CanvasView {
                 linesArray.push(item[0], item[1]);
                 linesArray.push(item[2], item[3]);
             }
-            this.#webGlInterface.drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth);
+            this.#webGlInterface._drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth);
             resolve();
         });
     }
@@ -4849,6 +4836,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Conus object to draw
  * @augments DrawShapeObject
+ * @ignore
  */
 class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
@@ -4921,6 +4909,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Image object to draw
  * @augments DrawShapeObject
+ * @ignore
  */
 class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawShapeObject {
     /**
@@ -5105,6 +5094,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Line object to draw
  * @augments DrawShapeObject
+ * @ignore
  */
 class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
@@ -5160,7 +5150,9 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * Creates drawObjects instances.
+ * Creates drawObjects instances.<br>
+ * accessible via ScreenPage.draw <br>
+ * @see {@link ScreenPage} a part of ScreenPage
  */
 class DrawObjectFactory {
 
@@ -5267,6 +5259,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * @augments DrawShapeObject
+ * @ignore
  */
 class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
@@ -5313,6 +5306,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * @augments DrawShapeObject
+ * @ignore
  */
 class DrawRectObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
@@ -5387,6 +5381,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * A base draw object
+ * @ignore
  */
 class DrawShapeObject {
     #x;
@@ -5518,7 +5513,7 @@ class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {Boolean}
      */
     get isRemoved() {
         return this.#isRemoved;
@@ -5553,6 +5548,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * @augments DrawShapeObject
+ * @ignore
  */
 class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.DrawShapeObject {
     #font;
@@ -5717,7 +5713,7 @@ function Exception (code, message) {
 }
 
 function Warning (code, message) {
-    console.error(code, message);
+    console.warn(code, message);
 }
 
 /***/ }),
@@ -5960,8 +5956,13 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * Represents the page of the game,
- * contains and rule page views
+ * Represents the page of the game,<br>
+ * Register and holds CanvasView.<br>
+ * Contains pages logic.<br>
+ * Instances should be created and registered with System.registerPage() factory method
+ * 
+ * @see {@link System} instances of this class holds by the System class
+ * @hideconstructor
  */
 class ScreenPage {
     /**
@@ -6072,10 +6073,12 @@ class ScreenPage {
     }
 
     /**
+     * @tutorial screen_pages_stages
      * Custom logic for register stage
      */
     register() {}
     /**
+     * @tutorial screen_pages_stages
      * Custom logic for init stage
      */
     init() {}
@@ -6084,6 +6087,7 @@ class ScreenPage {
      */
     start() {}
     /**
+     * @tutorial screen_pages_stages
      * Custom logic for stop stage
      */
     stop() {}
@@ -6093,6 +6097,7 @@ class ScreenPage {
     resize() {}
 
     /**
+     * @tutorial assets_manager
      * @type {AssetsManager}
      */
     get loader() {
@@ -6124,6 +6129,7 @@ class ScreenPage {
      * Attach all canvas elements from the #views to container
      * @param {HTMLDivElement} container
      * @protected
+     * @ignore
      */
     _attachViewsToContainer(container) {
         for (const view of this.#views.values()) {
@@ -6146,8 +6152,8 @@ class ScreenPage {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
             const view = this.#views.get(canvasKey);
-            view.renderObject = renderObject;
-            view.sortRenderObjects();
+            view._renderObject = renderObject;
+            view._sortRenderObjectsByZIndex();
         }
     }
 
@@ -6165,7 +6171,7 @@ class ScreenPage {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
             const view = this.#views.get(canvasKey);
-            view.renderLayers = new _RenderLayer_js__WEBPACK_IMPORTED_MODULE_5__.RenderLayer(layerKey, tileMapKey, setBoundaries);
+            view._renderLayers = new _RenderLayer_js__WEBPACK_IMPORTED_MODULE_5__.RenderLayer(layerKey, tileMapKey, setBoundaries);
             if (setBoundaries && this.systemSettings.gameOptions.render.mapBoundariesEnabled) {
                 view._enableMapBoundaries();
             }
@@ -6251,6 +6257,7 @@ class ScreenPage {
      * previously added to a loader query
      * @returns {Promise}
      * @protected
+     * @ignore
      */
     _loadPageAssets() {
         return this.#loader.preload();
@@ -6259,6 +6266,7 @@ class ScreenPage {
     /** 
      * @returns {Promise}
      * @protected 
+     * @ignore
      */
     _registerPageAudio() {
         return this.audio._registerAllAudio(this.#loader);
@@ -6268,6 +6276,7 @@ class ScreenPage {
      * Start page render
      * @param {*} options 
      * @protected
+     * @ignore
      */
     _start(options) {
         this.#isActive = true;
@@ -6283,6 +6292,7 @@ class ScreenPage {
     /**
      * Stop page render
      * @protected
+     * @ignore
      */
     _stop() {
         this.#isActive = false;
@@ -6296,6 +6306,7 @@ class ScreenPage {
     /**
      * Resize event
      * @protected
+     * @ignore
      */
     _resize = () => {
         this.#setCanvasSize();
@@ -6318,13 +6329,10 @@ class ScreenPage {
     }
 
     #setWorldDimensions() {
-        const width = this.systemSettings.worldSize.width,
-            height = this.systemSettings.worldSize.height;
-        if (!width || !height || width <= 0 || height <= 0) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, "world size should be set");
-        } else {
-            this.screenPageData.setWorldDimensions(width, height);
-        }
+        const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
+            height = this.systemSettings.worldSize ? this.systemSettings.worldSize.height : 0;
+            
+        this.screenPageData._setWorldDimensions(width, height);
     }
 
     /**
@@ -6468,9 +6476,9 @@ class ScreenPage {
     #setCanvasSize() {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
-        this.screenPageData.setCanvasDimensions(canvasWidth, canvasHeight);
+        this.screenPageData._setCanvasDimensions(canvasWidth, canvasHeight);
         for (const view of this.#views.values()) {
-            view.setCanvasSize(canvasWidth, canvasHeight);
+            view._setCanvasSize(canvasWidth, canvasHeight);
         }
     }
 
@@ -6513,7 +6521,7 @@ class ScreenPage {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
             for (const view of this.#views.values()) {
-                viewPromises.push(view.initiateWebGlContext(this.systemSettings.gameOptions.debugWebGl));
+                viewPromises.push(view._initiateWebGlContext(this.systemSettings.gameOptions.debugWebGl));
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {
                 drawingResults.forEach((result) => {
@@ -6533,7 +6541,7 @@ class ScreenPage {
             minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
         let viewPromises = [];
         this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START);
-        this.screenPageData.clearBoundaries();
+        this.screenPageData._clearBoundaries();
         for (const [key, view] of this.#views.entries()) {
             viewPromises.push(this.#executeRender(key, view));
         }
@@ -6559,13 +6567,13 @@ class ScreenPage {
 
     #executeRender (key, view) {
         return new Promise((resolve, reject) => {
-            if (!view.isCleared) {
-                view.clearWebGlContext();
+            if (!view._isCleared) {
+                view._clearWebGlContext();
             }
-            if (view.renderLayers.length !== 0) {
-                view.prepareBindRenderLayerPromises();
+            if (view._renderLayers.length !== 0) {
+                view._prepareBindRenderLayerPromises();
             }
-            view.executeBindRenderLayerPromises()
+            view._executeBindRenderLayerPromises()
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {
@@ -6574,17 +6582,17 @@ class ScreenPage {
                             return reject(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
                         }
                     });
-                    return view.executeTileImagesDraw();
+                    return view._executeTileImagesDraw();
                 })
                 .then(() => {
                     if (view.renderObjects.length !== 0) {
                         //this.#checkCollisions(view.renderObjects);
-                        view.prepareBindRenderObjectPromises();
+                        view._prepareBindRenderObjectPromises();
                     }
                     if (key === _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.LAYERS.BOUNDARIES) {
-                        view.prepareBindBoundariesPromise();
+                        view._prepareBindBoundariesPromise();
                     }
-                    return view.executeBindRenderObjectPromises();
+                    return view._executeBindRenderObjectPromises();
                 })
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
@@ -6594,7 +6602,7 @@ class ScreenPage {
                         }
                     });
                     
-                    view.isCleared = false;
+                    view._isCleared = false;
                     resolve();
                 });
         });
@@ -6622,38 +6630,30 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * An interface for common views data such as
  * boundaries, world dimensions, options
+ * accessible via ScreenPage.screenPageData 
+ * @see {@link ScreenPage} a part of ScreenPage
+ * @hideconstructor
  */
 class ScreenPageData {
     #worldWidth;
     #worldHeight;
     #viewWidth;
     #viewHeight;
-    #drawWith;
-    #drawHeight;
-    #xOffset;
-    #yOffset;
+    #xOffset = 0;
+    #yOffset = 0;
     #centerX = 0;
     #centerY = 0;
     #rotate = 0;
     /**
      * @type {Array.<Number[]>}
      */
-    #boundaries;
-
-    /**
-     * @hideconstructor
-     */
-    constructor() {
-        this.#xOffset = 0;
-        this.#yOffset = 0;
-        this.#boundaries = [];
-    }
+    #boundaries = [];
 
     /**
      * Add a Boundaries line
      * @param {*} boundaries 
      */
-    addBoundaries(boundaries) {
+    #addBoundaries(boundaries) {
         this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
     }
 
@@ -6661,14 +6661,14 @@ class ScreenPageData {
      * Add array of boundaries lines
      * @param {Array} boundaries 
      */
-    addBoundariesArray(boundaries) {
+    _addBoundariesArray(boundaries) {
         this.#boundaries.push(...boundaries);
     }
 
     /**
      * Clear map boundaries
      */
-    clearBoundaries() {
+    _clearBoundaries() {
         this.#boundaries = [];
     }
 
@@ -6677,49 +6677,9 @@ class ScreenPageData {
      * @param {Number} width 
      * @param {Number} height 
      */
-    setWorldDimensions(width, height) {
+    _setWorldDimensions(width, height) {
         this.#worldWidth = width;
         this.#worldHeight = height;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set xOffset(x) {
-        if (!Number.isInteger(x)) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#xOffset = x;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set yOffset(y) {
-        if (!Number.isInteger(y)) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#yOffset = y;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set centerX(x) {
-        if (!Number.isInteger(x)) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#centerX = x;
-    }
-
-    /**
-     * @type {Number}
-     */
-    set centerY(y) {
-        if (!Number.isInteger(y)) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WRONG_TYPE_ERROR, "Only Integers are allowed");
-        }
-        this.#centerY = y;
     }
 
     set mapRotate(value) {
@@ -6731,39 +6691,29 @@ class ScreenPageData {
      * @param {Number} width 
      * @param {Number} height 
      */
-    setCanvasDimensions(width, height) {
+    _setCanvasDimensions(width, height) {
         this.#viewWidth = width;
         this.#viewHeight = height;
     }
 
     /**
-     * 
-     * @param {Number} width 
-     * @param {Number} height 
-     */
-    setDrawDimensions(width, height) {
-        this.#drawWith = width;
-        this.#drawHeight = height;
-    }
-
-    /**
      * Set map borders
      */
-    setMapBoundaries() {
+    _setMapBoundaries() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
         if (!w || !h) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
         }
-        this.addBoundaries({x1: 0, y1: 0, x2: w, y2: 0});
-        this.addBoundaries({x1: w, y1: 0, x2: w, y2: h});
-        this.addBoundaries({x1: w, y1: h, x2: 0, y2: h});
-        this.addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
+        this.#addBoundaries({x1: 0, y1: 0, x2: w, y2: 0});
+        this.#addBoundaries({x1: w, y1: 0, x2: w, y2: h});
+        this.#addBoundaries({x1: w, y1: h, x2: 0, y2: h});
+        this.#addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
     }
 
     /**
      * Merge same boundaries
      */
-    mergeBoundaries() {
+    _mergeBoundaries() {
         const boundaries = this.getBoundaries(),
             boundariesSet = new Set(boundaries);
         for (const line of boundariesSet.values()) {
@@ -6801,17 +6751,6 @@ class ScreenPageData {
      */
     getBoundaries() {
         return this.#boundaries;
-    }
-
-    /**
-     * @type {Array<Number>}
-     */
-    get drawDimensions() {
-        if (this.#drawWith && this.#drawHeight) {
-            return [ this.#drawWith, this.#drawHeight ];
-        } else {
-            return this.canvasDimensions;
-        }
     }
 
     /**
@@ -6866,20 +6805,20 @@ class ScreenPageData {
             if (x < mapWidth - halfScreenWidth) {
                 const newXOffset = x - halfScreenWidth;
                 if (newXOffset >= 0)
-                    this.xOffset = Math.round(newXOffset);
+                    this.#xOffset = Math.round(newXOffset);
             } else if (mapWidth > canvasWidth) {
                 const newXOffset = mapWidth - canvasWidth;
-                this.xOffset = Math.round(newXOffset);
+                this.#xOffset = Math.round(newXOffset);
             }
         }
         if (currentCenterY < y) {
             if (y < mapHeight - halfScreenHeight) {
                 const newYOffset = y - halfScreenHeight;
                 if (newYOffset >= 0)
-                    this.yOffset = Math.round(newYOffset);
+                    this.#yOffset = Math.round(newYOffset);
             } else if (mapHeight > canvasHeight) {
                 const newYOffset = mapHeight - canvasHeight;
-                this.yOffset = Math.round(newYOffset);
+                this.#yOffset = Math.round(newYOffset);
             }
         }
 
@@ -6903,20 +6842,20 @@ class ScreenPageData {
             if (x < mapWidth - halfScreenWidth) {
                 const newXOffset = x - halfScreenWidth;
                 if (newXOffset >= 0)
-                    this.xOffset = Math.round(newXOffset);
+                    this.#xOffset = Math.round(newXOffset);
             } else if (mapWidth > canvasWidth) {
                 const newXOffset = mapWidth - canvasWidth;
-                this.xOffset = Math.round(newXOffset);
+                this.#xOffset = Math.round(newXOffset);
             }
         }
         if (currentCenterY < y) {
             if (y < mapHeight - halfScreenHeight) {
                 const newYOffset = y - halfScreenHeight;
                 if (newYOffset >= 0)
-                    this.yOffset = Math.round(newYOffset);
+                    this.#yOffset = Math.round(newYOffset);
             } else if (mapHeight > canvasHeight) {
                 const newYOffset = mapHeight - canvasHeight;
-                this.yOffset = Math.round(newYOffset);
+                this.#yOffset = Math.round(newYOffset);
             }
         }
 
@@ -6951,15 +6890,16 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * Holder class for pages,
- * can register new pages
- * init and preload data for them
+ * A main app class, <br>
+ * Holder class for ScreenPage,<br>
+ * can register new ScreenPages,<br>
+ * init and preload data for them,<br>
  */
 class System {
     #registeredPages;
     #system;
     /**
-     * @param {SystemSettings} systemSettings 
+     * @param {SystemSettings} systemSettings - holds system settings
      * @param {HTMLDivElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
      */
     constructor(systemSettings, canvasContainer) {
@@ -6984,7 +6924,8 @@ class System {
     }
 
     /**
-     * Register page in a system and call init() stage
+     * A main factory method for create ScreenPage instances, <br>
+     * register them in a System and call ScreenPage.register() stage
      * @param {String} screenPageName
      * @param {ScreenPage} screen 
      */
@@ -7011,7 +6952,7 @@ class System {
     }
 
     /**
-     * 
+     * Preloads assets data for specific page
      * @param {String} screenPageName
      * @return {Promise}
      */
@@ -7040,10 +6981,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * An audio interface, 
- * to control all application audio,
- * hold and retrieve audio,
- * change volume 
+ * An audio interface, <br>
+ * controls all application audio,<br>
+ * holds and retrieves audio, changes volume<br> 
+ * accessible via ScreenPage.audio
+ * @see {@link ScreenPage} a part of ScreenPage
+ * @hideconstructor
  */
 class SystemAudioInterface {
     #volume = 0.5;
@@ -7144,7 +7087,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * Public interface for a system class methods
+ * Public interface for a System<br>
+ * Can be used to start/stop ScreenPage render, <br>
+ * And provides access to SystemSettings, SystemSocketConnection and SystemAudioInterface <br>
+ * accessible via ScreenPage.system and System.system
+ * @see {@link System} a part of System class instance
+ * @see {@link ScreenPage} a part of ScreenPage class instance
  */
 class SystemInterface {
     #systemSettings;
@@ -7589,23 +7537,11 @@ class WebGlInterface {
         this.#texCoordBuffer = this.#gl.createBuffer();
     }
 
-    get count() {
-        return this.#verticesNumber;
-    }
-
-    setProgram(name, program) {
-        this.#programs.set(name, program);
-    }
-
-    getProgram(name) {
-        return this.#programs.get(name);
-    }
-
-    fixCanvasSize(width, height) {
+    _fixCanvasSize(width, height) {
         this.#gl.viewport(0, 0, width, height);
     }
 
-    initiateImagesDrawProgram() {
+    _initiateImagesDrawProgram() {
         this.#vertexShaderSource = `
         attribute vec2 a_texCoord;
 
@@ -7686,10 +7622,10 @@ class WebGlInterface {
             gl_FragColor = color;
         }
         `;
-        const program = this.initProgram(),
+        const program = this.#initProgram(),
             programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES;
 
-        this.setProgram(programName, program);
+        this.#setProgram(programName, program);
 
         const gl = this.#gl,
             translationLocation = gl.getUniformLocation(program, "u_translation"),
@@ -7715,7 +7651,7 @@ class WebGlInterface {
         return Promise.resolve();
     }
 
-    initPrimitivesDrawProgram() {
+    _initPrimitivesDrawProgram() {
         this.#vertexShaderSource = `
         attribute vec2 a_position;
 
@@ -7788,9 +7724,9 @@ class WebGlInterface {
             gl_FragColor = u_color;
         }
         `;
-        const program = this.initProgram(),
+        const program = this.#initProgram(),
             programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES;
-        this.setProgram(programName, program);
+        this.#setProgram(programName, program);
 
         const gl = this.#gl,
             translationLocation = gl.getUniformLocation(program, "u_translation"),
@@ -7811,7 +7747,7 @@ class WebGlInterface {
         return Promise.resolve();
     }
     
-    bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
         return new Promise((resolve) => {
             const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
                 existingProgramData = this.#programsData.filter((data) => data.programName === programName);
@@ -7834,10 +7770,10 @@ class WebGlInterface {
         });
     }
     
-    executeTileImagesDraw() {
+    _executeTileImagesDraw() {
         return new Promise((resolve) => {
             const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
-                program = this.getProgram(programName),
+                program = this.#getProgram(programName),
                 { translationLocation,
                     rotationRotation,
                     scaleLocation,
@@ -7896,16 +7832,16 @@ class WebGlInterface {
                 gl.blendFunc(gl[data.drawMask[0]], gl[data.drawMask[1]]);
                 this.#verticesNumber = data.programVerticesNum;
                 // Upload the image into the texture.
-                this.executeGlslProgram();
+                this.#executeGlslProgram();
             }
 
             resolve();
         });
     }
 
-    bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { translationLocation,
                 rotationRotation,
                 scaleLocation,
@@ -7965,12 +7901,12 @@ class WebGlInterface {
         // make image transparent parts transparent
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // Upload the image into the texture.
-        this.executeGlslProgram();
+        this.#executeGlslProgram();
     }
 
-    bindText(x, y, renderObject) {
+    _bindText(x, y, renderObject) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { translationLocation,
                 rotationRotation,
                 scaleLocation,
@@ -8062,12 +7998,12 @@ class WebGlInterface {
         }
         gl.uniform1i(u_imageLocation, bind_number);
         //console.log("vertex attrib 1 :", gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING));
-        this.executeGlslProgram();
+        this.#executeGlslProgram();
     }
 
-    bindPrimitives(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindPrimitives(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { 
                 translationLocation,
                 rotationRotation,
@@ -8135,12 +8071,12 @@ class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
-        this.executeGlslProgram(0, null, true);
+        this.#executeGlslProgram(0, null, true);
     }
 
-    drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { resolutionUniformLocation,
                 colorUniformLocation,
                 positionAttributeLocation,
@@ -8187,12 +8123,12 @@ class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //    gl.disableVertexAttribArray(1);
         //}
-        this.executeGlslProgram(0, gl.LINES);
+        this.#executeGlslProgram(0, gl.LINES);
     }
 
-    drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { resolutionUniformLocation,
                 colorUniformLocation,
                 positionAttributeLocation,
@@ -8234,19 +8170,12 @@ class WebGlInterface {
         const colorArray = this.#rgbaToArray(color);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
 
-        this.executeGlslProgram(0, null);
+        this.#executeGlslProgram(0, null);
     }
 
-    #bindPolygon(vertices) {
-        this.#gl.bufferData(
-            this.#gl.ARRAY_BUFFER, 
-            new Float32Array(vertices),
-            this.#gl.STATIC_DRAW);
-    }
-
-    bindConus(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindConus(renderObject, rotation = 0, translation = [0, 0], scale = [1, 1]) {
         const programName = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
-            program = this.getProgram(programName),
+            program = this.#getProgram(programName),
             { 
                 translationLocation,
                 rotationRotation,
@@ -8306,7 +8235,31 @@ class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
-        this.executeGlslProgram(0, gl.TRIANGLE_FAN, true);
+        this.#executeGlslProgram(0, gl.TRIANGLE_FAN, true);
+    }
+
+    _clearView() {
+        const gl = this.#gl;
+        // Set clear color to black, fully opaque
+        this.#programsData = [];
+        gl.clearColor(0, 0, 0, 0);
+        // Clear the color buffer with specified clear color
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
+
+    #setProgram(name, program) {
+        this.#programs.set(name, program);
+    }
+
+    #getProgram(name) {
+        return this.#programs.get(name);
+    }
+
+    #bindPolygon(vertices) {
+        this.#gl.bufferData(
+            this.#gl.ARRAY_BUFFER, 
+            new Float32Array(vertices),
+            this.#gl.STATIC_DRAW);
     }
 
     #randomInt(range) {
@@ -8328,7 +8281,7 @@ class WebGlInterface {
                 x2, y2]), this.#gl.STATIC_DRAW);
     }
     
-    executeGlslProgram(offset = 0, primitiveType, resetEquation) {
+    #executeGlslProgram(offset = 0, primitiveType, resetEquation) {
         const primitiveTypeValue = primitiveType ? primitiveType : this.#gl.TRIANGLES,
             gl = this.#gl;
             
@@ -8346,7 +8299,7 @@ class WebGlInterface {
         }
     }
 
-    initProgram() {
+    #initProgram() {
         const gl = this.#gl,
             program = gl.createProgram();
 
@@ -8359,15 +8312,6 @@ class WebGlInterface {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
         }
         return program;
-    }
-
-    clearView() {
-        const gl = this.#gl;
-        // Set clear color to black, fully opaque
-        this.#programsData = [];
-        gl.clearColor(0, 0, 0, 0);
-        // Clear the color buffer with specified clear color
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
     #createCanvasText(renderObject) {
@@ -8484,6 +8428,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
 
 
+/**
+ * Settings object, should be passed as a parameter to System.constructor()
+ */
 const SystemSettings = {
     mode: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.MODE.DEBUG,
     
