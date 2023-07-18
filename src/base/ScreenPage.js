@@ -650,7 +650,7 @@ export class ScreenPage {
                     return view._executeTileImagesDraw();
                 })
                 .then(() => {
-                    if (view._renderObjects.length !== 0) {
+                    if (view.renderObjects.length !== 0) {
                         //this.#checkCollisions(view.renderObjects);
                         view._prepareBindRenderObjectPromises();
                     }

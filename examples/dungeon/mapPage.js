@@ -50,6 +50,12 @@ export class MapPage extends ScreenPage {
 
     start() {
         this.registerEventListeners();
+        setTimeout(() => {
+            // fix width height after render started, and sizes corrected
+            const [w, h] = this.screenPageData.worldDimensions;
+            this.shadowRect.width = w;
+            this.shadowRect.height = h;
+        },1000);
     }
 
     stop() {

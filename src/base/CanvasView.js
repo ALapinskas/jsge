@@ -195,7 +195,7 @@ export class CanvasView {
     }
 
     _prepareBindRenderLayerPromises() {
-        for (const layer of this.renderLayers) {
+        for (const layer of this.#renderLayers) {
             this.#bindTileMapPromises.push(this.bindRenderLayerMethod(layer).catch((err) => {
                 Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
             }));

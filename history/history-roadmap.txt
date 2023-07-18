@@ -21,6 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.0.52:
+    f: CanvasView and ScreenPage issues
+    f: examples/dungeon overlay size
+
 0.0.51:
     r: changed setting world detentions behavior
     r: refactored encapsulation
