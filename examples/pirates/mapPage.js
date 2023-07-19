@@ -53,7 +53,7 @@ export class MapPage extends ScreenPage {
         this.windDirectionPointer.y = 50;
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.windDirectionPointer);
 
-        this.player = this.draw.image(50, 200, 33, 57, SHIPS_KEY, 0, [{x:0,y:-30}, {x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
+        this.player = this.draw.image(100, 300, 33, 57, SHIPS_KEY, 0, [{x:0,y:-30}, {x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
     }
 
@@ -132,9 +132,6 @@ export class MapPage extends ScreenPage {
     };
 
     stepMove(person, direction, force) {
-        //if (this.performanceS) {
-        //    console.log(`step time: ,  ${performance.now() - this.performanceS}`);
-        //}
         const forceToUse = !force || force > 1 ? 1 : force,
             movementForce = forceToUse * 1,
             newCoordX = person.x + movementForce * Math.cos(direction),
@@ -145,7 +142,7 @@ export class MapPage extends ScreenPage {
         if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
-            //this.screenPageData.centerCameraPosition(newCoordX, newCoordY);
+            this.screenPageData.centerCameraPosition(newCoordX, newCoordY);
         }
     }
     

@@ -39,7 +39,7 @@ export class CanvasView {
     /**
      * @type {boolean}
      */
-    #isStatic
+    #isOffsetTurnedOff
     /**
      * @type {boolean}
      */
@@ -79,12 +79,12 @@ export class CanvasView {
      */
     #bindRenderObjectPromises;
 
-    constructor(name, systemSettings, screenPageData, loader, isStatic) {
+    constructor(name, systemSettings, screenPageData, loader, isOffsetTurnedOff) {
         this.#canvas = document.createElement("canvas");
         this.#canvas.id = name;
         this.#canvas.style.position = "absolute";
         this.#isCleared = false;
-        this.#isStatic = isStatic;
+        this.#isOffsetTurnedOff = isOffsetTurnedOff;
 
         this.#screenPageData = screenPageData;
         this.#systemSettings = systemSettings;
@@ -266,7 +266,7 @@ export class CanvasView {
                 setBoundaries = renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
                 //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
-                [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset;
+                [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset;
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [];
@@ -561,7 +561,7 @@ export class CanvasView {
 
     #bindRenderObject(renderObject) {
         return new Promise((resolve) => {
-            const [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset,
+            const [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
                 x = renderObject.x - xOffset,
                 y = renderObject.y - yOffset;
 

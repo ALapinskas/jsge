@@ -21,6 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.0.53:
+    f: examples: pirates fixed top white line
+    r: CanvasView.isStatic -> isOffsetTurnOff
+
 0.0.52:
     f: CanvasView and ScreenPage issues
     f: examples/dungeon overlay size

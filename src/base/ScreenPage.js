@@ -180,11 +180,11 @@ export class ScreenPage {
      * Creates new canvas layer
      * and set it to the #views
      * @param {string} name
-     * @param {boolean} [isStatic = false] - determines if offset is affected on this layer or not
+     * @param {boolean} [isOffsetTurnedOff = false] - determines if offset is affected on this layer or not
      */
-    createCanvasView = (name, isStatic = false) => {
+    createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
-            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader, isStatic);
+            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader, isOffsetTurnedOff);
             this.#views.set(name, newView);
         } else
             Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS);

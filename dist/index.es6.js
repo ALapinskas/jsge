@@ -4210,7 +4210,7 @@ class CanvasView {
     /**
      * @type {boolean}
      */
-    #isStatic
+    #isOffsetTurnedOff
     /**
      * @type {boolean}
      */
@@ -4250,12 +4250,12 @@ class CanvasView {
      */
     #bindRenderObjectPromises;
 
-    constructor(name, systemSettings, screenPageData, loader, isStatic) {
+    constructor(name, systemSettings, screenPageData, loader, isOffsetTurnedOff) {
         this.#canvas = document.createElement("canvas");
         this.#canvas.id = name;
         this.#canvas.style.position = "absolute";
         this.#isCleared = false;
-        this.#isStatic = isStatic;
+        this.#isOffsetTurnedOff = isOffsetTurnedOff;
 
         this.#screenPageData = screenPageData;
         this.#systemSettings = systemSettings;
@@ -4437,7 +4437,7 @@ class CanvasView {
                 setBoundaries = renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
                 //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
-                [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset;
+                [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset;
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [];
@@ -4732,7 +4732,7 @@ class CanvasView {
 
     #bindRenderObject(renderObject) {
         return new Promise((resolve) => {
-            const [ xOffset, yOffset ] = this.#isStatic === true ? [0,0] : this.screenPageData.worldOffset,
+            const [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
                 x = renderObject.x - xOffset,
                 y = renderObject.y - yOffset;
 
@@ -6115,11 +6115,11 @@ class ScreenPage {
      * Creates new canvas layer
      * and set it to the #views
      * @param {string} name
-     * @param {boolean} [isStatic = false] - determines if offset is affected on this layer or not
+     * @param {boolean} [isOffsetTurnedOff = false] - determines if offset is affected on this layer or not
      */
-    createCanvasView = (name, isStatic = false) => {
+    createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
-            const newView = new _CanvasView_js__WEBPACK_IMPORTED_MODULE_6__.CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader, isStatic);
+            const newView = new _CanvasView_js__WEBPACK_IMPORTED_MODULE_6__.CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader, isOffsetTurnedOff);
             this.#views.set(name, newView);
         } else
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
