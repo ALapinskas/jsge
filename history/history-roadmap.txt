@@ -21,9 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
-0.0.53:
+0.0.6:
     f: examples: pirates fixed top white line
-    r: CanvasView.isStatic -> isOffsetTurnOff
+    r: CanvasView.isStatic -> isOffsetTurnedOff
+    r: _bindRenderLayer() cut right/bottom offscreen tiles
 
 0.0.52:
     f: CanvasView and ScreenPage issues

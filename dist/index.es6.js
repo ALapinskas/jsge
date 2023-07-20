@@ -4436,7 +4436,7 @@ class CanvasView {
                 tileheight = dtheight,
                 setBoundaries = renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
-                //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
+                [ canvasW, canvasH ] = this.screenPageData.canvasDimensions,
                 [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset;
                 
             let boundariesRowsIndexes = new Map(),
@@ -4469,10 +4469,11 @@ class CanvasView {
                     moduleLeft = xOffset % tilewidth,
                     skipRowsTop = yOffset !== 0 ? Math.floor(yOffset / tileheight) : 0,
                     skipColsLeft = xOffset !== 0 ? Math.floor(xOffset / tilewidth) : 0,
-                    skipColsRight = Math.floor((worldW - (xOffset + worldW)) / tilewidth),
-                    endColLeft = Math.ceil((xOffset + worldW ) / tilewidth),
-                    endRowTop = Math.ceil((yOffset + worldH ) / tileheight),
-                    
+                    // sometimes canvasW/H may be bigger than world itself
+                    screenRows = worldH > canvasH ? Math.ceil(canvasH / tileheight) + 1 : layerRows,
+                    screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
+                    skipColsRight = layerCols - screenCols - skipColsLeft,
+
                     verticesBufferData = [],
                     texturesBufferData = [];
                 if (setBoundaries) {
@@ -4489,14 +4490,11 @@ class CanvasView {
 
                 let mapIndex = skipRowsTop * layerCols;
 
-                const rowsEnd = endRowTop - skipRowsTop,
-                    colsEnd = endColLeft - skipColsLeft;
-
-                for (let row = 0; row < rowsEnd; row++) {
+                for (let row = 0; row < screenRows; row++) {
                     mapIndex += skipColsLeft;
                     let currentRowIndexes = new Map();
 
-                    for (let col = 0; col < colsEnd; col++) {
+                    for (let col = 0; col < screenCols; col++) {
                         let tile = layerData.data[mapIndex];
                         //if (tile !== 0)
                         if (tile >= firstgid && (nextgid === null || tile < nextgid)) {
