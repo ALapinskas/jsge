@@ -7,6 +7,7 @@ import { RenderLayer } from "./RenderLayer.js";
 import { CanvasView } from "./CanvasView.js";
 import { System } from "./System.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
+import { DrawCircleObject } from "./DrawCircleObject.js";
 import { DrawConusObject } from "./DrawConusObject.js";
 import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawLineObject } from "./DrawLineObject.js";
@@ -31,7 +32,7 @@ import { Vector, Vertex } from "./Primitives.js";
  */
 export class ScreenPage {
     /**
-     * @type {String}
+     * @type {string}
      */
     #name;
     /**
@@ -63,7 +64,7 @@ export class ScreenPage {
      */
     #drawObjectFactory = new DrawObjectFactory();
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */
     #tempFPStime;
     /**
@@ -85,7 +86,7 @@ export class ScreenPage {
 
     /**
      * 
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param  {...any} eventParams 
      */
     emit = (eventName, ...eventParams) => {
@@ -96,7 +97,7 @@ export class ScreenPage {
 
     /**
      * 
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -106,7 +107,7 @@ export class ScreenPage {
 
     /**
      * 
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -116,7 +117,7 @@ export class ScreenPage {
 
     /**
      * Register stage
-     * @param {String} name
+     * @param {string} name
      * @param {SystemInterface} system 
      * @protected
      */
@@ -204,10 +205,10 @@ export class ScreenPage {
 
     /**
      * Add render object to the view
-     * @param {String} canvasKey 
+     * @param {string} canvasKey 
      * @param { DrawConusObject | DrawImageObject | 
      *          DrawLineObject | DrawPolygonObject | 
-     *          DrawRectObject | DrawShapeObject | 
+     *          DrawRectObject | DrawCircleObject | 
      *          DrawTextObject } renderObject 
      */
     addRenderObject = (canvasKey, renderObject) => {
@@ -224,10 +225,10 @@ export class ScreenPage {
 
     /**
      * Add render layer to the view
-     * @param {String} canvasKey 
-     * @param {String} layerKey 
-     * @param {String} tileMapKey 
-     * @param {Boolean} setBoundaries 
+     * @param {string} canvasKey 
+     * @param {string} layerKey 
+     * @param {string} tileMapKey 
+     * @param {boolean} setBoundaries 
      */
     addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries) => {
         if (!canvasKey) {
@@ -245,7 +246,7 @@ export class ScreenPage {
 
     /**
      * Determines if this page render is Active or not
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isActive() {
         return this.#isActive;
@@ -253,7 +254,7 @@ export class ScreenPage {
 
     /**
      * Determines if this page is initialized or not
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isInitiated() {
         return this.#isInitiated;
@@ -261,7 +262,7 @@ export class ScreenPage {
 
     /**
      * Current page name
-     * @type {String}
+     * @type {string}
      */
     get name () {
         return this.#name;
@@ -269,7 +270,7 @@ export class ScreenPage {
 
     /**
      * Determines if all added files was loaded or not
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isAllFilesLoaded = () => {
         return this.#loader.filesWaitingForUpload === 0;
@@ -305,7 +306,7 @@ export class ScreenPage {
 
     /**
      * @method
-     * @param {String} key 
+     * @param {string} key 
      * @returns {CanvasView}
      */
     getView = (key) => {
@@ -400,38 +401,49 @@ export class ScreenPage {
         this.screenPageData._setWorldDimensions(width, height);
     }
 
-    /**
-     * 
-     * @param {Number} x 
-     * @param {Number} y 
-     * @returns {boolean}
-     */
-    #isPointToBoundariesCollision(x, y) {
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-            len = mapObjects.length;
+    #isPolygonToObjectsCollision(x, y, polygonVertices, polygonRotation, objects) {
+        const len = objects.length;
+        let collisions = [];
+        for (let i = 0; i < len; i++) {
+            const mapObject = objects[i],
+                drawMapObjectType = mapObject.type,
+                vertices = mapObject.vertices;
 
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i],
-                object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                };
-            if (isPointLineIntersect({x: x - mapOffsetX, y: y - mapOffsetY}, object)) {
-                return true;
+            let coll;
+            
+            switch(drawMapObjectType) {
+                case CONST.DRAW_TYPE.TEXT:
+                case CONST.DRAW_TYPE.RECTANGLE:
+                case CONST.DRAW_TYPE.CONUS:
+                case CONST.DRAW_TYPE.IMAGE:
+                    coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
+                    break;
+                case CONST.DRAW_TYPE.CIRCLE:
+                    console.warn("isObjectCollision.circle check is not implemented yet!");
+                    break;
+                case CONST.DRAW_TYPE.LINE:
+                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                    break;
+                default:
+                    console.warn("unknown object type!");
+            }
+            if (coll) {
+                collisions.push(coll);
             }
         }
-        return false;
+        if (collisions.length > 0) {
+            return this.#takeTheClosestCollision(collisions);
+        } else {
+            return null;
+        }
     }
 
     /**
-     * @param {Number} x
-     * @param {Number} y
+     * @param {number} x
+     * @param {number} y
      * @param {Array<Vertex>} polygon
-     * @param {Number} rotation 
-     * @returns {boolean}
+     * @param {number} rotation 
+     * @returns {{{x:number, y:number, p:number}} | boolean}
      */
     #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
         //console.log("angle: ", rotation);
@@ -463,9 +475,49 @@ export class ScreenPage {
         return false;
     }
 
+    #takeTheClosestCollision(collisions) {
+        return collisions.sort((a,b) => a.p < b.p)[0];
+    }
+
+    #isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject) {
+        const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            mapObjXWithOffset = mapObject.x - mapOffsetX,
+            mapObjYWithOffset = mapObject.y - mapOffsetY,
+            mapObjVertices = mapObject.vertices, 
+            mapObjRotation = mapObject.rotation,
+            polygonWithOffsetAndRotation = polygonVertices.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, polygonRotation))),
+            len = mapObjVertices.length;
+        //console.log("map object check:");
+        //console.log(mapObject);
+        for (let i = 0; i < len; i+=1) {
+            const mapObjFirstVertex = mapObjVertices[i];
+            let mapObjNextVertex = mapObjVertices[i + 1];
+            if (!mapObjNextVertex) {
+                mapObjNextVertex = mapObjVertices[0];
+            }
+            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                edge = {
+                    x1: vertex[0],
+                    y1: vertex[1],
+                    x2: nextVertex[0],
+                    y2: nextVertex[1]
+                },
+                intersect = isPolygonLineIntersect(polygonWithOffsetAndRotation, edge);
+            if (intersect) {
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
     #calculateShiftedVertexPos(vertex, centerX, centerY, rotation) {
-        const vector = new Vector(0, 0, vertex.x, vertex.y),
-            vertexAngle = angle_2points(0, 0, vertex.x, vertex.y),
+        const vector = new Vector(0, 0, vertex[0], vertex[1]),
+            vertexAngle = angle_2points(0, 0, vertex[0], vertex[1]),
             len = vector.length;
         //console.log("coords without rotation: ");
         //console.log(x + vertex.x);
@@ -474,29 +526,57 @@ export class ScreenPage {
         //console.log("angle: ", rotation);
         const newX = centerX + (len * Math.cos(rotation + vertexAngle)),
             newY = centerY + (len * Math.sin(rotation + vertexAngle));
-        return { x: newX, y: newY };
+        return [newX, newY];
     }
 
     /**
      * 
-     * @param {Number} x 
-     * @param {Number} y 
+     * @param {number} x 
+     * @param {number} y 
      * @param {DrawShapeObject} drawObject 
+     * @returns {{x:number, y:number, p:number} | boolean}
      */
     isBoundariesCollision = (x, y, drawObject) => {
-        const drawObjectType = drawObject.type;
+        const drawObjectType = drawObject.type,
+            vertices = drawObject.vertices;
         switch(drawObjectType) {
-            case CONST.DRAW_TYPE.RECTANGLE:
-                return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
-            case CONST.DRAW_TYPE.CIRCLE:
-            case CONST.DRAW_TYPE.LINE:
             case CONST.DRAW_TYPE.TEXT:
+            case CONST.DRAW_TYPE.RECTANGLE:
+            case CONST.DRAW_TYPE.CONUS:
+            case CONST.DRAW_TYPE.IMAGE:
+                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
+            case CONST.DRAW_TYPE.CIRCLE:
+                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            case CONST.DRAW_TYPE.LINE:
+                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
             default:
-                if (drawObject.boundaries && drawObject.boundaries.length > 0) {
-                    return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
-                 } else {
-                     return this.#isPointToBoundariesCollision(x, y);
-                 }
+                Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        }
+    }
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawShapeObject} drawObject
+     * @param {Array<DrawShapeObject>} objects - objects array to check
+     * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
+     */
+    isObjectsCollision = (x, y, drawObject, objects) => {
+        const drawObjectType = drawObject.type,
+            drawObjectBoundaries = drawObject.boundaries;
+        switch(drawObjectType) {
+            case CONST.DRAW_TYPE.TEXT:
+            case CONST.DRAW_TYPE.RECTANGLE:
+            case CONST.DRAW_TYPE.CONUS:
+            case CONST.DRAW_TYPE.IMAGE:
+                return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+            case CONST.DRAW_TYPE.CIRCLE:
+                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            case CONST.DRAW_TYPE.LINE:
+                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            default:
+                Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
     }
 
@@ -666,6 +746,8 @@ export class ScreenPage {
                             this.#isActive = false;
                         }
                     });
+
+                    view._postRenderActions();
                     
                     view._isCleared = false;
                     resolve();

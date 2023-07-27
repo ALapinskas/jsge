@@ -521,9 +521,9 @@ export class CanvasView {
                 this.#renderObjects.splice(i, 1);
                 i--;
             }
-            if (object.isAnimations) {
-                object._processActiveAnimations();
-            }
+            //if (object.isAnimations) {
+            //    object._processActiveAnimations();
+            //}
             const promise = this.#bindRenderObject(object).catch((err) => {
                 Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
                 return Promise.reject(err);
@@ -543,6 +543,15 @@ export class CanvasView {
             this.#clearRenderObjectPromises();
             return Promise.resolve(bindResults);
         });
+    }
+
+    _postRenderActions() {
+        for (let i = 0; i < this.#renderObjects.length; i++) {
+            const object = this.#renderObjects[i];
+            if (object.isAnimations) {
+                object._processActiveAnimations();
+            }
+        }
     }
 
     #getImage(key) {
@@ -603,10 +612,10 @@ export class CanvasView {
                 //ctx.restore();
             } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {
                 this.#webGlInterface._bindText(x, y, renderObject);
-            } else if (renderObject.type === CONST.DRAW_TYPE.CIRCLE) {
+            } else if (renderObject.type === CONST.DRAW_TYPE.CIRCLE || renderObject.type === CONST.DRAW_TYPE.CONUS) {
                 this.#webGlInterface._bindConus(renderObject, renderObject.rotation, [x, y]);
             } else if (renderObject.type === CONST.DRAW_TYPE.LINE) {
-                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
+                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth, renderObject.rotation, [x, y]);
             } else {
                 this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }

@@ -1,24 +1,24 @@
 import { AnimationEventImageObj } from "./AnimationEventImageObj.js";
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-
+import { utils } from "../index.js"
 /**
  * Image object to draw
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawImageObject extends DrawShapeObject {
     /**
-     * @type {Number}
+     * @type {number}
      */
     #w;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #h;
     /**
      * Image sprite key
-     * @type {String}
+     * @type {string}
      */
     #key;
     /**
@@ -26,17 +26,17 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #emitter;
     /**
-     * @type {Map<String, AnimationEventImageObj>}
+     * @type {Map<string, AnimationEventImageObj>}
      */
     #animations;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #imageIndex;
     /**
-     * @type {Array<Vertex> | null}
+     * @type {Array<Array<number>>}
      */
-    #boundaries = null;
+    #vertices = null;
 
     /**
      * @hideconstructor
@@ -47,20 +47,20 @@ export class DrawImageObject extends DrawShapeObject {
         this.#emitter = new EventTarget();
         this.#animations = new Map();
         this.#imageIndex = imageIndex;
-        this.#boundaries = boundaries;
         this.#w = width;
         this.#h = height;
+        this.#vertices = boundaries ? this._convertVerticesArray(boundaries) : this._calculateRectVertices(width, height);
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get width() {
         return this.#w;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get height() {
         return this.#h;
@@ -76,7 +76,7 @@ export class DrawImageObject extends DrawShapeObject {
 
     /**
      * A key should match an image loaded through AssetsManager
-     * @type {String}
+     * @type {string}
      */
     get key() {
         return this.#key;
@@ -84,7 +84,7 @@ export class DrawImageObject extends DrawShapeObject {
 
     /**
      * Current image index
-     * @type {Number}
+     * @type {number}
      */
     get imageIndex() {
         return this.#imageIndex;
@@ -92,19 +92,27 @@ export class DrawImageObject extends DrawShapeObject {
 
     /**
      * Determines if image is animated or not
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isAnimations() {
         return this.#animations.size > 0;
     }
 
      /**
-     * @type {Array<Vertex>}
+     * @deprecated - use .vertices instead 
+     * @type {Array<Array<number>>}
      */
     get boundaries() {
-        return this.#boundaries;
+        return this.#vertices;
     }
 
+    get vertices() {
+        return this.#vertices;
+    }
+
+    /**
+     * @ignore
+     */
     _processActiveAnimations() {
         for (let animationEvent of this.#animations.values()) {
             if (animationEvent.isActive) {
@@ -116,7 +124,7 @@ export class DrawImageObject extends DrawShapeObject {
 
     /**
      * Emit event
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param  {...any} eventParams 
      */
     emit(eventName, ...eventParams) {
@@ -127,7 +135,7 @@ export class DrawImageObject extends DrawShapeObject {
 
     /**
      * Subscribe
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -137,7 +145,7 @@ export class DrawImageObject extends DrawShapeObject {
 
     /**
      * Unsubscribe
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -147,13 +155,28 @@ export class DrawImageObject extends DrawShapeObject {
 
     /**
      * Adds image animations
-     * @param { String } eventName -animation name
-     * @param { Number[] } animationSpriteIndexes - animation image indexes
+     * @param { string } eventName -animation name
+     * @param { Array<number> } animationSpriteIndexes - animation image indexes
+     * @param { boolean } [isRepeated = false] - animation is circled or not, circled animation could be stopped only with stopRepeatedAnimation();
      */
-    addAnimation (eventName, animationSpriteIndexes) {
-        const animationEvent = new AnimationEventImageObj(eventName, animationSpriteIndexes);
+    addAnimation (eventName, animationSpriteIndexes, isRepeated) {
+        const animationEvent = new AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated);
         this.#animations.set(eventName, animationEvent);
-        this.addEventListener(eventName, animationEvent.activateAnimation);
+        this.addEventListener(eventName, this.#activateAnimation);
+    }
+
+    #activateAnimation = (event) => {
+        const animationEvent = this.#animations.get(event.type);
+        animationEvent.activateAnimation();
+        this.#imageIndex = animationEvent.currentSprite;
+    } 
+
+    /**
+     *
+     * @param {string} eventName - animation name
+     */
+    stopRepeatedAnimation (eventName) {
+        this.#animations.get(eventName).deactivateAnimation();
     }
 
     /**
@@ -162,8 +185,14 @@ export class DrawImageObject extends DrawShapeObject {
     removeAllAnimations() {
         for (let [eventName, animationEvent] of this.#animations.entries()) {
             this.removeEventListener(eventName, animationEvent.activateAnimation);
+            animationEvent.deactivateAnimation();
         }
         this.#animations.clear();
-        this.#animations - undefined;
+        this.#animations = undefined;
+    }
+
+    destroy() {
+        this.removeAllAnimations();
+        super.destroy();
     }
 }

@@ -16,11 +16,11 @@ export class MapPage extends ScreenPage {
 
     register() {
         this.tilemapKey = "gameMapTileset";
-        this.loader.addTileMap(this.tilemapKey, "/racing/map.tmj");
-        this.loader.addImage(BLACK_CAR_KEY, "/racing/car_black_small_12.png");
-        this.loader.addAudio(AUDIO_GEAR_UP, "/racing/audio/engine_up.mp3");
-        this.loader.addAudio(AUDIO_CAR_CRUSH, "/racing/audio/car_crash.mp3");
-        this.loader.addAudio(AUDIO_GEAR_DOWN, "/racing/audio/car_rearmove.mp3");
+        this.loader.addTileMap(this.tilemapKey, "./racing/map.tmj");
+        this.loader.addImage(BLACK_CAR_KEY, "./racing/car_black_small_12.png");
+        this.loader.addAudio(AUDIO_GEAR_UP, "./racing/audio/engine_up.mp3");
+        this.loader.addAudio(AUDIO_CAR_CRUSH, "./racing/audio/car_crash.mp3");
+        this.loader.addAudio(AUDIO_GEAR_DOWN, "./racing/audio/car_rearmove.mp3");
 
         this.speed = 0;
         this.movingInterval = null;

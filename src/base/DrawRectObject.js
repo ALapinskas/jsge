@@ -3,19 +3,19 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawRectObject extends DrawShapeObject {
     /**
-     * @type {Number}
+     * @type {number}
      */
     #w;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #h;
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<{x:number, y:number}>}
      */
     #vertices;
 
@@ -26,23 +26,24 @@ export class DrawRectObject extends DrawShapeObject {
         super(CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor, subtractProgram);
         this.#w = w;
         this.#h = h;
+        this.#vertices = this._calculateRectVertices(w,h);
     }
 
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<{x:number, y:number}>}
      */
     get vertices () {
         return this.#vertices;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get width() {
         return this.#w;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get height() {
         return this.#h;

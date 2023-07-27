@@ -4,7 +4,7 @@ import { CONST } from "../constants.js";
 
 /**
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawTextObject extends DrawShapeObject {
     #font;
@@ -12,7 +12,6 @@ export class DrawTextObject extends DrawShapeObject {
     #textBaseline;
     #fillStyle;
     #strokeStyle;
-    #direction;
     #text;
     #textMetrics;
 
@@ -37,8 +36,13 @@ export class DrawTextObject extends DrawShapeObject {
         return new Rectangle(this.x, this.y - height, width, height);
     }
 
+    get vertices() {
+        const bb = this.boundariesBox;
+        return this._calculateRectVertices(bb.width, bb.height);
+    }
+
     /**
-     * @type {String}
+     * @type {string}
      */
     get text() {
         return this.#text;
@@ -49,7 +53,7 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get font() {
         return this.#font;
@@ -60,7 +64,7 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get textAlign() {
         return this.#textAlign;
@@ -71,7 +75,7 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get textBaseline() {
         return this.#textBaseline;
@@ -82,7 +86,7 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get fillStyle() {
         return this.#fillStyle;
@@ -93,7 +97,7 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get strokeStyle() {
         return this.#strokeStyle;
@@ -104,7 +108,7 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get textMetrics() {
         return this.#textMetrics;

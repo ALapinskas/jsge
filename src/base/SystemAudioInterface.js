@@ -16,7 +16,7 @@ export class SystemAudioInterface {
 
     /**
      * Original track
-     * @param {String} name 
+     * @param {string} name 
      * @returns {HTMLAudioElement}
      */
     getAudio(name) {
@@ -31,7 +31,7 @@ export class SystemAudioInterface {
 
     /**
      * Clone of original track
-     * @param {String} name 
+     * @param {string} name 
      * @returns {HTMLAudioElement}
      */
     getAudioCloned(name) {
@@ -47,7 +47,7 @@ export class SystemAudioInterface {
 
     /**
      * Used to register audio in system after downloading
-     * @param {String} name 
+     * @param {string} name 
      * @param {AssetsManager} loader 
      */
     registerAudio(name, loader) {
@@ -73,7 +73,7 @@ export class SystemAudioInterface {
     /**
      * Used to set or get audio volume, 
      * value should be from 0 to 1
-     * @type {Number}
+     * @type {number}
      */
     get volume() {
         return this.#volume;

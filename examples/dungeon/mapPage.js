@@ -5,13 +5,18 @@ const angle_2points = utils.angle_2points;
 
 const OVERLAY_LAYER_KEY = "overlay";
 
+const ANIMATION_FIREMOVE = "firemove",
+    ANIMATION_REACHWALL = "reachwall";
+
 export class MapPage extends ScreenPage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
+    #enemies = [];
 
     register() {
         this.tilemapKey = "gameMapTileset";
-        this.loader.addTileMap(this.tilemapKey, "/dungeon/map.tmj");
-
+        this.fireImagesKey = "fireImages";
+        this.loader.addTileMap(this.tilemapKey, "./dungeon/map.tmj");
+        this.loader.addImage(this.fireImagesKey, "./dungeon/images/All_Fire_Bullet_Pixel_16x16_00.png");
         this.speed = 0;
         this.movingInterval = null;
     }
@@ -46,6 +51,17 @@ export class MapPage extends ScreenPage {
         this.addRenderObject(OVERLAY_LAYER_KEY, this.player);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.fireRange);
+
+
+        const monster1 = this.draw.image(255,250, 16, 16, "tilemap_packed", 108);
+        const monster2 = this.draw.image(255,420, 16, 16, "tilemap_packed", 109);
+        const monster3 = this.draw.image(285,420, 16, 16, "tilemap_packed", 110);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, monster1);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, monster2);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, monster3);
+        this.#enemies.push(monster1);
+        this.#enemies.push(monster2);
+        this.#enemies.push(monster3);
     }
 
     start() {
@@ -84,10 +100,12 @@ export class MapPage extends ScreenPage {
 
     #registerMouseListeners() {
         document.addEventListener("mousemove", this.#mouseMoveAction);
+        document.addEventListener("click", this.#mouseClickAction);
     }
 
     #unregisterMouseListeners() {
         document.removeEventListener("mousemove", this.#mouseMoveAction);
+        document.removeEventListener("click", this.#mouseClickAction);
     }
 
     #pressKeyAction = (event) => {
@@ -143,6 +161,46 @@ export class MapPage extends ScreenPage {
         //this.player.rotation = rad;
         this.fireRange.rotation = rad - (Math.PI/20);
     };
+
+    #mouseClickAction = () => {
+        const fireball = this.#createFireball();
+        this.#fireballFly(fireball);
+    }
+
+    #createFireball = () => {
+        const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 36, [[-8,0], [0, -4], [8, 0], [0,4]]);
+        f.addAnimation(ANIMATION_FIREMOVE, [36, 37, 38, 39], true);
+        f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118], false, false);
+
+        this.addRenderObject(CONST.LAYERS.DEFAULT, f);
+        f.emit(ANIMATION_FIREMOVE);
+        return f;
+    }
+
+    #fireballFly = (fireball) => {
+        //let distance = 0;
+        const speed = 1,
+            direction = this.fireRange.rotation + Math.PI/28,
+            interval = setInterval(() => {
+                const newCoordX = fireball.x + speed * Math.cos(direction),
+                    newCoordY = fireball.y + speed * Math.sin(direction);
+                fireball.x = newCoordX;
+                fireball.y = newCoordY;
+                //console.log(newCoordX);
+                if (this.isBoundariesCollision(newCoordX, newCoordY, fireball) 
+                || this.isObjectsCollision(newCoordX, newCoordY, fireball, this.#enemies)) {
+                    //stop itself
+                    clearInterval(interval);
+                    //console.log("boundaries collision happen");
+                    fireball.stopRepeatedAnimation(ANIMATION_FIREMOVE);
+                    fireball.emit(ANIMATION_REACHWALL);
+                    setTimeout(() => {
+                        //remove fireball
+                        fireball.destroy();
+                    }, 36);
+                }
+            }, 10);
+    }
 
     calculateCircleVertices(renderObject, offset, angle, width, step) {
         const [ xOffset, yOffset ] = offset,

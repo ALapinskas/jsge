@@ -40,7 +40,7 @@ export class System {
     /**
      * A main factory method for create ScreenPage instances, <br>
      * register them in a System and call ScreenPage.register() stage
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      * @param {ScreenPage} screen 
      */
     registerPage(screenPageName, screen) {
@@ -67,7 +67,7 @@ export class System {
 
     /**
      * Preloads assets data for specific page
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      * @return {Promise}
      */
     preloadPageData(screenPageName) {

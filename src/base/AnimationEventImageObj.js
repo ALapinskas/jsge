@@ -1,46 +1,49 @@
 export class AnimationEventImageObj {
     #eventName;
     #animationSpriteIndexes;
-    #currentSprite;
+    #currentSpriteIndex;
     #isActive;
+    #isRepeated;
+    #isReturnToBeginning;
     
-    constructor(eventName, animationSpriteIndexes, currentSprite, isActive = false) {
+    constructor(eventName, animationSpriteIndexes, isRepeated = false, currentSpriteIndex, isActive = false) {
         this.#eventName = eventName;
         this.#animationSpriteIndexes = animationSpriteIndexes;
-        this.#currentSprite = currentSprite ? currentSprite : animationSpriteIndexes[0];
+        this.#currentSpriteIndex = currentSpriteIndex ? currentSpriteIndex : 0;
         this.#isActive = isActive;
+        this.#isRepeated = isRepeated;
     }
 
     get isActive() {
         return this.#isActive;
     }
 
-    set isActive(value) {
-        this.#isActive = value;
-    }
-
     get currentSprite() {
-        return this.#currentSprite;
+        return this.#animationSpriteIndexes[this.#currentSpriteIndex];
     }
 
     get isLastSprite() {
-        return this.#animationSpriteIndexes[(this.#animationSpriteIndexes.length - 1)] === this.#currentSprite;
+        return (this.#animationSpriteIndexes.length - 1) === this.#currentSpriteIndex;
     }
 
     iterateSprite() {
         if (!this.isLastSprite) {
-            this.#currentSprite = this.#currentSprite + 1;
+            this.#currentSpriteIndex = this.#currentSpriteIndex + 1;
         } else {
-            this.#currentSprite = this.#animationSpriteIndexes[0];
-            this.#isActive = false;
+            if (!this.#isRepeated) {
+                this.#isActive = false;
+            } else {
+                this.#currentSpriteIndex = 0;
+            }
         }
     }
 
-    set currentSprite(value) {
-        this.#currentSprite = value;
-    }
-
     activateAnimation = () => {
-        this.isActive = true;
+        this.#isActive = true;
+        this.#currentSpriteIndex = 0;
     };
+
+    deactivateAnimation = () => {
+        this.#isActive = false;
+    }
 }

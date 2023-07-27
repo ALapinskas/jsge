@@ -1,10 +1,8 @@
 import { CONST } from "../constants.js";
-import { generateUniqId } from "../utils.js";
-import { Vertex } from "./Primitives.js";
+import { utils } from "../index.js";
 
 /**
  * A base draw object
- * @ignore
  */
 export class DrawShapeObject {
     #x;
@@ -23,19 +21,19 @@ export class DrawShapeObject {
     #blendFunc;
     
     /**
-     * @type {Number}
+     * @type {number}
      */
     #zIndex = 0;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #rotation = 0;
     /**
-     * @type {Number}
+     * @type {number}
      */
-    #id = generateUniqId();
+    #id = utils.generateUniqId();
     /**
-     * @type {Boolean}
+     * @type {boolean}
      */
     #isRemoved = false;
 
@@ -52,7 +50,7 @@ export class DrawShapeObject {
 
     /**
      * background color as rgba(r,g,b,a)
-     * @type {String}
+     * @type {string}
      */
     get bgColor() {
         return this.#bg;
@@ -70,14 +68,14 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get x() {
         return this.#x;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get y () {
         return this.#y;
@@ -92,14 +90,14 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get subtract() {
         return this.#subtract;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get zIndex () {
         return this.#zIndex;
@@ -118,7 +116,7 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get rotation() {
         return this.#rotation;
@@ -129,14 +127,14 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get id() {
         return this.#id;
     }
 
     /**
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isRemoved() {
         return this.#isRemoved;
@@ -147,5 +145,50 @@ export class DrawShapeObject {
      */
     destroy() {
         this.#isRemoved = true;
+    }
+
+    /**
+     * 
+     * @param {number} width 
+     * @param {number} height 
+     * @returns {Array<Array<number>>}
+     * @ignore
+     */
+    _calculateRectVertices = (width, height) => {
+        const halfW = width/2,
+            halfH = height/2;
+        return [[-halfW, -halfH], [halfW, -halfH], [halfW, halfH], [-halfW, halfH]];
+    }
+
+    /**
+     * 
+     * @param {number} radius 
+     * @param {number} [angle=2*Math.PI]
+     * @param {number} [step=Math.PI/12] 
+     * @returns {Array<Array<number>>}
+     * @ignore
+     */
+    _calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/12) {
+        let conusPolygonCoords = [0, 0];
+
+        for (let r = 0; r <= angle; r += step) {
+            let x2 = Math.cos(r) * radius,
+                y2 = Math.sin(r) * radius;
+
+            conusPolygonCoords.push(x2, y2);
+        }
+
+        return conusPolygonCoords;
+    }
+
+    /**
+     * @ignore
+     */
+    _convertVerticesArray(boundaries) {
+        if (typeof boundaries[0].x !== "undefined" && typeof boundaries[0].y !== "undefined") {
+            return utils.verticesArrayToArrayNumbers(boundaries);
+        } else {
+            return boundaries;
+        }
     }
 }

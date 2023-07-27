@@ -19,13 +19,13 @@ export class ScreenPageData {
     #centerY = 0;
     #rotate = 0;
     /**
-     * @type {Array.<Number[]>}
+     * @type {Array<Array<number>>}
      */
     #boundaries = [];
 
     /**
      * Add a Boundaries line
-     * @param {*} boundaries 
+     * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
      */
     #addBoundaries(boundaries) {
         this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
@@ -33,7 +33,8 @@ export class ScreenPageData {
 
     /**
      * Add array of boundaries lines
-     * @param {Array} boundaries 
+     * @param {Array<Array<number>>} boundaries 
+     * @ignore
      */
     _addBoundariesArray(boundaries) {
         this.#boundaries.push(...boundaries);
@@ -41,6 +42,7 @@ export class ScreenPageData {
 
     /**
      * Clear map boundaries
+     * @ignore
      */
     _clearBoundaries() {
         this.#boundaries = [];
@@ -48,8 +50,9 @@ export class ScreenPageData {
 
     /**
      * 
-     * @param {Number} width 
-     * @param {Number} height 
+     * @param {number} width 
+     * @param {number} height 
+     * @ignore
      */
     _setWorldDimensions(width, height) {
         this.#worldWidth = width;
@@ -62,8 +65,9 @@ export class ScreenPageData {
 
     /**
      * 
-     * @param {Number} width 
-     * @param {Number} height 
+     * @param {number} width 
+     * @param {number} height 
+     * @ignore
      */
     _setCanvasDimensions(width, height) {
         this.#viewWidth = width;
@@ -72,6 +76,7 @@ export class ScreenPageData {
 
     /**
      * Set map borders
+     * @ignore
      */
     _setMapBoundaries() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
@@ -86,6 +91,7 @@ export class ScreenPageData {
 
     /**
      * Merge same boundaries
+     * @ignore
      */
     _mergeBoundaries() {
         const boundaries = this.getBoundaries(),
@@ -121,42 +127,42 @@ export class ScreenPageData {
 
     /**
      * 
-     * @returns {Array}
+     * @returns {Array<Array<number>>}
      */
     getBoundaries() {
         return this.#boundaries;
     }
 
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get canvasDimensions() {
         return [this.#viewWidth, this.#viewHeight];
     }
 
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get worldDimensions() {
         return [this.#worldWidth, this.#worldHeight];
     }
     
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get worldOffset() {
         return [this.#xOffset, this.#yOffset];
     }
 
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get mapCenter() {
         return [this.#centerX, this.#centerY];
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get mapRotate() {
         return this.#rotate;
@@ -164,8 +170,8 @@ export class ScreenPageData {
 
     /**
      * @method
-     * @param {Number} x 
-     * @param {Number} y 
+     * @param {number} x 
+     * @param {number} y 
      */
     centerCameraPosition = (x, y) => {
         let [mapOffsetX, mapOffsetY] = this.worldOffset;

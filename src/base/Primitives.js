@@ -27,25 +27,25 @@ class Rectangle {
        this.#h = h; 
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get x() {
         return this.#x;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get y() {
         return this.#y;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get width() {
         return this.#w;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get height() {
         return this.#h;

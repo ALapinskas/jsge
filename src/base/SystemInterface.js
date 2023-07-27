@@ -55,7 +55,7 @@ export class SystemInterface {
 
     /**
      * @method
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      * @param {Object} [options] - options
      */
     startScreenPage = (screenPageName, options) => {
@@ -73,7 +73,7 @@ export class SystemInterface {
 
     /**
      * @method
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      */
     stopScreenPage = (screenPageName) => {
         if (this.#registeredPages.has(screenPageName)) {

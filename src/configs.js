@@ -14,7 +14,7 @@ export const SystemSettings = {
         boundaries: {
             drawLayerBoundaries: false,
             drawObjectBoundaries: false,
-            boundariesColor: "rgba(224, 12, 21, 1)",
+            boundariesColor: "rgba(224, 12, 21, 0.6)",
             boundariesWidth: 2
         },
         render: {

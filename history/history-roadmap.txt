@@ -21,6 +21,23 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.0.7:
+    r: CanvasView.#webGlInterface._drawLines() accepts rotation and x, y params
+    r: DrawObjectFactory jsdoc fix
+    +: DrawImageObject.addAnimation isRepeated parameter
+    +: DrawImageObject.stopRepeatedAnimation()
+    f: repeated animation indexes processing
+    r: types replaced with lowercase equivalents
+    r: DrawImageObject.boundaries -> vertices, boundaries marked as deprecated
+    r: vertices is now used to check collisions
+    r: vertices are now Array<Array<number>> (Array of x,y coords )
+    +: ScreenPage.isObjectsCollision()
+    +: DrawCircleObject, DRAW_TYPE.CIRCLE
+    +: Examples: dungeon, added casting fireballs, added enemies
+    f: fixed animations circles
+    +: addAnimation() isRepeated and isReturnToBeginning parameters
+    +: stopRepeatedAnimation()
+
 0.0.6:
     f: examples: pirates fixed top white line
     r: CanvasView.isStatic -> isOffsetTurnedOff

@@ -7,11 +7,11 @@ export class WebGlInterface {
     #vertexShaderSource;
     #fragmentShaderSource;
     /**
-     * @type {Map<String, WebGLProgram>}
+     * @type {Map<string, WebGLProgram>}
      */
     #programs;
     /**
-     * @type {Map<String, WebGLProgram>}
+     * @type {Map<string, WebGLProgram>}
      */
     #programsData;
     /**
@@ -19,11 +19,11 @@ export class WebGlInterface {
      */
     #coordsLocations;
     /**
-     * @type {Map<String, ArrayBuffer>}
+     * @type {Map<string, ArrayBuffer>}
      */
     #buffers;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #verticesNumber;
     /**
@@ -35,15 +35,15 @@ export class WebGlInterface {
      */
     #debug;
     /**
-     * @param  {Map<String, Number>}
+     * @param  {Map<string, number>}
      */
     #images_bind;
     /**
-     * @param {Map<String, WebGLBuffer>}
+     * @param {Map<string, WebGLBuffer>}
      */
     #positionBuffer;
     /**
-     * @param {Map<String, WebGLBuffer>}
+     * @param {Map<string, WebGLBuffer>}
      */
     #texCoordBuffer;
 
@@ -876,26 +876,37 @@ export class WebGlInterface {
         return shader;
     }
 
+    /**
+     * 
+     * @param {string} rgbaColor 
+     * @returns {number[]}
+     */
     #rgbaToArray (rgbaColor) {
-        return rgbaColor.replace("rgba(", "").replace(")", "").split(",").map((item) => Number(item.trim()));
+        return rgbaColor.replace("rgba(", "").replace(")", "").split(",").map((/** @param {string} */item) => Number(item.trim()));
     }
 
     #triangulatePolygon(vertices) {
         return this.#triangulate(vertices);
     }
 
+    /**
+     * 
+     * @param {Array<Array<number>>} polygonVertices 
+     * @param {Array<Array<number>>} triangulatedPolygon 
+     * @returns {Array<Array<number>>}
+     */
     #triangulate (polygonVertices, triangulatedPolygon = []) {
         const len = polygonVertices.length,
-            vectorsCS = (a, b, c) => crossProduct({x:c.x - a.x, y: c.y - a.y}, {x:b.x - a.x, y: b.y - a.y});
+            vectorsCS = (a, b, c) => crossProduct({x:c[0] - a[0], y: c[1] - a[1]}, {x:b[0] - a[0], y: b[1] - a[1]});
 
         if (len <= 3) {
             polygonVertices.forEach(vertex => {
-                triangulatedPolygon.push(vertex.x);
-                triangulatedPolygon.push(vertex.y);
+                triangulatedPolygon.push(vertex[0]);
+                triangulatedPolygon.push(vertex[1]);
             });
             return triangulatedPolygon;
         }
-        const verticesSortedByY = [...polygonVertices].sort((curr, next) => next.y - curr.y);
+        const verticesSortedByY = [...polygonVertices].sort((curr, next) => next[1] - curr[1]);
         const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
             startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
         
@@ -919,17 +930,17 @@ export class WebGlInterface {
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
             if (cs < 0) {
-                triangulatedPolygon.push(prevVertex.x);
-                triangulatedPolygon.push(prevVertex.y);
-                triangulatedPolygon.push(currentVertex.x);
-                triangulatedPolygon.push(currentVertex.y);
-                triangulatedPolygon.push(nextVertex.x);
-                triangulatedPolygon.push(nextVertex.y);
+                triangulatedPolygon.push(prevVertex[0]);
+                triangulatedPolygon.push(prevVertex[1]);
+                triangulatedPolygon.push(currentVertex[0]);
+                triangulatedPolygon.push(currentVertex[1]);
+                triangulatedPolygon.push(nextVertex[0]);
+                triangulatedPolygon.push(nextVertex[1]);
                 processedVertices = processedVertices.filter((val, index) => index !== i);
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
-                    console.warn("Can\'t extract triangles. Probably vertices input is not correct");
+                    console.warn("Can\'t extract triangles. Probably vertices input is not correct, or the order is wrong");
                     return;
                 }
             }

@@ -4105,48 +4105,51 @@ __webpack_require__.r(__webpack_exports__);
 class AnimationEventImageObj {
     #eventName;
     #animationSpriteIndexes;
-    #currentSprite;
+    #currentSpriteIndex;
     #isActive;
+    #isRepeated;
+    #isReturnToBeginning;
     
-    constructor(eventName, animationSpriteIndexes, currentSprite, isActive = false) {
+    constructor(eventName, animationSpriteIndexes, isRepeated = false, currentSpriteIndex, isActive = false) {
         this.#eventName = eventName;
         this.#animationSpriteIndexes = animationSpriteIndexes;
-        this.#currentSprite = currentSprite ? currentSprite : animationSpriteIndexes[0];
+        this.#currentSpriteIndex = currentSpriteIndex ? currentSpriteIndex : 0;
         this.#isActive = isActive;
+        this.#isRepeated = isRepeated;
     }
 
     get isActive() {
         return this.#isActive;
     }
 
-    set isActive(value) {
-        this.#isActive = value;
-    }
-
     get currentSprite() {
-        return this.#currentSprite;
+        return this.#animationSpriteIndexes[this.#currentSpriteIndex];
     }
 
     get isLastSprite() {
-        return this.#animationSpriteIndexes[(this.#animationSpriteIndexes.length - 1)] === this.#currentSprite;
+        return (this.#animationSpriteIndexes.length - 1) === this.#currentSpriteIndex;
     }
 
     iterateSprite() {
         if (!this.isLastSprite) {
-            this.#currentSprite = this.#currentSprite + 1;
+            this.#currentSpriteIndex = this.#currentSpriteIndex + 1;
         } else {
-            this.#currentSprite = this.#animationSpriteIndexes[0];
-            this.#isActive = false;
+            if (!this.#isRepeated) {
+                this.#isActive = false;
+            } else {
+                this.#currentSpriteIndex = 0;
+            }
         }
     }
 
-    set currentSprite(value) {
-        this.#currentSprite = value;
-    }
-
     activateAnimation = () => {
-        this.isActive = true;
+        this.#isActive = true;
+        this.#currentSpriteIndex = 0;
     };
+
+    deactivateAnimation = () => {
+        this.#isActive = false;
+    }
 }
 
 /***/ }),
@@ -4692,9 +4695,9 @@ class CanvasView {
                 this.#renderObjects.splice(i, 1);
                 i--;
             }
-            if (object.isAnimations) {
-                object._processActiveAnimations();
-            }
+            //if (object.isAnimations) {
+            //    object._processActiveAnimations();
+            //}
             const promise = this.#bindRenderObject(object).catch((err) => {
                 (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_3__.WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
                 return Promise.reject(err);
@@ -4714,6 +4717,15 @@ class CanvasView {
             this.#clearRenderObjectPromises();
             return Promise.resolve(bindResults);
         });
+    }
+
+    _postRenderActions() {
+        for (let i = 0; i < this.#renderObjects.length; i++) {
+            const object = this.#renderObjects[i];
+            if (object.isAnimations) {
+                object._processActiveAnimations();
+            }
+        }
     }
 
     #getImage(key) {
@@ -4774,10 +4786,10 @@ class CanvasView {
                 //ctx.restore();
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.TEXT) {
                 this.#webGlInterface._bindText(x, y, renderObject);
-            } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.CIRCLE) {
+            } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.CIRCLE || renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.CONUS) {
                 this.#webGlInterface._bindConus(renderObject, renderObject.rotation, [x, y]);
             } else if (renderObject.type === _constants_js__WEBPACK_IMPORTED_MODULE_3__.CONST.DRAW_TYPE.LINE) {
-                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth);
+                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth, renderObject.rotation, [x, y]);
             } else {
                 this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }
@@ -4814,6 +4826,68 @@ class CanvasView {
 
 /***/ }),
 
+/***/ "./src/base/DrawCircleObject.js":
+/*!**************************************!*\
+  !*** ./src/base/DrawCircleObject.js ***!
+  \**************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "DrawCircleObject": () => (/* binding */ DrawCircleObject)
+/* harmony export */ });
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
+
+
+
+/**
+ * Conus object to draw
+ * @augments DrawShapeObject
+ * @see {@link DrawObjectFactory} should be created with factory method
+ */
+class DrawCircleObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
+    /**
+     * @type {number}
+     */
+    #radius;
+
+    /**
+     * @type {Array<{x:number, y:number}>}
+     */
+    #vertices;
+
+    /**
+     * @hideconstructor
+     */
+    constructor(x, y, radius, bgColor, subtractProgram) {
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, subtractProgram);
+        this.#radius = radius;
+        this.#vertices = this._calculateConusVertices(radius);
+    }
+
+    /**
+     * Array of [x,y] cords
+     * @type {Array<Array<number>>}
+     */
+    get vertices () {
+        return this.#vertices;
+    }
+
+    set vertices(value) {
+        this.#vertices = value;
+    }
+
+    /**
+     * @type {number}
+     */
+    get radius() {
+        return this.#radius;
+    }
+}
+
+/***/ }),
+
 /***/ "./src/base/DrawConusObject.js":
 /*!*************************************!*\
   !*** ./src/base/DrawConusObject.js ***!
@@ -4834,16 +4908,17 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Conus object to draw
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
-     * @type {Number}
+     * @type {number}
      */
     #radius;
 
     /**
-     * @type {Array<Vertex>}
+     * Array of [x,y] cords
+     * @type {Array<Array<number>>}
      */
     #vertices;
 
@@ -4851,13 +4926,14 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
      * @hideconstructor
      */
     constructor(x, y, radius, bgColor, angle, subtractProgram) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, subtractProgram);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS, x, y, bgColor, subtractProgram);
         this.#radius = radius;
-        this.#vertices = this.#calculateConusVertices(radius, angle);
+        this.#vertices = this._calculateConusVertices(radius, angle);
     }
 
     /**
-     * @type {Array<Vertex>}
+     * Array of [x,y] cords
+     * @type {Array<Array<number>>}
      */
     get vertices () {
         return this.#vertices;
@@ -4867,21 +4943,11 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
         this.#vertices = value;
     }
 
+    /**
+     * @type {number}
+     */
     get radius() {
         return this.#radius;
-    }
-
-    #calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/12) {
-        let conusPolygonCoords = [0, 0];
-
-        for (let r = 0; r <= angle; r += step) {
-            let x2 = Math.cos(r) * radius,
-                y2 = Math.sin(r) * radius;
-
-            conusPolygonCoords.push(x2, y2);
-        }
-
-        return conusPolygonCoords;
     }
 }
 
@@ -4900,6 +4966,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AnimationEventImageObj.js */ "./src/base/AnimationEventImageObj.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../index.js */ "./src/index.js");
 
 
 
@@ -4907,20 +4974,20 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Image object to draw
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawShapeObject {
     /**
-     * @type {Number}
+     * @type {number}
      */
     #w;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #h;
     /**
      * Image sprite key
-     * @type {String}
+     * @type {string}
      */
     #key;
     /**
@@ -4928,17 +4995,17 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     #emitter;
     /**
-     * @type {Map<String, AnimationEventImageObj>}
+     * @type {Map<string, AnimationEventImageObj>}
      */
     #animations;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #imageIndex;
     /**
-     * @type {Array<Vertex> | null}
+     * @type {Array<Array<number>>}
      */
-    #boundaries = null;
+    #vertices = null;
 
     /**
      * @hideconstructor
@@ -4949,20 +5016,20 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         this.#emitter = new EventTarget();
         this.#animations = new Map();
         this.#imageIndex = imageIndex;
-        this.#boundaries = boundaries;
         this.#w = width;
         this.#h = height;
+        this.#vertices = boundaries ? this._convertVerticesArray(boundaries) : this._calculateRectVertices(width, height);
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get width() {
         return this.#w;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get height() {
         return this.#h;
@@ -4978,7 +5045,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
 
     /**
      * A key should match an image loaded through AssetsManager
-     * @type {String}
+     * @type {string}
      */
     get key() {
         return this.#key;
@@ -4986,7 +5053,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
 
     /**
      * Current image index
-     * @type {Number}
+     * @type {number}
      */
     get imageIndex() {
         return this.#imageIndex;
@@ -4994,19 +5061,27 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
 
     /**
      * Determines if image is animated or not
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isAnimations() {
         return this.#animations.size > 0;
     }
 
      /**
-     * @type {Array<Vertex>}
+     * @deprecated - use .vertices instead 
+     * @type {Array<Array<number>>}
      */
     get boundaries() {
-        return this.#boundaries;
+        return this.#vertices;
     }
 
+    get vertices() {
+        return this.#vertices;
+    }
+
+    /**
+     * @ignore
+     */
     _processActiveAnimations() {
         for (let animationEvent of this.#animations.values()) {
             if (animationEvent.isActive) {
@@ -5018,7 +5093,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
 
     /**
      * Emit event
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param  {...any} eventParams 
      */
     emit(eventName, ...eventParams) {
@@ -5029,7 +5104,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
 
     /**
      * Subscribe
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -5039,7 +5114,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
 
     /**
      * Unsubscribe
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -5049,13 +5124,28 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
 
     /**
      * Adds image animations
-     * @param { String } eventName -animation name
-     * @param { Number[] } animationSpriteIndexes - animation image indexes
+     * @param { string } eventName -animation name
+     * @param { Array<number> } animationSpriteIndexes - animation image indexes
+     * @param { boolean } [isRepeated = false] - animation is circled or not, circled animation could be stopped only with stopRepeatedAnimation();
      */
-    addAnimation (eventName, animationSpriteIndexes) {
-        const animationEvent = new _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__.AnimationEventImageObj(eventName, animationSpriteIndexes);
+    addAnimation (eventName, animationSpriteIndexes, isRepeated) {
+        const animationEvent = new _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__.AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated);
         this.#animations.set(eventName, animationEvent);
-        this.addEventListener(eventName, animationEvent.activateAnimation);
+        this.addEventListener(eventName, this.#activateAnimation);
+    }
+
+    #activateAnimation = (event) => {
+        const animationEvent = this.#animations.get(event.type);
+        animationEvent.activateAnimation();
+        this.#imageIndex = animationEvent.currentSprite;
+    } 
+
+    /**
+     *
+     * @param {string} eventName - animation name
+     */
+    stopRepeatedAnimation (eventName) {
+        this.#animations.get(eventName).deactivateAnimation();
     }
 
     /**
@@ -5064,9 +5154,15 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     removeAllAnimations() {
         for (let [eventName, animationEvent] of this.#animations.entries()) {
             this.removeEventListener(eventName, animationEvent.activateAnimation);
+            animationEvent.deactivateAnimation();
         }
         this.#animations.clear();
-        this.#animations - undefined;
+        this.#animations = undefined;
+    }
+
+    destroy() {
+        this.removeAllAnimations();
+        super.destroy();
     }
 }
 
@@ -5092,11 +5188,11 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Line object to draw
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
-     * @type {Array<Number>}
+     * @type {Array<Array<number>>}
      */
     #vertices;
 
@@ -5109,7 +5205,7 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
     }
 
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<Array<number>>}
      */
     get vertices () {
         return this.#vertices;
@@ -5139,6 +5235,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
 /* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
 /* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
+
 
 
 
@@ -5155,12 +5253,12 @@ __webpack_require__.r(__webpack_exports__);
 class DrawObjectFactory {
 
     /**
-     * @param {Number} x 
-     * @param {Number} y 
-     * @param {Number} width 
-     * @param {Number} height 
-     * @param {String} backgroundColor - rgba(r,g,b,a)
-     * @param {String} subtractProgram
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} width 
+     * @param {number} height 
+     * @param {string} backgroundColor - rgba(r,g,b,a)
+     * @param {string} subtractProgram
      * @returns {DrawRectObject}
      */
     rect(x, y, width, height, backgroundColor, subtractProgram) {
@@ -5168,11 +5266,11 @@ class DrawObjectFactory {
     }
 
     /**
-     * @param {Number} x 
-     * @param {Number} y 
-     * @param {String} text 
-     * @param {String} font - size fontFamily
-     * @param {String} color - rgba(r,g,b,a)
+     * @param {number} x 
+     * @param {number} y 
+     * @param {string} text 
+     * @param {string} font - size fontFamily
+     * @param {string} color - rgba(r,g,b,a)
      * @returns {DrawTextObject}
      */
     text(x, y, text, font, color) {
@@ -5181,10 +5279,10 @@ class DrawObjectFactory {
 
     /**
      * 
-     * @param {Number} radius 
-     * @param {String} bgColor - rgba(r,g,b,a)
-     * @param {Number=} angle
-     * @param {String=} subtractProgram 
+     * @param {number} radius 
+     * @param {string} bgColor - rgba(r,g,b,a)
+     * @param {number=} angle
+     * @param {string=} subtractProgram 
      * @returns {DrawConusObject}
      */
     conus(x, y, radius, bgColor, angle, subtractProgram) {
@@ -5193,23 +5291,23 @@ class DrawObjectFactory {
 
     /**
      * 
-     * @param {Number} radius 
-     * @param {String} bgColor - rgba(r,g,b,a)
-     * @param {String=} subtractProgram 
-     * @returns {DrawConusObject}
+     * @param {number} radius 
+     * @param {string} bgColor - rgba(r,g,b,a)
+     * @param {string=} subtractProgram 
+     * @returns {DrawCircleObject}
      */
     circle(x, y, radius, bgColor, subtractProgram) {
-        return new _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawConusObject(x, y, radius, bgColor, 2*Math.PI, subtractProgram);
+        return new _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_7__.DrawCircleObject(x, y, radius, bgColor, subtractProgram);
     }
 
     /**
-     * @param {Number} x 
-     * @param {Number} y 
-     * @param {Number} width 
-     * @param {Number} height 
-     * @param {String} key 
-     * @param {Number} [imageIndex = 0]
-     * @param {Array<Vertex>=} boundaries 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} width 
+     * @param {number} height 
+     * @param {string} key 
+     * @param {number} [imageIndex = 0]
+     * @param {Array<{x:Number, y:Number}>=} boundaries 
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries) {
@@ -5217,18 +5315,18 @@ class DrawObjectFactory {
     }
 
     /**
-     * @param {Array<Vertex>} vertices 
-     * @param {String} bgColor - rgba(r,g,b,a)
+     * @param {Array<number>} vertices 
+     * @param {string} color - rgba(r,g,b,a)
      * @returns {DrawLineObject}
      */
-    line(vertices, bgColor) {
-        return new _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__.DrawLineObject(vertices, bgColor);
+    line(vertices, color) {
+        return new _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__.DrawLineObject(vertices, color);
     }
 
     /**
-     * @param {Array<Vertex>} vertices - should go in anticlockwise order
-     * @param {String} bgColor - rgba(r,g,b,a) 
-     * @param {String=} subtractProgram 
+     * @param {Array<{x:number, y:number}>} vertices - should go in anticlockwise order
+     * @param {string} bgColor - rgba(r,g,b,a) 
+     * @param {string=} subtractProgram 
      * @returns {DrawPolygonObject}
      */
     polygon(vertices, bgColor, subtractProgram) {
@@ -5250,18 +5348,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
-
 
 
 
 /**
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<Array<number>>}
      */
     #vertices;
 
@@ -5270,11 +5366,11 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
      */
     constructor(vertices, bgColor, subtractProgram) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor, subtractProgram);
-        this.#vertices = vertices;
+        this.#vertices = this._convertVerticesArray(vertices);
     }
 
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<Array<number>>}
      */
     get vertices () {
         return this.#vertices;
@@ -5304,19 +5400,19 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 class DrawRectObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawShapeObject {
     /**
-     * @type {Number}
+     * @type {number}
      */
     #w;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #h;
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<{x:number, y:number}>}
      */
     #vertices;
 
@@ -5327,23 +5423,24 @@ class DrawRectObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor, subtractProgram);
         this.#w = w;
         this.#h = h;
+        this.#vertices = this._calculateRectVertices(w,h);
     }
 
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<{x:number, y:number}>}
      */
     get vertices () {
         return this.#vertices;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get width() {
         return this.#w;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get height() {
         return this.#h;
@@ -5371,15 +5468,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "DrawShapeObject": () => (/* binding */ DrawShapeObject)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
-/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
-
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../index.js */ "./src/index.js");
 
 
 
 /**
  * A base draw object
- * @ignore
  */
 class DrawShapeObject {
     #x;
@@ -5398,19 +5492,19 @@ class DrawShapeObject {
     #blendFunc;
     
     /**
-     * @type {Number}
+     * @type {number}
      */
     #zIndex = 0;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #rotation = 0;
     /**
-     * @type {Number}
+     * @type {number}
      */
-    #id = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.generateUniqId)();
+    #id = _index_js__WEBPACK_IMPORTED_MODULE_1__.utils.generateUniqId();
     /**
-     * @type {Boolean}
+     * @type {boolean}
      */
     #isRemoved = false;
 
@@ -5427,7 +5521,7 @@ class DrawShapeObject {
 
     /**
      * background color as rgba(r,g,b,a)
-     * @type {String}
+     * @type {string}
      */
     get bgColor() {
         return this.#bg;
@@ -5445,14 +5539,14 @@ class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get x() {
         return this.#x;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get y () {
         return this.#y;
@@ -5467,14 +5561,14 @@ class DrawShapeObject {
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get subtract() {
         return this.#subtract;
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get zIndex () {
         return this.#zIndex;
@@ -5493,7 +5587,7 @@ class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get rotation() {
         return this.#rotation;
@@ -5504,14 +5598,14 @@ class DrawShapeObject {
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get id() {
         return this.#id;
     }
 
     /**
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isRemoved() {
         return this.#isRemoved;
@@ -5522,6 +5616,51 @@ class DrawShapeObject {
      */
     destroy() {
         this.#isRemoved = true;
+    }
+
+    /**
+     * 
+     * @param {number} width 
+     * @param {number} height 
+     * @returns {Array<Array<number>>}
+     * @ignore
+     */
+    _calculateRectVertices = (width, height) => {
+        const halfW = width/2,
+            halfH = height/2;
+        return [[-halfW, -halfH], [halfW, -halfH], [halfW, halfH], [-halfW, halfH]];
+    }
+
+    /**
+     * 
+     * @param {number} radius 
+     * @param {number} [angle=2*Math.PI]
+     * @param {number} [step=Math.PI/12] 
+     * @returns {Array<Array<number>>}
+     * @ignore
+     */
+    _calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/12) {
+        let conusPolygonCoords = [0, 0];
+
+        for (let r = 0; r <= angle; r += step) {
+            let x2 = Math.cos(r) * radius,
+                y2 = Math.sin(r) * radius;
+
+            conusPolygonCoords.push(x2, y2);
+        }
+
+        return conusPolygonCoords;
+    }
+
+    /**
+     * @ignore
+     */
+    _convertVerticesArray(boundaries) {
+        if (typeof boundaries[0].x !== "undefined" && typeof boundaries[0].y !== "undefined") {
+            return _index_js__WEBPACK_IMPORTED_MODULE_1__.utils.verticesArrayToArrayNumbers(boundaries);
+        } else {
+            return boundaries;
+        }
     }
 }
 
@@ -5546,7 +5685,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.DrawShapeObject {
     #font;
@@ -5554,7 +5693,6 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     #textBaseline;
     #fillStyle;
     #strokeStyle;
-    #direction;
     #text;
     #textMetrics;
 
@@ -5579,8 +5717,13 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         return new _Primitives_js__WEBPACK_IMPORTED_MODULE_1__.Rectangle(this.x, this.y - height, width, height);
     }
 
+    get vertices() {
+        const bb = this.boundariesBox;
+        return this._calculateRectVertices(bb.width, bb.height);
+    }
+
     /**
-     * @type {String}
+     * @type {string}
      */
     get text() {
         return this.#text;
@@ -5591,7 +5734,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get font() {
         return this.#font;
@@ -5602,7 +5745,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get textAlign() {
         return this.#textAlign;
@@ -5613,7 +5756,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get textBaseline() {
         return this.#textBaseline;
@@ -5624,7 +5767,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get fillStyle() {
         return this.#fillStyle;
@@ -5635,7 +5778,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get strokeStyle() {
         return this.#strokeStyle;
@@ -5646,7 +5789,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {String}
+     * @type {string}
      */
     get textMetrics() {
         return this.#textMetrics;
@@ -5781,25 +5924,25 @@ class Rectangle {
        this.#h = h; 
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get x() {
         return this.#x;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get y() {
         return this.#y;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get width() {
         return this.#w;
     }
     /**
-     * @type {Number}
+     * @type {number}
      */
     get height() {
         return this.#h;
@@ -5860,7 +6003,7 @@ class RenderLayer {
 
     /**
      * A layer name
-     * @type {String}
+     * @type {string}
      */
     get layerKey() {
         return this.#layerKey;
@@ -5868,7 +6011,7 @@ class RenderLayer {
 
     /**
      * A tilemap layer key, should match key from the tilemap
-     * @type {String}
+     * @type {string}
      */
     get tileMapKey() {
         return this.#tileMapKey;
@@ -5877,7 +6020,7 @@ class RenderLayer {
     /**
      * Should the layer borders used as boundaries, or not
      * Can be set in ScreenPage.addRenderLayer() method
-     * @type {Boolean}
+     * @type {boolean}
      */
     get setBoundaries() {
         return this.#setBoundaries;
@@ -5886,7 +6029,7 @@ class RenderLayer {
     /**
      * Should draw a boundaries helper, or not
      * Can be set in SystemSettings
-     * @type {Boolean}
+     * @type {boolean}
      */
     get drawBoundaries() {
         return this.#drawBoundaries;
@@ -5919,18 +6062,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _CanvasView_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./CanvasView.js */ "./src/base/CanvasView.js");
 /* harmony import */ var _System_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./System.js */ "./src/base/System.js");
 /* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
-/* harmony import */ var _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./DrawConusObject.js */ "./src/base/DrawConusObject.js");
-/* harmony import */ var _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./DrawImageObject.js */ "./src/base/DrawImageObject.js");
-/* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
-/* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
-/* harmony import */ var _DrawRectObject_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./DrawRectObject.js */ "./src/base/DrawRectObject.js");
-/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./DrawTextObject.js */ "./src/base/DrawTextObject.js");
-/* harmony import */ var _SystemInterface_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./SystemInterface.js */ "./src/base/SystemInterface.js");
-/* harmony import */ var _SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./SystemAudioInterface.js */ "./src/base/SystemAudioInterface.js");
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
-/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
+/* harmony import */ var _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./DrawConusObject.js */ "./src/base/DrawConusObject.js");
+/* harmony import */ var _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./DrawImageObject.js */ "./src/base/DrawImageObject.js");
+/* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
+/* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
+/* harmony import */ var _DrawRectObject_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./DrawRectObject.js */ "./src/base/DrawRectObject.js");
+/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
+/* harmony import */ var _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./DrawTextObject.js */ "./src/base/DrawTextObject.js");
+/* harmony import */ var _SystemInterface_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./SystemInterface.js */ "./src/base/SystemInterface.js");
+/* harmony import */ var _SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./SystemAudioInterface.js */ "./src/base/SystemAudioInterface.js");
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
+
 
 
 
@@ -5964,7 +6109,7 @@ __webpack_require__.r(__webpack_exports__);
  */
 class ScreenPage {
     /**
-     * @type {String}
+     * @type {string}
      */
     #name;
     /**
@@ -5996,7 +6141,7 @@ class ScreenPage {
      */
     #drawObjectFactory = new _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_8__.DrawObjectFactory();
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */
     #tempFPStime;
     /**
@@ -6018,7 +6163,7 @@ class ScreenPage {
 
     /**
      * 
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param  {...any} eventParams 
      */
     emit = (eventName, ...eventParams) => {
@@ -6029,7 +6174,7 @@ class ScreenPage {
 
     /**
      * 
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -6039,7 +6184,7 @@ class ScreenPage {
 
     /**
      * 
-     * @param {String} eventName 
+     * @param {string} eventName 
      * @param {*} listener 
      * @param {*} options 
      */
@@ -6049,7 +6194,7 @@ class ScreenPage {
 
     /**
      * Register stage
-     * @param {String} name
+     * @param {string} name
      * @param {SystemInterface} system 
      * @protected
      */
@@ -6137,10 +6282,10 @@ class ScreenPage {
 
     /**
      * Add render object to the view
-     * @param {String} canvasKey 
+     * @param {string} canvasKey 
      * @param { DrawConusObject | DrawImageObject | 
      *          DrawLineObject | DrawPolygonObject | 
-     *          DrawRectObject | DrawShapeObject | 
+     *          DrawRectObject | DrawCircleObject | 
      *          DrawTextObject } renderObject 
      */
     addRenderObject = (canvasKey, renderObject) => {
@@ -6157,10 +6302,10 @@ class ScreenPage {
 
     /**
      * Add render layer to the view
-     * @param {String} canvasKey 
-     * @param {String} layerKey 
-     * @param {String} tileMapKey 
-     * @param {Boolean} setBoundaries 
+     * @param {string} canvasKey 
+     * @param {string} layerKey 
+     * @param {string} tileMapKey 
+     * @param {boolean} setBoundaries 
      */
     addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries) => {
         if (!canvasKey) {
@@ -6178,7 +6323,7 @@ class ScreenPage {
 
     /**
      * Determines if this page render is Active or not
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isActive() {
         return this.#isActive;
@@ -6186,7 +6331,7 @@ class ScreenPage {
 
     /**
      * Determines if this page is initialized or not
-     * @type {Boolean}
+     * @type {boolean}
      */
     get isInitiated() {
         return this.#isInitiated;
@@ -6194,7 +6339,7 @@ class ScreenPage {
 
     /**
      * Current page name
-     * @type {String}
+     * @type {string}
      */
     get name () {
         return this.#name;
@@ -6202,7 +6347,7 @@ class ScreenPage {
 
     /**
      * Determines if all added files was loaded or not
-     * @returns {Boolean}
+     * @returns {boolean}
      */
     isAllFilesLoaded = () => {
         return this.#loader.filesWaitingForUpload === 0;
@@ -6238,7 +6383,7 @@ class ScreenPage {
 
     /**
      * @method
-     * @param {String} key 
+     * @param {string} key 
      * @returns {CanvasView}
      */
     getView = (key) => {
@@ -6333,38 +6478,49 @@ class ScreenPage {
         this.screenPageData._setWorldDimensions(width, height);
     }
 
-    /**
-     * 
-     * @param {Number} x 
-     * @param {Number} y 
-     * @returns {boolean}
-     */
-    #isPointToBoundariesCollision(x, y) {
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-            len = mapObjects.length;
+    #isPolygonToObjectsCollision(x, y, polygonVertices, polygonRotation, objects) {
+        const len = objects.length;
+        let collisions = [];
+        for (let i = 0; i < len; i++) {
+            const mapObject = objects[i],
+                drawMapObjectType = mapObject.type,
+                vertices = mapObject.vertices;
 
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i],
-                object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                };
-            if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPointLineIntersect)({x: x - mapOffsetX, y: y - mapOffsetY}, object)) {
-                return true;
+            let coll;
+            
+            switch(drawMapObjectType) {
+                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+                    coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
+                    break;
+                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+                    console.warn("isObjectCollision.circle check is not implemented yet!");
+                    break;
+                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                    break;
+                default:
+                    console.warn("unknown object type!");
+            }
+            if (coll) {
+                collisions.push(coll);
             }
         }
-        return false;
+        if (collisions.length > 0) {
+            return this.#takeTheClosestCollision(collisions);
+        } else {
+            return null;
+        }
     }
 
     /**
-     * @param {Number} x
-     * @param {Number} y
+     * @param {number} x
+     * @param {number} y
      * @param {Array<Vertex>} polygon
-     * @param {Number} rotation 
-     * @returns {boolean}
+     * @param {number} rotation 
+     * @returns {{{x:number, y:number, p:number}} | boolean}
      */
     #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
         //console.log("angle: ", rotation);
@@ -6385,7 +6541,7 @@ class ScreenPage {
                     x2: item[2],
                     y2: item[3]
                 },
-                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, object);
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_20__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, object);
             if (intersect) {
                 //console.log("rotation: ", rotation);
                 //console.log("polygon: ", polygonWithOffsetAndRotation);
@@ -6396,9 +6552,49 @@ class ScreenPage {
         return false;
     }
 
+    #takeTheClosestCollision(collisions) {
+        return collisions.sort((a,b) => a.p < b.p)[0];
+    }
+
+    #isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject) {
+        const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            mapObjXWithOffset = mapObject.x - mapOffsetX,
+            mapObjYWithOffset = mapObject.y - mapOffsetY,
+            mapObjVertices = mapObject.vertices, 
+            mapObjRotation = mapObject.rotation,
+            polygonWithOffsetAndRotation = polygonVertices.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, polygonRotation))),
+            len = mapObjVertices.length;
+        //console.log("map object check:");
+        //console.log(mapObject);
+        for (let i = 0; i < len; i+=1) {
+            const mapObjFirstVertex = mapObjVertices[i];
+            let mapObjNextVertex = mapObjVertices[i + 1];
+            if (!mapObjNextVertex) {
+                mapObjNextVertex = mapObjVertices[0];
+            }
+            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                edge = {
+                    x1: vertex[0],
+                    y1: vertex[1],
+                    x2: nextVertex[0],
+                    y2: nextVertex[1]
+                },
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_20__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, edge);
+            if (intersect) {
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
     #calculateShiftedVertexPos(vertex, centerX, centerY, rotation) {
-        const vector = new _Primitives_js__WEBPACK_IMPORTED_MODULE_20__.Vector(0, 0, vertex.x, vertex.y),
-            vertexAngle = (0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.angle_2points)(0, 0, vertex.x, vertex.y),
+        const vector = new _Primitives_js__WEBPACK_IMPORTED_MODULE_21__.Vector(0, 0, vertex[0], vertex[1]),
+            vertexAngle = (0,_utils_js__WEBPACK_IMPORTED_MODULE_20__.angle_2points)(0, 0, vertex[0], vertex[1]),
             len = vector.length;
         //console.log("coords without rotation: ");
         //console.log(x + vertex.x);
@@ -6407,29 +6603,57 @@ class ScreenPage {
         //console.log("angle: ", rotation);
         const newX = centerX + (len * Math.cos(rotation + vertexAngle)),
             newY = centerY + (len * Math.sin(rotation + vertexAngle));
-        return { x: newX, y: newY };
+        return [newX, newY];
     }
 
     /**
      * 
-     * @param {Number} x 
-     * @param {Number} y 
+     * @param {number} x 
+     * @param {number} y 
      * @param {DrawShapeObject} drawObject 
+     * @returns {{x:number, y:number, p:number} | boolean}
      */
     isBoundariesCollision = (x, y, drawObject) => {
-        const drawObjectType = drawObject.type;
+        const drawObjectType = drawObject.type,
+            vertices = drawObject.vertices;
         switch(drawObjectType) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-                return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
             default:
-                if (drawObject.boundaries && drawObject.boundaries.length > 0) {
-                    return this.#isPolygonToBoundariesCollision(x, y, drawObject.boundaries, drawObject.rotation);
-                 } else {
-                     return this.#isPointToBoundariesCollision(x, y);
-                 }
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        }
+    }
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawShapeObject} drawObject
+     * @param {Array<DrawShapeObject>} objects - objects array to check
+     * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
+     */
+    isObjectsCollision = (x, y, drawObject, objects) => {
+        const drawObjectType = drawObject.type,
+            drawObjectBoundaries = drawObject.boundaries;
+        switch(drawObjectType) {
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+                return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            default:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
     }
 
@@ -6458,11 +6682,11 @@ class ScreenPage {
                     };
                 const objectBoundaries = object.boundaries;
                 if (objectBoundaries) {
-                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPolygonLineIntersect)(objectBoundaries, object)) {
+                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_20__.isPolygonLineIntersect)(objectBoundaries, object)) {
                         this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
                     }
                 } else {
-                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_19__.isPointLineIntersect)({ x: renderObject.x, y: renderObject.y }, object)) {
+                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_20__.isPointLineIntersect)({ x: renderObject.x, y: renderObject.y }, object)) {
                         this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
                         console.log("boundaries collision detected");
                     }
@@ -6599,6 +6823,8 @@ class ScreenPage {
                             this.#isActive = false;
                         }
                     });
+
+                    view._postRenderActions();
                     
                     view._isCleared = false;
                     resolve();
@@ -6643,13 +6869,13 @@ class ScreenPageData {
     #centerY = 0;
     #rotate = 0;
     /**
-     * @type {Array.<Number[]>}
+     * @type {Array<Array<number>>}
      */
     #boundaries = [];
 
     /**
      * Add a Boundaries line
-     * @param {*} boundaries 
+     * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
      */
     #addBoundaries(boundaries) {
         this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
@@ -6657,7 +6883,8 @@ class ScreenPageData {
 
     /**
      * Add array of boundaries lines
-     * @param {Array} boundaries 
+     * @param {Array<Array<number>>} boundaries 
+     * @ignore
      */
     _addBoundariesArray(boundaries) {
         this.#boundaries.push(...boundaries);
@@ -6665,6 +6892,7 @@ class ScreenPageData {
 
     /**
      * Clear map boundaries
+     * @ignore
      */
     _clearBoundaries() {
         this.#boundaries = [];
@@ -6672,8 +6900,9 @@ class ScreenPageData {
 
     /**
      * 
-     * @param {Number} width 
-     * @param {Number} height 
+     * @param {number} width 
+     * @param {number} height 
+     * @ignore
      */
     _setWorldDimensions(width, height) {
         this.#worldWidth = width;
@@ -6686,8 +6915,9 @@ class ScreenPageData {
 
     /**
      * 
-     * @param {Number} width 
-     * @param {Number} height 
+     * @param {number} width 
+     * @param {number} height 
+     * @ignore
      */
     _setCanvasDimensions(width, height) {
         this.#viewWidth = width;
@@ -6696,6 +6926,7 @@ class ScreenPageData {
 
     /**
      * Set map borders
+     * @ignore
      */
     _setMapBoundaries() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
@@ -6710,6 +6941,7 @@ class ScreenPageData {
 
     /**
      * Merge same boundaries
+     * @ignore
      */
     _mergeBoundaries() {
         const boundaries = this.getBoundaries(),
@@ -6745,42 +6977,42 @@ class ScreenPageData {
 
     /**
      * 
-     * @returns {Array}
+     * @returns {Array<Array<number>>}
      */
     getBoundaries() {
         return this.#boundaries;
     }
 
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get canvasDimensions() {
         return [this.#viewWidth, this.#viewHeight];
     }
 
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get worldDimensions() {
         return [this.#worldWidth, this.#worldHeight];
     }
     
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get worldOffset() {
         return [this.#xOffset, this.#yOffset];
     }
 
     /**
-     * @type {Array<Number>}
+     * @type {Array<number>}
      */
     get mapCenter() {
         return [this.#centerX, this.#centerY];
     }
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     get mapRotate() {
         return this.#rotate;
@@ -6788,8 +7020,8 @@ class ScreenPageData {
 
     /**
      * @method
-     * @param {Number} x 
-     * @param {Number} y 
+     * @param {number} x 
+     * @param {number} y 
      */
     centerCameraPosition = (x, y) => {
         let [mapOffsetX, mapOffsetY] = this.worldOffset;
@@ -6924,7 +7156,7 @@ class System {
     /**
      * A main factory method for create ScreenPage instances, <br>
      * register them in a System and call ScreenPage.register() stage
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      * @param {ScreenPage} screen 
      */
     registerPage(screenPageName, screen) {
@@ -6951,7 +7183,7 @@ class System {
 
     /**
      * Preloads assets data for specific page
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      * @return {Promise}
      */
     preloadPageData(screenPageName) {
@@ -6992,7 +7224,7 @@ class SystemAudioInterface {
 
     /**
      * Original track
-     * @param {String} name 
+     * @param {string} name 
      * @returns {HTMLAudioElement}
      */
     getAudio(name) {
@@ -7007,7 +7239,7 @@ class SystemAudioInterface {
 
     /**
      * Clone of original track
-     * @param {String} name 
+     * @param {string} name 
      * @returns {HTMLAudioElement}
      */
     getAudioCloned(name) {
@@ -7023,7 +7255,7 @@ class SystemAudioInterface {
 
     /**
      * Used to register audio in system after downloading
-     * @param {String} name 
+     * @param {string} name 
      * @param {AssetsManager} loader 
      */
     registerAudio(name, loader) {
@@ -7049,7 +7281,7 @@ class SystemAudioInterface {
     /**
      * Used to set or get audio volume, 
      * value should be from 0 to 1
-     * @type {Number}
+     * @type {number}
      */
     get volume() {
         return this.#volume;
@@ -7136,7 +7368,7 @@ class SystemInterface {
 
     /**
      * @method
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      * @param {Object} [options] - options
      */
     startScreenPage = (screenPageName, options) => {
@@ -7154,7 +7386,7 @@ class SystemInterface {
 
     /**
      * @method
-     * @param {String} screenPageName
+     * @param {string} screenPageName
      */
     stopScreenPage = (screenPageName) => {
         if (this.#registeredPages.has(screenPageName)) {
@@ -7335,15 +7567,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 class WebGlDrawProgramData {
     /**
-     * @type {String}
+     * @type {string}
      */
     #programName;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */
     #vectors;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */ 
     #textures;
     /**
@@ -7351,27 +7583,27 @@ class WebGlDrawProgramData {
      */ 
     #image;
     /**
-     * @type {String}
+     * @type {string}
      */ 
     #imageName;
     /**
-     * @type {String[]}
+     * @type {string[]}
      */
     #drawMask;
     /**
-     * @type {Number}
+     * @type {number}
      */ 
     #rotation;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */ 
     #translation;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */ 
     #scale;
     /**
-     * @type {Number}
+     * @type {number}
      */ 
     #programVerticesNum;
 
@@ -7478,11 +7710,11 @@ class WebGlInterface {
     #vertexShaderSource;
     #fragmentShaderSource;
     /**
-     * @type {Map<String, WebGLProgram>}
+     * @type {Map<string, WebGLProgram>}
      */
     #programs;
     /**
-     * @type {Map<String, WebGLProgram>}
+     * @type {Map<string, WebGLProgram>}
      */
     #programsData;
     /**
@@ -7490,11 +7722,11 @@ class WebGlInterface {
      */
     #coordsLocations;
     /**
-     * @type {Map<String, ArrayBuffer>}
+     * @type {Map<string, ArrayBuffer>}
      */
     #buffers;
     /**
-     * @type {Number}
+     * @type {number}
      */
     #verticesNumber;
     /**
@@ -7506,15 +7738,15 @@ class WebGlInterface {
      */
     #debug;
     /**
-     * @param  {Map<String, Number>}
+     * @param  {Map<string, number>}
      */
     #images_bind;
     /**
-     * @param {Map<String, WebGLBuffer>}
+     * @param {Map<string, WebGLBuffer>}
      */
     #positionBuffer;
     /**
-     * @param {Map<String, WebGLBuffer>}
+     * @param {Map<string, WebGLBuffer>}
      */
     #texCoordBuffer;
 
@@ -8347,26 +8579,37 @@ class WebGlInterface {
         return shader;
     }
 
+    /**
+     * 
+     * @param {string} rgbaColor 
+     * @returns {number[]}
+     */
     #rgbaToArray (rgbaColor) {
-        return rgbaColor.replace("rgba(", "").replace(")", "").split(",").map((item) => Number(item.trim()));
+        return rgbaColor.replace("rgba(", "").replace(")", "").split(",").map((/** @param {string} */item) => Number(item.trim()));
     }
 
     #triangulatePolygon(vertices) {
         return this.#triangulate(vertices);
     }
 
+    /**
+     * 
+     * @param {Array<Array<number>>} polygonVertices 
+     * @param {Array<Array<number>>} triangulatedPolygon 
+     * @returns {Array<Array<number>>}
+     */
     #triangulate (polygonVertices, triangulatedPolygon = []) {
         const len = polygonVertices.length,
-            vectorsCS = (a, b, c) => (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.crossProduct)({x:c.x - a.x, y: c.y - a.y}, {x:b.x - a.x, y: b.y - a.y});
+            vectorsCS = (a, b, c) => (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.crossProduct)({x:c[0] - a[0], y: c[1] - a[1]}, {x:b[0] - a[0], y: b[1] - a[1]});
 
         if (len <= 3) {
             polygonVertices.forEach(vertex => {
-                triangulatedPolygon.push(vertex.x);
-                triangulatedPolygon.push(vertex.y);
+                triangulatedPolygon.push(vertex[0]);
+                triangulatedPolygon.push(vertex[1]);
             });
             return triangulatedPolygon;
         }
-        const verticesSortedByY = [...polygonVertices].sort((curr, next) => next.y - curr.y);
+        const verticesSortedByY = [...polygonVertices].sort((curr, next) => next[1] - curr[1]);
         const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
             startVertexIndex = topVertexIndex !== len - 1 ? topVertexIndex + 1 : 0;
         
@@ -8390,17 +8633,17 @@ class WebGlInterface {
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
             if (cs < 0) {
-                triangulatedPolygon.push(prevVertex.x);
-                triangulatedPolygon.push(prevVertex.y);
-                triangulatedPolygon.push(currentVertex.x);
-                triangulatedPolygon.push(currentVertex.y);
-                triangulatedPolygon.push(nextVertex.x);
-                triangulatedPolygon.push(nextVertex.y);
+                triangulatedPolygon.push(prevVertex[0]);
+                triangulatedPolygon.push(prevVertex[1]);
+                triangulatedPolygon.push(currentVertex[0]);
+                triangulatedPolygon.push(currentVertex[1]);
+                triangulatedPolygon.push(nextVertex[0]);
+                triangulatedPolygon.push(nextVertex[1]);
                 processedVertices = processedVertices.filter((val, index) => index !== i);
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
-                    console.warn("Can\'t extract triangles. Probably vertices input is not correct");
+                    console.warn("Can\'t extract triangles. Probably vertices input is not correct, or the order is wrong");
                     return;
                 }
             }
@@ -8440,7 +8683,7 @@ const SystemSettings = {
         boundaries: {
             drawLayerBoundaries: false,
             drawObjectBoundaries: false,
-            boundariesColor: "rgba(224, 12, 21, 1)",
+            boundariesColor: "rgba(224, 12, 21, 0.6)",
             boundariesWidth: 2
         },
         render: {
@@ -8534,6 +8777,7 @@ const CONST = {
     },
     DRAW_TYPE: {
         RECTANGLE: "rect",
+        CONUS: "conus",
         CIRCLE: "circle",
         POLYGON: "polygon",
         LINE: "line",
@@ -8558,7 +8802,7 @@ const CONST = {
 
 const ERROR_CODES = {
     CREATE_INSTANCE_ERROR: "CREATE_INSTANCE_ERROR",
-    VIEW_NOT_EXIST: "VIEW_NOT_EXIST", 
+    VIEW_NOT_EXIST: "VIEW_NOT_EXIST",
     ELEMENT_NOT_EXIST: "ELEMENT_NOT_EXIST",
     FILE_NOT_EXIST: "FILE_NOT_EXIST",
     UNEXPECTED_INPUT_PARAMS: "UNEXPECTED_INPUT_PARAMS",
@@ -8585,8 +8829,45 @@ const WARNING_CODES =  {
     UNEXPECTED_WORLD_SIZE: "UNEXPECTED_WORLD_SIZE",
     AUDIO_ALREADY_REGISTERED: "AUDIO_ALREADY_REGISTERED",
     AUDIO_NOT_REGISTERED: "AUDIO_NOT_REGISTERED",
+    UNKNOWN_DRAW_OBJECT: "UNKNOWN_DRAW_OBJECT",
+    METHOD_NOT_IMPLEMENTED: "METHOD_NOT_IMPLEMENTED",
     POLYGON_VERTICES_NOT_CORRECT: "POLYGON_VERTICES_NOT_CORRECT"
 };
+
+/***/ }),
+
+/***/ "./src/index.js":
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "CONST": () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_5__.CONST),
+/* harmony export */   "DrawImageObject": () => (/* reexport safe */ _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawImageObject),
+/* harmony export */   "Primitives": () => (/* reexport module object */ _base_Primitives_js__WEBPACK_IMPORTED_MODULE_3__),
+/* harmony export */   "ScreenPage": () => (/* reexport safe */ _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__.ScreenPage),
+/* harmony export */   "System": () => (/* reexport safe */ _base_System_js__WEBPACK_IMPORTED_MODULE_0__.System),
+/* harmony export */   "SystemSettings": () => (/* reexport safe */ _configs_js__WEBPACK_IMPORTED_MODULE_4__.SystemSettings),
+/* harmony export */   "utils": () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_6__)
+/* harmony export */ });
+/* harmony import */ var _base_System_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/System.js */ "./src/base/System.js");
+/* harmony import */ var _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./base/ScreenPage.js */ "./src/base/ScreenPage.js");
+/* harmony import */ var _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./base/DrawImageObject.js */ "./src/base/DrawImageObject.js");
+/* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./configs.js */ "./src/configs.js");
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./utils.js */ "./src/utils.js");
+
+
+
+
+
+
+
+
+
 
 /***/ }),
 
@@ -8600,7 +8881,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "angle_2points": () => (/* binding */ angle_2points),
 /* harmony export */   "angle_3points": () => (/* binding */ angle_3points),
-/* harmony export */   "arrayNumbersToVerticesArray": () => (/* binding */ arrayNumbersToVerticesArray),
 /* harmony export */   "countClosestTraversal": () => (/* binding */ countClosestTraversal),
 /* harmony export */   "countClosestTraversal2": () => (/* binding */ countClosestTraversal2),
 /* harmony export */   "crossProduct": () => (/* binding */ crossProduct),
@@ -8616,7 +8896,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isPointRectIntersect": () => (/* binding */ isPointRectIntersect),
 /* harmony export */   "isPolygonLineIntersect": () => (/* binding */ isPolygonLineIntersect),
 /* harmony export */   "isSafari": () => (/* binding */ isSafari),
-/* harmony export */   "pointToCircleDistance": () => (/* binding */ pointToCircleDistance)
+/* harmony export */   "pointToCircleDistance": () => (/* binding */ pointToCircleDistance),
+/* harmony export */   "verticesArrayToArrayNumbers": () => (/* binding */ verticesArrayToArrayNumbers)
 /* harmony export */ });
 /* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
 
@@ -8673,6 +8954,12 @@ function countClosestTraversal(line, sight) {
     };
 }
 
+/**
+ * 
+ * @param {{x1:number, y1:number, x2:number, y2:number}} line1 
+ * @param {{x1:number, y1:number, x2:number, y2:number}} line2 
+ * @returns {{x:number, y:number, p:number}}
+ */
 function countClosestTraversal2(line1, line2) {
     const x1 = line2.x1,
         y1 = line2.y1,
@@ -8752,6 +9039,12 @@ function isPointLineIntersect(point, line) {
     return false;
 }
 
+/**
+ * 
+ * @param {Array<Array<number>>} polygon 
+ * @param {{x1:number, y1:number, x2:number, y2:number}} line 
+ * @returns {Array<{x:number, y:number, p:number}> | null}
+ */
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;
     for (let i = 0; i < len; i+=1) {
@@ -8760,29 +9053,29 @@ function isPolygonLineIntersect(polygon, line) {
         //if next item not exist and current is not first
         if (!next) {
             // if current vertex is not the first one
-            if (!(curr.x === polygon[0].x && curr.y === polygon[0].y)) {
+            if (!(curr[0] === polygon[0][0] && curr[1] === polygon[0][1])) {
                 next = polygon[0];
             } else {
                 continue;
             }
         }
-        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
+        const edge = { x1: curr[0], y1: curr[1], x2: next[0], y2: next[1] };
         const intersection = countClosestTraversal2(edge, line);
         if (intersection) {
             return intersection;
         }
     }
-    if (polygon[len-1] !== polygon[0]) {
+    if (polygon[len-1][0] !== polygon[0][0] && polygon[len-1][1] !== polygon[0][1]) {
         //check one last item
         const curr = polygon[len - 1],
             next = polygon[0];
-        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
+        const edge = { x1: curr[0], y1: curr[1], x2: next[0], y2: next[1] };
         const intersection = countClosestTraversal2(edge, line);
         if (intersection) {
             return intersection;
         }
     }
-    return false;
+    return null;
 }
 
 function isPointPolygonIntersect(/*x, y, polygon*/) {
@@ -8813,15 +9106,14 @@ function generateUniqId() {
     return Math.round(Math.random() * 1000000); 
 }
 
-function arrayNumbersToVerticesArray(array) {
+function verticesArrayToArrayNumbers(array) {
     const len = array.length,
-        vertices = [];
-    for (let i = 0; i < len; i+=2) {
-        const x = array[i],
-            y = array[i + 1];
-        vertices.push(new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vertex(x, y));
+        numbers = [];
+    for (let i = 0; i < len; i++) {
+        const vertex = array[i];
+        numbers.push([vertex.x, vertex.y]);
     }
-    return vertices;
+    return numbers;
 }
 
 
@@ -8884,47 +9176,19 @@ function arrayNumbersToVerticesArray(array) {
 /******/ })();
 /******/ 
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-/*!**********************!*\
-  !*** ./src/index.js ***!
-  \**********************/
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "CONST": () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_5__.CONST),
-/* harmony export */   "DrawImageObject": () => (/* reexport safe */ _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawImageObject),
-/* harmony export */   "Primitives": () => (/* reexport module object */ _base_Primitives_js__WEBPACK_IMPORTED_MODULE_3__),
-/* harmony export */   "ScreenPage": () => (/* reexport safe */ _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__.ScreenPage),
-/* harmony export */   "System": () => (/* reexport safe */ _base_System_js__WEBPACK_IMPORTED_MODULE_0__.System),
-/* harmony export */   "SystemSettings": () => (/* reexport safe */ _configs_js__WEBPACK_IMPORTED_MODULE_4__.SystemSettings),
-/* harmony export */   "utils": () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_6__)
-/* harmony export */ });
-/* harmony import */ var _base_System_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/System.js */ "./src/base/System.js");
-/* harmony import */ var _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./base/ScreenPage.js */ "./src/base/ScreenPage.js");
-/* harmony import */ var _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./base/DrawImageObject.js */ "./src/base/DrawImageObject.js");
-/* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./configs.js */ "./src/configs.js");
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./utils.js */ "./src/utils.js");
-
-
-
-
-
-
-
-
-
-})();
-
-var __webpack_exports__CONST = __webpack_exports__.CONST;
-var __webpack_exports__DrawImageObject = __webpack_exports__.DrawImageObject;
-var __webpack_exports__Primitives = __webpack_exports__.Primitives;
-var __webpack_exports__ScreenPage = __webpack_exports__.ScreenPage;
-var __webpack_exports__System = __webpack_exports__.System;
-var __webpack_exports__SystemSettings = __webpack_exports__.SystemSettings;
-var __webpack_exports__utils = __webpack_exports__.utils;
-export { __webpack_exports__CONST as CONST, __webpack_exports__DrawImageObject as DrawImageObject, __webpack_exports__Primitives as Primitives, __webpack_exports__ScreenPage as ScreenPage, __webpack_exports__System as System, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
+/******/ 
+/******/ // startup
+/******/ // Load entry module and return exports
+/******/ // This entry module is referenced by other modules so it can't be inlined
+/******/ var __webpack_exports__ = __webpack_require__("./src/index.js");
+/******/ var __webpack_exports__CONST = __webpack_exports__.CONST;
+/******/ var __webpack_exports__DrawImageObject = __webpack_exports__.DrawImageObject;
+/******/ var __webpack_exports__Primitives = __webpack_exports__.Primitives;
+/******/ var __webpack_exports__ScreenPage = __webpack_exports__.ScreenPage;
+/******/ var __webpack_exports__System = __webpack_exports__.System;
+/******/ var __webpack_exports__SystemSettings = __webpack_exports__.SystemSettings;
+/******/ var __webpack_exports__utils = __webpack_exports__.utils;
+/******/ export { __webpack_exports__CONST as CONST, __webpack_exports__DrawImageObject as DrawImageObject, __webpack_exports__Primitives as Primitives, __webpack_exports__ScreenPage as ScreenPage, __webpack_exports__System as System, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
+/******/ 
 
 //# sourceMappingURL=index.es6.js.map

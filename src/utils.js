@@ -52,6 +52,12 @@ function countClosestTraversal(line, sight) {
     };
 }
 
+/**
+ * 
+ * @param {{x1:number, y1:number, x2:number, y2:number}} line1 
+ * @param {{x1:number, y1:number, x2:number, y2:number}} line2 
+ * @returns {{x:number, y:number, p:number}}
+ */
 function countClosestTraversal2(line1, line2) {
     const x1 = line2.x1,
         y1 = line2.y1,
@@ -131,6 +137,12 @@ function isPointLineIntersect(point, line) {
     return false;
 }
 
+/**
+ * 
+ * @param {Array<Array<number>>} polygon 
+ * @param {{x1:number, y1:number, x2:number, y2:number}} line 
+ * @returns {Array<{x:number, y:number, p:number}> | null}
+ */
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;
     for (let i = 0; i < len; i+=1) {
@@ -139,29 +151,29 @@ function isPolygonLineIntersect(polygon, line) {
         //if next item not exist and current is not first
         if (!next) {
             // if current vertex is not the first one
-            if (!(curr.x === polygon[0].x && curr.y === polygon[0].y)) {
+            if (!(curr[0] === polygon[0][0] && curr[1] === polygon[0][1])) {
                 next = polygon[0];
             } else {
                 continue;
             }
         }
-        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
+        const edge = { x1: curr[0], y1: curr[1], x2: next[0], y2: next[1] };
         const intersection = countClosestTraversal2(edge, line);
         if (intersection) {
             return intersection;
         }
     }
-    if (polygon[len-1] !== polygon[0]) {
+    if (polygon[len-1][0] !== polygon[0][0] && polygon[len-1][1] !== polygon[0][1]) {
         //check one last item
         const curr = polygon[len - 1],
             next = polygon[0];
-        const edge = { x1: curr.x, y1: curr.y, x2: next.x, y2: next.y };
+        const edge = { x1: curr[0], y1: curr[1], x2: next[0], y2: next[1] };
         const intersection = countClosestTraversal2(edge, line);
         if (intersection) {
             return intersection;
         }
     }
-    return false;
+    return null;
 }
 
 function isPointPolygonIntersect(/*x, y, polygon*/) {
@@ -192,15 +204,14 @@ function generateUniqId() {
     return Math.round(Math.random() * 1000000); 
 }
 
-function arrayNumbersToVerticesArray(array) {
+function verticesArrayToArrayNumbers(array) {
     const len = array.length,
-        vertices = [];
-    for (let i = 0; i < len; i+=2) {
-        const x = array[i],
-            y = array[i + 1];
-        vertices.push(new Vertex(x, y));
+        numbers = [];
+    for (let i = 0; i < len; i++) {
+        const vertex = array[i];
+        numbers.push([vertex.x, vertex.y]);
     }
-    return vertices;
+    return numbers;
 }
 
 export { 
@@ -222,4 +233,4 @@ export {
     isPointCircleIntersect,
     isPolygonLineIntersect,
     generateUniqId,
-    arrayNumbersToVerticesArray };
+    verticesArrayToArrayNumbers };

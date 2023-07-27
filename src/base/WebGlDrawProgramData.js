@@ -1,14 +1,14 @@
 export class WebGlDrawProgramData {
     /**
-     * @type {String}
+     * @type {string}
      */
     #programName;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */
     #vectors;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */ 
     #textures;
     /**
@@ -16,27 +16,27 @@ export class WebGlDrawProgramData {
      */ 
     #image;
     /**
-     * @type {String}
+     * @type {string}
      */ 
     #imageName;
     /**
-     * @type {String[]}
+     * @type {string[]}
      */
     #drawMask;
     /**
-     * @type {Number}
+     * @type {number}
      */ 
     #rotation;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */ 
     #translation;
     /**
-     * @type {Number[]}
+     * @type {number[]}
      */ 
     #scale;
     /**
-     * @type {Number}
+     * @type {number}
      */ 
     #programVerticesNum;
 

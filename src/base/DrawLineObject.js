@@ -5,11 +5,11 @@ import { Vertex } from "./Primitives.js";
 /**
  * Line object to draw
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawLineObject extends DrawShapeObject {
     /**
-     * @type {Array<Number>}
+     * @type {Array<Array<number>>}
      */
     #vertices;
 
@@ -22,7 +22,7 @@ export class DrawLineObject extends DrawShapeObject {
     }
 
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<Array<number>>}
      */
     get vertices () {
         return this.#vertices;

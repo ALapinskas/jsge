@@ -1,14 +1,13 @@
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Vertex } from "./Primitives.js";
 
 /**
  * @augments DrawShapeObject
- * @ignore
+ * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawPolygonObject extends DrawShapeObject {
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<Array<number>>}
      */
     #vertices;
 
@@ -17,11 +16,11 @@ export class DrawPolygonObject extends DrawShapeObject {
      */
     constructor(vertices, bgColor, subtractProgram) {
         super(CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor, subtractProgram);
-        this.#vertices = vertices;
+        this.#vertices = this._convertVerticesArray(vertices);
     }
 
     /**
-     * @type {Array<Vertex>}
+     * @type {Array<Array<number>>}
      */
     get vertices () {
         return this.#vertices;
