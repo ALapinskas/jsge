@@ -1,9 +1,8 @@
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Vertex } from "./Primitives.js";
 
 /**
- * Line object to draw
+ * Line object to draw.
  * @augments DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */

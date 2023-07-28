@@ -13,11 +13,7 @@ var config = {
         filename: "index.es6.js",
         library: {
             type: 'module'
-        },
-        environment:{
-            module:true
-        },
-        iife: false
+        }
     },
     devServer: {
         static: ["dist", "examples"],

@@ -1,4 +1,4 @@
-import { Vector, Vertex } from "./base/Primitives.js";
+import { Vector } from "./base/Primitives.js";
 
 function isMobile() {
     return /Android|webOS|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent) ;
@@ -56,7 +56,7 @@ function countClosestTraversal(line, sight) {
  * 
  * @param {{x1:number, y1:number, x2:number, y2:number}} line1 
  * @param {{x1:number, y1:number, x2:number, y2:number}} line2 
- * @returns {{x:number, y:number, p:number}}
+ * @returns {{x:number, y:number, p:number} | undefined}
  */
 function countClosestTraversal2(line1, line2) {
     const x1 = line2.x1,
@@ -114,12 +114,12 @@ function crossProduct(a, b) {
 
 function isPointOnTheLine(point, line, m_error = 0) {
     return  (
-                ((point.x >= (line.x1 - m_error)) && (point.x <= (line.x2 + m_error))) || 
+        ((point.x >= (line.x1 - m_error)) && (point.x <= (line.x2 + m_error))) || 
                 ((point.x <= (line.x1 + m_error)) && (point.x >= (line.x2 - m_error)))
-            ) && (
-                ((point.y >= (line.y1 - m_error)) && (point.y <= (line.y2 + m_error))) || 
+    ) && (
+        ((point.y >= (line.y1 - m_error)) && (point.y <= (line.y2 + m_error))) || 
                 ((point.y <= (line.y1 + m_error)) && (point.y >= (line.y2 - m_error)))
-            );
+    );
 }
 
 function isLineShorter(line1, line2) {
@@ -141,7 +141,7 @@ function isPointLineIntersect(point, line) {
  * 
  * @param {Array<Array<number>>} polygon 
  * @param {{x1:number, y1:number, x2:number, y2:number}} line 
- * @returns {Array<{x:number, y:number, p:number}> | null}
+ * @returns {{x:number, y:number, p:number} | null}
  */
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;

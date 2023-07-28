@@ -2,10 +2,9 @@ import { CONST, ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { ScreenPageData } from "./ScreenPageData.js";
 import { Exception, Warning } from "./Exception.js";
 import { Logger } from "./Logger.js";
-import AssetsManager from "assetsm";
+import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 import { RenderLayer } from "./RenderLayer.js";
 import { CanvasView } from "./CanvasView.js";
-import { System } from "./System.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { DrawCircleObject } from "./DrawCircleObject.js";
 import { DrawConusObject } from "./DrawConusObject.js";
@@ -13,13 +12,12 @@ import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
 import { DrawRectObject } from "./DrawRectObject.js";
-import { DrawShapeObject } from "./DrawShapeObject.js";
 import { DrawTextObject } from "./DrawTextObject.js";
 import { SystemInterface } from "./SystemInterface.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
 import { isPointLineIntersect, isPolygonLineIntersect, angle_2points } from "../utils.js";
-import { Vector, Vertex } from "./Primitives.js";
+import { Vector } from "./Primitives.js";
 
 /**
  * Represents the page of the game,<br>
@@ -44,11 +42,11 @@ export class ScreenPage {
      */
     #isActive;
     /**
-     * @type {System}
+     * @type {SystemInterface}
      */
     #system;
     /**
-     * @type {Map<CanvasView>}
+     * @type {Map<String, CanvasView>}
      */
     #views;
     /**
@@ -64,11 +62,11 @@ export class ScreenPage {
      */
     #drawObjectFactory = new DrawObjectFactory();
     /**
-     * @type {number[]}
+     * @type {Array<number>}
      */
     #tempFPStime;
     /**
-     * @type {Function}
+     * @type {NodeJS.Timer}
      */
     #fpsAverageCountTimer;
     /**
@@ -93,7 +91,7 @@ export class ScreenPage {
         const event = new Event(eventName);
         event.data = [...eventParams];
         this.#emitter.dispatchEvent(event);
-    }
+    };
 
     /**
      * 
@@ -103,7 +101,7 @@ export class ScreenPage {
      */
     addEventListener = (eventName, listener, options) => {
         this.#emitter.addEventListener(eventName, listener, options);
-    }
+    };
 
     /**
      * 
@@ -113,13 +111,13 @@ export class ScreenPage {
      */
     removeEventListener = (eventName, listener, options) => {
         this.#emitter.removeEventListener(eventName, listener, options);
-    }
+    };
 
     /**
      * Register stage
      * @param {string} name
      * @param {SystemInterface} system 
-     * @protected
+     * @ignore
      */
     _register(name, system) {
         this.#name = name;
@@ -131,7 +129,7 @@ export class ScreenPage {
 
     /**
      * Initialization stage
-     * @protected
+     * @ignore
      */
     _init() {
         this.init();
@@ -150,8 +148,9 @@ export class ScreenPage {
     init() {}
     /**
      * Custom logic for start stage
+     * @param {Object=} options
      */
-    start() {}
+    start(options) {}
     /**
      * @tutorial screen_pages_stages
      * Custom logic for stop stage
@@ -189,12 +188,11 @@ export class ScreenPage {
             this.#views.set(name, newView);
         } else
             Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
-    }
+    };
 
     /**
      * Attach all canvas elements from the #views to container
-     * @param {HTMLDivElement} container
-     * @protected
+     * @param {HTMLElement} container
      * @ignore
      */
     _attachViewsToContainer(container) {
@@ -221,14 +219,14 @@ export class ScreenPage {
             view._renderObject = renderObject;
             view._sortRenderObjectsByZIndex();
         }
-    }
+    };
 
     /**
      * Add render layer to the view
      * @param {string} canvasKey 
      * @param {string} layerKey 
      * @param {string} tileMapKey 
-     * @param {boolean} setBoundaries 
+     * @param {boolean=} setBoundaries 
      */
     addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries) => {
         if (!canvasKey) {
@@ -242,7 +240,7 @@ export class ScreenPage {
                 view._enableMapBoundaries();
             }
         }
-    }
+    };
 
     /**
      * Determines if this page render is Active or not
@@ -274,7 +272,7 @@ export class ScreenPage {
      */
     isAllFilesLoaded = () => {
         return this.#loader.filesWaitingForUpload === 0;
-    }
+    };
 
     /**
      * @type {ScreenPageData}
@@ -307,7 +305,7 @@ export class ScreenPage {
     /**
      * @method
      * @param {string} key 
-     * @returns {CanvasView}
+     * @returns {CanvasView | undefined}
      */
     getView = (key) => {
         const ctx = this.#views.get(key);
@@ -322,26 +320,15 @@ export class ScreenPage {
      * Load all assets,
      * previously added to a loader query
      * @returns {Promise}
-     * @protected
      * @ignore
      */
     _loadPageAssets() {
         return this.#loader.preload();
     }
 
-    /** 
-     * @returns {Promise}
-     * @protected 
-     * @ignore
-     */
-    _registerPageAudio() {
-        return this.audio._registerAllAudio(this.#loader);
-    }
-
     /**
      * Start page render
-     * @param {*} options 
-     * @protected
+     * @param {Object=} options 
      * @ignore
      */
     _start(options) {
@@ -357,7 +344,6 @@ export class ScreenPage {
 
     /**
      * Stop page render
-     * @protected
      * @ignore
      */
     _stop() {
@@ -371,18 +357,17 @@ export class ScreenPage {
 
     /**
      * Resize event
-     * @protected
      * @ignore
      */
     _resize = () => {
         this.#setCanvasSize();
         this.resize();
-    }
+    };
 
     /**
      * 
-     * @param {HTMLDivElement} htmlElement 
-     * @param {HTMLDivElement} container 
+     * @param {HTMLCanvasElement} htmlElement 
+     * @param {HTMLElement} container 
      */
     #attachElementToContainer(htmlElement, container) {
         container.appendChild(htmlElement);
@@ -406,26 +391,25 @@ export class ScreenPage {
         let collisions = [];
         for (let i = 0; i < len; i++) {
             const mapObject = objects[i],
-                drawMapObjectType = mapObject.type,
-                vertices = mapObject.vertices;
+                drawMapObjectType = mapObject.type;
 
             let coll;
             
             switch(drawMapObjectType) {
-                case CONST.DRAW_TYPE.TEXT:
-                case CONST.DRAW_TYPE.RECTANGLE:
-                case CONST.DRAW_TYPE.CONUS:
-                case CONST.DRAW_TYPE.IMAGE:
-                    coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
-                    break;
-                case CONST.DRAW_TYPE.CIRCLE:
-                    console.warn("isObjectCollision.circle check is not implemented yet!");
-                    break;
-                case CONST.DRAW_TYPE.LINE:
-                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                    break;
-                default:
-                    console.warn("unknown object type!");
+            case CONST.DRAW_TYPE.TEXT:
+            case CONST.DRAW_TYPE.RECTANGLE:
+            case CONST.DRAW_TYPE.CONUS:
+            case CONST.DRAW_TYPE.IMAGE:
+                coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
+                break;
+            case CONST.DRAW_TYPE.CIRCLE:
+                console.warn("isObjectCollision.circle check is not implemented yet!");
+                break;
+            case CONST.DRAW_TYPE.LINE:
+                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                break;
+            default:
+                console.warn("unknown object type!");
             }
             if (coll) {
                 collisions.push(coll);
@@ -441,9 +425,9 @@ export class ScreenPage {
     /**
      * @param {number} x
      * @param {number} y
-     * @param {Array<Vertex>} polygon
+     * @param {Array<Array<number>>} polygon
      * @param {number} rotation 
-     * @returns {{{x:number, y:number, p:number}} | boolean}
+     * @returns {{x:number, y:number, p:number} | boolean}
      */
     #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
         //console.log("angle: ", rotation);
@@ -457,8 +441,8 @@ export class ScreenPage {
             len = mapObjects.length;
             
         for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i],
-                object = {
+            const item = mapObjects[i];
+            const object = {
                     x1: item[0],
                     y1: item[1],
                     x2: item[2],
@@ -533,52 +517,58 @@ export class ScreenPage {
      * 
      * @param {number} x 
      * @param {number} y 
-     * @param {DrawShapeObject} drawObject 
+     * @param {DrawImageObject} drawObject 
      * @returns {{x:number, y:number, p:number} | boolean}
      */
     isBoundariesCollision = (x, y, drawObject) => {
         const drawObjectType = drawObject.type,
             vertices = drawObject.vertices;
         switch(drawObjectType) {
-            case CONST.DRAW_TYPE.TEXT:
-            case CONST.DRAW_TYPE.RECTANGLE:
-            case CONST.DRAW_TYPE.CONUS:
-            case CONST.DRAW_TYPE.IMAGE:
-                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
-            case CONST.DRAW_TYPE.CIRCLE:
-                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            case CONST.DRAW_TYPE.LINE:
-                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            default:
-                Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        case CONST.DRAW_TYPE.TEXT:
+        case CONST.DRAW_TYPE.RECTANGLE:
+        case CONST.DRAW_TYPE.CONUS:
+        case CONST.DRAW_TYPE.IMAGE:
+            return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
+        case CONST.DRAW_TYPE.CIRCLE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            break;
+        case CONST.DRAW_TYPE.LINE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            break;
+        default:
+            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
-    }
+        return false;
+    };
 
     /**
      * 
      * @param {number} x 
      * @param {number} y 
-     * @param {DrawShapeObject} drawObject
-     * @param {Array<DrawShapeObject>} objects - objects array to check
+     * @param {DrawImageObject} drawObject
+     * @param {Array<DrawImageObject>} objects - objects array to check
      * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
      */
     isObjectsCollision = (x, y, drawObject, objects) => {
         const drawObjectType = drawObject.type,
-            drawObjectBoundaries = drawObject.boundaries;
+            drawObjectBoundaries = drawObject.vertices;
         switch(drawObjectType) {
-            case CONST.DRAW_TYPE.TEXT:
-            case CONST.DRAW_TYPE.RECTANGLE:
-            case CONST.DRAW_TYPE.CONUS:
-            case CONST.DRAW_TYPE.IMAGE:
-                return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
-            case CONST.DRAW_TYPE.CIRCLE:
-                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            case CONST.DRAW_TYPE.LINE:
-                Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            default:
-                Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        case CONST.DRAW_TYPE.TEXT:
+        case CONST.DRAW_TYPE.RECTANGLE:
+        case CONST.DRAW_TYPE.CONUS:
+        case CONST.DRAW_TYPE.IMAGE:
+            return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+        case CONST.DRAW_TYPE.CIRCLE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            break;
+        case CONST.DRAW_TYPE.LINE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            break;
+        default:
+            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
-    }
+        return false;
+    };
 
     #checkCollisions(renderObjects) {
         const boundaries = this.screenPageData.getBoundaries(),
@@ -662,6 +652,10 @@ export class ScreenPage {
         }
     };
 
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
     #prepareViews() {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
@@ -671,7 +665,7 @@ export class ScreenPage {
             Promise.allSettled(viewPromises).then((drawingResults) => {
                 drawingResults.forEach((result) => {
                     if (result.status === "rejected") {
-                        const error = result.reason || result.value;
+                        const error = result.reason;
                         Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, error);
                         reject(error);
                     }
@@ -693,7 +687,7 @@ export class ScreenPage {
         Promise.allSettled(viewPromises).then((drawingResults) => {
             drawingResults.forEach((result) => {
                 if (result.status === "rejected") {
-                    Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason || result.value);
+                    Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
                 }
             });
             const r_time = performance.now() - pt0,
@@ -710,6 +704,12 @@ export class ScreenPage {
         });
     };
 
+    /**
+     * 
+     * @param {string} key 
+     * @param {CanvasView} view 
+     * @returns {Promise<void>}
+     */
     #executeRender (key, view) {
         return new Promise((resolve, reject) => {
             if (!view._isCleared) {
@@ -722,9 +722,9 @@ export class ScreenPage {
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {
-                            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason || result.value);
+                            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
                             this.#isActive = false;
-                            return reject(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
+                            return reject(WARNING_CODES.UNHANDLED_DRAW_ISSUE + ", reason: " + result.reason);
                         }
                     });
                     return view._executeTileImagesDraw();
@@ -742,7 +742,7 @@ export class ScreenPage {
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {
-                            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason || result.value);
+                            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
                             this.#isActive = false;
                         }
                     });

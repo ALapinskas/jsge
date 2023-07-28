@@ -1,0 +1,40 @@
+{
+  "name": "assetsm",
+  "version": "0.0.7",
+  "description": "Assets Manager. Tilemaps, tilesets, images and audio files loading and managing.",
+  "main": "dist/assetsm.min.js",
+  "scripts": {
+    "start": "npx http-server -c-1 -o ./examples",
+    "minify": "npx terser ./src/AssetsManager.js --compress ecma=6 -m -o ./dist/assetsm.min.js"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">= v13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ALapinskas/assetsm.git"
+  },
+  "keywords": [
+    "tilemap",
+    "tileset",
+    "tiled",
+    "image",
+    "audio",
+    "assets",
+    "loader",
+    "manager",
+    "tmj",
+    "tsj"
+  ],
+  "author": "Arturas-Alfredas Lapinskas",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ALapinskas/assetsm/issues"
+  },
+  "homepage": "https://github.com/ALapinskas/assetsm#readme",
+  "devDependencies": {
+    "http-server": "14.1.1",
+    "terser": "5.16.9"
+  }
+}

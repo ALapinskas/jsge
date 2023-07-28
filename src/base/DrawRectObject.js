@@ -15,7 +15,7 @@ export class DrawRectObject extends DrawShapeObject {
      */
     #h;
     /**
-     * @type {Array<{x:number, y:number}>}
+     * @type {Array<Array<number>>}
      */
     #vertices;
 
@@ -30,7 +30,7 @@ export class DrawRectObject extends DrawShapeObject {
     }
 
     /**
-     * @type {Array<{x:number, y:number}>}
+     * @type {Array<Array<number>>}
      */
     get vertices () {
         return this.#vertices;

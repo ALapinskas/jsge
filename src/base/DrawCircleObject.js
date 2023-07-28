@@ -2,7 +2,7 @@ import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
- * Conus object to draw
+ * Conus object to draw.
  * @augments DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
@@ -13,7 +13,7 @@ export class DrawCircleObject extends DrawShapeObject {
     #radius;
 
     /**
-     * @type {Array<{x:number, y:number}>}
+     * @type {Array<number>}
      */
     #vertices;
 
@@ -27,8 +27,8 @@ export class DrawCircleObject extends DrawShapeObject {
     }
 
     /**
-     * Array of [x,y] cords
-     * @type {Array<Array<number>>}
+     * Array of [x,y] cords.
+     * @type {Array<number>}
      */
     get vertices () {
         return this.#vertices;

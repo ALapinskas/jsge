@@ -21,6 +21,13 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.0.8:
+    r: changed main file to src/index.js
+    r: added /modules, fixed modules imports
+    r: changed socket.io to dynamic import 
+    f: fixed jsdocs
+    f: fixed eslint issues
+
 0.0.7:
     r: CanvasView.#webGlInterface._drawLines() accepts rotation and x, y params
     r: DrawObjectFactory jsdoc fix

@@ -1,5 +1,5 @@
-import { ScreenPage, CONST } from "/index.es6.js";
-import { utils } from "/index.es6.js";
+import { ScreenPage, CONST } from "../../src/index.js";
+import { utils } from "../../src/index.js";
 
 const angle_2points = utils.angle_2points;
 
@@ -170,7 +170,7 @@ export class MapPage extends ScreenPage {
     #createFireball = () => {
         const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 36, [[-8,0], [0, -4], [8, 0], [0,4]]);
         f.addAnimation(ANIMATION_FIREMOVE, [36, 37, 38, 39], true);
-        f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118], false, false);
+        f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118]);
 
         this.addRenderObject(CONST.LAYERS.DEFAULT, f);
         f.emit(ANIMATION_FIREMOVE);

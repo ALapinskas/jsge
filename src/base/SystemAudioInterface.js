@@ -1,4 +1,4 @@
-import AssetsManager from "assetsm";
+import AssetsManager from  "../../modules/assetsm/dist/assetsm.min.js";
 import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { Exception, Warning } from "./Exception.js";
 
@@ -17,7 +17,7 @@ export class SystemAudioInterface {
     /**
      * Original track
      * @param {string} name 
-     * @returns {HTMLAudioElement}
+     * @returns {HTMLAudioElement | null}
      */
     getAudio(name) {
         const audio = this.#audio.get(name);
@@ -32,7 +32,7 @@ export class SystemAudioInterface {
     /**
      * Clone of original track
      * @param {string} name 
-     * @returns {HTMLAudioElement}
+     * @returns {HTMLAudioElement | null}
      */
     getAudioCloned(name) {
         const audio = this.#audio.get(name).cloneNode();

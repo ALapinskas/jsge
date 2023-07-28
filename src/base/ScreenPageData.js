@@ -1,6 +1,5 @@
-import { ERROR_CODES, WARNING_CODES } from "../constants.js";
-import { Exception, Warning } from "./Exception.js";
-import { Logger } from "./Logger.js";
+import { WARNING_CODES } from "../constants.js";
+import { Warning } from "./Exception.js";
 /**
  * An interface for common views data such as
  * boundaries, world dimensions, options
@@ -206,7 +205,7 @@ export class ScreenPageData {
         this.#centerY = y;
         //Logger.debug("center camera position, offset: ", this.worldOffset);
         //Logger.debug("center: ", this.mapCenter);   
-    }
+    };
 
     personRotatedCenterCamera = (x, y, rotationAngle) => {
         console.log("new centering algorithm");
@@ -244,5 +243,5 @@ export class ScreenPageData {
         Logger.debug("center camera position, offset: ", this.worldOffset);
         Logger.debug("center: ", this.mapCenter);   
         */
-    }
+    };
 }

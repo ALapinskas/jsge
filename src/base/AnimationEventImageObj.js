@@ -1,10 +1,21 @@
 export class AnimationEventImageObj {
     #eventName;
+    /**
+     * @type {Array<number>}
+     */
     #animationSpriteIndexes;
+    /**
+     * @type {number}
+     */
     #currentSpriteIndex;
+    /**
+     * @type {boolean}
+     */
     #isActive;
+    /**
+     * @type {boolean}
+     */
     #isRepeated;
-    #isReturnToBeginning;
     
     constructor(eventName, animationSpriteIndexes, isRepeated = false, currentSpriteIndex, isActive = false) {
         this.#eventName = eventName;
@@ -45,5 +56,5 @@ export class AnimationEventImageObj {
 
     deactivateAnimation = () => {
         this.#isActive = false;
-    }
+    };
 }

@@ -1,5 +1,6 @@
 module.exports = {
     "env": {
+        "es6": true,
         "browser": true,
         "es2021": true
     },
@@ -13,6 +14,7 @@ module.exports = {
         "sourceType": "module"
     },
     "plugins": [
+        "jsdoc"
        // "@typescript-eslint"
     ],
     "rules": {
@@ -33,5 +35,6 @@ module.exports = {
             "always"
         ],
         //"@typescript-eslint/no-explicit-any": "off"//remove this later
+        "jsdoc/no-undefined-types": 1
     }
 };

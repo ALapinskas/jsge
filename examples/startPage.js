@@ -1,5 +1,5 @@
-import { ScreenPage, CONST } from "/index.es6.js";
-import { utils } from "/index.es6.js";
+import { ScreenPage, CONST } from "../src/index.js";
+import { utils } from "../src/index.js";
 
 const isPointRectIntersect = utils.isPointRectIntersect;
 const LEFT_SHIFT = -70;

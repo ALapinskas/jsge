@@ -1,4 +1,4 @@
-import { System, SystemSettings } from "/index.es6.js";
+import { System, SystemSettings } from "../src/index.js";
 import { StartPage } from "./startPage.js";
 import { MapPage as Dungeon } from "./dungeon/mapPage.js";
 import { MapPage as Pirates } from "./pirates/mapPage.js";

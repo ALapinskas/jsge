@@ -1,7 +1,7 @@
 import { CONST } from "./constants.js";
 
 /**
- * Settings object, should be passed as a parameter to System.constructor()
+ * Settings object, should be passed as a parameter to System.constructor().
  */
 export const SystemSettings = {
     mode: CONST.MODE.DEBUG,
@@ -40,4 +40,4 @@ export const SystemSettings = {
     },
 
     defaultCanvasKey: "default"
-}
+};

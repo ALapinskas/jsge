@@ -1,6 +1,6 @@
-import { Primitives } from "/index.es6.js";
-import { ScreenPage, CONST } from "/index.es6.js";
-import { utils } from "/index.es6.js";
+import { Primitives } from "../../src/index.js";
+import { ScreenPage, CONST } from "../../src/index.js";
+import { utils } from "../../src/index.js";
 
 const Vertex = Primitives.Vertex;
 const SHIPS_KEY = "ships";

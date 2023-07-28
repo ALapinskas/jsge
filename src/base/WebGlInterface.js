@@ -11,17 +11,13 @@ export class WebGlInterface {
      */
     #programs;
     /**
-     * @type {Map<string, WebGLProgram>}
+     * @type {Array<WebGlDrawProgramData>}
      */
     #programsData;
     /**
-     * @type {WebGlDrawProgramData[]}
+     * @type {Map<string, Object>}
      */
     #coordsLocations;
-    /**
-     * @type {Map<string, ArrayBuffer>}
-     */
-    #buffers;
     /**
      * @type {number}
      */
@@ -35,15 +31,15 @@ export class WebGlInterface {
      */
     #debug;
     /**
-     * @param  {Map<string, number>}
+     * @type  {Map<string, number>}
      */
     #images_bind;
     /**
-     * @param {Map<string, WebGLBuffer>}
+     * @type {WebGLBuffer}
      */
     #positionBuffer;
     /**
-     * @param {Map<string, WebGLBuffer>}
+     * @type {WebGLBuffer}
      */
     #texCoordBuffer;
 
@@ -58,7 +54,6 @@ export class WebGlInterface {
         this.#programsData = [];
         this.#coordsLocations = new Map();
         this.#images_bind = new Map();
-        this.#buffers = [];
         this.#verticesNumber = 0;
         this.#positionBuffer = this.#gl.createBuffer();
         this.#texCoordBuffer = this.#gl.createBuffer();
@@ -553,29 +548,29 @@ export class WebGlInterface {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
         switch (renderObject.type) {
-            case CONST.DRAW_TYPE.RECTANGLE:
-                this.#setSingleRectangle(renderObject.width, renderObject.height);
-                this.#verticesNumber += 6;
-                break;
-            case CONST.DRAW_TYPE.TEXT:
-                break;
-            case CONST.DRAW_TYPE.CIRCLE:
-                const coords = renderObject.vertices;
-                gl.bufferData(this.#gl.ARRAY_BUFFER, 
-                    new Float32Array(coords), this.#gl.STATIC_DRAW);
-                this.#verticesNumber += coords.length / 2;
-                break;
-            case CONST.DRAW_TYPE.POLYGON: {
-                const triangles = this.#triangulatePolygon(renderObject.vertices);
-                this.#bindPolygon(triangles);
-                const len = triangles.length;
-                if (len % 3 !== 0) {
-                    Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
-                    return;
-                }
-                this.#verticesNumber += len / 2;
-                break;
+        case CONST.DRAW_TYPE.RECTANGLE:
+            this.#setSingleRectangle(renderObject.width, renderObject.height);
+            this.#verticesNumber += 6;
+            break;
+        case CONST.DRAW_TYPE.TEXT:
+            break;
+        case CONST.DRAW_TYPE.CIRCLE:
+            const coords = renderObject.vertices;
+            gl.bufferData(this.#gl.ARRAY_BUFFER, 
+                new Float32Array(coords), this.#gl.STATIC_DRAW);
+            this.#verticesNumber += coords.length / 2;
+            break;
+        case CONST.DRAW_TYPE.POLYGON: {
+            const triangles = this.#triangulatePolygon(renderObject.vertices);
+            this.#bindPolygon(triangles);
+            const len = triangles.length;
+            if (len % 3 !== 0) {
+                Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
+                return;
             }
+            this.#verticesNumber += len / 2;
+            break;
+        }
         }
         //Tell the attribute how to get data out of positionBuffer
         const size = 2,
@@ -681,7 +676,7 @@ export class WebGlInterface {
         
         const polygonVerticesNum = triangles.length;
         if (polygonVerticesNum % 3 !== 0) {
-            Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygon boundaries vertices are not correct, skip drawing`);
+            Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "polygon boundaries vertices are not correct, skip drawing");
             return;
         }
         this.#bindPolygon(triangles);
@@ -749,9 +744,9 @@ export class WebGlInterface {
             //gl.blendFunc( gl.ONE, gl.ONE );
             //gl.blendFunc(gl.ONE, gl.DST_COLOR);
         } //else {
-            //gl.disable(gl.BLEND);
-            // make transparent
-            //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //gl.disable(gl.BLEND);
+        // make transparent
+        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         //}
 
         const colorArray = this.#rgbaToArray(fillStyle);
@@ -788,10 +783,6 @@ export class WebGlInterface {
             new Float32Array(vertices),
             this.#gl.STATIC_DRAW);
     }
-
-    #randomInt(range) {
-        return Math.floor(Math.random() * range);
-    } 
 
     #setSingleRectangle(width, height) {
         const x1 = 0,
@@ -845,7 +836,7 @@ export class WebGlInterface {
         const ctx = document.createElement("canvas").getContext("2d");
 
         ctx.font = renderObject.font;
-        renderObject.textMetrics = ctx.measureText(renderObject.text);
+        renderObject._textMetrics = ctx.measureText(renderObject.text);
         const boxWidth = renderObject.boundariesBox.width, 
             boxHeight = renderObject.boundariesBox.height;
         ctx.canvas.width = boxWidth;
@@ -892,8 +883,8 @@ export class WebGlInterface {
     /**
      * 
      * @param {Array<Array<number>>} polygonVertices 
-     * @param {Array<Array<number>>} triangulatedPolygon 
-     * @returns {Array<Array<number>>}
+     * @param {Array<number>} triangulatedPolygon 
+     * @returns {Array<number> | undefined}
      */
     #triangulate (polygonVertices, triangulatedPolygon = []) {
         const len = polygonVertices.length,

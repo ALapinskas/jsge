@@ -1,9 +1,8 @@
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Vertex } from "./Primitives.js";
 
 /**
- * Conus object to draw
+ * Conus object to draw.
  * @augments DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
@@ -14,8 +13,8 @@ export class DrawConusObject extends DrawShapeObject {
     #radius;
 
     /**
-     * Array of [x,y] cords
-     * @type {Array<Array<number>>}
+     * Array of [x,y] cords.
+     * @type {Array<number>}
      */
     #vertices;
 
@@ -29,8 +28,8 @@ export class DrawConusObject extends DrawShapeObject {
     }
 
     /**
-     * Array of [x,y] cords
-     * @type {Array<Array<number>>}
+     * Array of [x,y] cords.
+     * @type {Array<number>}
      */
     get vertices () {
         return this.#vertices;

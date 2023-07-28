@@ -27,7 +27,7 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * Rectangle text box
+     * Rectangle text box.
      * @type {Rectangle}
      */
     get boundariesBox() {
@@ -108,13 +108,13 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {string}
+     * @type {TextMetrics}
      */
     get textMetrics() {
         return this.#textMetrics;
     }
 
-    set textMetrics(value) {
+    set _textMetrics(value) {
         this.#textMetrics = value;
     }
 }

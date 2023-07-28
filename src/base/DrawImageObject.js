@@ -36,7 +36,7 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * @type {Array<Array<number>>}
      */
-    #vertices = null;
+    #vertices;
 
     /**
      * @hideconstructor

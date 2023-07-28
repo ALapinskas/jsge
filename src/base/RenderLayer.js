@@ -12,7 +12,7 @@ export class RenderLayer {
     }
 
     /**
-     * A layer name
+     * A layer name.
      * @type {string}
      */
     get layerKey() {
@@ -20,7 +20,7 @@ export class RenderLayer {
     }
 
     /**
-     * A tilemap layer key, should match key from the tilemap
+     * A tilemap layer key, should match key from the tilemap.
      * @type {string}
      */
     get tileMapKey() {
@@ -29,7 +29,7 @@ export class RenderLayer {
 
     /**
      * Should the layer borders used as boundaries, or not
-     * Can be set in ScreenPage.addRenderLayer() method
+     * Can be set in ScreenPage.addRenderLayer() method.
      * @type {boolean}
      */
     get setBoundaries() {
@@ -38,7 +38,7 @@ export class RenderLayer {
 
     /**
      * Should draw a boundaries helper, or not
-     * Can be set in SystemSettings
+     * Can be set in SystemSettings.
      * @type {boolean}
      */
     get drawBoundaries() {

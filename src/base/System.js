@@ -14,7 +14,7 @@ export class System {
     #system;
     /**
      * @param {SystemSettings} systemSettings - holds system settings
-     * @param {HTMLDivElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
+     * @param {HTMLElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
      */
     constructor(systemSettings, canvasContainer) {
         if (!systemSettings) {

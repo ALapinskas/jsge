@@ -5,9 +5,16 @@ import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { WebGlInterface } from "./WebGlInterface.js";
 import { SystemSettings } from "../configs.js";
 import { ScreenPageData } from "./ScreenPageData.js";
-import AssetsManager from "assetsm";
+import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 //import { calculateBufferData } from "../wa/release.js";
 import { CONST } from "../constants.js";
+import { DrawImageObject } from "./DrawImageObject.js";
+import { DrawCircleObject } from "./DrawCircleObject.js";
+import { DrawConusObject } from "./DrawConusObject.js";
+import { DrawLineObject } from "./DrawLineObject.js";
+import { DrawPolygonObject } from "./DrawPolygonObject.js";
+import { DrawRectObject } from "./DrawRectObject.js";
+import { DrawTextObject } from "./DrawTextObject.js";
 
 const INDEX_TOP_LINE = 0,
     INDEX_RIGHT_LINE = 1,
@@ -62,7 +69,7 @@ export class CanvasView {
     #loader;
 
     /**
-     * @type {Array<DrawShapeObject>}
+     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject>}
      */
     #renderObjects;
     /**
@@ -122,13 +129,16 @@ export class CanvasView {
 
     /**
      * Retrieve specific objects instances
-     * @param {DrawShapeObject} instance - drawObjectInstance to retrieve 
-     * @returns {Array<DrawShapeObject>}
+     * @param {Object} instance - drawObjectInstance to retrieve 
+     * @returns {Array<Object>}
      */
     getObjectsByInstance(instance) {
         return this.#renderObjects.filter((object) => object instanceof instance);
     }
 
+    /**
+     * @returns {Array<RenderLayer>}
+     */
     get _renderLayers() {
         return this.#renderLayers;
     }
@@ -141,6 +151,9 @@ export class CanvasView {
         this.#renderObjects = objects;
     } 
 
+    /**
+     * @param {RenderLayer} layer
+     */
     set _renderLayers(layer) {
         this.#renderLayers.push(layer);
     }
@@ -209,6 +222,11 @@ export class CanvasView {
         });
     }
 
+    /**
+     * 
+     * @param {RenderLayer} renderLayer 
+     * @returns {Promise<void>}
+     */
     _bindRenderLayerWM(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
@@ -254,6 +272,11 @@ export class CanvasView {
         });
     }
 
+    /**
+     * 
+     * @param {RenderLayer} renderLayer 
+     * @returns {Promise<void>}
+     */
     _bindRenderLayer(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
@@ -507,6 +530,7 @@ export class CanvasView {
             }
             
             if (setBoundaries) {
+                // filter undefined value
                 const filtered = boundaries.filter(array => array);
                 this.screenPageData._addBoundariesArray(filtered);
             }
@@ -546,8 +570,9 @@ export class CanvasView {
     }
 
     _postRenderActions() {
-        for (let i = 0; i < this.#renderObjects.length; i++) {
-            const object = this.#renderObjects[i];
+        const images = this.getObjectsByInstance(DrawImageObject);
+        for (let i = 0; i < images.length; i++) {
+            const object = images[i];
             if (object.isAnimations) {
                 object._processActiveAnimations();
             }
@@ -566,6 +591,11 @@ export class CanvasView {
         this.#bindTileMapPromises = [];
     }
 
+    /**
+     * 
+     * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject} renderObject 
+     * @returns {Promise<void>}
+     */
     #bindRenderObject(renderObject) {
         return new Promise((resolve) => {
             const [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
@@ -619,11 +649,11 @@ export class CanvasView {
             } else {
                 this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }
-            if (renderObject.boundaries && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
+            if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                 const shiftX = x,// - renderObject.boundaries[0],
                     shiftY = y,// - renderObject.boundaries[1],
                 rotation = renderObject.rotation ? renderObject.rotation : 0;
-                this.#webGlInterface._drawPolygon(renderObject.boundaries, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
             }
             return resolve();
         });
@@ -633,6 +663,10 @@ export class CanvasView {
         this.#bindRenderObjectPromises = [];
     }
 
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
     #drawBoundariesWebGl() {
         return new Promise((resolve) => {
             const b = this.screenPageData.getBoundaries(),

@@ -1,9 +1,7 @@
-import { ScreenPage, CONST } from "/index.es6.js";
-import { utils } from "/index.es6.js";
+import { ScreenPage, CONST } from "../../src/index.js";
+import { utils } from "../../src/index.js";
 
 const BLACK_CAR_KEY = "bkc",
-    angle_2points = utils.angle_2points,
-    isPointLineIntersect = utils.isPointLineIntersect,
     MAX_SPEED = 2,
     MIN_SPEED = -0.5;
 
@@ -172,7 +170,7 @@ export class MapPage extends ScreenPage {
             y = e.offsetY,
             cursorPosX = x + xOffset,
             cursorPosY = y + yOffset,
-            rad = angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
+            rad = utils.angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
             
             this.player.rotation = rad - Math.PI/2;
     };
