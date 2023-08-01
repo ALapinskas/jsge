@@ -2,7 +2,7 @@ import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
- * @augments DrawShapeObject
+ * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawRectObject extends DrawShapeObject {
@@ -22,8 +22,8 @@ export class DrawRectObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(x, y, w, h, bgColor, subtractProgram) {
-        super(CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor, subtractProgram);
+    constructor(x, y, w, h, bgColor, cut) {
+        super(CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor, cut);
         this.#w = w;
         this.#h = h;
         this.#vertices = this._calculateRectVertices(w,h);

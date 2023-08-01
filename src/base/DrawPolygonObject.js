@@ -2,7 +2,7 @@ import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
- * @augments DrawShapeObject
+ * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawPolygonObject extends DrawShapeObject {
@@ -14,8 +14,8 @@ export class DrawPolygonObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(vertices, bgColor, subtractProgram) {
-        super(CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor, subtractProgram);
+    constructor(vertices, bgColor, cut) {
+        super(CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor, cut);
         this.#vertices = this._convertVerticesArray(vertices);
     }
 

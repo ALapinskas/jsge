@@ -73,6 +73,11 @@ export class ScreenPage {
      * @type {EventTarget}
      */
     #emitter = new EventTarget();
+    /**
+     * @type {boolean}
+     */
+    #isBoundariesPrecalculations = false;
+    #minCircleTime;
 
     constructor() {
         this.#isActive = false;
@@ -122,6 +127,8 @@ export class ScreenPage {
     _register(name, system) {
         this.#name = name;
         this.#system = system;
+        this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
+        this.#minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
         this.#setWorldDimensions();
         this.#setCanvasSize();
         this.register();
@@ -236,7 +243,7 @@ export class ScreenPage {
         } else {
             const view = this.#views.get(canvasKey);
             view._renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries);
-            if (setBoundaries && this.systemSettings.gameOptions.render.mapBoundariesEnabled) {
+            if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
                 view._enableMapBoundaries();
             }
         }
@@ -659,8 +666,12 @@ export class ScreenPage {
     #prepareViews() {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
+            const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
             for (const view of this.#views.values()) {
                 viewPromises.push(view._initiateWebGlContext(this.systemSettings.gameOptions.debugWebGl));
+                if (isBoundariesPrecalculations) {
+                    viewPromises.push(view._createBoundariesPrecalculations());
+                }
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {
                 drawingResults.forEach((result) => {
@@ -677,10 +688,12 @@ export class ScreenPage {
 
     #drawViews = (/*drawTime*/) => {
         const pt0 = performance.now(),
-            minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
+            minCircleTime = this.#minCircleTime;
+            
         let viewPromises = [];
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
         this.screenPageData._clearBoundaries();
+
         for (const [key, view] of this.#views.entries()) {
             viewPromises.push(this.#executeRender(key, view));
         }

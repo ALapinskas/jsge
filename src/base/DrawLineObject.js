@@ -3,7 +3,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * Line object to draw.
- * @augments DrawShapeObject
+ * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawLineObject extends DrawShapeObject {

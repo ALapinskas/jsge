@@ -3,7 +3,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * Conus object to draw.
- * @augments DrawShapeObject
+ * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawCircleObject extends DrawShapeObject {
@@ -20,8 +20,8 @@ export class DrawCircleObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(x, y, radius, bgColor, subtractProgram) {
-        super(CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, subtractProgram);
+    constructor(x, y, radius, bgColor, cut) {
+        super(CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, cut);
         this.#radius = radius;
         this.#vertices = this._calculateConusVertices(radius);
     }

@@ -18,9 +18,16 @@ export class ScreenPageData {
     #centerY = 0;
     #rotate = 0;
     /**
+     * current screen boundaries, recalculated every render circle
      * @type {Array<Array<number>>}
      */
     #boundaries = [];
+
+    /**
+     * whole world boundaries, calculated once on prepare stage
+     * @type {Array<Array<number>>}
+     */
+    #wholeWorldBoundaries = [];
 
     /**
      * Add a Boundaries line
@@ -88,12 +95,23 @@ export class ScreenPageData {
         this.#addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
     }
 
+    _setWholeWorldMapBoundaries() {
+        const [w, h] = [this.#worldWidth, this.#worldHeight];
+        if (!w || !h) {
+            Warning(WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
+        }
+        this.#wholeWorldBoundaries.push([0, 0, w, 0]);
+        this.#wholeWorldBoundaries.push([w, 0, w, h]);
+        this.#wholeWorldBoundaries.push([w, h, 0, h]);
+        this.#wholeWorldBoundaries.push([0, h, 0, 0]);
+    }
+
     /**
      * Merge same boundaries
      * @ignore
      */
-    _mergeBoundaries() {
-        const boundaries = this.getBoundaries(),
+    _mergeBoundaries(isWholeMapBoundaries = false) {
+        const boundaries = isWholeMapBoundaries ? this.getWholeWorldBoundaries() : this.getBoundaries(),
             boundariesSet = new Set(boundaries);
         for (const line of boundariesSet.values()) {
             const lineX1 = line[0],
@@ -120,8 +138,16 @@ export class ScreenPageData {
             }
         }
 
-        this.#boundaries = Array.from(boundariesSet);
+        if (isWholeMapBoundaries) {
+            this.#boundaries = Array.from(boundariesSet);
+        } else {
+            this.#wholeWorldBoundaries = Array.from(boundariesSet);
+        }
         boundariesSet.clear();
+    }
+
+    _setWholeMapBoundaries(boundaries) {
+        this.#wholeWorldBoundaries.push(...boundaries);
     }
 
     /**
@@ -132,6 +158,9 @@ export class ScreenPageData {
         return this.#boundaries;
     }
 
+    getWholeWorldBoundaries() {
+        return this.#wholeWorldBoundaries;
+    }
     /**
      * @type {Array<number>}
      */

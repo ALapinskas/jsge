@@ -4,7 +4,13 @@ import { Exception, Warning } from "./Exception.js";
 import { WebGlDrawProgramData } from "./WebGlDrawProgramData.js";
 
 export class WebGlInterface {
+    /**
+     * @type {string}
+     */
     #vertexShaderSource;
+    /**
+     * @type {string}
+     */
     #fragmentShaderSource;
     /**
      * @type {Map<string, WebGLProgram>}
@@ -35,11 +41,11 @@ export class WebGlInterface {
      */
     #images_bind;
     /**
-     * @type {WebGLBuffer}
+     * @type {WebGLBuffer | null}
      */
     #positionBuffer;
     /**
-     * @type {WebGLBuffer}
+     * @type {WebGLBuffer | null}
      */
     #texCoordBuffer;
 
@@ -269,6 +275,18 @@ export class WebGlInterface {
         return Promise.resolve();
     }
     
+    /**
+     * 
+     * @param {*} vectors 
+     * @param {*} textures 
+     * @param {*} image 
+     * @param {*} imageName 
+     * @param {*} drawMask 
+     * @param {*} rotation 
+     * @param {*} translation 
+     * @param {*} scale 
+     * @returns {Promise<void>}
+     */
     _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
@@ -292,6 +310,10 @@ export class WebGlInterface {
         });
     }
     
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
     _executeTileImagesDraw() {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
@@ -305,7 +327,7 @@ export class WebGlInterface {
                     u_imageLocation } = this.#coordsLocations.get(programName),
                 gl = this.#gl,
                 programsData = this.#programsData.filter(programData => programData.programName === programName);
-                
+           
             gl.useProgram(program);
 
             for (let i = 0; i < programsData.length; i++) {
@@ -586,7 +608,7 @@ export class WebGlInterface {
         if (renderObject.blendFunc) {
             gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
         }
-        if (renderObject.subtract) {
+        if (renderObject.cut) {
             gl.blendEquation(gl.FUNC_SUBTRACT);
         }
         //disable attribute which is not used in this program
@@ -738,7 +760,7 @@ export class WebGlInterface {
             gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
         }
 
-        if (renderObject.subtract) {
+        if (renderObject.cut) {
             // cut bottom 
             gl.blendEquation(gl.FUNC_SUBTRACT);
             //gl.blendFunc( gl.ONE, gl.ONE );
@@ -817,52 +839,81 @@ export class WebGlInterface {
         }
     }
 
+    /**
+     * @returns {WebGLProgram}
+     */
     #initProgram() {
         const gl = this.#gl,
             program = gl.createProgram();
 
-        gl.attachShader(program, this.#compileShader(this.#vertexShaderSource, gl.VERTEX_SHADER));
-        gl.attachShader(program, this.#compileShader(this.#fragmentShaderSource, gl.FRAGMENT_SHADER));
+        if (program) {
+            const compVertexShader = this.#compileShader(this.#vertexShaderSource, gl.VERTEX_SHADER);
+            if (compVertexShader) {
+                gl.attachShader(program, compVertexShader);
+            } else {
+                Exception(ERROR_CODES.WEBGL_ERROR, "#compileShader(vertexShaderSource) is null");
+            }
 
-        gl.linkProgram(program);
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            const info = gl.getProgramInfoLog(program);
-            Exception(ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
+            const compFragmentShader = this.#compileShader(this.#fragmentShaderSource, gl.FRAGMENT_SHADER);
+            if (compFragmentShader) {
+                gl.attachShader(program, compFragmentShader);
+            } else {
+                Exception(ERROR_CODES.WEBGL_ERROR, "#compileShader(fragmentShaderSource) is null");
+            }
+
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                const info = gl.getProgramInfoLog(program);
+                Exception(ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
+            }
+        } else {
+            Exception(ERROR_CODES.WEBGL_ERROR, 'gl.createProgram() is null');
         }
         return program;
     }
 
+    /**
+     * 
+     * @param {*} renderObject 
+     * @returns {{boxWidth:number, boxHeight:number, ctx:CanvasRenderingContext2D}}
+     */
     #createCanvasText(renderObject) {
         const ctx = document.createElement("canvas").getContext("2d");
-
-        ctx.font = renderObject.font;
-        renderObject._textMetrics = ctx.measureText(renderObject.text);
-        const boxWidth = renderObject.boundariesBox.width, 
-            boxHeight = renderObject.boundariesBox.height;
-        ctx.canvas.width = boxWidth;
-        ctx.canvas.height = boxHeight;
-        ctx.font = renderObject.font;
-        ctx.textBaseline = "bottom";// bottom
-        if (renderObject.fillStyle) {
-            ctx.fillStyle = renderObject.fillStyle;
-            ctx.fillText(renderObject.text, 0, boxHeight);
-        } 
-        if (renderObject.strokeStyle) {
-            ctx.strokeStyle = renderObject.strokeStyle;
-            ctx.strokeText(renderObject.text, 0, boxHeight);
+        if (ctx) { 
+            ctx.font = renderObject.font;
+            renderObject._textMetrics = ctx.measureText(renderObject.text);
+            const boxWidth = renderObject.boundariesBox.width, 
+                boxHeight = renderObject.boundariesBox.height;
+            ctx.canvas.width = boxWidth;
+            ctx.canvas.height = boxHeight;
+            ctx.font = renderObject.font;
+            ctx.textBaseline = "bottom";// bottom
+            if (renderObject.fillStyle) {
+                ctx.fillStyle = renderObject.fillStyle;
+                ctx.fillText(renderObject.text, 0, boxHeight);
+            } 
+            if (renderObject.strokeStyle) {
+                ctx.strokeStyle = renderObject.strokeStyle;
+                ctx.strokeText(renderObject.text, 0, boxHeight);
+            }
+            return { boxWidth, boxHeight, ctx };
+        } else {
+            Exception(ERROR_CODES.WEBGL_ERROR, "can't getContext('2d')");
         }
-
-        return { boxWidth, boxHeight, ctx };
     }
 
     #compileShader(shaderSource, shaderType) {
         const shader = this.#gl.createShader(shaderType);
-        this.#gl.shaderSource(shader, shaderSource);
-        this.#gl.compileShader(shader);
+        if (shader) {
+            this.#gl.shaderSource(shader, shaderSource);
+            this.#gl.compileShader(shader);
 
-        if (!this.#gl.getShaderParameter(shader, this.#gl.COMPILE_STATUS)) {
-            const info = this.#gl.getShaderInfoLog(shader);
-            Exception(ERROR_CODES.WEBGL_ERROR, "Couldn't compile webGl program. \n\n" + info);
+            if (!this.#gl.getShaderParameter(shader, this.#gl.COMPILE_STATUS)) {
+                const info = this.#gl.getShaderInfoLog(shader);
+                Exception(ERROR_CODES.WEBGL_ERROR, "Couldn't compile webGl program. \n\n" + info);
+            }
+        } else {
+            Exception(ERROR_CODES.WEBGL_ERROR, `gl.createShader(${shaderType}) is null`);
         }
         return shader;
     }
@@ -884,7 +935,7 @@ export class WebGlInterface {
      * 
      * @param {Array<Array<number>>} polygonVertices 
      * @param {Array<number>} triangulatedPolygon 
-     * @returns {Array<number> | undefined}
+     * @returns {Array<number>}
      */
     #triangulate (polygonVertices, triangulatedPolygon = []) {
         const len = polygonVertices.length,
@@ -931,8 +982,7 @@ export class WebGlInterface {
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
-                    console.warn("Can\'t extract triangles. Probably vertices input is not correct, or the order is wrong");
-                    return;
+                    Exception(ERROR_CODES.DRAW_PREPARE_ERROR, "Can\'t extract triangles. Probably vertices input is not correct, or the order is wrong");
                 }
             }
             i++;

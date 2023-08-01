@@ -13,7 +13,7 @@ export class DrawShapeObject {
      * @enum {CONST.DRAW_TYPE}
      */
     #type;
-    #subtract;
+    #cut;
     /**
      * Is used for blending pixel arithmetic
      * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc.
@@ -41,12 +41,12 @@ export class DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(type, mapX, mapY, bgColor, subtractProgram) {
+    constructor(type, mapX, mapY, bgColor, cut) {
         this.#x = mapX;
         this.#y = mapY;
         this.#bg = bgColor;
         this.#type = type;
-        this.#subtract = subtractProgram;
+        this.#cut = cut;
     }
 
     /**
@@ -94,8 +94,8 @@ export class DrawShapeObject {
     /**
      * @type {boolean}
      */
-    get subtract() {
-        return this.#subtract;
+    get cut() {
+        return this.#cut;
     }
 
     /**
@@ -167,7 +167,7 @@ export class DrawShapeObject {
      * @returns {Array<number>}
      * @ignore
      */
-    _calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/12) {
+    _calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/14) {
         let conusPolygonCoords = [0, 0];
 
         for (let r = 0; r <= angle; r += step) {

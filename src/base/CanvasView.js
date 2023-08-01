@@ -166,6 +166,16 @@ export class CanvasView {
         return this.#isCleared;
     }
 
+    _createBoundariesPrecalculations() {
+        const promises = [];
+        for (const layer of this.#renderLayers) {
+            promises.push(this.#layerBoundariesPrecalculation(layer).catch((err) => {
+                Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
+            }));
+        }
+        return promises;
+    }
+
     /**
      * @ignore
      */
@@ -286,10 +296,11 @@ export class CanvasView {
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 tilewidth = dtwidth,
                 tileheight = dtheight,
-                setBoundaries = renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
                 [ canvasW, canvasH ] = this.screenPageData.canvasDimensions,
-                [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset;
+                [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
+                boundariesCalculations = this.systemSettings.gameOptions.render.boundaries.realtimeCalculations,
+                setBoundaries = renderLayer.setBoundaries && boundariesCalculations;
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [];
@@ -593,6 +604,76 @@ export class CanvasView {
 
     /**
      * 
+     * @param {RenderLayer} renderLayer 
+     * @returns {Promise<void>}
+     */
+    #layerBoundariesPrecalculation(renderLayer) {
+        return new Promise((resolve, reject) => {
+            if (renderLayer.setBoundaries) {
+                const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
+                tilesets = tilemap.tilesets,
+                layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
+                { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                tilewidth = dtwidth,
+                tileheight = dtheight,
+                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
+                
+                let boundaries = [];
+
+                if (!layerData) {
+                    Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
+                    reject();
+                }
+                
+                for (let i = 0; i < tilesets.length; i++) {
+                    const layerCols = layerData.width,
+                        layerRows = layerData.height,
+                        worldW = tilewidth * layerCols,
+                        worldH = tileheight * layerRows;
+
+                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                        Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                        this.screenPageData._setWorldDimensions(worldW, worldH);
+                    }
+                    
+                    if (this.#isWorldBoundariesEnabled) {
+                        this.screenPageData._setWholeWorldMapBoundaries();
+                    }
+
+                    //calculate boundaries
+                    let mapIndex = 0;
+
+                    for (let row = 0; row < layerRows; row++) {
+                        for (let col = 0; col < layerCols; col++) {
+                            let tile = layerData.data[mapIndex],
+                                mapPosX = col * tilewidth,
+                                mapPosY = row * tileheight;
+                            if (tile !== 0) {
+                                tile -= 1;
+                                
+                                boundaries.push([mapPosX, mapPosY, mapPosX + tilewidth, mapPosY]);
+                                boundaries.push([mapPosX + tilewidth, mapPosY, mapPosX + tilewidth, mapPosY + tileheight]);
+                                boundaries.push([mapPosX + tilewidth, mapPosY + tileheight, mapPosX, mapPosY + tileheight]);
+                                boundaries.push([mapPosX, mapPosY + tileheight, mapPosX, mapPosY ]);
+    
+                            }
+                            mapIndex++;
+                        }
+                    }
+                }
+                this.screenPageData._setWholeMapBoundaries(boundaries);
+                this.screenPageData._mergeBoundaries(true);
+                console.warn("precalculated boundaries set");
+                console.log(this.screenPageData.getWholeWorldBoundaries());
+                resolve();
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    /**
+     * 
      * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject} renderObject 
      * @returns {Promise<void>}
      */
@@ -639,6 +720,12 @@ export class CanvasView {
                         texX2, texY2
                     ];
                 this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y]);
+                if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
+                    const shiftX = x,// - renderObject.boundaries[0],
+                        shiftY = y,// - renderObject.boundaries[1],
+                    rotation = renderObject.rotation ? renderObject.rotation : 0;
+                    this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                }
                 //ctx.restore();
             } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {
                 this.#webGlInterface._bindText(x, y, renderObject);
@@ -648,12 +735,6 @@ export class CanvasView {
                 this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth, renderObject.rotation, [x, y]);
             } else {
                 this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
-            }
-            if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
-                const shiftX = x,// - renderObject.boundaries[0],
-                    shiftY = y,// - renderObject.boundaries[1],
-                rotation = renderObject.rotation ? renderObject.rotation : 0;
-                this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
             }
             return resolve();
         });

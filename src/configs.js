@@ -12,7 +12,7 @@ export const SystemSettings = {
         debugMobileTouch: false,
         optimization: null,
         boundaries: {
-            drawLayerBoundaries: false,
+            drawLayerBoundaries: true,
             drawObjectBoundaries: false,
             boundariesColor: "rgba(224, 12, 21, 0.6)",
             boundariesWidth: 2
@@ -20,7 +20,11 @@ export const SystemSettings = {
         render: {
             averageFPStime: 10000,
             minCircleTime: 16, //ms which is ~60 FPS
-            mapBoundariesEnabled: true
+            boundaries: {
+                mapBoundariesEnabled: true,
+                realtimeCalculations: true,
+                wholeWorldPrecalculations: false
+            }
         }
     },
 

@@ -20,11 +20,11 @@ export class DrawObjectFactory {
      * @param {number} width 
      * @param {number} height 
      * @param {string} backgroundColor - rgba(r,g,b,a)
-     * @param {string} subtractProgram
+     * @param {boolean=} cut
      * @returns {DrawRectObject}
      */
-    rect(x, y, width, height, backgroundColor, subtractProgram) {
-        return new DrawRectObject(x, y, width, height, backgroundColor, subtractProgram); 
+    rect(x, y, width, height, backgroundColor, cut) {
+        return new DrawRectObject(x, y, width, height, backgroundColor, cut); 
     }
 
     /**
@@ -44,22 +44,22 @@ export class DrawObjectFactory {
      * @param {number} radius 
      * @param {string} bgColor - rgba(r,g,b,a)
      * @param {number=} angle
-     * @param {string=} subtractProgram 
+     * @param {boolean=} cut
      * @returns {DrawConusObject}
      */
-    conus(x, y, radius, bgColor, angle, subtractProgram) {
-        return new DrawConusObject(x, y, radius, bgColor, angle, subtractProgram);
+    conus(x, y, radius, bgColor, angle, cut) {
+        return new DrawConusObject(x, y, radius, bgColor, angle, cut);
     }
 
     /**
      * 
      * @param {number} radius 
      * @param {string} bgColor - rgba(r,g,b,a)
-     * @param {string=} subtractProgram 
+     * @param {boolean=} cut
      * @returns {DrawCircleObject}
      */
-    circle(x, y, radius, bgColor, subtractProgram) {
-        return new DrawCircleObject(x, y, radius, bgColor, subtractProgram);
+    circle(x, y, radius, bgColor, cut) {
+        return new DrawCircleObject(x, y, radius, bgColor, cut);
     }
 
     /**
@@ -88,10 +88,10 @@ export class DrawObjectFactory {
     /**
      * @param {Array<{x:number, y:number}>} vertices - should go in anticlockwise order
      * @param {string} bgColor - rgba(r,g,b,a) 
-     * @param {string=} subtractProgram 
+     * @param {boolean=} cut
      * @returns {DrawPolygonObject}
      */
-    polygon(vertices, bgColor, subtractProgram) {
-        return new DrawPolygonObject(vertices, bgColor, subtractProgram);
+    polygon(vertices, bgColor, cut) {
+        return new DrawPolygonObject(vertices, bgColor, cut);
     }
 }

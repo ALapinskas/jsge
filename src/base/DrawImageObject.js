@@ -4,7 +4,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 import { utils } from "../index.js"
 /**
  * Image object to draw
- * @augments DrawShapeObject
+ * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawImageObject extends DrawShapeObject {

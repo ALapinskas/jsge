@@ -3,7 +3,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * Conus object to draw.
- * @augments DrawShapeObject
+ * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawConusObject extends DrawShapeObject {
@@ -11,6 +11,11 @@ export class DrawConusObject extends DrawShapeObject {
      * @type {number}
      */
     #radius;
+
+    /**
+     * @type {number}
+     */
+    #angle;
 
     /**
      * Array of [x,y] cords.
@@ -21,9 +26,10 @@ export class DrawConusObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(x, y, radius, bgColor, angle, subtractProgram) {
-        super(CONST.DRAW_TYPE.CONUS, x, y, bgColor, subtractProgram);
+    constructor(x, y, radius, bgColor, angle, cut) {
+        super(CONST.DRAW_TYPE.CONUS, x, y, bgColor, cut);
         this.#radius = radius;
+        this.#angle = angle;
         this.#vertices = this._calculateConusVertices(radius, angle);
     }
 
@@ -44,5 +50,12 @@ export class DrawConusObject extends DrawShapeObject {
      */
     get radius() {
         return this.#radius;
+    }
+
+    /**
+     * @type {number}
+     */
+    get angle() {
+        return this.#angle;
     }
 }

@@ -12,6 +12,8 @@ export class MapPage extends ScreenPage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
     #enemies = [];
 
+    tilemapKey = "";
+
     register() {
         this.tilemapKey = "gameMapTileset";
         this.fireImagesKey = "fireImages";
@@ -43,6 +45,9 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "walls", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "decs", this.tilemapKey);
         
+        const greenLight = this.draw.conus(315,370,100,"rgba(0,128,0,0.1", Math.PI);
+
+        this.addRenderObject(CONST.LAYERS.DEFAULT, greenLight);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)", true);

@@ -3,7 +3,7 @@ import { Rectangle } from "./Primitives.js";
 import { CONST } from "../constants.js";
 
 /**
- * @augments DrawShapeObject
+ * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawTextObject extends DrawShapeObject {
