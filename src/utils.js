@@ -122,6 +122,10 @@ function isPointOnTheLine(point, line, m_error = 0) {
     );
 }
 
+function countDistance(obj1, obj2) {
+    return new Vector(obj1.x, obj1.y, obj2.x, obj2.y).length;
+}
+
 function isLineShorter(line1, line2) {
     return (new Vector(line1.x1, line1.y1, line1.x2, line1.y2)).length < (new Vector(line2.x1, line2.y1, line2.x2, line2.y2)).length;
 }
@@ -233,4 +237,5 @@ export {
     isPointCircleIntersect,
     isPolygonLineIntersect,
     generateUniqId,
-    verticesArrayToArrayNumbers };
+    verticesArrayToArrayNumbers,
+    countDistance };

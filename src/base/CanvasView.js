@@ -1,5 +1,4 @@
 import { RenderLayer } from "./RenderLayer.js";
-import { DrawShapeObject } from "./DrawShapeObject.js";
 import { Exception, Warning } from "./Exception.js";
 import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { WebGlInterface } from "./WebGlInterface.js";
@@ -183,17 +182,17 @@ export class CanvasView {
         this.#isWorldBoundariesEnabled = true;
     }
 
-    _initiateWebGlContext(debug = false) {
+    _initiateWebGlContext() {
         const webgl = this.#canvas.getContext("webgl");
         if (webgl) {
             this.#drawContext = webgl;
-            this.#webGlInterface = new WebGlInterface(this.#drawContext, debug);
+            this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettings.gameOptions.checkWebGlErrors);
             
             return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
                 this.#webGlInterface._initPrimitivesDrawProgram()]);
         } else {
             Exception(ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
-        } 
+        }
     }
 
     _clearWebGlContext() {

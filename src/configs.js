@@ -8,11 +8,11 @@ export const SystemSettings = {
     
     gameOptions: {
         library: CONST.LIBRARY.WEBGL,
-        debugWebGl: false,
+        checkWebGlErrors: false,
         debugMobileTouch: false,
         optimization: null,
         boundaries: {
-            drawLayerBoundaries: true,
+            drawLayerBoundaries: false,
             drawObjectBoundaries: false,
             boundariesColor: "rgba(224, 12, 21, 0.6)",
             boundariesWidth: 2

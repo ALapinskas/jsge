@@ -55,22 +55,10 @@ export class System {
 
     /**
      * Preloads assets for all registered pages
-     * @return {Promise}
+     * @return {Promise<void>}
      */
     preloadAllData() {
-        const promises = [];
-        for (const key of this.#registeredPages.keys()) {
-            promises.push(this.preloadPageData(key));
-        }
-        return Promise.all(promises);
+        return this.#system.loader.preload();
     }
 
-    /**
-     * Preloads assets data for specific page
-     * @param {string} screenPageName
-     * @return {Promise}
-     */
-    preloadPageData(screenPageName) {
-        return this.#registeredPages.get(screenPageName)._loadPageAssets();
-    }
 }

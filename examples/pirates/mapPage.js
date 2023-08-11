@@ -14,7 +14,7 @@ export class MapPage extends ScreenPage {
     #windDirection = 0; // east
     #windStrength = 0.3; //from 0 to 1
     register() {
-        this.tilemapKey = "gameMapTileset";
+        this.tilemapKey = "piratesGameMapTileset";
         this.loader.addTileMap(this.tilemapKey, "./pirates/map.tmj");
         this.loader.addImage(SHIPS_KEY, "./pirates/ship.png");
     }

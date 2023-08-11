@@ -1,4 +1,4 @@
-import { ScreenPage, CONST } from "../../src/index.js";
+import { ScreenPage, CONST, DrawImageObject, SystemAudioInterface } from "../../src/index.js";
 import { utils } from "../../src/index.js";
 
 const angle_2points = utils.angle_2points;
@@ -8,17 +8,28 @@ const OVERLAY_LAYER_KEY = "overlay";
 const ANIMATION_FIREMOVE = "firemove",
     ANIMATION_REACHWALL = "reachwall";
 
+const ENEMY_DETECT_DISTANCE = 150;
 export class MapPage extends ScreenPage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
     #enemies = [];
+    #skippedRender = 0;
+    tilemapKey = "dungeonGameMapTileset";
+    fireImagesKey = "fireImages";
+    defaultAudioKey = "default_audio_key";
+    fireballCastKey = "fireball_cast_key";
 
-    tilemapKey = "";
+    #fireballDestroyAudioKey = "fireball_d";
+
+    #detectedByGhostAudioKey = "ghost_audio";
 
     register() {
-        this.tilemapKey = "gameMapTileset";
-        this.fireImagesKey = "fireImages";
         this.loader.addTileMap(this.tilemapKey, "./dungeon/map.tmj");
         this.loader.addImage(this.fireImagesKey, "./dungeon/images/All_Fire_Bullet_Pixel_16x16_00.png");
+        this.loader.addAudio(this.fireballCastKey, "./dungeon/audio/zvuk-poleta-ognennogo-shara.mp3");
+        this.loader.addAudio(this.#fireballDestroyAudioKey, "./dungeon/audio/ognennyiy-shar-vspyihnul.mp3");
+        this.loader.addAudio(this.#detectedByGhostAudioKey, "./dungeon/audio/zvuk-prizraka-prividenie-24332.mp3");
+        this.loader.addAudio(this.defaultAudioKey, "./dungeon/audio/ustrashayuschiy-nagnetayuschiy-zvuk-kapaniya-kapel-v-pustom-zabroshennom-pomeschenii.mp3");
+        this.backgroundSounds = new SystemAudioInterface(this.loader);
         this.speed = 0;
         this.movingInterval = null;
     }
@@ -45,28 +56,36 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "walls", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "decs", this.tilemapKey);
         
-        const greenLight = this.draw.conus(315,370,100,"rgba(0,128,0,0.1", Math.PI);
+        this.greenLight = this.draw.conus(315,369,100,"rgba(0,128,0,0.5", Math.PI, false, 20);
 
-        this.addRenderObject(CONST.LAYERS.DEFAULT, greenLight);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.greenLight);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)", true);
         this.sightView.zIndex = 1;
-        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.2", Math.PI/8);
+        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.2", Math.PI/8, false, 60);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.player);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.fireRange);
 
-
-        const monster1 = this.draw.image(255,250, 16, 16, "tilemap_packed", 108);
-        const monster2 = this.draw.image(255,420, 16, 16, "tilemap_packed", 109);
-        const monster3 = this.draw.image(285,420, 16, 16, "tilemap_packed", 110);
+        const monster1 = new Ghost(255,250, 16, 16, "tilemap_packed", 108);
+        const monster2 = new Ghost(255,420, 16, 16, "tilemap_packed", 108);
+        const monster3 = new Ghost(285,420, 16, 16, "tilemap_packed", 108);
         this.addRenderObject(CONST.LAYERS.DEFAULT, monster1);
         this.addRenderObject(CONST.LAYERS.DEFAULT, monster2);
         this.addRenderObject(CONST.LAYERS.DEFAULT, monster3);
         this.#enemies.push(monster1);
         this.#enemies.push(monster2);
         this.#enemies.push(monster3);
+
+        this.audio.registerAudio(this.fireballCastKey);
+        this.audio.registerAudio(this.#fireballDestroyAudioKey);
+        this.audio.registerAudio(this.#detectedByGhostAudioKey);
+        this.backgroundSounds.registerAudio(this.defaultAudioKey);
+        this.backgroundSounds.volume = .5;
+        const defaultAudio = this.backgroundSounds.getAudio(this.defaultAudioKey);
+        defaultAudio.loop = true;
+        defaultAudio.play();
     }
 
     start() {
@@ -86,11 +105,21 @@ export class MapPage extends ScreenPage {
     registerEventListeners() {
         this.#registerMouseListeners();
         this.#registerKeyboardListeners();
+        this.#registerSystemEvents();
     }
 
     unregisterEventListeners() {
         this.#unregisterMouseListeners();
         this.#unregisterKeyboardListeners();
+        this.#unregisterSystemEvents();
+    }
+
+    #registerSystemEvents() {
+        this.addEventListener(CONST.EVENTS.SYSTEM.RENDER.START, this.#renderAction);
+    }
+
+    #unregisterSystemEvents() {
+        this.removeEventListener(CONST.EVENTS.SYSTEM.RENDER.START, this.#renderAction);
     }
 
     #registerKeyboardListeners() {
@@ -111,6 +140,26 @@ export class MapPage extends ScreenPage {
     #unregisterMouseListeners() {
         document.removeEventListener("mousemove", this.#mouseMoveAction);
         document.removeEventListener("click", this.#mouseClickAction);
+    }
+
+    #renderAction = (event) => {
+        if (this.#skippedRender > 8) {
+            const new_value = Math.random() * (40 - 20) + 20;
+            this.greenLight.fade_min = new_value;
+            this.#skippedRender = 0;
+        } else {
+            this.#skippedRender += 1;
+        }
+        const enemiesLen = this.#enemies.length;
+        for (let i = 0; i < enemiesLen; i++) {
+            const enemy = this.#enemies[i];
+            if (utils.countDistance(enemy, this.player) < ENEMY_DETECT_DISTANCE) {
+                this.audio.getAudio(this.#detectedByGhostAudioKey).play();
+                enemy.moveTo(this.player.x, this.player.y);
+            } else {
+                enemy.idle();
+            } 
+        }
     }
 
     #pressKeyAction = (event) => {
@@ -179,6 +228,8 @@ export class MapPage extends ScreenPage {
 
         this.addRenderObject(CONST.LAYERS.DEFAULT, f);
         f.emit(ANIMATION_FIREMOVE);
+
+        this.audio.getAudioCloned(this.fireballCastKey).play();
         return f;
     }
 
@@ -202,6 +253,7 @@ export class MapPage extends ScreenPage {
                     setTimeout(() => {
                         //remove fireball
                         fireball.destroy();
+                        this.audio.getAudioCloned(this.#fireballDestroyAudioKey).play();
                     }, 36);
                 }
             }, 10);
@@ -240,5 +292,29 @@ export class MapPage extends ScreenPage {
         //const coordsFixed = conusPolygonCoords.slice(0, conusPolygonCoords.length - excess);
             
         return conusPolygonCoords;
+    }
+}
+
+class Ghost extends DrawImageObject {
+    #idle = true;
+    #moveSpeed = 0.5;
+
+    constructor(mapX, mapY, width, height, key, imageIndex) {
+        super(mapX, mapY, width, height, key, imageIndex);
+    }
+
+    moveTo = (x, y) => {
+        this.#idle = false;
+        const forceToUse = this.#moveSpeed,
+            direction = angle_2points(this.x, this.y, x, y),
+            newCoordX = this.x + forceToUse * Math.cos(direction),
+            newCoordY = this.y + forceToUse * Math.sin(direction);
+            
+        this.x = newCoordX;
+        this.y = newCoordY;
+    }
+
+    idle = () => {
+        this.#idle = true;
     }
 }

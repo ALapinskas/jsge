@@ -50,10 +50,6 @@ export class ScreenPage {
      */
     #views;
     /**
-     * @type {AssetsManager}
-     */
-    #loader;
-    /**
      * @type {ScreenPageData}
      */
     #screenPageData;
@@ -82,7 +78,6 @@ export class ScreenPage {
     constructor() {
         this.#isActive = false;
         this.#views = new Map();
-        this.#loader = new AssetsManager();
         this.#screenPageData = new ScreenPageData();
         this.#tempFPStime = [];
     }
@@ -102,7 +97,7 @@ export class ScreenPage {
      * 
      * @param {string} eventName 
      * @param {*} listener 
-     * @param {*} options 
+     * @param {*=} options 
      */
     addEventListener = (eventName, listener, options) => {
         this.#emitter.addEventListener(eventName, listener, options);
@@ -112,7 +107,7 @@ export class ScreenPage {
      * 
      * @param {string} eventName 
      * @param {*} listener 
-     * @param {*} options 
+     * @param {*=} options 
      */
     removeEventListener = (eventName, listener, options) => {
         this.#emitter.removeEventListener(eventName, listener, options);
@@ -173,7 +168,7 @@ export class ScreenPage {
      * @type {AssetsManager}
      */
     get loader() {
-        return this.#loader;
+        return this.#system.loader;
     }
 
     /**
@@ -191,7 +186,7 @@ export class ScreenPage {
      */
     createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
-            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.#loader, isOffsetTurnedOff);
+            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, isOffsetTurnedOff);
             this.#views.set(name, newView);
         } else
             Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
@@ -278,7 +273,7 @@ export class ScreenPage {
      * @returns {boolean}
      */
     isAllFilesLoaded = () => {
-        return this.#loader.filesWaitingForUpload === 0;
+        return this.loader.filesWaitingForUpload === 0;
     };
 
     /**
@@ -322,16 +317,6 @@ export class ScreenPage {
             Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", cannot find canvas with key " + key);
         }
     };
-
-    /**
-     * Load all assets,
-     * previously added to a loader query
-     * @returns {Promise}
-     * @ignore
-     */
-    _loadPageAssets() {
-        return this.#loader.preload();
-    }
 
     /**
      * Start page render
@@ -668,7 +653,7 @@ export class ScreenPage {
             let viewPromises = [];
             const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
             for (const view of this.#views.values()) {
-                viewPromises.push(view._initiateWebGlContext(this.systemSettings.gameOptions.debugWebGl));
+                viewPromises.push(view._initiateWebGlContext());
                 if (isBoundariesPrecalculations) {
                     viewPromises.push(view._createBoundariesPrecalculations());
                 }

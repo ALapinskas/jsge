@@ -13,18 +13,30 @@ import { Exception, Warning } from "./Exception.js";
 export class SystemAudioInterface {
     #volume = 0.5;
     #audio = new Map();
+    /**
+     * @type {AssetsManager}
+     */
+    #loader;
+
+    constructor(loader) {
+        this.#loader = loader;
+    }
 
     /**
      * Original track
      * @param {string} name 
      * @returns {HTMLAudioElement | null}
      */
-    getAudio(name) {
+    getAudio = (name) => {
         const audio = this.#audio.get(name);
+        if (audio === null) {
+            Warning(WARNING_CODES.AUDIO_NOT_LOADED, "Audio with key " + name + " exists, but not actually loaded");
+            return audio;
+        }
         if (audio) {
             return audio;
         } else {
-            Warning(WARNING_CODES.AUDIO_NOT_REGISTERED);
+            Warning(WARNING_CODES.AUDIO_NOT_REGISTERED, "");
             return null;
         }
     }
@@ -34,35 +46,19 @@ export class SystemAudioInterface {
      * @param {string} name 
      * @returns {HTMLAudioElement | null}
      */
-    getAudioCloned(name) {
-        const audio = this.#audio.get(name).cloneNode();
-        if (audio) {
-            audio.volume = this.#volume;
+    getAudioCloned = (name) => {
+        const audio = this.#audio.get(name);
+        if (audio === null) {
+            Warning(WARNING_CODES.AUDIO_NOT_LOADED, "Audio with key " + name + " exists, but not actually loaded");
             return audio;
+        }
+        if (audio) {
+            const audioCloned = audio.cloneNode();
+            audioCloned.volume = this.#volume;
+            return audioCloned;
         } else {
             Warning(WARNING_CODES.AUDIO_NOT_REGISTERED);
             return null;
-        }
-    }
-
-    /**
-     * Used to register audio in system after downloading
-     * @param {string} name 
-     * @param {AssetsManager} loader 
-     */
-    registerAudio(name, loader) {
-        let mediaElement = this.#audio.get(name);
-        if (!mediaElement) {
-            const audioEl = loader.getAudio(name);
-            if (!audioEl) {
-                Exception(ERROR_CODES.FILE_NOT_EXIST, "can't get audio," + name);
-            }
-            //mediaElement = this.#audioContext.createMediaElementSource(audioEl);
-            audioEl.volume = this.#volume;
-            mediaElement = audioEl;
-            this.#audio.set(name, mediaElement);
-        } else {
-            Warning(WARNING_CODES.AUDIO_ALREADY_REGISTERED, "");
         }
     }
 
@@ -81,7 +77,18 @@ export class SystemAudioInterface {
 
     #updateTracksVolumes(value) {
         for (const track of this.#audio.values()) {
-            track.volume = value;
+            if (track) {
+                track.volume = value;
+            }
         }
+    }
+
+    /**
+     * Register audio in the system
+     * @param {string} name
+     */
+    registerAudio(name) {
+        let mediaElement = this.#loader.getAudio(name);
+        this.#audio.set(name, mediaElement);
     }
 }

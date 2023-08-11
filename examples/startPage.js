@@ -33,7 +33,7 @@ export class StartPage extends ScreenPage {
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemPir);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemRac);
         
-        this.audio.registerAudio(MENU_CLICK_AUDIO_NAME, this.loader);
+        this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
     }
 

@@ -181,6 +181,8 @@ export class WebGlInterface {
 
     _initPrimitivesDrawProgram() {
         this.#vertexShaderSource = `
+        precision mediump float;
+
         attribute vec2 a_position;
 
         uniform vec2 u_translation;
@@ -248,8 +250,24 @@ export class WebGlInterface {
         precision mediump float;
 
         uniform vec4 u_color;
+        uniform float u_fade_min; 
+        uniform float u_fade_max;
+        uniform vec2 a_position;
+        uniform vec2 u_resolution;
+        uniform vec2 u_translation;
+        
         void main(void) {
-            gl_FragColor = u_color;
+            vec4 p = u_color;
+            if (u_fade_min > 0.0) {
+                vec2 fix_tr = vec2(u_translation.x, u_resolution.y - u_translation.y); 
+                float distance = distance(fix_tr.xy, gl_FragCoord.xy);
+                if (u_fade_min <= distance && distance <= u_fade_max) {
+                    float percent = ((distance - u_fade_max) / (u_fade_min - u_fade_max)) * 100.0;
+                    p.a = u_color.a * (percent / 100.0);
+                }
+            }
+
+            gl_FragColor = p;
         }
         `;
         const program = this.#initProgram(),
@@ -262,7 +280,9 @@ export class WebGlInterface {
             scaleLocation = gl.getUniformLocation(program, "u_scale"),
             resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution"),
             colorUniformLocation = gl.getUniformLocation(program, "u_color"),
-            positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+            positionAttributeLocation = gl.getAttribLocation(program, "a_position"),
+            fadeMinLocation = gl.getUniformLocation(program, "u_fade_min"),
+            fadeMaxLocation =  gl.getUniformLocation(program, "u_fade_max");
 
         this.#coordsLocations.set(programName, {
             translationLocation,
@@ -270,7 +290,9 @@ export class WebGlInterface {
             scaleLocation,
             resolutionUniformLocation,
             colorUniformLocation,
-            positionAttributeLocation
+            positionAttributeLocation,
+            fadeMinLocation,
+            fadeMaxLocation
         });
         return Promise.resolve();
     }
@@ -554,7 +576,8 @@ export class WebGlInterface {
                 scaleLocation,
                 resolutionUniformLocation,
                 colorUniformLocation,
-                positionAttributeLocation 
+                positionAttributeLocation,
+                fadeMinLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
@@ -565,6 +588,8 @@ export class WebGlInterface {
         gl.uniform2f(translationLocation, translation[0], translation[1]);
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
+        gl.uniform1f(fadeMinLocation, 0);
+
         gl.enableVertexAttribArray(positionAttributeLocation);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
@@ -627,7 +652,9 @@ export class WebGlInterface {
             
                 translationLocation,
                 rotationRotation,
-                scaleLocation} = this.#coordsLocations.get(programName),
+                scaleLocation,
+                fadeMinLocation
+            } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
         gl.useProgram(program);
@@ -637,6 +664,7 @@ export class WebGlInterface {
         gl.uniform2f(translationLocation, translation[0], translation[1]);
         gl.uniform2f(scaleLocation, 1, 1);
         gl.uniform1f(rotationRotation, rotation);
+        gl.uniform1f(fadeMinLocation, 0);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -679,7 +707,9 @@ export class WebGlInterface {
             
                 translationLocation,
                 rotationRotation,
-                scaleLocation} = this.#coordsLocations.get(programName),
+                scaleLocation,
+                fadeMinLocation
+            } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
         gl.useProgram(program);
@@ -689,6 +719,7 @@ export class WebGlInterface {
         gl.uniform2f(translationLocation, translation[0], translation[1]);
         gl.uniform2f(scaleLocation, 1, 1);
         gl.uniform1f(rotationRotation, rotation);
+        gl.uniform1f(fadeMinLocation, 0);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -726,11 +757,15 @@ export class WebGlInterface {
                 scaleLocation,
                 resolutionUniformLocation,
                 colorUniformLocation,
-                positionAttributeLocation 
+                positionAttributeLocation,
+                fadeMinLocation,
+                fadeMaxLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl,
             coords = renderObject.vertices,
-            fillStyle = renderObject.bgColor;
+            fillStyle = renderObject.bgColor,
+            fade_min = renderObject.fade_min,
+            fadeLen = renderObject.radius;
             
         gl.useProgram(program);
         
@@ -739,7 +774,8 @@ export class WebGlInterface {
         gl.uniform2f(translationLocation, translation[0], translation[1]);
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
-        
+        gl.uniform1f(fadeMinLocation, fade_min);
+        gl.uniform1f(fadeMaxLocation, fadeLen);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
         gl.bufferData(this.#gl.ARRAY_BUFFER, 

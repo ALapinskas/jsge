@@ -4,7 +4,8 @@ ScreenPage has few different loading stages:
     this is the place where AssetsManager as loader and {@link ScreenPageData} as screenPageData are created\
     so you could immediately use them.
 
-2. register() - here {@link SystemInterface}, with {@link SystemSettings} as systemSettings, {@link SystemAudioInterface} as audio and {@link SystemSocketConnection} as network are attached to the {@link ScreenPage}.
+2. register() - here {@link SystemInterface}, with {@link SystemSettings} as systemSettings, {@link SystemAudioInterface} as audio and {@link SystemSocketConnection} as network are attached to the {@link ScreenPage}. \
+This is a place where assets should be added: {@tutorial assets_manager}, {@tutorial how_to_add_and_use_audio}
 
 3. init() - is called only after SystemInterface.startScreenPage() is called, this stage called only once pear game.
 

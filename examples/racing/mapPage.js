@@ -13,7 +13,7 @@ export class MapPage extends ScreenPage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
 
     register() {
-        this.tilemapKey = "gameMapTileset";
+        this.tilemapKey = "racingGameMapTileset";
         this.loader.addTileMap(this.tilemapKey, "./racing/map.tmj");
         this.loader.addImage(BLACK_CAR_KEY, "./racing/car_black_small_12.png");
         this.loader.addAudio(AUDIO_GEAR_UP, "./racing/audio/engine_up.mp3");

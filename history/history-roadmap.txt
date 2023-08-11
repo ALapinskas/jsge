@@ -21,6 +21,18 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.1.0:
+    +: tutorial How to add and use audio
+    +: dungeon: default audio, ghost and fireball audio
+    +: dungeon: enemy - player detect
+    +: dungeon: enemy - player move
+    +: utils.countDistance()
+    +: DrawConusObject.fade_min
+    +: DrawConusObject ability to draw fade effect, using fade_min property
+    +: WebGL fade count, depends on fade_min and radius properties
+    r: loader moved to the system class level
+    r: updated scheme
+
 0.0.9:
     f: draw object boundaries
     f: jsdoc: subtractProgram string -> cut boolean

@@ -3,6 +3,7 @@ import { Exception } from "./Exception.js";
 import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
+import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 /**
  * Public interface for a System<br>
  * Can be used to start/stop ScreenPage render, <br>
@@ -17,7 +18,7 @@ export class SystemInterface {
     #registeredPages;
     #systemServerConnection;
     #systemAudioInterface;
-
+    #loader;
     /**
      * @hideconstructor
      */
@@ -28,7 +29,8 @@ export class SystemInterface {
         this.#systemSettings = systemSettings;
         this.#canvasContainer = canvasContainer;
         this.#registeredPages = registeredPages;
-        this.#systemAudioInterface = new SystemAudioInterface();
+        this.#loader = new AssetsManager();
+        this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
     }
 
@@ -51,6 +53,10 @@ export class SystemInterface {
      */
     get audio() {
         return this.#systemAudioInterface;
+    }
+
+    get loader() {
+        return this.#loader;
     }
 
     /**

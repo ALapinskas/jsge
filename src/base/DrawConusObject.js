@@ -22,14 +22,16 @@ export class DrawConusObject extends DrawShapeObject {
      * @type {Array<number>}
      */
     #vertices;
+    #fade_min;
 
     /**
      * @hideconstructor
      */
-    constructor(x, y, radius, bgColor, angle, cut) {
+    constructor(x, y, radius, bgColor, angle, cut, fade = 0) {
         super(CONST.DRAW_TYPE.CONUS, x, y, bgColor, cut);
         this.#radius = radius;
         this.#angle = angle;
+        this.#fade_min = fade;
         this.#vertices = this._calculateConusVertices(radius, angle);
     }
 
@@ -57,5 +59,19 @@ export class DrawConusObject extends DrawShapeObject {
      */
     get angle() {
         return this.#angle;
+    }
+
+    /**
+     * @type {number}
+     */
+    get fade_min() {
+        return this.#fade_min;
+    }
+
+    /**
+     * @param {number} value - fade start pos in px
+     */
+    set fade_min(value) {
+        this.#fade_min = value;
     }
 }

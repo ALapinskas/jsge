@@ -1,7 +1,7 @@
 Assets Manager is now {@link https://github.com/ALapinskas/assetsm} an external module
 
 it is used to load and hold game assets such as\
-tilmaps(.tmg files), images and audio\
+tilmaps(.tmg files), images and audio*\
 to attach data use:
 ```
 page.loader.addAudio(key, url)
@@ -15,3 +15,5 @@ const audio = page.loader.getAudio(key)
 const image = page.loader.getImage(key)
 const tilemap = page.loader.getTileMap(key)
 ```
+
+*added audio files is better to register in AudioInterface, {@tutorial how_to_add_and_use_audio}
