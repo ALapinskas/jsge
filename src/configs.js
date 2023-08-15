@@ -11,6 +11,11 @@ export const SystemSettings = {
         checkWebGlErrors: false,
         debugMobileTouch: false,
         optimization: null,
+        loadingScreen: {
+            backgroundColor:  "rgba(128, 128, 128, 0.6)",
+            loadingBarBg: "rgba(128, 128, 128, 1)",
+            loadingBarProgress: "rgba(128, 128, 128, 0.2)",
+        },
         boundaries: {
             drawLayerBoundaries: false,
             drawObjectBoundaries: false,

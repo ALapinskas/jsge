@@ -3217,11 +3217,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ScreenPage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ScreenPage.js */ "./src/base/ScreenPage.js");
 /* harmony import */ var _SystemInterface_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./SystemInterface.js */ "./src/base/SystemInterface.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _design_LoadingScreen_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../design/LoadingScreen.js */ "./src/design/LoadingScreen.js");
 
 
 
 
 
+
+
+
+const loadingPageName = "loadingPage";
 /**
  * A main app class, <br>
  * Holder class for ScreenPage,<br>
@@ -3247,6 +3252,12 @@ class System {
         }
 
         this.#system = new _SystemInterface_js__WEBPACK_IMPORTED_MODULE_3__.SystemInterface(systemSettings, canvasContainer, this.#registeredPages);
+        
+        this.registerPage(loadingPageName, _design_LoadingScreen_js__WEBPACK_IMPORTED_MODULE_5__.LoadingScreen);
+
+        this.#system.loader.addEventListener("loadstart", this.#loadStart);
+        this.#system.loader.addEventListener("progress", this.#loadProgress);
+        this.#system.loader.addEventListener("load", this.#loadComplete);
     }
 
     /**
@@ -3280,6 +3291,21 @@ class System {
         return this.#system.loader.preload();
     }
 
+    #loadStart = (event) => {
+        this.#system.startScreenPage(loadingPageName, {total: event.total});
+    }
+
+    #loadProgress = (event) => {
+        const uploaded = event.loaded,
+            left = event.total,
+            loadingPage = this.#registeredPages.get(loadingPageName);
+            
+        loadingPage._progress(uploaded, left);
+    }
+
+    #loadComplete = (event) => {
+        this.#system.stopScreenPage(loadingPageName);
+    }
 }
 
 /***/ }),
@@ -4857,6 +4883,11 @@ const SystemSettings = {
         checkWebGlErrors: false,
         debugMobileTouch: false,
         optimization: null,
+        loadingScreen: {
+            backgroundColor:  "rgba(128, 128, 128, 0.6)",
+            loadingBarBg: "rgba(128, 128, 128, 1)",
+            loadingBarProgress: "rgba(128, 128, 128, 0.2)",
+        },
         boundaries: {
             drawLayerBoundaries: false,
             drawObjectBoundaries: false,
@@ -5018,6 +5049,68 @@ const WARNING_CODES =  {
 
 /***/ }),
 
+/***/ "./src/design/LoadingScreen.js":
+/*!*************************************!*\
+  !*** ./src/design/LoadingScreen.js ***!
+  \*************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "LoadingScreen": () => (/* binding */ LoadingScreen)
+/* harmony export */ });
+/* harmony import */ var _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../base/ScreenPage.js */ "./src/base/ScreenPage.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../index.js */ "./src/index.js");
+
+
+
+const logoKey = "logoKey";
+class LoadingScreen extends _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__.ScreenPage {
+    #total = 0;
+    #loaded = 0;
+    #barWidth = 0;
+    register() {
+        //this.loader.addImage(logoKey, "./images/icon.png");
+    }
+
+    init() {
+        const [w, h] = this.screenPageData.canvasDimensions,
+            barWidth = w/3,
+            barHeight = 20;
+        this.createCanvasView(_index_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LAYERS.DEFAULT);
+        //this.logo = this.draw.image(w/2, h/2, 300, 200, logoKey);
+        this.background = this.draw.rect(0, 0, w, h, this.systemSettings.gameOptions.loadingScreen.backgroundColor);  
+        this.loadingBarBg = this.draw.rect(w/2 - (barWidth/2), h/2 - (barHeight/2), barWidth, barHeight, this.systemSettings.gameOptions.loadingScreen.loadingBarBg);
+        this.loadingBarProgress = this.draw.rect(w/2 - (barWidth/2), h/2 - (barHeight/2), barWidth, barHeight, this.systemSettings.gameOptions.loadingScreen.loadingBarProgress);
+
+        this.#barWidth = barWidth;
+        this.addRenderObject(_index_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LAYERS.DEFAULT, this.background);
+        //this.addRenderObject(CONST.LAYERS.DEFAULT, this.logo);
+        this.addRenderObject(_index_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LAYERS.DEFAULT, this.loadingBarBg);
+        this.addRenderObject(_index_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LAYERS.DEFAULT, this.loadingBarProgress);
+    }
+
+    _progress = (loaded, left) => {
+        const [w, h] = this.screenPageData.canvasDimensions,
+            widthPart = this.#barWidth / this.#total;
+
+        this.#loaded = loaded;
+        
+        this.loadingBarProgress.width = widthPart * this.#loaded;
+    }
+
+    start(options) {
+        this.#total = options.total;
+    }
+
+    // a workaround for checking upload progress before render
+    get loader() {
+        return ({filesWaitingForUpload:0});
+    }
+} 
+
+/***/ }),
+
 /***/ "./src/index.js":
 /*!**********************!*\
   !*** ./src/index.js ***!
@@ -5145,6 +5238,7 @@ function countClosestTraversal(line, sight) {
  * @param {{x1:number, y1:number, x2:number, y2:number}} line1 
  * @param {{x1:number, y1:number, x2:number, y2:number}} line2 
  * @returns {{x:number, y:number, p:number} | undefined}
+ * @ignore
  */
 function countClosestTraversal2(line1, line2) {
     const x1 = line2.x1,
@@ -5234,6 +5328,7 @@ function isPointLineIntersect(point, line) {
  * @param {Array<Array<number>>} polygon 
  * @param {{x1:number, y1:number, x2:number, y2:number}} line 
  * @returns {{x:number, y:number, p:number} | null}
+ * @ignore
  */
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;

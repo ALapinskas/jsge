@@ -57,6 +57,7 @@ function countClosestTraversal(line, sight) {
  * @param {{x1:number, y1:number, x2:number, y2:number}} line1 
  * @param {{x1:number, y1:number, x2:number, y2:number}} line2 
  * @returns {{x:number, y:number, p:number} | undefined}
+ * @ignore
  */
 function countClosestTraversal2(line1, line2) {
     const x1 = line2.x1,
@@ -146,6 +147,7 @@ function isPointLineIntersect(point, line) {
  * @param {Array<Array<number>>} polygon 
  * @param {{x1:number, y1:number, x2:number, y2:number}} line 
  * @returns {{x:number, y:number, p:number} | null}
+ * @ignore
  */
 function isPolygonLineIntersect(polygon, line) {
     const len = polygon.length;

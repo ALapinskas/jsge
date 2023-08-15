@@ -21,6 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.1.1:
+    +: loading progress bar
+    f: jsdocs cleanup
+
 0.1.0:
     +: tutorial How to add and use audio
     +: dungeon: default audio, ghost and fireball audio

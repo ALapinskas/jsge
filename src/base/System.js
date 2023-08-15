@@ -3,6 +3,10 @@ import { Exception } from "./Exception.js";
 import { ScreenPage } from "./ScreenPage.js";
 import { SystemInterface } from "./SystemInterface.js";
 import { SystemSettings } from "../configs.js";
+
+import { LoadingScreen } from "../design/LoadingScreen.js";
+
+const loadingPageName = "loadingPage";
 /**
  * A main app class, <br>
  * Holder class for ScreenPage,<br>
@@ -28,6 +32,12 @@ export class System {
         }
 
         this.#system = new SystemInterface(systemSettings, canvasContainer, this.#registeredPages);
+        
+        this.registerPage(loadingPageName, LoadingScreen);
+
+        this.#system.loader.addEventListener("loadstart", this.#loadStart);
+        this.#system.loader.addEventListener("progress", this.#loadProgress);
+        this.#system.loader.addEventListener("load", this.#loadComplete);
     }
 
     /**
@@ -61,4 +71,19 @@ export class System {
         return this.#system.loader.preload();
     }
 
+    #loadStart = (event) => {
+        this.#system.startScreenPage(loadingPageName, {total: event.total});
+    }
+
+    #loadProgress = (event) => {
+        const uploaded = event.loaded,
+            left = event.total,
+            loadingPage = this.#registeredPages.get(loadingPageName);
+            
+        loadingPage._progress(uploaded, left);
+    }
+
+    #loadComplete = (event) => {
+        this.#system.stopScreenPage(loadingPageName);
+    }
 }
