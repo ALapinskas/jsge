@@ -1139,6 +1139,10 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         return this.#imageIndex;
     }
 
+    set imageIndex(value) {
+        this.#imageIndex = value;
+    }
+
     /**
      * Determines if image is animated or not
      * @type {boolean}

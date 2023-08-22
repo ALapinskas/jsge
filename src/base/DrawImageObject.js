@@ -90,6 +90,10 @@ export class DrawImageObject extends DrawShapeObject {
         return this.#imageIndex;
     }
 
+    set imageIndex(value) {
+        this.#imageIndex = value;
+    }
+
     /**
      * Determines if image is animated or not
      * @type {boolean}
