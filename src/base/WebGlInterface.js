@@ -601,12 +601,13 @@ export class WebGlInterface {
             break;
         case CONST.DRAW_TYPE.TEXT:
             break;
-        case CONST.DRAW_TYPE.CIRCLE:
+        case CONST.DRAW_TYPE.CIRCLE: {
             const coords = renderObject.vertices;
             gl.bufferData(this.#gl.ARRAY_BUFFER, 
                 new Float32Array(coords), this.#gl.STATIC_DRAW);
             this.#verticesNumber += coords.length / 2;
             break;
+        }
         case CONST.DRAW_TYPE.POLYGON: {
             const triangles = this.#triangulatePolygon(renderObject.vertices);
             this.#bindPolygon(triangles);
@@ -903,7 +904,7 @@ export class WebGlInterface {
                 Exception(ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
             }
         } else {
-            Exception(ERROR_CODES.WEBGL_ERROR, 'gl.createProgram() is null');
+            Exception(ERROR_CODES.WEBGL_ERROR, "gl.createProgram() is null");
         }
         return program;
     }
@@ -1018,7 +1019,7 @@ export class WebGlInterface {
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
-                    Exception(ERROR_CODES.DRAW_PREPARE_ERROR, "Can\'t extract triangles. Probably vertices input is not correct, or the order is wrong");
+                    Exception(ERROR_CODES.DRAW_PREPARE_ERROR, "Can't extract triangles. Probably vertices input is not correct, or the order is wrong");
                 }
             }
             i++;

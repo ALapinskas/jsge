@@ -573,7 +573,7 @@ export class ScreenPage {
                 if (i === j) {
                     continue;
                 }
-                const renderObjectCheck = renderObjects[j];
+                // const renderObjectCheck = renderObjects[j];
                 // check object - object collisions
             }
 

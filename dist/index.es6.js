@@ -158,7 +158,7 @@ class CanvasView {
     /**
      * @type {boolean}
      */
-    #isOffsetTurnedOff
+    #isOffsetTurnedOff;
     /**
      * @type {boolean}
      */
@@ -723,12 +723,12 @@ class CanvasView {
         return new Promise((resolve, reject) => {
             if (renderLayer.setBoundaries) {
                 const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
-                tilesets = tilemap.tilesets,
-                layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
-                { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                tilewidth = dtwidth,
-                tileheight = dtheight,
-                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
+                    tilesets = tilemap.tilesets,
+                    layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
+                    { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                    tilewidth = dtwidth,
+                    tileheight = dtheight,
+                    [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
                 
                 let boundaries = [];
 
@@ -835,7 +835,7 @@ class CanvasView {
                 if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                     const shiftX = x,// - renderObject.boundaries[0],
                         shiftY = y,// - renderObject.boundaries[1],
-                    rotation = renderObject.rotation ? renderObject.rotation : 0;
+                        rotation = renderObject.rotation ? renderObject.rotation : 0;
                     this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
                 }
                 //ctx.restore();
@@ -1046,8 +1046,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AnimationEventImageObj.js */ "./src/base/AnimationEventImageObj.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../index.js */ "./src/index.js");
-
 
 
 
@@ -1151,7 +1149,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         return this.#animations.size > 0;
     }
 
-     /**
+    /**
      * @deprecated - use .vertices instead 
      * @type {Array<Array<number>>}
      */
@@ -1222,7 +1220,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         const animationEvent = this.#animations.get(event.type);
         animationEvent.activateAnimation();
         this.#imageIndex = animationEvent.currentSprite;
-    } 
+    }; 
 
     /**
      *
@@ -1316,9 +1314,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./DrawImageObject.js */ "./src/base/DrawImageObject.js");
 /* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
 /* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
-/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
-/* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
-
+/* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
 
 
 
@@ -1380,7 +1376,7 @@ class DrawObjectFactory {
      * @returns {DrawCircleObject}
      */
     circle(x, y, radius, bgColor, cut) {
-        return new _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_7__.DrawCircleObject(x, y, radius, bgColor, cut);
+        return new _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_6__.DrawCircleObject(x, y, radius, bgColor, cut);
     }
 
     /**
@@ -2732,7 +2728,7 @@ class ScreenPage {
                 if (i === j) {
                     continue;
                 }
-                const renderObjectCheck = renderObjects[j];
+                // const renderObjectCheck = renderObjects[j];
                 // check object - object collisions
             }
 
@@ -3297,7 +3293,7 @@ class System {
 
     #loadStart = (event) => {
         this.#system.startScreenPage(loadingPageName, {total: event.total});
-    }
+    };
 
     #loadProgress = (event) => {
         const uploaded = event.loaded,
@@ -3305,11 +3301,11 @@ class System {
             loadingPage = this.#registeredPages.get(loadingPageName);
             
         loadingPage._progress(uploaded, left);
-    }
+    };
 
-    #loadComplete = (event) => {
+    #loadComplete = () => {
         this.#system.stopScreenPage(loadingPageName);
-    }
+    };
 }
 
 /***/ }),
@@ -3368,7 +3364,7 @@ class SystemAudioInterface {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_1__.WARNING_CODES.AUDIO_NOT_REGISTERED, "");
             return null;
         }
-    }
+    };
 
     /**
      * Clone of original track
@@ -3389,7 +3385,7 @@ class SystemAudioInterface {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_1__.WARNING_CODES.AUDIO_NOT_REGISTERED);
             return null;
         }
-    }
+    };
 
     set volume(value) {
         this.#volume = value;
@@ -3609,45 +3605,45 @@ class SystemSocketConnection extends EventTarget {
     #onConnect = () => {
         _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("connected, socket id: " + this.#socket.id);
         this.dispatchEvent(new Event(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
-    }
+    };
 
     #onDisconnect = (reason) => {
         _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("server disconnected, reason: " + reason);
         this.dispatchEvent(new Event(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
-    }
+    };
 
     #onData = (event) => {
         console.warn("server data: ", event);
-    }
+    };
 
     #onMessage = (message) => {
         _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("received new message from server: " + message);
         this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.SERVER_MESSAGE, message));
-    }
+    };
 
     #onRoomsInfo = (rooms) => {
         _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("received roomsInfo " + rooms);
         this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.ROOMS_INFO, rooms));
-    }
+    };
 
     #onCreateNewRoom = (room, map) => {
         _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Created room  " + room);
         this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CREATED, {room, map}));
-    }
+    };
 
     #onRoomIsFull = (room) => {
         _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Room is full, can't join: " + room);
         this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.FULL, {room}));
-    }
+    };
 
     #onJoinedToRoom = (room, map) => {
         _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Joined to room: " + room, ", map: ", map);
         this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.JOINED, {room, map}));
-    }
+    };
 
     #onUnjoinedFromRoom = (playerId) => {
         this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.DISCONNECTED, {playerId}));
-    }
+    };
 
     #registerSocketListeners() {
         this.#socket.on("connect", this.#onConnect);
@@ -3680,7 +3676,7 @@ class SystemSocketConnection extends EventTarget {
 
     #disconnect = () => {
         this.#socket.disconnect();
-    }
+    };
 }
 
 /***/ }),
@@ -4434,12 +4430,13 @@ class WebGlInterface {
             break;
         case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
             break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE: {
             const coords = renderObject.vertices;
             gl.bufferData(this.#gl.ARRAY_BUFFER, 
                 new Float32Array(coords), this.#gl.STATIC_DRAW);
             this.#verticesNumber += coords.length / 2;
             break;
+        }
         case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON: {
             const triangles = this.#triangulatePolygon(renderObject.vertices);
             this.#bindPolygon(triangles);
@@ -4736,7 +4733,7 @@ class WebGlInterface {
                 (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, `Could not compile WebGL program. \n\n${info}`);
             }
         } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, 'gl.createProgram() is null');
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.WEBGL_ERROR, "gl.createProgram() is null");
         }
         return program;
     }
@@ -4851,7 +4848,7 @@ class WebGlInterface {
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
-                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.DRAW_PREPARE_ERROR, "Can\'t extract triangles. Probably vertices input is not correct, or the order is wrong");
+                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.DRAW_PREPARE_ERROR, "Can't extract triangles. Probably vertices input is not correct, or the order is wrong");
                 }
             }
             i++;
@@ -5101,7 +5098,7 @@ class LoadingScreen extends _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__.Scr
         this.#loaded = loaded;
         
         this.loadingBarProgress.width = widthPart * this.#loaded;
-    }
+    };
 
     start(options) {
         this.#total = options.total;

@@ -45,7 +45,7 @@ export class CanvasView {
     /**
      * @type {boolean}
      */
-    #isOffsetTurnedOff
+    #isOffsetTurnedOff;
     /**
      * @type {boolean}
      */
@@ -610,12 +610,12 @@ export class CanvasView {
         return new Promise((resolve, reject) => {
             if (renderLayer.setBoundaries) {
                 const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
-                tilesets = tilemap.tilesets,
-                layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
-                { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                tilewidth = dtwidth,
-                tileheight = dtheight,
-                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
+                    tilesets = tilemap.tilesets,
+                    layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
+                    { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                    tilewidth = dtwidth,
+                    tileheight = dtheight,
+                    [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
                 
                 let boundaries = [];
 
@@ -722,7 +722,7 @@ export class CanvasView {
                 if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                     const shiftX = x,// - renderObject.boundaries[0],
                         shiftY = y,// - renderObject.boundaries[1],
-                    rotation = renderObject.rotation ? renderObject.rotation : 0;
+                        rotation = renderObject.rotation ? renderObject.rotation : 0;
                     this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
                 }
                 //ctx.restore();

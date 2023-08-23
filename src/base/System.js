@@ -73,7 +73,7 @@ export class System {
 
     #loadStart = (event) => {
         this.#system.startScreenPage(loadingPageName, {total: event.total});
-    }
+    };
 
     #loadProgress = (event) => {
         const uploaded = event.loaded,
@@ -81,9 +81,9 @@ export class System {
             loadingPage = this.#registeredPages.get(loadingPageName);
             
         loadingPage._progress(uploaded, left);
-    }
+    };
 
-    #loadComplete = (event) => {
+    #loadComplete = () => {
         this.#system.stopScreenPage(loadingPageName);
-    }
+    };
 }

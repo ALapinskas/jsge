@@ -34,7 +34,7 @@ export class LoadingScreen extends ScreenPage {
         this.#loaded = loaded;
         
         this.loadingBarProgress.width = widthPart * this.#loaded;
-    }
+    };
 
     start(options) {
         this.#total = options.total;

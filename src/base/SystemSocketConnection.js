@@ -59,45 +59,45 @@ export class SystemSocketConnection extends EventTarget {
     #onConnect = () => {
         Logger.debug("connected, socket id: " + this.#socket.id);
         this.dispatchEvent(new Event(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
-    }
+    };
 
     #onDisconnect = (reason) => {
         Logger.debug("server disconnected, reason: " + reason);
         this.dispatchEvent(new Event(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
-    }
+    };
 
     #onData = (event) => {
         console.warn("server data: ", event);
-    }
+    };
 
     #onMessage = (message) => {
         Logger.debug("received new message from server: " + message);
         this.dispatchEvent(new SystemEvent(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.SERVER_MESSAGE, message));
-    }
+    };
 
     #onRoomsInfo = (rooms) => {
         Logger.debug("received roomsInfo " + rooms);
         this.dispatchEvent(new SystemEvent(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.ROOMS_INFO, rooms));
-    }
+    };
 
     #onCreateNewRoom = (room, map) => {
         Logger.debug("CLIENT SOCKET: Created room  " + room);
         this.dispatchEvent(new SystemEvent(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CREATED, {room, map}));
-    }
+    };
 
     #onRoomIsFull = (room) => {
         Logger.debug("CLIENT SOCKET: Room is full, can't join: " + room);
         this.dispatchEvent(new SystemEvent(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.FULL, {room}));
-    }
+    };
 
     #onJoinedToRoom = (room, map) => {
         Logger.debug("CLIENT SOCKET: Joined to room: " + room, ", map: ", map);
         this.dispatchEvent(new SystemEvent(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.JOINED, {room, map}));
-    }
+    };
 
     #onUnjoinedFromRoom = (playerId) => {
         this.dispatchEvent(new SystemEvent(CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.DISCONNECTED, {playerId}));
-    }
+    };
 
     #registerSocketListeners() {
         this.#socket.on("connect", this.#onConnect);
@@ -130,5 +130,5 @@ export class SystemSocketConnection extends EventTarget {
 
     #disconnect = () => {
         this.#socket.disconnect();
-    }
+    };
 }

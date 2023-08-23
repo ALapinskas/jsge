@@ -21,6 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.1.21:
+    f: eslint issues
+    +: package.json keywords
+    
 0.1.2:
     f: jsdocs
     +: ship sails state

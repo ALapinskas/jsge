@@ -1,7 +1,6 @@
 import { AnimationEventImageObj } from "./AnimationEventImageObj.js";
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { utils } from "../index.js"
 /**
  * Image object to draw
  * @extends DrawShapeObject
@@ -102,7 +101,7 @@ export class DrawImageObject extends DrawShapeObject {
         return this.#animations.size > 0;
     }
 
-     /**
+    /**
      * @deprecated - use .vertices instead 
      * @type {Array<Array<number>>}
      */
@@ -173,7 +172,7 @@ export class DrawImageObject extends DrawShapeObject {
         const animationEvent = this.#animations.get(event.type);
         animationEvent.activateAnimation();
         this.#imageIndex = animationEvent.currentSprite;
-    } 
+    }; 
 
     /**
      *

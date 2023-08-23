@@ -1,6 +1,6 @@
 import AssetsManager from  "../../modules/assetsm/dist/assetsm.min.js";
-import { ERROR_CODES, WARNING_CODES } from "../constants.js";
-import { Exception, Warning } from "./Exception.js";
+import { WARNING_CODES } from "../constants.js";
+import { Warning } from "./Exception.js";
 
 /**
  * An audio interface, <br>
@@ -39,7 +39,7 @@ export class SystemAudioInterface {
             Warning(WARNING_CODES.AUDIO_NOT_REGISTERED, "");
             return null;
         }
-    }
+    };
 
     /**
      * Clone of original track
@@ -60,7 +60,7 @@ export class SystemAudioInterface {
             Warning(WARNING_CODES.AUDIO_NOT_REGISTERED);
             return null;
         }
-    }
+    };
 
     set volume(value) {
         this.#volume = value;

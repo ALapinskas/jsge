@@ -4,7 +4,6 @@ import { DrawConusObject } from "./DrawConusObject.js";
 import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
-import { Vertex } from "./Primitives.js";
 import { DrawCircleObject } from "./DrawCircleObject.js";
 
 /**
