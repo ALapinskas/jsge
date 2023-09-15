@@ -13,7 +13,7 @@ import { ScreenPage } from "jsge";
 export class CustomPage extends ScreenPage {
 }
 ```
-3. Add data such as audio, images, tilemaps(.tmj files) using CustomPage.loader in page constructor(), or register() method(stage):
+3. Add data such as audio, images, tilemaps(.tmj files) using CustomPage.loader in page [register() stage]{@tutorial screen_pages_stages}:
 ```
 export class CustomPage extends ScreenPage {
     register() {
@@ -21,7 +21,7 @@ export class CustomPage extends ScreenPage {
     }
 }
 ```
-4. Create {@link CanvasView} on CustomPage.init(), or CustomPage.start() methods(stages):
+4. Create {@link CanvasView} on CustomPage.init(), or CustomPage.start() [stages]{@tutorial screen_pages_stages}:
 ```
 init() {
     this.createCanvasView("view_key");
@@ -36,7 +36,7 @@ init() {
 ```
 app.registerPage("MapPageKey", MapPage);
 ```
-7. Run preloadAllData to load all data you added on step 3:
+7. Run [preloadAllData()]{@link System#preloadAllData} to load all data you added on step 3:
 ```
 app.preloadAllData().then(() => {
 ```

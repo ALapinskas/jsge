@@ -269,7 +269,7 @@ export class CanvasView {
                     atlasWidth = atlasImage.width,
                     atlasHeight = atlasImage.height;
                     
-                const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
+                //const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 
                 this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 if (setBoundaries) {

@@ -1,11 +1,11 @@
-To add a file use page.loader.addAudio() in the register stage:
+To add a file use page.loader.addAudio() in the [register stage]{@tutorial screen_pages_stages}:
 ```
 this.loader.addAudio("audio_key", "./audio.mp3");
 ```
 ## Using AudioInterface:
 AudioInterface is control center for all audio tracks, \
 default AudioInterface is available via page.audio, \
-you could any other audio interfaces with 
+you could add any other audio interfaces with 
 ```
 this.music = new AudioInterface(this.loader);
 ```

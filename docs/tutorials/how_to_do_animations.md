@@ -4,7 +4,7 @@ How to do animations with sprite indexes:
 
 ![fireball](../tutorials/fireball32x16.png)
 
-2. Load it to the project:
+2. [Add and load it to the project]{@tutorial assets_manager}:
 ```
 this.loader.addImage("image_key", "./fireball32x16.png");
 ```
@@ -15,7 +15,7 @@ const posY = 200;
 const imageW = 16;
 const imageH = 16;
 
-this.fireball = this.draw.image(posX, posY, 16, 16, "image_key");
+this.fireball = this.draw.image(posX, posY, imageW, imageH, "image_key");
 ```
 4. To render it without animations, attach it to render:
 ```

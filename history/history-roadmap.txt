@@ -21,6 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.1.22:
+    f: updated readme and tutorials
+    +: added jsge name on loading screen
+
 0.1.21:
     f: eslint issues
     +: package.json keywords

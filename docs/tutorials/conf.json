@@ -1,15 +1,18 @@
 {
-    "assets_manager": {
-        "title": "Assets Manager"
-    },
     "quick_start": {
         "title": "Quick start"
+    },
+    "assets_manager": {
+        "title": "Assets Manager"
     },
     "screen_pages_stages": {
         "title": "Screen Pages Stages"
     },
     "application_scheme": {
         "title": "Application Scheme"
+    },
+    "how_to_load_and_use_tilemaps": {
+        "title": "How to load and use tilemaps"
     },
     "how_to_do_animations": {
         "title": "How create animations"
