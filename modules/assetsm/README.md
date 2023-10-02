@@ -61,3 +61,14 @@ npm start
 * Images are loaded as ImageBitmaps
 * When loading tilemaps, it also process tileset files and loads images inside them, attached images could be retrieved by tileset.name key, check examples/index.js how to do that
 * ES6 only
+
+# Version 0.1.0 functionality:
+# adding new loaders
+1. Register a loader and uploadMethod using registerLoader(loaderType, loaderMethod)
+2. Add upload item to the queue using add[loaderName](fileKey, url), or addFile(loaderName, fileKey, url).
+3. Executing preload(), will upload all items where added in step2 with loaderMethod provided in step1 and save them temporary.
+4. After that uploadingResults will be available with get[loaderName](fileKey), or getFile(loaderName, fileKey, url)
+
+# Notes
+* loaderMethod should return Promise with uploading result value
+* loaderMethod is optional, by default it will return fetch result

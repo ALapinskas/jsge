@@ -46,6 +46,6 @@ app.preloadAllData().then(() => {
     app.system.startScreenPage("MapPageKey");
 });
 ```
-9. Thats it! Your image now should be rendered! \
+9. Thats it! Your image now will be rendered! \
 Use document.addEventListener to attach mouse or keyboard controllers and \
 move attached object on the screen changing x, y, or rotation properties

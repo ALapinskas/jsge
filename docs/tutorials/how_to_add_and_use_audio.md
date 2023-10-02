@@ -1,16 +1,16 @@
-To add a file use page.loader.addAudio() in the [register stage]{@tutorial screen_pages_stages}:
+IN order to add a file, use page.loader.addAudio() in the [register stage]{@tutorial screen_pages_stages}:
 ```
 this.loader.addAudio("audio_key", "./audio.mp3");
 ```
 ## Using AudioInterface:
-AudioInterface is control center for all audio tracks, \
+AudioInterface is a control center for all audio tracks, \
 default AudioInterface is available via page.audio, \
 you could add any other audio interfaces with 
 ```
 this.music = new AudioInterface(this.loader);
 ```
 ### How to use tracks with AudioInterface
-1. first, register added and loaded audio file in the init, or start stage:
+1. first, register the added and loaded audio file in the init, or start stage:
 ```
 page.audio.registerAudio("audio_key");
 ```
@@ -23,17 +23,17 @@ const track = page.audio.getAudio("audio_key");
 track.play();
 track.pause();
 ```
-4. to loop audio track set track.loop parameter to true:
+4. In order to loop the audio track, set track.loop parameter to true:
 ```
 const audioTrack = this.audio.getAudio("audio_key");
 audioTrack.loop = true;
 audioTrack.play();
 ```
-4. if you want to take a copy of the track use getAudioCloned():
+5. If you want to take a copy of the track use getAudioCloned():
 ```
 this.audio.getAudioCloned("audio_key").play();
 ```
-5. to control the volume, set audio.volume from 0 to 1(this will affect only on registered tracks):
+6. In order to control the volume, set audio.volume from 0 to 1(this will affect only on registered tracks):
 ```
 this.audio.volume = 0.5;
 ```

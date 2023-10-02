@@ -20,5 +20,5 @@ const image = page.loader.getImage(key)
 const tilemap = page.loader.getTileMap(key)
 ```
 
-*be carful will loading tilemaps and attached tilesets and images, everything should be in the same folder or subfolder.\
-*added audio files is better to register in AudioInterface, {@tutorial how_to_add_and_use_audio}
+*be careful with loading tilemaps and attached tilesets and images, everything should be in the same folder or subfolder.\
+*added audio files is better to register in the AudioInterface, {@tutorial how_to_add_and_use_audio}

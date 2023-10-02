@@ -1,31 +1,31 @@
-import AssetsManager from "../dist/assetsm.min.js"
-//import AssetsManager from "../src/AssetsManager.js"
+// import AssetsManager from "../dist/assetsm.min.js"
+import AssetsManager from "../src/AssetsManager.js"
 // 1. Create a class instance
-const assets = new AssetsManager()
+const manager = new AssetsManager();
 
 // 2. Add files to the queue
-assets.addAudio("default", "./knopka-schelchok-korotkii-chetkii-myagkii1.mp3")
-assets.addImage("soldier", "./SpritesheetGuns.png")
-assets.addTileMap("tilemap", "./map.tmj")
+manager.addAudio("default", "./knopka-schelchok-korotkii-chetkii-myagkii1.mp3")
+manager.addImage("soldier", "./SpritesheetGuns.png")
+manager.addTileMap("tilemap", "./map.tmj")
 
 // 3. Subscribe for progress to track the loading progress status
-assets.addEventListener("progress", (event) => {
+manager.addEventListener("progress", (event) => {
     console.log("progress, loaded items: ", event.loaded);
     console.log("progress, items left: ", event.total);
 });
 
 // 4. Get current pending uploads if necessary
-console.log("files, waiting for upload:", assets.filesWaitingForUpload)
+console.log("files, waiting for upload:", manager.filesWaitingForUpload)
 
 // 5. Preload all files you added in the previous step
-assets.preload().then(() => {
+manager.preload().then(() => {
 
     // 6. Use 
-    const audio = assets.getAudio("default"),
-        imageBitmap = assets.getImage("soldier"),
-        tilemap = assets.getTileMap("tilemap"),
+    const audio = manager.getAudio("default"),
+        imageBitmap = manager.getImage("soldier"),
+        tilemap = manager.getTileMap("tilemap"),
         tilesets = tilemap.tilesets,
-        tilesetImages = tilesets.map((tileset) => assets.getImage(tileset.data.name));
+        tilesetImages = tilesets.map((tileset) => manager.getImage(tileset.data.name));
 
     audio.play()
 
@@ -40,5 +40,38 @@ assets.preload().then(() => {
     })
 
     document.body.appendChild(canvas) 
-})
+});
 
+/*** new functionality(from 0.1.0): adding custom file types */
+const loaderMethodForSpineText = () => { console.log("upload SpineText"); return Promise.resolve("result spine text"); },
+    loaderMethodForSpineAtlas = () => { console.log("upload SpineAtlas"); return Promise.resolve("result spine atlas"); };
+
+manager.registerLoader("SpineText", loaderMethodForSpineText);
+manager.registerLoader("SpineAtlas", loaderMethodForSpineAtlas);
+//use default upload fetch method
+manager.registerLoader("ReadmeText");
+
+manager.addSpineText("defaultSpineText", "./spineText.json");
+manager.addSpineAtlas("defaultSpineAtlas", "./spine.atlas");
+manager.addReadmeText("defaultReadmeKey", "./readme.txt");
+
+manager.preload().then(() => {
+    console.log(manager.getSpineText("defaultSpineText"));
+    console.log(manager.getSpineAtlas("defaultSpineAtlas"));
+    manager.getReadmeText("defaultReadmeKey").text().then((result) => {
+        console.log(result);
+    });
+});
+
+// wait until other uploads will be finished
+setTimeout(() => {
+    const loaderWithIncorrectValue =  () => { console.log("upload and return incorrect value"); return {}; };
+
+    manager.registerLoader("IncorrectValueLoader", loaderWithIncorrectValue);
+    manager.addIncorrectValueLoader("default", "./spineText.json");
+    manager.preload().catch((err) => {
+        if (err.message.includes("uploadMethod should be instance of Promise")) {
+            console.log("expected, incorrect upload method return value");
+        }
+    });
+}, 1000);

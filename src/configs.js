@@ -22,6 +22,9 @@ export const SystemSettings = {
             boundariesColor: "rgba(224, 12, 21, 0.6)",
             boundariesWidth: 2
         },
+        modules: {
+            spineAnimations: true
+        },
         render: {
             averageFPStime: 10000,
             minCircleTime: 16, //ms which is ~60 FPS
@@ -32,6 +35,7 @@ export const SystemSettings = {
             }
         }
     },
+    
 
     network: {
         address: "https://gameserver.reslc.ru:9009",

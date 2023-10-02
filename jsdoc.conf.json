@@ -12,6 +12,14 @@
         "dictionaries": ["jsdoc","closure"]
     },
     "templates": {
+        "default": {
+            "staticFiles": {
+                "include": [
+                    "./schemes/",
+                    "./docs/images"
+                ]
+            }
+        }
     },
     "opts": {
         "destination": "./docs/build",

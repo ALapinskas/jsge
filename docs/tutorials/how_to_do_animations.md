@@ -17,11 +17,11 @@ const imageH = 16;
 
 this.fireball = this.draw.image(posX, posY, imageW, imageH, "image_key");
 ```
-4. To render it without animations, attach it to render:
+4. To render it without animations, attach it to the render:
 ```
 this.addRenderObject("view_key",  this.fireball);
 ```
-5. Then add animation event: 
+5. Then add an animation event: 
 ```
 this.fireball.addAnimation("startAnimation", [0,1,2,3]);
 ```
@@ -31,11 +31,11 @@ this.fireball.emit("startAnimation");
 ```
 This will run through the image indexes 0,1,2,3 on next render circles.
 
-7. Adding last parameter as true
+7. Adding last parameter as true will loop animation indexes:
 ```
 this.fireball.addAnimation("startAnimation", [0,1,2,3], true);
 ```
-will loop animation indexes, until stopRepeatedAnimation() will be called, or object will be destroyed.
+until stopRepeatedAnimation() will be called, or object will be destroyed.
 ```
 this.fireball.stopRepeatedAnimation("startAnimation");
 ```

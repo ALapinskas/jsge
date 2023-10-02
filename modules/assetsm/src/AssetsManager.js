@@ -8,6 +8,90 @@ const PROGRESS_EVENT_TYPE = {
     timeout: "timeout"
 }
 
+class Loader {
+    /**
+     * @type {String}
+     */
+    #fileType;
+    /**
+     * @type { (...args: any[]) => Promise<any> | undefined }
+     */
+    #uploadMethod;
+    /**
+     * name: url
+     * @type { Map<String, String>}
+     */
+    #loadingQueue = new Map();
+    /**
+     * name: file
+     * @type { Map<String, any>}
+     */
+    #store = new Map();
+    /**
+     * 
+     * @param {String} name 
+     * @param {Function} uploadMethod 
+     */
+
+    constructor(name, uploadMethod) {
+        this.#fileType = name;
+        this.#uploadMethod = (key, url, ...args) => {
+            const upload = uploadMethod(key, url, ...args);
+            if (upload instanceof Promise) {
+                return upload.then((uploadResult) => this.#processUploadResult(uploadResult, key));
+            } else {
+                Exception("uploadMethod should be instance of Promise and return upload result value");
+            }
+        }
+    }
+
+    #processUploadResult = (uploadResult, key) => {
+        return new Promise((resolve,reject) => {
+            if(!uploadResult || uploadResult.length === 0 ) {
+                Warning("uploadMethod for " + this.#fileType + " should return Promise with upload value");
+            }
+            this.#addUploadResultValue(key, uploadResult);
+            this.#removeUploadFromQueue(key);
+            resolve();
+        });
+    }
+
+    #addUploadResultValue(key, value) {
+        this.#store.set(key, value);
+    }
+
+    #removeUploadFromQueue(key) {
+        this.#loadingQueue.delete(key);
+    }
+
+    get filesWaitingForUpload() {
+        return this.#loadingQueue.size;
+    }
+
+    get loadingQueue() {
+        return this.#loadingQueue
+    };
+    
+    get uploadMethod() { 
+        return this.#uploadMethod;
+    }
+
+    _addFile = (key, url) => {
+        if (this.#loadingQueue.has(key)) {
+            Warning("File " + this.#fileType + " with key " + key + " is already added");
+        }
+        this.#loadingQueue.set(key, url);
+    }
+
+    _isFileInQueue = (key) => {
+        return this.#loadingQueue.has(key);
+    }
+
+    _getFile = (key) => {
+        return this.#store.get(key);
+    }
+}
+
 /**
  *  This class is used to preload 
  *  tilemaps, tilesets, images and audio,
@@ -18,168 +102,80 @@ export default class AssetsManager {
     /**
      * @type {EventTarget}
      */
-    #emitter;
+    #emitter = new EventTarget();
 
     /**
-     * @type {Map<String, HTMLAudioElement>}
+     * @type { Map<string, Loader>}
      */
-    #audio;
-
-    /**
-     * @type {Map<String, ImageBitmap>}
-     */
-    #images;
-
-    /**
-     * @type {Map<String, Object>}
-     */
-    #tilemaps;
-
-    /**
-     * @type {Map<String, String>}
-     */
-    #audioQueue;
-
-    /**
-     * @type {Map<String, String>}
-     */
-    #imagesQueue;
-
-    /**
-     * @type {Map<String, String>}
-     */
-    #tileMapsQueue;
-
+    #registeredLoaders = new Map();
+    
     /**
      * @type {Number}
      */
-    #itemsLoaded;
+    #itemsLoaded = 0;
 
     constructor() {
-        this.#audio = new Map();
-        this.#images = new Map();
-        this.#tilemaps = new Map();
-        this.#audioQueue = new Map();
-        this.#imagesQueue = new Map();
-        this.#tileMapsQueue = new Map();
-        this.#emitter = new EventTarget();
-        this.#itemsLoaded = 0;
+        this.registerLoader("Audio", this._loadAudio);
+        this.registerLoader("Image", this._loadImage);
+        this.registerLoader("TileMap", this._loadTileMap);
     }
 
     get filesWaitingForUpload() {
-        return this.#audioQueue.size + this.#tileMapsQueue.size + this.#imagesQueue.size;
+        let files = 0;
+        Array.from(this.#registeredLoaders.values()).map((fileType) => files += fileType.filesWaitingForUpload);
+        return files;
     }
 
     /**
-     * @param {String} key 
-     * @returns {HTMLAudioElement | undefined} cloned audio element
+     * Register a new file type to upload
+     * @param {String} fileTypeName
+     * @param {Function=} loadMethod loadMethod should return Promise<result>
+     * @returns {Promise | void}
      */
-    getAudio(key) {
-        const val = this.#audio.get(key);
-        if (val) {
-            return val;
-        } else {
-            Warning("Audio with key '" + key + "' is not loaded");
-        }
-    }
+    registerLoader = (fileTypeName, loadMethod = this._defaultUploadMethod) => {
+        const registeredFileType = this.#registeredLoaders.get(fileTypeName) || new Loader(fileTypeName, loadMethod);
 
-    /**
-     * @param {String} key 
-     * @returns {ImageBitmap | undefined}
-     */
-    getImage(key) {
-        const val = this.#images.get(key);
-        if (val) {
-            return val;
-        } else {
-            Warning("Image with key '" + key + "' is not loaded");
+        this["add" + fileTypeName] = (key, url) => {
+            this.addFile(fileTypeName, key, url);
         }
-    }
-
-    /**
-     * @param {String} key 
-     * @returns {Object | undefined}
-     */
-    getTileMap(key) {
-        const val = this.#tilemaps.get(key);
-        if (val) {
-            return val;
-        } else {
-            Warning("Tilemap with key '" + key + "' is not loaded");
+        this["get" + fileTypeName] = (key) => {
+            return this.getFile(fileTypeName, key);
         }
+        this["is" + fileTypeName + ["InQueue"]] = (key) => {
+            return this.isFileInQueue(fileTypeName, key);
+        }
+        this.#registeredLoaders.set(fileTypeName, registeredFileType);
     }
 
     /**
      * Execute load audio, images from tilemaps and images queues
-     * @returns {Promise}
+     * @returns {Promise<void>}
      */
     preload() {
         this.#dispatchLoadingStart();
-        return Promise.allSettled(Array.from(this.#audioQueue.entries()).map((key_value) => this.#loadAudio(key_value[0], key_value[1]))).then((loadingResults) => {
-            loadingResults.forEach((result) => {
-                if (result.status === "rejected") {
-                    Warning(result.reason || result.value);
-                }
-            });
-
-            return Promise.allSettled(Array.from(this.#tileMapsQueue.entries()).map((key_value) => this.#loadTileMap(key_value[0], key_value[1]))).then((loadingResults) => {
-                loadingResults.forEach((result) => {
-                    if (result.status === "rejected") {
-                        Warning(result.reason || result.value);
-                    }
-                });
-
-                return Promise.allSettled(Array.from(this.#imagesQueue.entries()).map((key_value) => this.#loadImage(key_value[0], key_value[1]))).then((loadingResults) => { 
-                    loadingResults.forEach((result) => {
-                        if (result.status === "rejected") {
-                            Warning(result.reason || result.value);
-                        }
+        return new Promise((resolve, reject) => {
+            this.#uploadFiles().then(() => {
+                // upload additional files
+                if (this.filesWaitingForUpload) {
+                    this.#uploadFiles().then(() => {
+                        this.#dispatchLoadingFinish();
+                        resolve()
                     });
-
+                } else {
                     this.#dispatchLoadingFinish();
-                    return Promise.resolve();
-                });
+                    resolve();
+                }
             });
         });
     }
 
-    /**
-     * Adds an audio file to a loading queue
-     * @param {string} key 
-     * @param {string} url
-     */
-    addAudio(key, url) {
-        this.#checkInputParams(key, url);
-        if (this.#audioQueue.has(key)) {
-            Warning("Audio with key " + key + " is already registered");
-        }
-        this.#audioQueue.set(key, url);
-    }
-
-    /**
-     * Adds an image file to a loading queue
-     * @param {string} key 
-     * @param {string} url
-     */
-    addImage(key, url) {
-        this.#checkInputParams(key, url);
-        if (this.#imagesQueue.has(key)) {
-            Warning("Image with key " + key + " is already registered");
-        }
-        this.#imagesQueue.set(key, url);
-    }
-
-    /**
-     * Adds a tilemap, including tilesets and tilesets images to a loading queue
-     * @param {String} key 
-     * @param {String} url 
-     */
-    addTileMap(key, url) {
-        this.#checkInputParams(key, url);
-        if (this.#tileMapsQueue.has(key)) {
-            Warning("Tilemap with key " + key + " is already registered");
-        }
-        this.#tileMapsQueue.set(key, url);
+    #uploadFiles() {
+        const results = Array.from(this.#registeredLoaders.values()).map((fileType) => {
+            return Promise.allSettled(Array.from(fileType.loadingQueue.entries()).map((key_value) => {
+                return fileType.uploadMethod(key_value[0], key_value[1]);
+            }));
+        });
+        return Promise.all(results);
     }
 
     addEventListener(type, fn, ...args) {
@@ -194,14 +190,14 @@ export default class AssetsManager {
         this.#emitter.removeEventListener(type, fn, ...args);
     }
 
-    #loadTileSet(tileset, relativePath) {
+    #loadTileSet = (tileset, relativePath) => {
         const { firstgid:gid, source:url } = tileset;
         this.#checkTilesetUrl(url);
         return fetch("./" + relativePath ? relativePath + url : url)
             .then((response) => response.json())
             .then((data) => {
                 const {name, image} = data;
-                if (name && image) {
+                if (name && image && !this.isImageInQueue(name)) {
                     this.addImage(name, relativePath ? relativePath + image : image, data);
                 }
                 data.gid = gid;
@@ -212,13 +208,17 @@ export default class AssetsManager {
             });
     }
 
+    _defaultUploadMethod = (key, url) => {
+        return fetch(url);
+    }
+
     /**
      * Loads tilemap file and related data
      * @param {string} key 
      * @param {string} url 
      * @returns {Promise}
      */
-    #loadTileMap(key, url) {
+    _loadTileMap = (key, url) => {
         this.#checkTilemapUrl(url);
         return fetch(url)
             .then((response) => response.json())
@@ -233,20 +233,25 @@ export default class AssetsManager {
                     split.splice(length - 2, 2);
                     relativePath = split.join("/") + "/";
                 }
-                this.#addTileMap(key, data);
-                this.#removeTileMapFromQueue(key);
                 
                 if (data.tilesets && data.tilesets.length > 0) {
                     const tilesetPromises = [];
+                    // upload additional tileset data
                     data.tilesets.forEach((tileset, idx) => {
-                        const loadTilesetPromise = this.#loadTileSet(tileset, relativePath).then((tileset) => {
-                            this.#attachTilesetData(key, idx, tileset);
+                        const loadTilesetPromise = this.#loadTileSet(tileset, relativePath).then((tilesetData) => {
                             this.#dispatchCurrentLoadingProgress();
-                            return Promise.resolve();
+                            return Promise.resolve(tilesetData);
                         });
                         tilesetPromises.push(loadTilesetPromise);
                     });
-                    return Promise.all(tilesetPromises);
+                    //attach additional tileset data to tilemap data
+                    return Promise.all(tilesetPromises).then((tilesetDataArray) => {
+                        for (let i = 0; i < tilesetDataArray.length; i++) {
+                            const tilesetData = tilesetDataArray[i];
+                            data.tilesets[i].data = tilesetData;
+                        }
+                        return Promise.resolve(data);
+                    });
                 }
             })
             .catch((err) => {
@@ -264,15 +269,13 @@ export default class AssetsManager {
      * @param {string} url 
      * @returns {Promise}
      */
-    #loadAudio(key, url) {
+    _loadAudio = (key, url) => {
         return new Promise((resolve, reject) => {
             const audio = new Audio(url);
             
             audio.addEventListener("loadeddata", () => {
-                this.#addNewAudio(key, audio);
-                this.#removeAudioFromQueue(key);
                 this.#dispatchCurrentLoadingProgress();
-                resolve();
+                resolve(audio);
             });
 
             audio.addEventListener("error", () => {
@@ -289,16 +292,14 @@ export default class AssetsManager {
      * @param {string} url 
      * @returns {Promise}
      */
-    #loadImage(key, url) {
+    _loadImage = (key, url) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
             
             img.onload = () => {
                 createImageBitmap(img).then((imageBitmap) => {
-                    this.#addNewImage(key, imageBitmap);
-                    this.#removeImageFromQueue(key);
                     this.#dispatchCurrentLoadingProgress();
-                    resolve();
+                    resolve(imageBitmap);
                 });
             };
             img.onerror = () => {
@@ -326,44 +327,44 @@ export default class AssetsManager {
         }
     }
 
-    #checkInputParams(key, url) {
-        const errorMessage = "image key and url should be provided";
-        if (!key || key.trim().length === 0) {
+    addFile(fileType, fileKey, url) {
+        const loader = this.#registeredLoaders.get(fileType);
+        if (loader) {
+            this.#checkInputParams(fileKey, url);
+            loader._addFile(fileKey, url);
+        } else {
+            Exception("Loader for " + fileType + " is not registered!");
+        }
+
+    }
+
+    isFileInQueue(fileType, fileKey) {
+        const loader = this.#registeredLoaders.get(fileType);
+        if (loader) {
+            return loader._isFileInQueue(fileKey);
+        } else {
+            Exception("Loader for " + fileType + " is not registered!");
+        }
+    }
+
+    getFile(fileType, fileKey) {
+        const loader = this.#registeredLoaders.get(fileType);
+        if (loader) {
+            return loader._getFile(fileKey);
+        } else {
+            Exception("Loader for " + fileType + " is not registered!");
+        }
+    }
+
+    #checkInputParams(fileKey, url) {
+        const errorMessage = "fileKey and url should be provided";
+        if (!fileKey || fileKey.trim().length === 0) {
             Exception(errorMessage);
         }
         if (!url || url.trim().length === 0) {
             Exception(errorMessage);
         }
         return;
-    }
-
-    #addNewAudio(key, audio) {
-        this.#audio.set(key, audio);
-    }
-
-    #removeAudioFromQueue(key) {
-        this.#audioQueue.delete(key);
-    }
-
-    #addNewImage(key, image) {
-        this.#images.set(key, image);
-    }
-
-    #removeImageFromQueue(key) {
-        this.#imagesQueue.delete(key);
-    }
-
-    #attachTilesetData(key, idx, tileset) {
-        const tilemap = this.#tilemaps.get(key);
-        tilemap.tilesets[idx].data = tileset;
-    }
-
-    #addTileMap(key, data) {
-        this.#tilemaps.set(key, data);
-    }
-
-    #removeTileMapFromQueue(key) {
-        this.#tileMapsQueue.delete(key);
     }
 
     #dispatchLoadingStart() {
