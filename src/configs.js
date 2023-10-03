@@ -23,7 +23,8 @@ export const SystemSettings = {
             boundariesWidth: 2
         },
         modules: {
-            spineAnimations: true
+            spineAnimations: true,
+            spineFolder: "./spine-assets"
         },
         render: {
             averageFPStime: 10000,

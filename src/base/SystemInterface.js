@@ -63,9 +63,13 @@ export class SystemInterface {
     }
 
     #registerSpineLoaders() {
-        const spineTextLoader = () => { console.log("upload SpineText"); return Promise.resolve("result spine text"); },
-            spineBinaryLoader = () => { console.log("upload SpineBinary"); return Promise.resolve("result spine binary"); },
-            spineAtlasLoader = () => { console.log("upload SpineAtlas"); return Promise.resolve("result spine atlas"); };
+        const spineTextLoader = (key, url) => fetch(url).then(result => result.text()),
+            spineBinaryLoader = (key, url) => fetch(url).then(result => result.arrayBuffer()),
+            spineAtlasLoader = (key, url) => fetch(url).then(result => result.text()).then(text => {
+                const spineImage = text.split("\r\n")[0];
+                this.loader.addImage(key, this.#systemSettings.gameOptions.modules.spineFolder + "/" + spineImage);
+                return text;
+            });
 
         this.loader.registerLoader("SpineText", spineTextLoader);
         this.loader.registerLoader("SpineBinary", spineBinaryLoader);

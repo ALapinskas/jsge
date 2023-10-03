@@ -10,11 +10,20 @@ const START_PAGE_NAME = "start",
     PIRATES_GAME = "pirates",
     RACING_GAME = "racing";
 
+const SPINE = {
+    SpineText: "spineText",
+    SpineBinary: "spineBinary",
+    SpineAtlas: "spineAtlas"
+};
+
 export class StartPage extends ScreenPage {
     #menuClickMediaElement;
 
     register() {
         this.loader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
+        this.loader.addSpineText(SPINE.SpineText, "./spine-assets/spineboy-pro.json");
+        this.loader.addSpineBinary(SPINE.SpineBinary, "./spine-assets/spineboy-pro.skel");
+        this.loader.addSpineAtlas(SPINE.SpineAtlas, "./spine-assets/spineboy-pma.atlas");
     }
 
     init() {
@@ -35,6 +44,16 @@ export class StartPage extends ScreenPage {
         
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
+
+        const spineText = this.loader.getSpineText(SPINE.SpineText),
+            spineBinary = this.loader.getSpineBinary(SPINE.SpineBinary),
+            spineAtlas = this.loader.getSpineAtlas(SPINE.SpineAtlas),
+            spineImage = this.loader.getImage(SPINE.SpineAtlas);
+
+        console.log(spineText);
+        console.log(spineBinary);
+        console.log(spineAtlas);
+        console.log(spineImage);
     }
 
     start() {
