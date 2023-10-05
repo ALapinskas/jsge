@@ -3,7 +3,8 @@ import { Exception } from "./Exception.js";
 import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
-import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
+import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
+import { DrawImageObject } from "./DrawImageObject.js";
 /**
  * Public interface for a System<br>
  * Can be used to start/stop ScreenPage render, <br>
@@ -22,6 +23,7 @@ export class SystemInterface {
     /**
      * @hideconstructor
      */
+    #modules = new Map();
     constructor(systemSettings, canvasContainer, registeredPages) {
         if (!systemSettings) {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
@@ -32,9 +34,20 @@ export class SystemInterface {
         this.#loader = new AssetsManager();
         this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
-        if (systemSettings.gameOptions.modules.spineAnimations) {
-            this.#registerSpineLoaders();
+
+        for(const moduleKey in systemSettings.gameOptions.modules) {
+            //console.log(moduleKey);
+            const moduleOptions = systemSettings.gameOptions.modules[moduleKey],
+                modulePath = moduleOptions.path;
+                
+            import(modulePath).then((moduleArgs) => {
+                console.log("import module");
+                //console.log(moduleArgs);
+                
+                //this.#modules.set(moduleKey, );
+            });                
         }
+        
     }
 
     /**

@@ -1,0 +1,16 @@
+{
+  "name": "spine-plugin",
+  "version": "0.0.1",
+  "description": "jsge spine plugin",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arturas Lapinskas",
+  "license": "MIT",
+  "dependencies": {
+    "@esotericsoftware/spine-core": "4.2.23",
+    "@esotericsoftware/spine-webgl": "4.2.23"
+  }
+}

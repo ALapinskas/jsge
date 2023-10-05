@@ -13,7 +13,7 @@ Advantages:
 What you can do with it:
 1. Draw primitives, texts, load images, audio and tilemaps with tilesets from Tiled editor.
 2. Render everything in a sequence.
-4. Images can be animated, switching their indexes.
+4. Images can be animated, switching their frames.
 5. Tiles can be rendered as layers on top of each other using webgl blend effects.
 6. Map centering. Cutting off everything out off screen.
 7. Boundaries could be extracted from tiles and used further.

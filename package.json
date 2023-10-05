@@ -4,7 +4,17 @@
   "description": "Javascript Game Engine",
   "main": "src/index.js",
   "type": "module",
-  "keywords": ["javascript", "game", "game engine", "engine", "top down", "top-down", "tiled", "render", "rendering"],
+  "keywords": [
+    "javascript",
+    "game",
+    "game engine",
+    "engine",
+    "top down",
+    "top-down",
+    "tiled",
+    "render",
+    "rendering"
+  ],
   "scripts": {
     "start": "http-server -c-1 -p 9000 -o /examples",
     "eslint": "eslint src/** --fix",
