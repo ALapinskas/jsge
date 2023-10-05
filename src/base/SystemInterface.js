@@ -32,9 +32,6 @@ export class SystemInterface {
         this.#loader = new AssetsManager();
         this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
-        if (systemSettings.gameOptions.modules.spineAnimations) {
-            this.#registerSpineLoaders();
-        }
     }
 
     /**
@@ -60,16 +57,6 @@ export class SystemInterface {
 
     get loader() {
         return this.#loader;
-    }
-
-    #registerSpineLoaders() {
-        const spineTextLoader = () => { console.log("upload SpineText"); return Promise.resolve("result spine text"); },
-            spineBinaryLoader = () => { console.log("upload SpineBinary"); return Promise.resolve("result spine binary"); },
-            spineAtlasLoader = () => { console.log("upload SpineAtlas"); return Promise.resolve("result spine atlas"); };
-
-        this.loader.registerLoader("SpineText", spineTextLoader);
-        this.loader.registerLoader("SpineBinary", spineBinaryLoader);
-        this.loader.registerLoader("SpineAtlas", spineAtlasLoader);
     }
 
     /**

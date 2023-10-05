@@ -3470,9 +3470,6 @@ class SystemInterface {
         this.#loader = new _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__["default"]();
         this.#systemAudioInterface = new _SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_3__.SystemAudioInterface(this.loader);
         this.#systemServerConnection = new _SystemSocketConnection_js__WEBPACK_IMPORTED_MODULE_2__.SystemSocketConnection(systemSettings);
-        if (systemSettings.gameOptions.modules.spineAnimations) {
-            this.#registerSpineLoaders();
-        }
     }
 
     /**
@@ -3498,16 +3495,6 @@ class SystemInterface {
 
     get loader() {
         return this.#loader;
-    }
-
-    #registerSpineLoaders() {
-        const spineTextLoader = () => { console.log("upload SpineText"); return Promise.resolve("result spine text"); },
-            spineBinaryLoader = () => { console.log("upload SpineBinary"); return Promise.resolve("result spine binary"); },
-            spineAtlasLoader = () => { console.log("upload SpineAtlas"); return Promise.resolve("result spine atlas"); };
-
-        this.loader.registerLoader("SpineText", spineTextLoader);
-        this.loader.registerLoader("SpineBinary", spineBinaryLoader);
-        this.loader.registerLoader("SpineAtlas", spineAtlasLoader);
     }
 
     /**
@@ -4909,7 +4896,6 @@ const SystemSettings = {
             boundariesWidth: 2
         },
         modules: {
-            spineAnimations: true
         },
         render: {
             averageFPStime: 10000,

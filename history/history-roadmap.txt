@@ -21,6 +21,8 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.1.24:
+    f: updated tutorials
 0.1.23:
     f: updated readme
     f: updated tutorials
