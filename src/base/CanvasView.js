@@ -75,15 +75,7 @@ export class CanvasView {
      * @type {Array<RenderLayer>}
      */
     #renderLayers;
-    
-    /**
-     * @type {Array<Promise>}
-     */
-    #bindTileMapPromises;
-    /**
-     * @type {Array<Promise>}
-     */
-    #bindRenderObjectPromises;
+    #bindRenderLayerMethod;
 
     constructor(name, systemSettings, screenPageData, loader, isOffsetTurnedOff) {
         this.#canvas = document.createElement("canvas");
@@ -98,9 +90,7 @@ export class CanvasView {
         this.#renderObjects = [];
         this.#renderLayers = [];
 
-        this.#bindTileMapPromises = [];
-        this.#bindRenderObjectPromises = [];
-        this.bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this._bindRenderLayerWM : this._bindRenderLayer;
+        this.#bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this.#bindRenderLayerWM : this.#bindRenderLayer;
     }
 
     get screenPageData() {
@@ -182,7 +172,7 @@ export class CanvasView {
         this.#isWorldBoundariesEnabled = true;
     }
 
-    _initiateWebGlContext() {
+    initiateContext() {
         const webgl = this.#canvas.getContext("webgl");
         if (webgl) {
             this.#drawContext = webgl;
@@ -195,13 +185,9 @@ export class CanvasView {
         }
     }
 
-    _clearWebGlContext() {
+    #clearWebGlContext() {
         this.#webGlInterface._clearView();
         this.#isCleared = true;
-    }
-
-    _executeTileImagesDraw() {
-        return this.#webGlInterface._executeTileImagesDraw();
     }
 
     _setCanvasSize(width, height) {
@@ -216,27 +202,12 @@ export class CanvasView {
         this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.zIndex - obj1.zIndex);
     }
 
-    _prepareBindRenderLayerPromises() {
-        for (const layer of this.#renderLayers) {
-            this.#bindTileMapPromises.push(this.bindRenderLayerMethod(layer).catch((err) => {
-                Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
-            }));
-        }
-    }
-
-    _executeBindRenderLayerPromises() {
-        return Promise.allSettled(this.#bindTileMapPromises).then((bindResults) => {
-            this.#clearTileMapPromises();
-            return Promise.resolve(bindResults);
-        });
-    }
-
     /**
      * 
      * @param {RenderLayer} renderLayer 
      * @returns {Promise<void>}
      */
-    _bindRenderLayerWM(renderLayer) {
+    #bindRenderLayerWM(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
@@ -286,7 +257,7 @@ export class CanvasView {
      * @param {RenderLayer} renderLayer 
      * @returns {Promise<void>}
      */
-    _bindRenderLayer(renderLayer) {
+    #bindRenderLayer(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
@@ -547,39 +518,66 @@ export class CanvasView {
             resolve();
         });
     }
-    
-    _prepareBindRenderObjectPromises() {
-        for (let i = 0; i < this.#renderObjects.length; i++) {
-            const object = this.#renderObjects[i];
-            if (object.isRemoved) {
-                this.#renderObjects.splice(i, 1);
-                i--;
+
+    async render(key) {
+        return new Promise(async(resolve, reject) => {
+            if (!this._isCleared) {
+                this.#clearWebGlContext();
             }
-            //if (object.isAnimations) {
-            //    object._processActiveAnimations();
-            //}
-            const promise = this.#bindRenderObject(object).catch((err) => {
-                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
-                return Promise.reject(err);
-            });
-            this.#bindRenderObjectPromises.push(promise);
-        }
-    }
+            const renderLayers = this._renderLayers;
+            if (renderLayers.length !== 0) {
+                let renderLayerPromises = [];
+                for (const layer of renderLayers) {
+                    renderLayerPromises.push(this.#bindRenderLayerMethod(layer));
+                }
+                const bindResults = await Promise.allSettled(renderLayerPromises);
+                bindResults.forEach((result) => {
+                    if (result.status === "rejected") {
+                        reject("reason: " + result.reason);
+                    }
+                });
+                await this.#webGlInterface._executeTileImagesDraw();
+            }
+            
+            const renderObjects = this.renderObjects;
+            if (renderObjects.length !== 0) {
+                let renderObjectsPromises = [];
+                //this.#checkCollisions(view.renderObjects);
+                for (let i = 0; i < renderObjects.length; i++) {
+                    const object = renderObjects[i];
+                    if (object.isRemoved) {
+                        renderObjects.splice(i, 1);
+                        i--;
+                    }
+                    //if (object.isAnimations) {
+                    //    object._processActiveAnimations();
+                    //}
+                    const promise = this.#bindRenderObject(object).catch((err) => {
+                        reject(err);
+                    });
+                    renderObjectsPromises.push(promise);
+                }
+                if (key === CONST.LAYERS.BOUNDARIES) {
+                    renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
+                        reject(err);
+                    }));
+                }
+                const bindResults = await Promise.allSettled(renderObjectsPromises);
+                bindResults.forEach((result) => {
+                    if (result.status === "rejected") {
+                        reject(result.reason);
+                    }
+                });
 
-    _prepareBindBoundariesPromise() {
-        this.#bindRenderObjectPromises.push(this.#drawBoundariesWebGl().catch((err) => {
-            Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
-        }));
-    }
-
-    _executeBindRenderObjectPromises () {
-        return Promise.allSettled(this.#bindRenderObjectPromises).then((bindResults) => {
-            this.#clearRenderObjectPromises();
-            return Promise.resolve(bindResults);
+                this.#postRenderActions();
+                    
+                this._isCleared = false;
+            }
+            resolve();
         });
     }
 
-    _postRenderActions() {
+    #postRenderActions() {
         const images = this.getObjectsByInstance(DrawImageObject);
         for (let i = 0; i < images.length; i++) {
             const object = images[i];
@@ -597,9 +595,9 @@ export class CanvasView {
         this.#webGlInterface._bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, drawMask, rotation, translation);
     }
 
-    #clearTileMapPromises() {
-        this.#bindTileMapPromises = [];
-    }
+    //#clearTileMapPromises() {
+    //    this.#bindTileMapPromises = [];
+    //}
 
     /**
      * 
@@ -739,9 +737,9 @@ export class CanvasView {
         });
     }
 
-    #clearRenderObjectPromises() {
-        this.#bindRenderObjectPromises = [];
-    }
+    //#clearRenderObjectPromises() {
+    //    this.#bindRenderObjectPromises = [];
+    //}
 
     /**
      * 

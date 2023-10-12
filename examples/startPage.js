@@ -1,9 +1,11 @@
 import { ScreenPage, CONST } from "../src/index.js";
 import { utils } from "../src/index.js";
+import SpineModuleInitialization from "../modules/spine/dist/bundle.js";
 
 const isPointRectIntersect = utils.isPointRectIntersect;
 const LEFT_SHIFT = -70;
 const MENU_CLICK_AUDIO_NAME = "menu_click";
+const SPINE_VIEW_KEY = "spine-module-layer";
 
 const START_PAGE_NAME = "start",
     DUNGEON_GAME = "dungeon",
@@ -21,14 +23,16 @@ export class StartPage extends ScreenPage {
 
     register() {
         this.loader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
-        //this.loader.addSpineText(SPINE.SpineText, "./spine-assets/spineboy-pro.json");
-        //this.loader.addSpineBinary(SPINE.SpineBinary, "./spine-assets/spineboy-pro.skel");
-        //this.loader.addSpineAtlas(SPINE.SpineAtlas, "./spine-assets/spineboy-pma.atlas");
+        const spineView = this.createCanvasView(SPINE_VIEW_KEY, true);
+        this.system.installModule("spineModule", SpineModuleInitialization, "./spine-assets", spineView);
+        this.loader.addSpineJson(SPINE.SpineText, "./spine-assets/spineboy-pro.json");
+        this.loader.addSpineBinary(SPINE.SpineBinary, "./spine-assets/spineboy-pro.skel");
+        this.loader.addSpineAtlas(SPINE.SpineAtlas, "./spine-assets/spineboy-pma.atlas");
     }
 
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
-
+        
         this.createCanvasView(CONST.LAYERS.DEFAULT);
         
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");        
@@ -45,15 +49,11 @@ export class StartPage extends ScreenPage {
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
 
-        //const spineText = this.loader.getSpineText(SPINE.SpineText),
-        //    spineBinary = this.loader.getSpineBinary(SPINE.SpineBinary),
-        //    spineAtlas = this.loader.getSpineAtlas(SPINE.SpineAtlas),
-        //    spineImage = this.loader.getImage(SPINE.SpineAtlas);
-
-        //console.log(spineText);
-        //console.log(spineBinary);
-        //console.log(spineAtlas);
-        //console.log(spineImage);
+        const spineDrawObject = this.draw.spine(0, -300, SPINE.SpineText, SPINE.SpineAtlas);
+        spineDrawObject.scale(0.5);
+        
+        this.addRenderObject(SPINE_VIEW_KEY, spineDrawObject);
+        spineDrawObject.animationState.setAnimation(0, "run", true);
     }
 
     start() {

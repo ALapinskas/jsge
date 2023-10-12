@@ -175,7 +175,7 @@ export class ScreenPage {
      * @type {DrawObjectFactory}
      */
     get draw() {
-        return this.#drawObjectFactory;
+        return this.#system.drawObjectFactory;
     }
 
     /**
@@ -183,11 +183,13 @@ export class ScreenPage {
      * and set it to the #views
      * @param {string} name
      * @param {boolean} [isOffsetTurnedOff = false] - determines if offset is affected on this layer or not
+     * @returns {CanvasView}
      */
     createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
             const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, isOffsetTurnedOff);
             this.#views.set(name, newView);
+            return newView;
         } else
             Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
     };
@@ -653,7 +655,7 @@ export class ScreenPage {
             let viewPromises = [];
             const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
             for (const view of this.#views.values()) {
-                viewPromises.push(view._initiateWebGlContext());
+                viewPromises.push(view.initiateContext());
                 if (isBoundariesPrecalculations) {
                     viewPromises.push(view._createBoundariesPrecalculations());
                 }
@@ -680,12 +682,13 @@ export class ScreenPage {
         this.screenPageData._clearBoundaries();
 
         for (const [key, view] of this.#views.entries()) {
-            viewPromises.push(this.#executeRender(key, view));
+            viewPromises.push(view.render(key));
         }
         Promise.allSettled(viewPromises).then((drawingResults) => {
             drawingResults.forEach((result) => {
                 if (result.status === "rejected") {
                     Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
+                    this.#isActive = false;
                 }
             });
             const r_time = performance.now() - pt0,
@@ -701,55 +704,4 @@ export class ScreenPage {
             }
         });
     };
-
-    /**
-     * 
-     * @param {string} key 
-     * @param {CanvasView} view 
-     * @returns {Promise<void>}
-     */
-    #executeRender (key, view) {
-        return new Promise((resolve, reject) => {
-            if (!view._isCleared) {
-                view._clearWebGlContext();
-            }
-            if (view._renderLayers.length !== 0) {
-                view._prepareBindRenderLayerPromises();
-            }
-            view._executeBindRenderLayerPromises()
-                .then((bindResults) => {
-                    bindResults.forEach((result) => {
-                        if (result.status === "rejected") {
-                            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
-                            this.#isActive = false;
-                            return reject(WARNING_CODES.UNHANDLED_DRAW_ISSUE + ", reason: " + result.reason);
-                        }
-                    });
-                    return view._executeTileImagesDraw();
-                })
-                .then(() => {
-                    if (view.renderObjects.length !== 0) {
-                        //this.#checkCollisions(view.renderObjects);
-                        view._prepareBindRenderObjectPromises();
-                    }
-                    if (key === CONST.LAYERS.BOUNDARIES) {
-                        view._prepareBindBoundariesPromise();
-                    }
-                    return view._executeBindRenderObjectPromises();
-                })
-                .then((bindResults) => {
-                    bindResults.forEach((result) => {
-                        if (result.status === "rejected") {
-                            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
-                            this.#isActive = false;
-                        }
-                    });
-
-                    view._postRenderActions();
-                    
-                    view._isCleared = false;
-                    resolve();
-                });
-        });
-    }
 }

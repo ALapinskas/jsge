@@ -1,10 +1,12 @@
 import { ERROR_CODES } from "../constants.js";
-import { Exception } from "./Exception.js";
+import { Exception, Warning } from "./Exception.js";
 import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
 import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
 import { DrawImageObject } from "./DrawImageObject.js";
+import { DrawObjectFactory } from "./DrawObjectFactory.js";
+
 /**
  * Public interface for a System<br>
  * Can be used to start/stop ScreenPage render, <br>
@@ -19,7 +21,8 @@ export class SystemInterface {
     #registeredPages;
     #systemServerConnection;
     #systemAudioInterface;
-    #loader;
+    #loader = new AssetsManager();
+    #drawObjectFactory = new DrawObjectFactory();
     /**
      * @hideconstructor
      */
@@ -31,23 +34,15 @@ export class SystemInterface {
         this.#systemSettings = systemSettings;
         this.#canvasContainer = canvasContainer;
         this.#registeredPages = registeredPages;
-        this.#loader = new AssetsManager();
         this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
+    }
 
-        for(const moduleKey in systemSettings.gameOptions.modules) {
-            //console.log(moduleKey);
-            const moduleOptions = systemSettings.gameOptions.modules[moduleKey],
-                modulePath = moduleOptions.path;
-                
-            import(modulePath).then((moduleArgs) => {
-                console.log("import module");
-                //console.log(moduleArgs);
-                
-                //this.#modules.set(moduleKey, );
-            });                
-        }
-        
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    get canvasContainer() {
+        return this.#canvasContainer;
     }
 
     /**
@@ -75,20 +70,20 @@ export class SystemInterface {
         return this.#loader;
     }
 
-    #registerSpineLoaders() {
-        const spineTextLoader = (key, url) => fetch(url).then(result => result.text()),
-            spineBinaryLoader = (key, url) => fetch(url).then(result => result.arrayBuffer()),
-            spineAtlasLoader = (key, url) => fetch(url).then(result => result.text()).then(text => {
-                const spineImage = text.split("\r\n")[0];
-                this.loader.addImage(key, this.#systemSettings.gameOptions.modules.spineFolder + "/" + spineImage);
-                return text;
-            });
-
-        this.loader.registerLoader("SpineText", spineTextLoader);
-        this.loader.registerLoader("SpineBinary", spineBinaryLoader);
-        this.loader.registerLoader("SpineAtlas", spineAtlasLoader);
+    get drawObjectFactory() {
+        return this.#drawObjectFactory;
     }
 
+    get modules() {
+        return this.#modules;
+    }
+
+    installModule = (moduleKey, moduleClass, ...args) => {
+        console.log(this);
+        const moduleInstance = new moduleClass(this, ...args);
+        this.#modules.set(moduleKey, moduleInstance);
+        return moduleInstance;
+    }
     /**
      * @method
      * @param {string} screenPageName

@@ -1,5 +1,4 @@
 import { CONST } from "./constants.js";
-
 /**
  * Settings object, should be passed as a parameter to System.constructor().
  */
@@ -21,12 +20,6 @@ export const SystemSettings = {
             drawObjectBoundaries: false,
             boundariesColor: "rgba(224, 12, 21, 0.6)",
             boundariesWidth: 2
-        },
-        modules: {
-            Spine: {
-                spineFolder: "./spine-assets",
-                path: "../../modules/spine/src/index.js"
-            }
         },
         render: {
             averageFPStime: 10000,

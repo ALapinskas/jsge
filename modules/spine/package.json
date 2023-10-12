@@ -1,16 +1,19 @@
 {
-  "name": "spine-plugin",
+  "name": "jsge-spine-module",
   "version": "0.0.1",
-  "description": "jsge spine plugin",
-  "main": "src/index.js",
+  "description": "jsge spine module",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
+    "build-dev": "webpack --mode=development",
+    "build-prod": "webpack --mode=production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Arturas Lapinskas",
   "license": "MIT",
   "dependencies": {
     "@esotericsoftware/spine-core": "4.2.23",
-    "@esotericsoftware/spine-webgl": "4.2.23"
+    "@esotericsoftware/spine-webgl": "4.2.23",
+    "webpack": "5.88.2"
   }
 }
