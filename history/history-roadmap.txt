@@ -23,8 +23,8 @@ f: fixed defects
 # History
 0.2.0:
     +: modules installing with system.installModule(key, moduleClass, ...params)
-    +: spine module
-    r: rendering pipeline now use public, overwritable methods view.initiateContext() view.render()
+    +: spine module, intergration spine runtimes
+    r: rendering pipeline now use public, overwritable methods view.initiateContext() and view.render()
     r: ScreenPage.createCanvasView is now returns a CanvasView instance
 
 0.1.23:

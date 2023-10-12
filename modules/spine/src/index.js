@@ -11,6 +11,9 @@ import {
 import { AtlasAttachmentLoader, GLTexture, SceneRenderer, SkeletonBinary, SkeletonData, ResizeMode, SkeletonJson, TextureAtlas, ManagedWebGLRenderingContext } from "@esotericsoftware/spine-webgl";
 
 class DrawSpineObject {
+    /**
+     * @type {Skeleton}
+     */
     #skeleton;
     #isRemoved = false;
     constructor(mapX, mapY, key, imageIndex = 0, boundaries, skeleton) {
@@ -48,12 +51,66 @@ class DrawSpineObject {
         this.#skeleton.updateWorldTransform();
     }
 
+    setSkin(skinKey) {
+        const skin = this.#skeleton.data.findSkin(skinKey)
+        if (skin) {
+            this.#skeleton.setSkin(skin);
+            this.#skeleton.setToSetupPose();
+            this.#skeleton.updateWorldTransform();
+        } else {
+            console.error("no skin with key ", skinKey, " was found");
+        }
+
+        // Calculate the bounds so we can center and zoom
+        // the camera such that the skeleton is in full view.
+        //let offset = new spine.Vector2(), size = new spine.Vector2();
+        //this.skeleton.getBounds(offset, size);
+    }
+
     get isRemoved() {
         return this.#isRemoved;
     }
 
     remove() {
         this.#isRemoved = true;
+    }
+}
+
+class DrawSpineTexture {
+    #x;
+    #y;
+    #width;
+    #height;
+    /**
+     * @type {GLTexture}
+     */
+    #image;
+    constructor(x,y, width, height, image) {
+        this.#x = x;
+        this.#y = y;
+        this.#width = width;
+        this.#height = height;
+        this.#image = image;
+    }
+
+    get x() {
+        return this.#x;
+    }
+
+    get y() {
+        return this.#y;
+    }
+
+    get width() {
+        return this.#width;
+    }
+
+    get height() {
+        return this.#height;
+    }
+
+    get image() {
+        return this.#image;
     }
 }
 //console.log(new Skeleton());
@@ -66,19 +123,10 @@ export default class SpineModuleInitialization {
         this.#systemInterface = systemInterface;
         this.#registerSpineLoaders(this.#systemInterface.loader, spineFolder);
         this.#extendDrawFactory();
-        this.registerView(spineView);
-        this.time = new TimeKeeper();
-    }
-    // image behind skeleton
-    drawBgImage(texture) {
-        // Draw the background image.
-        let bgImage = config.backgroundImage;
-        if (bgImage) {
-            if (bgImage.x !== void 0 && bgImage.y !== void 0 && bgImage.width && bgImage.height)
-                this.#sceneRenderer.drawTexture(texture, bgImage.x, bgImage.y, bgImage.width, bgImage.height);
-            else
-                this.#sceneRenderer.drawTexture(texture, viewport.x, viewport.y, viewport.width, viewport.height);
+        if (spineView) {
+            this.registerView(spineView);
         }
+        this.time = new TimeKeeper();
     }
 
     #registerSpineLoaders(loader, spineFolder = "") {
@@ -105,12 +153,20 @@ export default class SpineModuleInitialization {
         const drawFactory = this.#systemInterface.drawObjectFactory;
 
         drawFactory.spine = (x, y, dataKey, atlasKey, imageIndex, boundaries) => {
-            console.log("draw spine called!");
             const skeleton = this.#createSkeleton(dataKey, atlasKey);
             if (!skeleton || !(skeleton instanceof Skeleton)) {
                 console.error("couldn't create spine skeleton!");
             } else {
                 return new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
+            }
+        }
+
+        drawFactory.spineTexture = (x, y, width, height, imageKey) => {
+            const image = this.#systemInterface.loader.getImage(imageKey);
+            if (image) {
+                return new DrawSpineTexture(x, y, width, height, new GLTexture(this.#context, image));
+            } else {
+                console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
             }
         }
     }
@@ -137,7 +193,6 @@ export default class SpineModuleInitialization {
     #attachAtlasGraphicsData(textureAtlas) {
         for (let page of textureAtlas.pages) {
             const img = this.#systemInterface.loader.getImage(page.name);
-            let i = 0;
             for (let region of page.regions) {
                 if (!this.#context) {
                     console.error("no view is registered on the module!");
@@ -165,7 +220,7 @@ export default class SpineModuleInitialization {
         this.#registeredView = view;
         
         this.#setCanvasSize(view);
-        this.#context = new ManagedWebGLRenderingContext(canvas, { alpha: false, preserveDrawingBuffer: false });
+        this.#context = new ManagedWebGLRenderingContext(canvas, { preserveDrawingBuffer: false });
         this.#sceneRenderer = new SceneRenderer(canvas, this.#context, true);
 
         this.#registeredView.initiateContext = () => Promise.resolve();
@@ -176,22 +231,32 @@ export default class SpineModuleInitialization {
             // Clear the color buffer with specified clear color
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            const spineObjects = this.#registeredView.getObjectsByInstance(DrawSpineObject);
+            const renderObjects = this.#registeredView.renderObjects;
             this.#registeredView._bindRenderObjectPromises = [];
             // Begin rendering.
             this.#sceneRenderer.begin();
-            for (let i = 0; i < spineObjects.length; i++) {
-                const object = spineObjects[i];
+            for (let i = 0; i < renderObjects.length; i++) {
+                this.time.update();
+                const object = renderObjects[i];
                 if (object.isRemoved) {
-                    spineObjects.splice(i, 1);
+                    renderObjects.splice(i, 1);
                     i--;
                 }
-                const promise = new Promise((resolve, reject) => {
-                    this.time.update();
-                    object.update(this.time.delta);
-                    this.#sceneRenderer.drawSkeleton(object.skeleton, false);
-                    resolve();
-                });
+                let promise;
+                if (object instanceof DrawSpineObject) {
+                    promise = new Promise((resolve, reject) => {
+                        object.update(this.time.delta);
+                        this.#sceneRenderer.drawSkeleton(object.skeleton, false);
+                        resolve();
+                    });
+                } else if (object instanceof DrawSpineTexture) {
+                    promise = new Promise((resolve, reject) => {
+                        this.#sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
+                        resolve();
+                    });
+                } else {
+                    console.warn("view doesn't support this draw object!", object);
+                }
                 this.#registeredView._bindRenderObjectPromises.push(promise);
             }
 

@@ -79,7 +79,6 @@ export class SystemInterface {
     }
 
     installModule = (moduleKey, moduleClass, ...args) => {
-        console.log(this);
         const moduleInstance = new moduleClass(this, ...args);
         this.#modules.set(moduleKey, moduleInstance);
         return moduleInstance;

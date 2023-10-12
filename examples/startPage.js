@@ -5,29 +5,18 @@ import SpineModuleInitialization from "../modules/spine/dist/bundle.js";
 const isPointRectIntersect = utils.isPointRectIntersect;
 const LEFT_SHIFT = -70;
 const MENU_CLICK_AUDIO_NAME = "menu_click";
-const SPINE_VIEW_KEY = "spine-module-layer";
 
 const START_PAGE_NAME = "start",
     DUNGEON_GAME = "dungeon",
     PIRATES_GAME = "pirates",
-    RACING_GAME = "racing";
-
-const SPINE = {
-    SpineText: "spineText",
-    SpineBinary: "spineBinary",
-    SpineAtlas: "spineAtlas"
-};
+    RACING_GAME = "racing",
+    SPINE_PAGE = "spine";
 
 export class StartPage extends ScreenPage {
     #menuClickMediaElement;
 
     register() {
         this.loader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
-        const spineView = this.createCanvasView(SPINE_VIEW_KEY, true);
-        this.system.installModule("spineModule", SpineModuleInitialization, "./spine-assets", spineView);
-        this.loader.addSpineJson(SPINE.SpineText, "./spine-assets/spineboy-pro.json");
-        this.loader.addSpineBinary(SPINE.SpineBinary, "./spine-assets/spineboy-pro.skel");
-        this.loader.addSpineAtlas(SPINE.SpineAtlas, "./spine-assets/spineboy-pma.atlas");
     }
 
     init() {
@@ -41,19 +30,15 @@ export class StartPage extends ScreenPage {
         this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
         this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");
         this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "black");
+        this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 60, "Spine module", "24px sans-serif", "black");
         
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemDun);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemPir);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemRac);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemSpine);
         
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
-
-        const spineDrawObject = this.draw.spine(0, -300, SPINE.SpineText, SPINE.SpineAtlas);
-        spineDrawObject.scale(0.5);
-        
-        this.addRenderObject(SPINE_VIEW_KEY, spineDrawObject);
-        spineDrawObject.animationState.setAnimation(0, "run", true);
     }
 
     start() {
@@ -75,7 +60,9 @@ export class StartPage extends ScreenPage {
         const canvas = this.getView(CONST.LAYERS.DEFAULT).canvas,
             isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox),
             isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox),
-            isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox);;
+            isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox),
+            isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox);
+
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
         } else {
@@ -94,7 +81,13 @@ export class StartPage extends ScreenPage {
             this.navItemRac.strokeStyle = undefined;
         }
 
-        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed) {
+        if (isNav4Traversed) {
+            this.navItemSpine.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        } else {
+            this.navItemSpine.strokeStyle = undefined;
+        }
+
+        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed) {
             canvas.style.cursor = "pointer";
         } else {
             canvas.style.cursor = "default";
@@ -121,6 +114,12 @@ export class StartPage extends ScreenPage {
             this.#menuClickMediaElement.play();
             this.system.stopScreenPage(START_PAGE_NAME);
             this.system.startScreenPage(RACING_GAME);
+        }
+
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox)) {
+            this.#menuClickMediaElement.play();
+            this.system.stopScreenPage(START_PAGE_NAME);
+            this.system.startScreenPage(SPINE_PAGE);
         }
     };
 

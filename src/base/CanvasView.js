@@ -126,6 +126,97 @@ export class CanvasView {
     }
 
     /**
+     * 
+     * @returns {Promise}
+     */
+    initiateContext() {
+        const webgl = this.#canvas.getContext("webgl");
+        if (webgl) {
+            this.#drawContext = webgl;
+            this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettings.gameOptions.checkWebGlErrors);
+            
+            return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
+                this.#webGlInterface._initPrimitivesDrawProgram()]);
+        } else {
+            Exception(ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
+        }
+    }
+
+    /**
+     * @param {string} key
+     * @returns {Promise<void>}
+     */
+    async render(key) {
+        return new Promise(async(resolve, reject) => {
+            if (!this._isCleared) {
+                this.#clearWebGlContext();
+            }
+            const renderLayers = this._renderLayers;
+            if (renderLayers.length !== 0) {
+                let renderLayerPromises = [];
+                for (const layer of renderLayers) {
+                    renderLayerPromises.push(this.#bindRenderLayerMethod(layer));
+                }
+                const bindResults = await Promise.allSettled(renderLayerPromises);
+                bindResults.forEach((result) => {
+                    if (result.status === "rejected") {
+                        reject("reason: " + result.reason);
+                    }
+                });
+                await this.#webGlInterface._executeTileImagesDraw();
+            }
+            
+            const renderObjects = this.renderObjects;
+            if (renderObjects.length !== 0) {
+                let renderObjectsPromises = [];
+                //this.#checkCollisions(view.renderObjects);
+                for (let i = 0; i < renderObjects.length; i++) {
+                    const object = renderObjects[i];
+                    if (object.isRemoved) {
+                        renderObjects.splice(i, 1);
+                        i--;
+                    }
+                    //if (object.isAnimations) {
+                    //    object._processActiveAnimations();
+                    //}
+                    const promise = this._bindRenderObject(object).catch((err) => {
+                        reject(err);
+                    });
+                    renderObjectsPromises.push(promise);
+                }
+                if (key === CONST.LAYERS.BOUNDARIES) {
+                    renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
+                        reject(err);
+                    }));
+                }
+                const bindResults = await Promise.allSettled(renderObjectsPromises);
+                bindResults.forEach((result) => {
+                    if (result.status === "rejected") {
+                        reject(result.reason);
+                    }
+                });
+
+                this.#postRenderActions();
+                    
+                this._isCleared = false;
+            }
+            resolve();
+        });
+    }
+
+    _setCanvasSize(width, height) {
+        this.canvas.width = width;
+        this.canvas.height = height;
+        if (this.#webGlInterface) {
+            this.#webGlInterface._fixCanvasSize(width, height);
+        }
+    }
+
+    _sortRenderObjectsByZIndex() {
+        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.zIndex - obj1.zIndex);
+    }
+
+    /**
      * @returns {Array<RenderLayer>}
      */
     get _renderLayers() {
@@ -172,34 +263,9 @@ export class CanvasView {
         this.#isWorldBoundariesEnabled = true;
     }
 
-    initiateContext() {
-        const webgl = this.#canvas.getContext("webgl");
-        if (webgl) {
-            this.#drawContext = webgl;
-            this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettings.gameOptions.checkWebGlErrors);
-            
-            return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
-                this.#webGlInterface._initPrimitivesDrawProgram()]);
-        } else {
-            Exception(ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
-        }
-    }
-
     #clearWebGlContext() {
         this.#webGlInterface._clearView();
         this.#isCleared = true;
-    }
-
-    _setCanvasSize(width, height) {
-        this.canvas.width = width;
-        this.canvas.height = height;
-        if (this.#webGlInterface) {
-            this.#webGlInterface._fixCanvasSize(width, height);
-        }
-    }
-
-    _sortRenderObjectsByZIndex() {
-        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.zIndex - obj1.zIndex);
     }
 
     /**
@@ -519,64 +585,6 @@ export class CanvasView {
         });
     }
 
-    async render(key) {
-        return new Promise(async(resolve, reject) => {
-            if (!this._isCleared) {
-                this.#clearWebGlContext();
-            }
-            const renderLayers = this._renderLayers;
-            if (renderLayers.length !== 0) {
-                let renderLayerPromises = [];
-                for (const layer of renderLayers) {
-                    renderLayerPromises.push(this.#bindRenderLayerMethod(layer));
-                }
-                const bindResults = await Promise.allSettled(renderLayerPromises);
-                bindResults.forEach((result) => {
-                    if (result.status === "rejected") {
-                        reject("reason: " + result.reason);
-                    }
-                });
-                await this.#webGlInterface._executeTileImagesDraw();
-            }
-            
-            const renderObjects = this.renderObjects;
-            if (renderObjects.length !== 0) {
-                let renderObjectsPromises = [];
-                //this.#checkCollisions(view.renderObjects);
-                for (let i = 0; i < renderObjects.length; i++) {
-                    const object = renderObjects[i];
-                    if (object.isRemoved) {
-                        renderObjects.splice(i, 1);
-                        i--;
-                    }
-                    //if (object.isAnimations) {
-                    //    object._processActiveAnimations();
-                    //}
-                    const promise = this.#bindRenderObject(object).catch((err) => {
-                        reject(err);
-                    });
-                    renderObjectsPromises.push(promise);
-                }
-                if (key === CONST.LAYERS.BOUNDARIES) {
-                    renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
-                        reject(err);
-                    }));
-                }
-                const bindResults = await Promise.allSettled(renderObjectsPromises);
-                bindResults.forEach((result) => {
-                    if (result.status === "rejected") {
-                        reject(result.reason);
-                    }
-                });
-
-                this.#postRenderActions();
-                    
-                this._isCleared = false;
-            }
-            resolve();
-        });
-    }
-
     #postRenderActions() {
         const images = this.getObjectsByInstance(DrawImageObject);
         for (let i = 0; i < images.length; i++) {
@@ -674,7 +682,7 @@ export class CanvasView {
      * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject} renderObject 
      * @returns {Promise<void>}
      */
-    #bindRenderObject(renderObject) {
+    _bindRenderObject(renderObject) {
         return new Promise((resolve) => {
             const [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
                 x = renderObject.x - xOffset,

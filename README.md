@@ -7,8 +7,10 @@ This engine was designed to work with maps from Tiled editor.
 Advantages:
 * Fresh codebase, depends on latest javascript features such as classes and privacy.
 * Strict OPP structure, no circle dependencies.
+* Modular structure.
 * Webgl 1 under the hood, wide browser support and fast rendering on desktop and mobile screens.
 * Flexible multilayer design. Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
+* Spine 2d skeletal animation runtimes integrated.
 
 What you can do with it:
 1. Draw primitives, texts, load images, audio and tilemaps with tilesets from Tiled editor.
