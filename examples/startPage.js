@@ -1,5 +1,6 @@
 import { ScreenPage, CONST } from "../src/index.js";
 import { utils } from "../src/index.js";
+import SpineModuleInitialization from "../modules/spine/dist/bundle.js";
 
 const isPointRectIntersect = utils.isPointRectIntersect;
 const LEFT_SHIFT = -70;
@@ -8,7 +9,8 @@ const MENU_CLICK_AUDIO_NAME = "menu_click";
 const START_PAGE_NAME = "start",
     DUNGEON_GAME = "dungeon",
     PIRATES_GAME = "pirates",
-    RACING_GAME = "racing";
+    RACING_GAME = "racing",
+    SPINE_PAGE = "spine";
 
 export class StartPage extends ScreenPage {
     #menuClickMediaElement;
@@ -19,7 +21,7 @@ export class StartPage extends ScreenPage {
 
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
-
+        
         this.createCanvasView(CONST.LAYERS.DEFAULT);
         
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");        
@@ -28,10 +30,12 @@ export class StartPage extends ScreenPage {
         this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
         this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");
         this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "black");
+        this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 60, "Spine module", "24px sans-serif", "black");
         
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemDun);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemPir);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemRac);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemSpine);
         
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
@@ -56,7 +60,9 @@ export class StartPage extends ScreenPage {
         const canvas = this.getView(CONST.LAYERS.DEFAULT).canvas,
             isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox),
             isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox),
-            isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox);;
+            isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox),
+            isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox);
+
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
         } else {
@@ -75,7 +81,13 @@ export class StartPage extends ScreenPage {
             this.navItemRac.strokeStyle = undefined;
         }
 
-        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed) {
+        if (isNav4Traversed) {
+            this.navItemSpine.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        } else {
+            this.navItemSpine.strokeStyle = undefined;
+        }
+
+        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed) {
             canvas.style.cursor = "pointer";
         } else {
             canvas.style.cursor = "default";
@@ -102,6 +114,12 @@ export class StartPage extends ScreenPage {
             this.#menuClickMediaElement.play();
             this.system.stopScreenPage(START_PAGE_NAME);
             this.system.startScreenPage(RACING_GAME);
+        }
+
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox)) {
+            this.#menuClickMediaElement.play();
+            this.system.stopScreenPage(START_PAGE_NAME);
+            this.system.startScreenPage(SPINE_PAGE);
         }
     };
 

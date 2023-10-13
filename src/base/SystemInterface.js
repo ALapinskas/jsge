@@ -1,9 +1,12 @@
 import { ERROR_CODES } from "../constants.js";
-import { Exception } from "./Exception.js";
+import { Exception, Warning } from "./Exception.js";
 import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
-import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
+import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
+import { DrawImageObject } from "./DrawImageObject.js";
+import { DrawObjectFactory } from "./DrawObjectFactory.js";
+
 /**
  * Public interface for a System<br>
  * Can be used to start/stop ScreenPage render, <br>
@@ -18,10 +21,12 @@ export class SystemInterface {
     #registeredPages;
     #systemServerConnection;
     #systemAudioInterface;
-    #loader;
+    #loader = new AssetsManager();
+    #drawObjectFactory = new DrawObjectFactory();
     /**
      * @hideconstructor
      */
+    #modules = new Map();
     constructor(systemSettings, canvasContainer, registeredPages) {
         if (!systemSettings) {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
@@ -29,9 +34,15 @@ export class SystemInterface {
         this.#systemSettings = systemSettings;
         this.#canvasContainer = canvasContainer;
         this.#registeredPages = registeredPages;
-        this.#loader = new AssetsManager();
         this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
+    }
+
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    get canvasContainer() {
+        return this.#canvasContainer;
     }
 
     /**
@@ -59,6 +70,19 @@ export class SystemInterface {
         return this.#loader;
     }
 
+    get drawObjectFactory() {
+        return this.#drawObjectFactory;
+    }
+
+    get modules() {
+        return this.#modules;
+    }
+
+    installModule = (moduleKey, moduleClass, ...args) => {
+        const moduleInstance = new moduleClass(this, ...args);
+        this.#modules.set(moduleKey, moduleInstance);
+        return moduleInstance;
+    }
     /**
      * @method
      * @param {string} screenPageName

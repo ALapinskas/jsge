@@ -1,10 +1,22 @@
 {
   "name": "jsge",
-  "version": "0.1.24",
+  "version": "0.2.0",
   "description": "Javascript Game Engine",
   "main": "src/index.js",
   "type": "module",
-  "keywords": ["javascript", "game", "game engine", "engine", "top down", "top-down", "tiled", "render", "rendering"],
+  "keywords": [
+    "javascript",
+    "game",
+    "game engine",
+    "engine",
+    "top down",
+    "top-down",
+    "tiled",
+    "render",
+    "rendering",
+    "spine",
+    "animations"
+  ],
   "scripts": {
     "start": "http-server -c-1 -p 9000 -o /examples",
     "eslint": "eslint src/** --fix",
