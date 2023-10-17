@@ -6,6 +6,7 @@ import { SystemSettings } from "../configs.js";
 import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
 import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
+import { WebGlInterface } from "./WebGlInterface.js";
 
 /**
  * Public interface for a System<br>
@@ -17,6 +18,9 @@ import { DrawObjectFactory } from "./DrawObjectFactory.js";
  */
 export class SystemInterface {
     #systemSettings;
+    #canvas;
+    #drawContext;
+    #webGlInterface;
     #canvasContainer;
     #registeredPages;
     #systemServerConnection;
@@ -33,6 +37,10 @@ export class SystemInterface {
         }
         this.#systemSettings = systemSettings;
         this.#canvasContainer = canvasContainer;
+        this.#canvas = document.createElement("canvas");
+        this.#drawContext = this.#canvas.getContext("webgl");
+        this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettings.gameOptions.checkWebGlErrors);
+        this.#canvasContainer.appendChild(this.#canvas);
         this.#registeredPages = registeredPages;
         this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
@@ -45,7 +53,15 @@ export class SystemInterface {
         return this.#canvasContainer;
     }
 
-    /**
+    get canvas() {
+        return this.#canvas;
+    }
+
+    get webGlInterface() {
+        return this.#webGlInterface;
+    }
+
+    /**#webGlInterface
      * @type { SystemSocketConnection }
      */
     get network () {
@@ -78,6 +94,19 @@ export class SystemInterface {
         return this.#modules;
     }
 
+    initiateContext() {
+        return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
+            this.#webGlInterface._initPrimitivesDrawProgram()]);
+    }
+
+    setCanvasSize(width, height) {
+        this.#canvas.width = width;
+        this.#canvas.height = height;
+        if (this.#webGlInterface) {
+            this.#webGlInterface._fixCanvasSize(width, height);
+        }
+    }
+
     installModule = (moduleKey, moduleClass, ...args) => {
         const moduleInstance = new moduleClass(this, ...args);
         this.#modules.set(moduleKey, moduleInstance);
@@ -94,7 +123,7 @@ export class SystemInterface {
             if (page.isInitiated === false) {
                 page._init();
             }
-            page._attachViewsToContainer(this.#canvasContainer);
+            //page._attachViewsToContainer(this.#canvasContainer);
             page._start(options);
         } else {
             Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");

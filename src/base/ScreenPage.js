@@ -187,7 +187,7 @@ export class ScreenPage {
      */
     createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
-            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, isOffsetTurnedOff);
+            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
             this.#views.set(name, newView);
             return newView;
         } else
@@ -306,6 +306,10 @@ export class ScreenPage {
         return this.#system;
     }
 
+    get canvas() {
+        return this.#system.canvas;
+    }
+    
     /**
      * @method
      * @param {string} key 
@@ -344,7 +348,7 @@ export class ScreenPage {
         this.#isActive = false;
         window.removeEventListener("resize", this._resize);
         this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
-        this.#removeCanvasFromDom();
+        //this.#removeCanvasFromDom();
         clearInterval(this.#fpsAverageCountTimer);
         this.stop();
     }
@@ -367,11 +371,11 @@ export class ScreenPage {
         container.appendChild(htmlElement);
     }
 
-    #removeCanvasFromDom() {
-        for (const view of this.#views.values()) {
-            document.getElementById(view.canvas.id).remove();
-        }
-    }
+    //#removeCanvasFromDom() {
+    //    for (const view of this.#views.values()) {
+    //        document.getElementById(view.canvas.id).remove();
+    //    }
+    //}
 
     #setWorldDimensions() {
         const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
@@ -606,9 +610,10 @@ export class ScreenPage {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
         this.screenPageData._setCanvasDimensions(canvasWidth, canvasHeight);
-        for (const view of this.#views.values()) {
-            view._setCanvasSize(canvasWidth, canvasHeight);
-        }
+        this.system.setCanvasSize(canvasWidth, canvasHeight)
+        //for (const view of this.#views.values()) {
+        //    view._setCanvasSize(canvasWidth, canvasHeight);
+        //}
     }
 
     #countFPSaverage() {
@@ -654,9 +659,9 @@ export class ScreenPage {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
             const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
-            for (const view of this.#views.values()) {
-                viewPromises.push(view.initiateContext());
-                if (isBoundariesPrecalculations) {
+            viewPromises.push(this.system.initiateContext());
+            if (isBoundariesPrecalculations) {
+                for (const view of this.#views.values()) {
                     viewPromises.push(view._createBoundariesPrecalculations());
                 }
             }

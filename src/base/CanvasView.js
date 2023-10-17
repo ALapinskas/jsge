@@ -77,7 +77,7 @@ export class CanvasView {
     #renderLayers;
     #bindRenderLayerMethod;
 
-    constructor(name, systemSettings, screenPageData, loader, isOffsetTurnedOff) {
+    constructor(name, systemSettings, screenPageData, loader, webGlInterface, isOffsetTurnedOff) {
         this.#canvas = document.createElement("canvas");
         this.#canvas.id = name;
         this.#canvas.style.position = "absolute";
@@ -87,6 +87,7 @@ export class CanvasView {
         this.#screenPageData = screenPageData;
         this.#systemSettings = systemSettings;
         this.#loader = loader;
+        this.#webGlInterface = webGlInterface;
         this.#renderObjects = [];
         this.#renderLayers = [];
 

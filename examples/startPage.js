@@ -50,14 +50,14 @@ export class StartPage extends ScreenPage {
     }
 
     registerEventListeners() {
-        const canvas = this.getView(CONST.LAYERS.DEFAULT).canvas; 
+        const canvas = this.canvas; 
         canvas.addEventListener("mousemove", this.#mouseHoverEvent);            
         canvas.addEventListener("click", this.#mouseClickEvent);
         document.addEventListener("keydown", this.pressKeyAction);
     }
 
     #mouseHoverEvent = (event) => {
-        const canvas = this.getView(CONST.LAYERS.DEFAULT).canvas,
+        const canvas = this.canvas,
             isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox),
             isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox),
             isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox),
@@ -124,7 +124,7 @@ export class StartPage extends ScreenPage {
     };
 
     unregisterEventListeners() {
-        const canvas = this.getView(CONST.LAYERS.DEFAULT).canvas;
+        const canvas = this.canvas;
         canvas.removeEventListener("click", this.#mouseClickEvent);
         document.removeEventListener("keydown", this.#pressKeyAction);
     }
