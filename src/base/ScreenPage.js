@@ -702,6 +702,9 @@ export class ScreenPage {
             //console.log("draw circle done, take: ", (r_time), " ms");
             //console.log("fps: ", fps);
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
+            if(fps === Infinity) {
+                console.log("infinity time");
+            }
             this.#tempFPStime.push(fps);
             if (this.#isActive) {
                 setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);

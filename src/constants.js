@@ -66,6 +66,10 @@ export const CONST = {
         WEBGL: "webgl"
     },
     OPTIMIZATION: {
+        NATIVE_JS: {
+            NOT_OPTIMIZED: "NOT_OPTIMIZED",
+            OPTIMIZED: "OPTIMIZED"
+        },
         WEB_ASSEMBLY: {
             ASSEMBLY_SCRIPT: "ASSEMBLY_SCRIPT",
             WASM: "WASM"
