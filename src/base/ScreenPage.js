@@ -653,11 +653,15 @@ export class ScreenPage {
     #prepareViews() {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
-            const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
+            const isBoundariesPrecalculations = this.#isBoundariesPrecalculations,
+                isWasmEnabled = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM;
             for (const view of this.#views.values()) {
                 viewPromises.push(view.initiateContext());
                 if (isBoundariesPrecalculations) {
                     viewPromises.push(view._createBoundariesPrecalculations());
+                }
+                if (isWasmEnabled) {
+                    viewPromises.push(view.initiateWasm());
                 }
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {

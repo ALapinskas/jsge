@@ -49,6 +49,10 @@ export class CanvasView {
     /**
      * @type {boolean}
      */
+    #isWasmEnabled = false;
+    /**
+     * @type {boolean}
+     */
     #isWorldBoundariesEnabled;
 
     #drawContext;
@@ -90,7 +94,9 @@ export class CanvasView {
         this.#renderObjects = [];
         this.#renderLayers = [];
 
-        this.#bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this.#bindRenderLayerWM : this.#bindRenderLayer;
+        this.#isWasmEnabled = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM;
+
+        this.#bindRenderLayerMethod = this.#isWasmEnabled ? this.#bindRenderLayerWM : this.#bindRenderLayer;
     }
 
     get screenPageData() {
@@ -123,6 +129,32 @@ export class CanvasView {
      */
     getObjectsByInstance(instance) {
         return this.#renderObjects.filter((object) => object instanceof instance);
+    }
+
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
+    initiateWasm = () => {
+        return new Promise((resolve, reject) => {
+            this.layerData = new WebAssembly.Memory({initial:50});
+            this.layerDataFloat32 = new Float32Array(this.layerData.buffer);
+            const importObject = {
+                env: {
+                    data: this.layerData,
+                    logi: console.log,
+                    logf: console.log
+                }
+            };
+
+            fetch("/src/wa/calculateBufferData.wasm")
+            .then((response) => response.arrayBuffer())
+            .then((module) => WebAssembly.instantiate(module, importObject))
+            .then((obj) => {
+                this.calculateBufferData = obj.instance.exports.calculateBufferData;
+                resolve();
+            });
+        })
     }
 
     /**
@@ -273,23 +305,29 @@ export class CanvasView {
      * @param {RenderLayer} renderLayer 
      * @returns {Promise<void>}
      */
-    #bindRenderLayerWM(renderLayer) {
+    #bindRenderLayerWM = (renderLayer) => {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
                 tilesetImages = tilesets.map((tileset) => this.#getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                setBoundaries = false;//, //renderLayer.setBoundaries,
-                //[ worldW, worldH ] = this.screenPageData.worldDimensions,
+                offsetDataItemsFullNum = layerData.data.length,
+                offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
+                setBoundaries = false, //renderLayer.setBoundaries,
+                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
                 //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
                 //[ xOffset, yOffset ] = this.screenPageData.worldOffset;
-                
+
+            //clear data
+            //this.layerDataFloat32.fill(0);
+            this.layerDataFloat32.set(layerData.data);
             if (!layerData) {
                 Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
                 reject();
             }
-            for (let i = 0; i <= tilesets.length - 1; i++) {
+            
+            for (let i = 0; i < tilesets.length; i++) {
                 const tileset = tilesets[i].data,
                     //tilesetImages = this.loader.getTilesetImageArray(tileset.name),
                     tilewidth = tileset.tilewidth,
@@ -302,12 +340,41 @@ export class CanvasView {
                     //visibleRows = Math.ceil(canvasH / tileheight),
                     //offsetCols = layerCols - visibleCols,
                     //offsetRows = layerRows - visibleRows,
+                    worldW = tilewidth * layerCols,
+                    worldH = tileheight * layerRows,
                     atlasImage = tilesetImages[i],
                     atlasWidth = atlasImage.width,
-                    atlasHeight = atlasImage.height;
-                    
+                    atlasHeight = atlasImage.height,
+                    items = layerRows * layerCols,
+                    dataCellSizeBytes = 4,
+                    vectorCoordsItemsNum = 12,
+                    texturesCoordsItemsNum = 12,
+                    vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
+                    texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum;
+                
+                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                    this.screenPageData._setWorldDimensions(worldW, worldH);
+                }
+
+                //if (this.canvas.width !== worldW || this.canvas.height !== worldH) {
+                //    this._setCanvasSize(worldW, worldH);
+                //}
+
+                if (setBoundaries) {
+                    // boundaries cleanups every draw circle, we need to set world boundaries again
+                    if (this.#isWorldBoundariesEnabled) {
+                        this.screenPageData._setMapBoundaries();
+                    }
+                }
+                
+                this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 //const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 
+                const verticesBufferData = this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum),
+                    texturesBufferData = this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum);
+                //console.log(verticesBufferData);
+                //console.log(texturesBufferData);
                 this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 if (setBoundaries) {
                     this.screenPageData._mergeBoundaries();
@@ -375,12 +442,12 @@ export class CanvasView {
 
                     verticesBufferData = [],
                     texturesBufferData = [];
+                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                    this.screenPageData._setWorldDimensions(worldW, worldH);
+                }
+
                 if (setBoundaries) {
-                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                        Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                        this.screenPageData._setWorldDimensions(worldW, worldH);
-                    }
-                    
                     // boundaries cleanups every draw circle, we need to set world boundaries again
                     if (this.#isWorldBoundariesEnabled) {
                         this.screenPageData._setMapBoundaries();
@@ -572,7 +639,9 @@ export class CanvasView {
                     mapIndex += skipColsRight;
                 }
                 if (verticesBufferData.length > 0 && texturesBufferData.length > 0) {
-                    this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
+                    const v = new Float32Array(verticesBufferData);
+                    const t = new Float32Array(texturesBufferData);
+                    this.#bindTileImages(v, t, atlasImage, tileset.name);
                 }
             }
             

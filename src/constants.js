@@ -67,7 +67,8 @@ export const CONST = {
     },
     OPTIMIZATION: {
         WEB_ASSEMBLY: {
-            ASSEMBLY_SCRIPT: "ASSEMBLY_SCRIPT"
+            ASSEMBLY_SCRIPT: "ASSEMBLY_SCRIPT",
+            WASM: "WASM"
         }
     }
 };

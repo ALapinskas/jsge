@@ -309,7 +309,7 @@ export class WebGlInterface {
      * @param {*} scale 
      * @returns {Promise<void>}
      */
-    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindTileImages(vectorsBuffer, texturesBuffer, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
                 existingProgramData = this.#programsData.filter((data) => data.programName === programName);
@@ -319,13 +319,13 @@ export class WebGlInterface {
             for(let i = 0; i < existingProgramData.length; i++) {
                 const data = existingProgramData[i];
                 if (data.isProgramDataCanBeMerged(imageName, drawMask)) {
-                    data.mergeProgramData(vectors, textures);
+                    data.mergeProgramData(vectorsBuffer, texturesBuffer);
                     isProgramDataMerged = true;
                 }
             }
 
             if (!isProgramDataMerged) {
-                this.#programsData.push(new WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale));
+                this.#programsData.push(new WebGlDrawProgramData(programName, vectorsBuffer, texturesBuffer, image, imageName, drawMask, rotation, translation, scale));
             }
 
             resolve();
@@ -361,7 +361,7 @@ export class WebGlInterface {
                 gl.uniform1f(rotationRotation, data.rotation);
                 
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vectors), gl.STATIC_DRAW);
+                gl.bufferData(gl.ARRAY_BUFFER, data.vectors, gl.STATIC_DRAW);
 
                 gl.enableVertexAttribArray(positionAttributeLocation);
                 //Tell the attribute how to get data out of positionBuffer
@@ -374,7 +374,7 @@ export class WebGlInterface {
 
                 //textures buffer
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.textures), gl.STATIC_DRAW);
+                gl.bufferData(gl.ARRAY_BUFFER, data.textures, gl.STATIC_DRAW);
 
                 gl.enableVertexAttribArray(texCoordLocation);
                 gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);

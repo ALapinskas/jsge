@@ -4,13 +4,13 @@ export class WebGlDrawProgramData {
      */
     #programName;
     /**
-     * @type {number[]}
+     * @type {Float32Array}
      */
-    #vectors;
+    #vectorsBuffer;
     /**
-     * @type {number[]}
+     * @type {Float32Array}
      */ 
-    #textures;
+    #texturesBuffer;
     /**
      * @type {}
      */ 
@@ -42,8 +42,8 @@ export class WebGlDrawProgramData {
 
     constructor(programName, vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0,0], scale = [1, 1]) {
         this.#programName = programName;
-        this.#vectors = vectors;
-        this.#textures = textures;
+        this.#vectorsBuffer = vectors;
+        this.#texturesBuffer = textures;
         this.#image = image;
         this.#imageName = imageName;
         this.#drawMask = drawMask;
@@ -58,11 +58,11 @@ export class WebGlDrawProgramData {
     }
     
     get vectors() {
-        return this.#vectors;
+        return this.#vectorsBuffer;
     }
     
     get textures() {
-        return this.#textures;
+        return this.#texturesBuffer;
     }
     
     get image() {
@@ -110,9 +110,18 @@ export class WebGlDrawProgramData {
     }
     
     mergeProgramData(vectors, textures) {
-        this.#vectors.push(...vectors);
-        this.#textures.push(...textures);
-        this.#programVerticesNum = this.#vectors.length / 2; 
+        const currentArrayLen = this.#vectorsBuffer.length,
+            newArrayLength = currentArrayLen + vectors.length,
+            newVectorArray = new Float32Array(newArrayLength),
+            newTexturesArray = new Float32Array(newArrayLength);
+            
+        newVectorArray.set(this.#vectorsBuffer);
+        newVectorArray.set(vectors, currentArrayLen);
+        newTexturesArray.set(this.#texturesBuffer);
+        newTexturesArray.set(textures, currentArrayLen);
+        this.#vectorsBuffer = newVectorArray;
+        this.#texturesBuffer = newTexturesArray;
+        this.#programVerticesNum = this.#vectorsBuffer.length / 2; 
     }
 
 }
