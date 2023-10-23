@@ -21,6 +21,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.2.1:
+    +: web assembly experiments
+
 0.2.0:
     +: modules installing with system.installModule(key, moduleClass, ...params)
     +: spine module, intergration spine runtimes
