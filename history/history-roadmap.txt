@@ -21,6 +21,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.2.11:
+    f: fixed dependency issue
+
 0.2.1:
     +: web assembly experiments
 
