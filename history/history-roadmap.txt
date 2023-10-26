@@ -21,6 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.2.12:
+    f: fixed boundaries drawing
+    f: left and bottom map boundaries count
+    
 0.2.11:
     f: fixed dependency issue
 

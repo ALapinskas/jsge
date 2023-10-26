@@ -135,6 +135,9 @@ export class ScreenPage {
      */
     _init() {
         this.init();
+        if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
+            this.createCanvasView(CONST.LAYERS.BOUNDARIES);
+        }
         this.#isInitiated = true;
     }
 
@@ -433,7 +436,7 @@ export class ScreenPage {
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
             len = mapObjects.length;
-            
+
         for (let i = 0; i < len; i+=1) {
             const item = mapObjects[i];
             const object = {

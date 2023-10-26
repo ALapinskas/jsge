@@ -50,15 +50,13 @@ export class StartPage extends ScreenPage {
     }
 
     registerEventListeners() {
-        const canvas = this.getView(CONST.LAYERS.DEFAULT).canvas; 
-        canvas.addEventListener("mousemove", this.#mouseHoverEvent);            
-        canvas.addEventListener("click", this.#mouseClickEvent);
+        document.addEventListener("mousemove", this.#mouseHoverEvent);            
+        document.addEventListener("click", this.#mouseClickEvent);
         document.addEventListener("keydown", this.pressKeyAction);
     }
 
     #mouseHoverEvent = (event) => {
-        const canvas = this.getView(CONST.LAYERS.DEFAULT).canvas,
-            isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox),
+        const isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox),
             isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox),
             isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox),
             isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox);
@@ -88,9 +86,9 @@ export class StartPage extends ScreenPage {
         }
 
         if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed) {
-            canvas.style.cursor = "pointer";
+            document.body.style.cursor = "pointer";
         } else {
-            canvas.style.cursor = "default";
+            document.body.style.cursor = "default";
         }
 
         

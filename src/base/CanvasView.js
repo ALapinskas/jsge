@@ -81,9 +81,10 @@ export class CanvasView {
     #renderLayers;
     #bindRenderLayerMethod;
 
-    constructor(name, systemSettings, screenPageData, loader, isOffsetTurnedOff) {
+    constructor(name, systemSettings, screenPageData, loader, isOffsetTurnedOff, zIndex) {
         this.#canvas = document.createElement("canvas");
         this.#canvas.id = name;
+        this.#canvas.style.zIndex = zIndex;
         this.#canvas.style.position = "absolute";
         this.#isCleared = false;
         this.#isOffsetTurnedOff = isOffsetTurnedOff;
@@ -209,10 +210,14 @@ export class CanvasView {
                 });
                 await this.#webGlInterface._executeTileImagesDraw();
             }
-            
+            let renderObjectsPromises = [];
+            if (key === CONST.LAYERS.BOUNDARIES) {
+                renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
+                    reject(err);
+                }));
+            }
             const renderObjects = this.renderObjects;
             if (renderObjects.length !== 0) {
-                let renderObjectsPromises = [];
                 //this.#checkCollisions(view.renderObjects);
                 for (let i = 0; i < renderObjects.length; i++) {
                     const object = renderObjects[i];
@@ -228,22 +233,17 @@ export class CanvasView {
                     });
                     renderObjectsPromises.push(promise);
                 }
-                if (key === CONST.LAYERS.BOUNDARIES) {
-                    renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
-                        reject(err);
-                    }));
-                }
-                const bindResults = await Promise.allSettled(renderObjectsPromises);
-                bindResults.forEach((result) => {
-                    if (result.status === "rejected") {
-                        reject(result.reason);
-                    }
-                });
-
-                this.#postRenderActions();
-                    
-                this._isCleared = false;
             }
+            const bindResults = await Promise.allSettled(renderObjectsPromises);
+            bindResults.forEach((result) => {
+                if (result.status === "rejected") {
+                    reject(result.reason);
+                }
+            });
+
+            this.#postRenderActions();
+                
+            this._isCleared = false;
             resolve();
         });
     }
@@ -373,13 +373,10 @@ export class CanvasView {
                 //    this._setCanvasSize(worldW, worldH);
                 //}
 
-                if (setBoundaries) {
-                    // boundaries cleanups every draw circle, we need to set world boundaries again
-                    if (this.#isWorldBoundariesEnabled) {
-                        this.screenPageData._setMapBoundaries();
-                    }
+                // boundaries cleanups every draw circle, we need to set world boundaries again
+                if (this.#isWorldBoundariesEnabled) {
+                    this.screenPageData._setMapBoundaries();
                 }
-                
                 this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 //const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 
@@ -550,11 +547,9 @@ export class CanvasView {
                     this.screenPageData._setWorldDimensions(worldW, worldH);
                 }
 
-                if (setBoundaries) {
-                    // boundaries cleanups every draw circle, we need to set world boundaries again
-                    if (this.#isWorldBoundariesEnabled) {
-                        this.screenPageData._setMapBoundaries();
-                    }
+                // boundaries cleanups every draw circle, we need to set world boundaries again
+                if (this.#isWorldBoundariesEnabled) {
+                    this.screenPageData._setMapBoundaries();
                 }
 
                 let mapIndex = skipRowsTop * layerCols;

@@ -40,10 +40,6 @@ export class MapPage extends ScreenPage {
         this.createCanvasView(CONST.LAYERS.DEFAULT);
         this.createCanvasView(OVERLAY_LAYER_KEY);
 
-        if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
-            this.createCanvasView(CONST.LAYERS.BOUNDARIES);
-        }
-
         this.shadowRect = this.draw.rect(0, 0, w, h, "rgba(0, 0, 0, 0.5)");        
         this.shadowRect.zIndex = 2;
         this.shadowRect.blendFunc = [WebGLRenderingContext.ONE, WebGLRenderingContext.DST_COLOR];
@@ -55,8 +51,10 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "background", this.tilemapKey);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "walls", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "decs", this.tilemapKey);
+
+        //this.addRenderLayer(CONST.LAYERS.DEFAULT, "test", this.tilemapKey, true);
         
-        this.greenLight = this.draw.conus(315,369,100,"rgba(0,128,0,0.5", Math.PI, false, 20);
+        this.greenLight = this.draw.conus(315, 369, 100,"rgba(0,128,0,0.5", Math.PI, false, 20);
 
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.greenLight);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
@@ -187,7 +185,7 @@ export class MapPage extends ScreenPage {
             movementForce = forceToUse * 1,
             newCoordX = person.x + movementForce * Math.cos(direction),
             newCoordY = person.y + movementForce * Math.sin(direction);
-            
+        
         if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
