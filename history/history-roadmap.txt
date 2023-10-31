@@ -21,6 +21,11 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.2.2:
+    +: added system class types
+    r: spine module design updated
+    +: introduced spineModule.activateSpineRender()
+
 0.2.12:
     f: fixed boundaries drawing
     f: left and bottom map boundaries count
