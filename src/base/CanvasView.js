@@ -224,6 +224,7 @@ export class CanvasView {
                     if (object.isRemoved) {
                         renderObjects.splice(i, 1);
                         i--;
+                        continue;
                     }
                     //if (object.isAnimations) {
                     //    object._processActiveAnimations();

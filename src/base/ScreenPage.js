@@ -329,6 +329,7 @@ export class ScreenPage {
      * @ignore
      */
     _start(options) {
+        this.start(options);
         this.#isActive = true;
         window.addEventListener("resize", this._resize);
         this._resize();
@@ -336,7 +337,6 @@ export class ScreenPage {
             requestAnimationFrame(this.#render);
         }
         this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
-        this.start(options);
     }
 
     /**
