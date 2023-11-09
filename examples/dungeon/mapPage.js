@@ -58,10 +58,10 @@ export class MapPage extends ScreenPage {
 
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.greenLight);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
-        this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);
-        this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)", true);
+        this.player = this.draw.image(55, 255, 16, 16, "tilemap_packed", 84);
+        this.sightView = this.draw.circle(55, 255, 150, "rgba(0, 0, 0, 1)", true);
         this.sightView.zIndex = 1;
-        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.2", Math.PI/8, false, 60);
+        this.fireRange = this.draw.conus(55, 255, 120, "rgba(255, 0,0, 0.2", Math.PI/8, false, 60);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.player);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
         this.addRenderObject(OVERLAY_LAYER_KEY, this.fireRange);
@@ -220,7 +220,7 @@ export class MapPage extends ScreenPage {
     }
 
     #createFireball = () => {
-        const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 36, [[-8,0], [0, -4], [8, 0], [0,4]]);
+        const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 36, {r:4});
         f.addAnimation(ANIMATION_FIREMOVE, [36, 37, 38, 39], true);
         f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118]);
 

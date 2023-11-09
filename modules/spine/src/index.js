@@ -255,6 +255,14 @@ export default class SpineModuleInitialization {
         }
     }
 
+    get sceneRenderer() {
+        if (this.#activeView) {
+            return this.#registeredViews.get(this.#activeView).sceneRenderer;
+        } else {
+            throw new Error(SPINE_ERROR + ERROR_MESSAGES.NO_ACTIVATED_VIEW);
+        }
+    }
+
     #attachAtlasGraphicsData(textureAtlas) {
         const context = this.context;
         for (let page of textureAtlas.pages) {
@@ -292,6 +300,17 @@ export default class SpineModuleInitialization {
         }
         
     }
+
+    /**
+     * fix active spine renderer viewport
+     * @param {number} width
+     * @param {number} height
+     */
+    fixActiveSpineRendererViewport(width, height) {
+        this.sceneRenderer.context.gl.viewport(0, 0, width, height);
+        this.sceneRenderer.camera.setViewport(width, height);
+    }
+    
 
     /**
      * @param {CanvasView} view 

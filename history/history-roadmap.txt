@@ -21,6 +21,14 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.2.3
+    +: circle boundaries
+    +: circle/circle/polygon/boundaries collisions
+    +: spine-animation tutorial
+    
+0.2.21
+    f: fixed removing drawObjects
+    
 0.2.2:
     +: added system class types
     r: spine module design updated

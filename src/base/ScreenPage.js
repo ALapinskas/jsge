@@ -16,7 +16,7 @@ import { DrawTextObject } from "./DrawTextObject.js";
 import { SystemInterface } from "./SystemInterface.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
-import { isPointLineIntersect, isPolygonLineIntersect, angle_2points } from "../utils.js";
+import { isPointLineIntersect, isPolygonLineIntersect, angle_2points, isCircleLineIntersect } from "../utils.js";
 import { Vector } from "./Primitives.js";
 
 /**
@@ -332,11 +332,11 @@ export class ScreenPage {
         this.start(options);
         this.#isActive = true;
         window.addEventListener("resize", this._resize);
-        this._resize();
         if (this.#views.size > 0) {
             requestAnimationFrame(this.#render);
         }
         this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
+        this._resize();
     }
 
     /**
@@ -383,8 +383,81 @@ export class ScreenPage {
         this.screenPageData._setWorldDimensions(width, height);
     }
 
+    //////////////////////////////////////////////////////
+    //***************************************************/
+    //****************** Collisions ********************//
+    //**************************************************//
+    //////////////////////////////////////////////////////
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawImageObject} drawObject 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
+    isBoundariesCollision = (x, y, drawObject) => {
+        const drawObjectType = drawObject.type,
+            vertices = drawObject.vertices,
+            circleBoundaries = drawObject.circleBoundaries;
+        switch(drawObjectType) {
+        case CONST.DRAW_TYPE.TEXT:
+        case CONST.DRAW_TYPE.RECTANGLE:
+        case CONST.DRAW_TYPE.CONUS:
+        case CONST.DRAW_TYPE.IMAGE:
+            if (!circleBoundaries) {
+                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
+            } else {
+                return this.#isCircleToBoundariesCollision(x, y, drawObject.circleBoundaries.r);
+            }
+        case CONST.DRAW_TYPE.CIRCLE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            break;
+        case CONST.DRAW_TYPE.LINE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            break;
+        default:
+            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        }
+        return false;
+    };
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawImageObject} drawObject
+     * @param {Array<DrawImageObject>} objects - objects array to check
+     * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
+     */
+    isObjectsCollision = (x, y, drawObject, objects) => {
+        const drawObjectType = drawObject.type,
+            drawObjectBoundaries = drawObject.vertices,
+            circleBoundaries = drawObject.circleBoundaries;
+        switch(drawObjectType) {
+        case CONST.DRAW_TYPE.TEXT:
+        case CONST.DRAW_TYPE.RECTANGLE:
+        case CONST.DRAW_TYPE.CONUS:
+        case CONST.DRAW_TYPE.IMAGE:
+            if (!circleBoundaries) {
+                return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+            } else {
+                return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
+            }
+        case CONST.DRAW_TYPE.CIRCLE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            break;
+        case CONST.DRAW_TYPE.LINE:
+            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            break;
+        default:
+            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        }
+        return false;
+    };
     #isPolygonToObjectsCollision(x, y, polygonVertices, polygonRotation, objects) {
         const len = objects.length;
+
         let collisions = [];
         for (let i = 0; i < len; i++) {
             const mapObject = objects[i],
@@ -393,20 +466,20 @@ export class ScreenPage {
             let coll;
             
             switch(drawMapObjectType) {
-            case CONST.DRAW_TYPE.TEXT:
-            case CONST.DRAW_TYPE.RECTANGLE:
-            case CONST.DRAW_TYPE.CONUS:
-            case CONST.DRAW_TYPE.IMAGE:
-                coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
-                break;
-            case CONST.DRAW_TYPE.CIRCLE:
-                console.warn("isObjectCollision.circle check is not implemented yet!");
-                break;
-            case CONST.DRAW_TYPE.LINE:
-                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                break;
-            default:
-                console.warn("unknown object type!");
+                case CONST.DRAW_TYPE.TEXT:
+                case CONST.DRAW_TYPE.RECTANGLE:
+                case CONST.DRAW_TYPE.CONUS:
+                case CONST.DRAW_TYPE.IMAGE:
+                    coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
+                    break;
+                case CONST.DRAW_TYPE.CIRCLE:
+                    console.warn("isObjectCollision.circle check is not implemented yet!");
+                    break;
+                case CONST.DRAW_TYPE.LINE:
+                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                    break;
+                default:
+                    console.warn("unknown object type!");
             }
             if (coll) {
                 collisions.push(coll);
@@ -419,45 +492,100 @@ export class ScreenPage {
         }
     }
 
-    /**
-     * @param {number} x
-     * @param {number} y
-     * @param {Array<Array<number>>} polygon
-     * @param {number} rotation 
-     * @returns {{x:number, y:number, p:number} | boolean}
-     */
-    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
-        //console.log("angle: ", rotation);
-        //console.log("boundaries before calculations: ");
-        //console.log(polygon);
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-            xWithOffset = x - mapOffsetX,
-            yWithOffset = y - mapOffsetY,
-            polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
-            len = mapObjects.length;
+    #isCircleToObjectsCollision(x, y, drawObjectBoundaries, objects) {
+        const radius = drawObjectBoundaries.r;
 
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i];
-            const object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                },
-                intersect = isPolygonLineIntersect(polygonWithOffsetAndRotation, object);
-            if (intersect) {
-                //console.log("rotation: ", rotation);
-                //console.log("polygon: ", polygonWithOffsetAndRotation);
-                //console.log("intersect: ", intersect);
-                return intersect;
+        const len = objects.length;
+
+        let collisions = [];
+        for (let i = 0; i < len; i++) {
+            const mapObject = objects[i],
+                drawMapObjectType = mapObject.type,
+                circleBoundaries = mapObject.circleBoundaries;
+
+            let coll;
+            
+            switch(drawMapObjectType) {
+                case CONST.DRAW_TYPE.TEXT:
+                case CONST.DRAW_TYPE.RECTANGLE:
+                case CONST.DRAW_TYPE.CONUS:
+                case CONST.DRAW_TYPE.IMAGE:
+                    if (!circleBoundaries) {
+                        coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
+                    } else {
+                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
+                    }
+                    break;
+                case CONST.DRAW_TYPE.CIRCLE:
+                    console.warn("isObjectCollision.circle check is not implemented yet!");
+                    break;
+                case CONST.DRAW_TYPE.LINE:
+                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                    break;
+                default:
+                    console.warn("unknown object type!");
+            }
+            if (coll) {
+                collisions.push(coll);
             }
         }
-        return false;
+        if (collisions.length > 0) {
+            return this.#takeTheClosestCollision(collisions);
+        } else {
+            return null;
+        }
     }
-
+ 
     #takeTheClosestCollision(collisions) {
         return collisions.sort((a,b) => a.p < b.p)[0];
+    }
+
+    #isCircleToPolygonCollision(x, y, radius, mapObject) {
+        const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        xWithOffset = x - mapOffsetX,
+        yWithOffset = y - mapOffsetY,
+        mapObjXWithOffset = mapObject.x - mapOffsetX,
+        mapObjYWithOffset = mapObject.y - mapOffsetY,
+        mapObjVertices = mapObject.vertices, 
+        mapObjRotation = mapObject.rotation,
+        len = mapObjVertices.length;
+    //console.log("map object check:");
+    //console.log(mapObject);
+    for (let i = 0; i < len; i+=1) {
+        const mapObjFirstVertex = mapObjVertices[i];
+        let mapObjNextVertex = mapObjVertices[i + 1];
+        if (!mapObjNextVertex) {
+            mapObjNextVertex = mapObjVertices[0];
+        }
+        const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+            nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+            edge = {
+                x1: vertex[0],
+                y1: vertex[1],
+                x2: nextVertex[0],
+                y2: nextVertex[1]
+            },
+            intersect = isCircleLineIntersect(xWithOffset, yWithOffset, radius, edge);
+        if (intersect) {
+            //console.log("polygon: ", polygonWithOffsetAndRotation);
+            //console.log("intersect: ", intersect);
+            return intersect;
+        }
+    }
+    return false;
+    }
+
+    #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
+        const len = new Vector(circle1X, circle1Y, circle2X, circle2Y).length;
+        console.log(len);
+        console.log(circle1R);
+        console.log(circle2R);
+        if ((len - (circle1R + circle2R)) > 0) {
+            return false;
+        } else {
+            //@todo calculate point of intersect
+            return true;
+        }
     }
 
     #isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject) {
@@ -510,63 +638,6 @@ export class ScreenPage {
         return [newX, newY];
     }
 
-    /**
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @param {DrawImageObject} drawObject 
-     * @returns {{x:number, y:number, p:number} | boolean}
-     */
-    isBoundariesCollision = (x, y, drawObject) => {
-        const drawObjectType = drawObject.type,
-            vertices = drawObject.vertices;
-        switch(drawObjectType) {
-        case CONST.DRAW_TYPE.TEXT:
-        case CONST.DRAW_TYPE.RECTANGLE:
-        case CONST.DRAW_TYPE.CONUS:
-        case CONST.DRAW_TYPE.IMAGE:
-            return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
-        case CONST.DRAW_TYPE.CIRCLE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            break;
-        case CONST.DRAW_TYPE.LINE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            break;
-        default:
-            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
-        }
-        return false;
-    };
-
-    /**
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @param {DrawImageObject} drawObject
-     * @param {Array<DrawImageObject>} objects - objects array to check
-     * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
-     */
-    isObjectsCollision = (x, y, drawObject, objects) => {
-        const drawObjectType = drawObject.type,
-            drawObjectBoundaries = drawObject.vertices;
-        switch(drawObjectType) {
-        case CONST.DRAW_TYPE.TEXT:
-        case CONST.DRAW_TYPE.RECTANGLE:
-        case CONST.DRAW_TYPE.CONUS:
-        case CONST.DRAW_TYPE.IMAGE:
-            return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
-        case CONST.DRAW_TYPE.CIRCLE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            break;
-        case CONST.DRAW_TYPE.LINE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            break;
-        default:
-            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
-        }
-        return false;
-    };
-
     #checkCollisions(renderObjects) {
         const boundaries = this.screenPageData.getBoundaries(),
             boundariesLen = boundaries.length,
@@ -604,6 +675,70 @@ export class ScreenPage {
             }
         }
     }
+
+    #isCircleToBoundariesCollision(x, y, r) {
+        const mapObjects = this.screenPageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            len = mapObjects.length;
+
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i];
+            const object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                },
+                intersect = isCircleLineIntersect(xWithOffset, yWithOffset, r, object);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {Array<Array<number>>} polygon
+     * @param {number} rotation 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
+    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
+        //console.log("angle: ", rotation);
+        //console.log("boundaries before calculations: ");
+        //console.log(polygon);
+        const mapObjects = this.screenPageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
+            len = mapObjects.length;
+
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i];
+            const object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                },
+                intersect = isPolygonLineIntersect(polygonWithOffsetAndRotation, object);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+    //****************** End Collisions ****************//
 
     #setCanvasSize() {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,

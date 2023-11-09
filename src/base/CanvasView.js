@@ -893,11 +893,17 @@ export class CanvasView {
                         texX2, texY2
                     ];
                 this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y]);
-                if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
+                if (this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                     const shiftX = x,// - renderObject.boundaries[0],
                         shiftY = y,// - renderObject.boundaries[1],
                         rotation = renderObject.rotation ? renderObject.rotation : 0;
-                    this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                    if (renderObject.circleBoundaries) {
+                        const vertices = renderObject._calculateConusVertices(renderObject.circleBoundaries.r);
+                        this.#webGlInterface._bindConus({vertices, bgColor: this.systemSettings.gameOptions.boundaries.boundariesColor }, rotation, [shiftX, shiftY]);
+                    } else {
+                        this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                    }
+                    
                 }
                 //ctx.restore();
             } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {

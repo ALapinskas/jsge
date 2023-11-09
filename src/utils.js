@@ -206,6 +206,38 @@ function isPointCircleIntersect(x, y, circle) {
         return false;
 }
 
+function isCircleLineIntersect(x, y, r, line) {
+    const x1 = line.x1,
+        y1 = line.y1,
+        x2 = line.x2,
+        y2 = line.y2,
+        vec1 = {x: x1 - x, y: y1-y}, //new Vector(x, y, x1, y1),
+        vec2 = {x: x2 - x, y: y2-y}, //new Vector(x, y, x2, y2),
+        vec3 = {x: x2 - x1, y: y2-y1}, //new Vector(x1 ,y1, x2, y2),
+        vec4 = {x: x1 - x2, y: y1-y2}, //new Vector(x2, y2, x1, y1),
+        vec3Len = Math.sqrt(Math.pow(vec3.x, 2) + Math.pow(vec3.y, 2)),//vec3.length,
+        dotP1 = dotProduct(vec1, vec4),
+        dotP2 = dotProduct(vec2, vec3);
+        // checks if the line is inside the circle,
+        // max_dist = Math.max(vec1Len, vec2Len);
+    let min_dist;
+    
+    if (dotP1 > 0 && dotP2 > 0) {
+        min_dist = crossProduct(vec1,vec2)/vec3Len;
+        if (min_dist < 0) {
+            min_dist *= -1;
+        }
+    } else {
+        min_dist = Math.min(vec1.length, vec2.length);
+    }
+    
+    if (min_dist <= r) { // && max_dist >= r) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 function generateUniqId() {
     return Math.round(Math.random() * 1000000); 
 }
@@ -238,6 +270,7 @@ export {
     isPointRectIntersect,
     isPointCircleIntersect,
     isPolygonLineIntersect,
+    isCircleLineIntersect,
     generateUniqId,
     verticesArrayToArrayNumbers,
     countDistance };
