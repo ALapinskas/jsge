@@ -82,10 +82,11 @@ export class CanvasView {
     #bindRenderLayerMethod;
 
     constructor(name, systemSettings, screenPageData, loader, isOffsetTurnedOff, zIndex) {
-        this.#canvas = document.createElement("canvas");
+        //this.#canvas = document.createElement("canvas");
+        this.#canvas = new OffscreenCanvas(256, 256);
         this.#canvas.id = name;
-        this.#canvas.style.zIndex = zIndex;
-        this.#canvas.style.position = "absolute";
+        //this.#canvas.style.zIndex = zIndex;
+        //this.#canvas.style.position = "absolute";
         this.#isCleared = false;
         this.#isOffsetTurnedOff = isOffsetTurnedOff;
 

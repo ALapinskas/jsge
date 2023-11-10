@@ -204,7 +204,9 @@ export class ScreenPage {
      */
     _attachViewsToContainer(container) {
         for (const view of this.#views.values()) {
-            this.#attachElementToContainer(view.canvas, container);
+            if (view.canvas instanceof HTMLCanvasElement) {
+                this.#attachElementToContainer(view.canvas, container);
+            }
         }
     }
 
@@ -371,8 +373,11 @@ export class ScreenPage {
     }
 
     #removeCanvasFromDom() {
-        for (const view of this.#views.values()) {
-            document.getElementById(view.canvas.id).remove();
+        //for (const view of this.#views.values()) {
+            //document.getElementById(view.canvas.id).remove();
+        //}
+        for (const canvas of document.getElementsByTagName("canvas")) {
+            canvas.remove();
         }
     }
 
@@ -791,6 +796,11 @@ export class ScreenPage {
     #prepareViews() {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
+            
+            this.canvas = document.createElement("canvas");
+            document.body.appendChild(this.canvas);
+            this.context = this.canvas.getContext("bitmaprenderer");
+
             const isBoundariesPrecalculations = this.#isBoundariesPrecalculations,
                 isWasmEnabled = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM;
             for (const view of this.#views.values()) {
@@ -833,6 +843,9 @@ export class ScreenPage {
                     this.#isActive = false;
                 }
             });
+            for (const [key, view] of this.#views.entries()) {
+                this.context.transferFromImageBitmap(view.canvas.transferToImageBitmap());
+            }
             const r_time = performance.now() - pt0,
                 r_time_less = minCircleTime - r_time,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
