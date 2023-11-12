@@ -20,8 +20,8 @@ export class DrawCircleObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(x, y, radius, bgColor, cut) {
-        super(CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, cut);
+    constructor(x, y, radius, bgColor, zIndex, cut) {
+        super(CONST.DRAW_TYPE.CIRCLE, x, y, bgColor, zIndex, cut);
         this.#radius = radius;
         this.#vertices = this._calculateConusVertices(radius);
     }

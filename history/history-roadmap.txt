@@ -21,6 +21,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.3.0:
+    r: DrawShapeObject.zIndex -> sortIndex
+    r: CanvasView._sortRenderObjectsByZIndex -> _sortRenderObjectsBySortIndex
+    
 0.2.0:
     +: modules installing with system.installModule(key, moduleClass, ...params)
     +: spine module, integration spine runtimes

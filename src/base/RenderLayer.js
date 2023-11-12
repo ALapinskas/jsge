@@ -3,12 +3,14 @@ export class RenderLayer {
     #tileMapKey;
     #setBoundaries;
     #drawBoundaries;
+    #zIndex = 0;
 
-    constructor(layerKey, tileMapKey, setBoundaries = false) {
+    constructor(layerKey, tileMapKey, zIndex = 0, setBoundaries = false) {
         this.#layerKey = layerKey;
         this.#tileMapKey = tileMapKey;
         this.#setBoundaries = setBoundaries;
         this.#drawBoundaries = setBoundaries ? setBoundaries : false;
+        this.#zIndex = zIndex;
     }
 
     /**
@@ -47,5 +49,9 @@ export class RenderLayer {
 
     set drawBoundaries(value) {
         this.#drawBoundaries = value;
+    }
+
+    get zIndex() {
+        return this.#zIndex;
     }
 }

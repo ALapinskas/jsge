@@ -24,14 +24,17 @@ export class StartPage extends ScreenPage {
         
         this.createCanvasView(CONST.LAYERS.DEFAULT);
         
-        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");        
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
-
-        this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
-        this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");
-        this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "black");
-        this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 60, "Spine module", "24px sans-serif", "black");
+        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 1)", false, -0.3);        
         
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
+        this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "grey"),
+        this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "grey");
+        this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "grey");
+        this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 60, "Spine module", "24px sans-serif", "grey");
+        this.sightView = this.draw.circle(255, 250, 150, "rgba(0, 0, 0, 1)", true);
+        //this.sightView.blendFunc = [WebGLRenderingContext.SRC_ALPHA, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA];
+        
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.sightView);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemDun);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemPir);
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemRac);

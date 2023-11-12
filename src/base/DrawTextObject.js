@@ -18,8 +18,8 @@ export class DrawTextObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, text, font, fillStyle) {
-        super(CONST.DRAW_TYPE.TEXT, mapX, mapY);
+    constructor(mapX, mapY, text, font, fillStyle, zIndex) {
+        super(CONST.DRAW_TYPE.TEXT, mapX, mapY, undefined, zIndex);
         this.#text = text;
         this.#font = font;
         this.#fillStyle = fillStyle;

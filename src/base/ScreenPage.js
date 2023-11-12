@@ -221,7 +221,7 @@ export class ScreenPage {
         } else {
             const view = this.#views.get(canvasKey);
             view._renderObject = renderObject;
-            view._sortRenderObjectsByZIndex();
+            view._sortRenderObjectsBySortIndex();
         }
     };
 
@@ -231,15 +231,16 @@ export class ScreenPage {
      * @param {string} layerKey 
      * @param {string} tileMapKey 
      * @param {boolean=} setBoundaries 
+     * @param {number=} zIndex
      */
-    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries) => {
+    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries, zIndex) => {
         if (!canvasKey) {
             Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
         } else if (!this.#views.has(canvasKey)) {
             Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
             const view = this.#views.get(canvasKey);
-            view._renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries);
+            view._renderLayers = new RenderLayer(layerKey, tileMapKey, zIndex, setBoundaries);
             if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
                 view._enableMapBoundaries();
             }
@@ -683,8 +684,10 @@ export class ScreenPage {
             minCircleTime = this.#minCircleTime;
             
         let viewPromises = [];
-        this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
+
+        this.system.clearWebGlContext();
         this.screenPageData._clearBoundaries();
+        this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
 
         for (const [key, view] of this.#views.entries()) {
             viewPromises.push(view.render(key));

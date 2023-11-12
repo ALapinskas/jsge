@@ -40,7 +40,11 @@ export class WebGlDrawProgramData {
      */ 
     #programVerticesNum;
 
-    constructor(programName, vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0,0], scale = [1, 1]) {
+    /**
+     * @type {number}
+     */
+    #zIndex;
+    constructor(programName, vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0,0], scale = [1, 1], zIndex) {
         this.#programName = programName;
         this.#vectors = vectors;
         this.#textures = textures;
@@ -51,6 +55,7 @@ export class WebGlDrawProgramData {
         this.#translation = translation;
         this.#scale = scale;
         this.#programVerticesNum = vectors.length / 2; 
+        this.#zIndex = zIndex;
     }
 
     get programName() {
@@ -91,6 +96,10 @@ export class WebGlDrawProgramData {
 
     get programVerticesNum() {
         return this.#programVerticesNum;
+    }
+
+    get zIndex() {
+        return this.#zIndex;
     }
     
     isProgramDataCanBeMerged(imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0,0], scale = [1, 1]) {

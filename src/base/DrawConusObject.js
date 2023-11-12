@@ -27,8 +27,8 @@ export class DrawConusObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(x, y, radius, bgColor, angle, cut, fade = 0) {
-        super(CONST.DRAW_TYPE.CONUS, x, y, bgColor, cut);
+    constructor(x, y, radius, bgColor, angle, zIndex, cut, fade = 0) {
+        super(CONST.DRAW_TYPE.CONUS, x, y, bgColor, zIndex, cut);
         this.#radius = radius;
         this.#angle = angle;
         this.#fade_min = fade;

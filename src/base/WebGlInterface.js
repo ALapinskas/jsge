@@ -75,6 +75,7 @@ export class WebGlInterface {
 
         attribute vec2 a_position;
 
+        uniform float u_zIndex;
         uniform vec2 u_translation;
         uniform float u_rotation;
         uniform vec2 u_scale;
@@ -132,7 +133,7 @@ export class WebGlInterface {
             //convert from 0->2 to -1->+1
             vec2 clipSpace = zeroToTwo - 1.0;
 
-            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+            gl_Position = vec4(clipSpace * vec2(1, -1), u_zIndex, 1);
             
             v_texCoord = a_texCoord;
         }
@@ -162,7 +163,8 @@ export class WebGlInterface {
             resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution"),
             positionAttributeLocation = gl.getAttribLocation(program, "a_position"),
             texCoordLocation = gl.getAttribLocation(program, "a_texCoord"),
-            u_imageLocation = gl.getUniformLocation(program, "u_image");
+            u_imageLocation = gl.getUniformLocation(program, "u_image"),
+            zIndexLocation = gl.getUniformLocation(program, "u_zIndex");;
 
         gl.enable(gl.BLEND);
         // turn attribute on
@@ -174,7 +176,8 @@ export class WebGlInterface {
             resolutionUniformLocation,
             positionAttributeLocation,
             texCoordLocation,
-            u_imageLocation
+            u_imageLocation,
+            zIndexLocation
         });
         return Promise.resolve();
     }
@@ -185,6 +188,7 @@ export class WebGlInterface {
 
         attribute vec2 a_position;
 
+        uniform float u_zIndex;
         uniform vec2 u_translation;
         uniform float u_rotation;
         uniform vec2 u_scale;
@@ -243,7 +247,7 @@ export class WebGlInterface {
             //convert from 0->2 to -1->+1
             vec2 clipSpace = zeroToTwo - 1.0;
 
-            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+            gl_Position = vec4(clipSpace * vec2(1, -1), u_zIndex, 1);
         }
         `;
         this.#fragmentShaderSource = `
@@ -282,7 +286,8 @@ export class WebGlInterface {
             colorUniformLocation = gl.getUniformLocation(program, "u_color"),
             positionAttributeLocation = gl.getAttribLocation(program, "a_position"),
             fadeMinLocation = gl.getUniformLocation(program, "u_fade_min"),
-            fadeMaxLocation =  gl.getUniformLocation(program, "u_fade_max");
+            fadeMaxLocation =  gl.getUniformLocation(program, "u_fade_max"),
+            zIndexLocation = gl.getUniformLocation(program, "u_zIndex");
 
         this.#coordsLocations.set(programName, {
             translationLocation,
@@ -292,7 +297,8 @@ export class WebGlInterface {
             colorUniformLocation,
             positionAttributeLocation,
             fadeMinLocation,
-            fadeMaxLocation
+            fadeMaxLocation,
+            zIndexLocation
         });
         return Promise.resolve();
     }
@@ -309,7 +315,7 @@ export class WebGlInterface {
      * @param {*} scale 
      * @returns {Promise<void>}
      */
-    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1], zIndex) {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
                 existingProgramData = this.#programsData.filter((data) => data.programName === programName);
@@ -325,7 +331,7 @@ export class WebGlInterface {
             }
 
             if (!isProgramDataMerged) {
-                this.#programsData.push(new WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale));
+                this.#programsData.push(new WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale, zIndex));
             }
 
             resolve();
@@ -346,7 +352,8 @@ export class WebGlInterface {
                     resolutionUniformLocation,
                     positionAttributeLocation,
                     texCoordLocation,
-                    u_imageLocation } = this.#coordsLocations.get(programName),
+                    u_imageLocation,
+                    zIndexLocation } = this.#coordsLocations.get(programName),
                 gl = this.#gl,
                 programsData = this.#programsData.filter(programData => programData.programName === programName);
            
@@ -359,7 +366,7 @@ export class WebGlInterface {
                 gl.uniform2f(translationLocation, data.translation[0], data.translation[1]);
                 gl.uniform2f(scaleLocation, data.scale[0], data.scale[1]);
                 gl.uniform1f(rotationRotation, data.rotation);
-                
+                gl.uniform1f(zIndexLocation, data.zIndex);
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vectors), gl.STATIC_DRAW);
 
@@ -397,15 +404,17 @@ export class WebGlInterface {
                 gl.uniform1i(u_imageLocation, bind_number);
                 gl.blendFunc(gl[data.drawMask[0]], gl[data.drawMask[1]]);
                 this.#verticesNumber = data.programVerticesNum;
+                //console.log("zIndex tilesdraw: ", data.zIndex);
+                gl.enable(gl.DEPTH_TEST);
+                gl.depthFunc(gl.ALWAYS);
                 // Upload the image into the texture.
                 this.#executeGlslProgram();
             }
-
             resolve();
         });
     }
 
-    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1], zIndex) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
             program = this.#getProgram(programName),
             { translationLocation,
@@ -414,7 +423,8 @@ export class WebGlInterface {
                 resolutionUniformLocation,
                 positionAttributeLocation,
                 texCoordLocation,
-                u_imageLocation } = this.#coordsLocations.get(programName),
+                u_imageLocation,
+                zIndexLocation } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
         gl.useProgram(program);
@@ -424,7 +434,7 @@ export class WebGlInterface {
         gl.uniform2f(translationLocation, translation[0], translation[1]);
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
-        
+        gl.uniform1f(zIndexLocation, zIndex);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
 
@@ -467,6 +477,9 @@ export class WebGlInterface {
         // make image transparent parts transparent
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         // Upload the image into the texture.
+        //console.log("zIndex tileimagedraw: ", zIndex);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.ALWAYS);
         this.#executeGlslProgram();
     }
 
@@ -479,7 +492,8 @@ export class WebGlInterface {
                 resolutionUniformLocation,
                 positionAttributeLocation,
                 texCoordLocation,
-                u_imageLocation } = this.#coordsLocations.get(programName),
+                u_imageLocation,
+                zIndexLocation } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
         //@toDo: add additional info to the #images_bind and avoid this call, if image is already created
@@ -520,6 +534,7 @@ export class WebGlInterface {
         gl.uniform2f(translationLocation, translation[0], translation[1]);
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
+        gl.uniform1f(zIndexLocation, renderObject.zIndex);
         
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticesBufferData), gl.STATIC_DRAW);
@@ -563,6 +578,10 @@ export class WebGlInterface {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
         gl.uniform1i(u_imageLocation, bind_number);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        //console.log("zIndex drawText: ", renderObject.zIndex);
+        //console.log("depth mask: ", gl.getParameter(gl.DEPTH_WRITEMASK))
         //console.log("vertex attrib 1 :", gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING));
         this.#executeGlslProgram();
     }
@@ -577,7 +596,8 @@ export class WebGlInterface {
                 resolutionUniformLocation,
                 colorUniformLocation,
                 positionAttributeLocation,
-                fadeMinLocation
+                fadeMinLocation,
+                zIndexLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
@@ -589,6 +609,7 @@ export class WebGlInterface {
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
+        gl.uniform1f(zIndexLocation, renderObject.zIndex);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -641,10 +662,13 @@ export class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.ALWAYS);
+        //console.log("zIndex drawPrimitives: ", renderObject.zIndex);
         this.#executeGlslProgram(0, null, true);
     }
 
-    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0], zIndex) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.#getProgram(programName),
             { resolutionUniformLocation,
@@ -654,7 +678,8 @@ export class WebGlInterface {
                 translationLocation,
                 rotationRotation,
                 scaleLocation,
-                fadeMinLocation
+                fadeMinLocation,
+                zIndexLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
@@ -666,6 +691,7 @@ export class WebGlInterface {
         gl.uniform2f(scaleLocation, 1, 1);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
+        gl.uniform1f(zIndexLocation, zIndex);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -696,10 +722,13 @@ export class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //    gl.disableVertexAttribArray(1);
         //}
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.ALWAYS);
+        //console.log("zIndex drawLines: ", zIndex);
         this.#executeGlslProgram(0, gl.LINES);
     }
 
-    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0], zIndex) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.#getProgram(programName),
             { resolutionUniformLocation,
@@ -709,7 +738,8 @@ export class WebGlInterface {
                 translationLocation,
                 rotationRotation,
                 scaleLocation,
-                fadeMinLocation
+                fadeMinLocation,
+                zIndexLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
@@ -721,6 +751,7 @@ export class WebGlInterface {
         gl.uniform2f(scaleLocation, 1, 1);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
+        gl.uniform1f(zIndexLocation, zIndex);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -745,7 +776,9 @@ export class WebGlInterface {
 
         const colorArray = this.#rgbaToArray(color);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
-
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.ALWAYS);
+        //console.log("zIndex drawPolygon: ", zIndex);
         this.#executeGlslProgram(0, null);
     }
 
@@ -760,7 +793,8 @@ export class WebGlInterface {
                 colorUniformLocation,
                 positionAttributeLocation,
                 fadeMinLocation,
-                fadeMaxLocation
+                fadeMaxLocation,
+                zIndexLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl,
             coords = renderObject.vertices,
@@ -777,6 +811,7 @@ export class WebGlInterface {
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, fade_min);
         gl.uniform1f(fadeMaxLocation, fadeLen);
+        gl.uniform1f(zIndexLocation, renderObject.zIndex);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
         gl.bufferData(this.#gl.ARRAY_BUFFER, 
@@ -805,7 +840,7 @@ export class WebGlInterface {
         } //else {
         //gl.disable(gl.BLEND);
         // make transparent
-        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)g;
         //}
 
         const colorArray = this.#rgbaToArray(fillStyle);
@@ -816,6 +851,8 @@ export class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.ALWAYS);
         this.#executeGlslProgram(0, gl.TRIANGLE_FAN, true);
     }
 
@@ -824,6 +861,7 @@ export class WebGlInterface {
         // Set clear color to black, fully opaque
         this.#programsData = [];
         gl.clearColor(0, 0, 0, 0);
+        //gl.clearDepth(0);
         // Clear the color buffer with specified clear color
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }

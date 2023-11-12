@@ -22,8 +22,8 @@ export class DrawRectObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(x, y, w, h, bgColor, cut) {
-        super(CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor, cut);
+    constructor(x, y, w, h, bgColor, zIndex, cut) {
+        super(CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor, zIndex, cut);
         this.#w = w;
         this.#h = h;
         this.#vertices = this._calculateRectVertices(w,h);

@@ -24,6 +24,10 @@ export class DrawShapeObject {
     /**
      * @type {number}
      */
+    #sortIndex = 0;
+    /**
+     * @type {number}
+     */
     #zIndex = 0;
     /**
      * @type {number}
@@ -41,12 +45,13 @@ export class DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(type, mapX, mapY, bgColor, cut) {
+    constructor(type, mapX, mapY, bgColor, zIndex = 0, cut) {
         this.#x = mapX;
         this.#y = mapY;
         this.#bg = bgColor;
         this.#type = type;
         this.#cut = cut;
+        this.#zIndex = zIndex;
     }
 
     /**
@@ -105,8 +110,15 @@ export class DrawShapeObject {
         return this.#zIndex;
     }
 
-    set zIndex(value) {
-        this.#zIndex = value;
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
     }
 
     get blendFunc () {

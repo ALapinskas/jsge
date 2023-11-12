@@ -107,6 +107,10 @@ export class SystemInterface {
         }
     }
 
+    clearWebGlContext() {
+        this.#webGlInterface._clearView();
+    }
+
     installModule = (moduleKey, moduleClass, ...args) => {
         const moduleInstance = new moduleClass(this, ...args);
         this.#modules.set(moduleKey, moduleInstance);
