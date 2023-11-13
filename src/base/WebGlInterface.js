@@ -80,6 +80,7 @@ export class WebGlInterface {
         uniform vec2 u_scale;
 
         uniform vec2 u_resolution;
+        uniform float u_zIndex;
 
         varying vec2 v_texCoord;
 
@@ -190,6 +191,7 @@ export class WebGlInterface {
         uniform vec2 u_scale;
 
         uniform vec2 u_resolution;
+        uniform float u_zIndex;
 
         void main(void) {
             float c = cos(-u_rotation);
@@ -296,6 +298,12 @@ export class WebGlInterface {
         });
         return Promise.resolve();
     }
+
+    _initWebGlAttributes() {
+        const gl = this.#gl;
+        gl.enable(gl.DEPTH_TEST);
+        return Promise.resolve();
+    }
     
     /**
      * 
@@ -309,7 +317,7 @@ export class WebGlInterface {
      * @param {*} scale 
      * @returns {Promise<void>}
      */
-    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1], zIndex) {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
                 existingProgramData = this.#programsData.filter((data) => data.programName === programName);
@@ -318,14 +326,14 @@ export class WebGlInterface {
 
             for(let i = 0; i < existingProgramData.length; i++) {
                 const data = existingProgramData[i];
-                if (data.isProgramDataCanBeMerged(imageName, drawMask)) {
+                if (data.isProgramDataCanBeMerged(imageName, drawMask, 0, [0,0], [1,1], zIndex)) {
                     data.mergeProgramData(vectors, textures);
                     isProgramDataMerged = true;
                 }
             }
 
             if (!isProgramDataMerged) {
-                this.#programsData.push(new WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale));
+                this.#programsData.push(new WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale, zIndex));
             }
 
             resolve();
@@ -405,7 +413,7 @@ export class WebGlInterface {
         });
     }
 
-    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1]) {
+    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1], zIndex) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
             program = this.#getProgram(programName),
             { translationLocation,
@@ -485,6 +493,7 @@ export class WebGlInterface {
         //@toDo: add additional info to the #images_bind and avoid this call, if image is already created
         const { boxWidth, boxHeight, ctx } = this.#createCanvasText(renderObject),
             texture = ctx.canvas,
+            zIndex = renderObject.renderObject,
             image_name = renderObject.text;
 
         y = y - boxHeight;
@@ -644,7 +653,7 @@ export class WebGlInterface {
         this.#executeGlslProgram(0, null, true);
     }
 
-    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0], zIndex) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.#getProgram(programName),
             { resolutionUniformLocation,
@@ -699,7 +708,7 @@ export class WebGlInterface {
         this.#executeGlslProgram(0, gl.LINES);
     }
 
-    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
+    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0], zIndex) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.#getProgram(programName),
             { resolutionUniformLocation,

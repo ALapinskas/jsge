@@ -183,11 +183,13 @@ export class ScreenPage {
      * and set it to the #views
      * @param {string} name
      * @param {boolean} [isOffsetTurnedOff = false] - determines if offset is affected on this layer or not
+     * @param {number=} zIndex
      * @returns {CanvasView}
      */
-    createCanvasView = (name, isOffsetTurnedOff = false) => {
+    createCanvasView = (name, isOffsetTurnedOff = false, zIndex) => {
         if (name && name.trim().length > 0) {
-            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
+            const z = zIndex ? zIndex : this.#views.size + 1;
+            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff, z);
             this.#views.set(name, newView);
             return newView;
         } else
@@ -678,16 +680,18 @@ export class ScreenPage {
         });
     }
 
-    #drawViews = (/*drawTime*/) => {
+    #drawViews = async (/*drawTime*/) => {
         const pt0 = performance.now(),
             minCircleTime = this.#minCircleTime;
             
         let viewPromises = [];
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
         this.screenPageData._clearBoundaries();
-
+        this.system.clearContext();
+        
         for (const [key, view] of this.#views.entries()) {
-            viewPromises.push(view.render(key));
+            const render = await view.render(key);
+            viewPromises.push(render);
         }
         Promise.allSettled(viewPromises).then((drawingResults) => {
             drawingResults.forEach((result) => {

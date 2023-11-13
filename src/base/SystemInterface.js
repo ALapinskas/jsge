@@ -96,7 +96,11 @@ export class SystemInterface {
 
     initiateContext() {
         return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
-            this.#webGlInterface._initPrimitivesDrawProgram()]);
+            this.#webGlInterface._initPrimitivesDrawProgram(), this.#webGlInterface._initWebGlAttributes()]);
+    }
+
+    clearContext() {
+        this.#webGlInterface._clearView();
     }
 
     setCanvasSize(width, height) {

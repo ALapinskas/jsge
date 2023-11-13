@@ -52,6 +52,9 @@ export class CanvasView {
     #isWorldBoundariesEnabled;
 
     #drawContext;
+    /**
+     * @type {WebGlInterface}
+     */
     #webGlInterface;
 
     /**
@@ -76,13 +79,15 @@ export class CanvasView {
      */
     #renderLayers;
     #bindRenderLayerMethod;
+    #zIndex;
 
-    constructor(name, systemSettings, screenPageData, loader, webGlInterface, isOffsetTurnedOff) {
+    constructor(name, systemSettings, screenPageData, loader, webGlInterface, isOffsetTurnedOff, zIndex) {
         this.#canvas = document.createElement("canvas");
         this.#canvas.id = name;
         this.#canvas.style.position = "absolute";
         this.#isCleared = false;
         this.#isOffsetTurnedOff = isOffsetTurnedOff;
+        this.#zIndex = zIndex;
 
         this.#screenPageData = screenPageData;
         this.#systemSettings = systemSettings;
@@ -117,6 +122,10 @@ export class CanvasView {
         return this.#canvas;
     }
 
+    get zIndex() {
+        return this.#zIndex;
+    }
+
     /**
      * Retrieve specific objects instances
      * @param {Object} instance - drawObjectInstance to retrieve 
@@ -149,9 +158,9 @@ export class CanvasView {
      */
     async render(key) {
         return new Promise(async(resolve, reject) => {
-            if (!this._isCleared) {
-                this.#clearWebGlContext();
-            }
+            //if (!this._isCleared) {
+            //    this.#clearWebGlContext();
+            //}
             const renderLayers = this._renderLayers;
             if (renderLayers.length !== 0) {
                 let renderLayerPromises = [];
@@ -601,7 +610,7 @@ export class CanvasView {
     }
 
     #bindTileImages(verticesBufferData, texturesBufferData,  atlasImage, image_name, drawMask, rotation, translation) {
-        this.#webGlInterface._bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, drawMask, rotation, translation);
+        this.#webGlInterface._bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, drawMask, rotation, translation, [1, 1], this.#zIndex);
     }
 
     //#clearTileMapPromises() {
@@ -725,12 +734,12 @@ export class CanvasView {
                         texX2, texY1,
                         texX2, texY2
                     ];
-                this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y]);
+                this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y], [1, 1], this.#zIndex);
                 if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
                     const shiftX = x,// - renderObject.boundaries[0],
                         shiftY = y,// - renderObject.boundaries[1],
                         rotation = renderObject.rotation ? renderObject.rotation : 0;
-                    this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                    this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY], this.#zIndex);
                 }
                 //ctx.restore();
             } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {
@@ -738,7 +747,7 @@ export class CanvasView {
             } else if (renderObject.type === CONST.DRAW_TYPE.CIRCLE || renderObject.type === CONST.DRAW_TYPE.CONUS) {
                 this.#webGlInterface._bindConus(renderObject, renderObject.rotation, [x, y]);
             } else if (renderObject.type === CONST.DRAW_TYPE.LINE) {
-                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth, renderObject.rotation, [x, y]);
+                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth, renderObject.rotation, [x, y], this.#zIndex);
             } else {
                 this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
             }
@@ -765,7 +774,7 @@ export class CanvasView {
                 linesArray.push(item[0], item[1]);
                 linesArray.push(item[2], item[3]);
             }
-            this.#webGlInterface._drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth);
+            this.#webGlInterface._drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, 0, [0,0], this.#zIndex);
             resolve();
         });
     }
