@@ -302,6 +302,7 @@ export class WebGlInterface {
     _initWebGlAttributes() {
         const gl = this.#gl;
         gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.ALWAYS);
         return Promise.resolve();
     }
     
