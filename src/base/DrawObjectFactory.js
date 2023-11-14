@@ -19,11 +19,11 @@ export class DrawObjectFactory {
      * @param {number} width 
      * @param {number} height 
      * @param {string} backgroundColor - rgba(r,g,b,a)
-     * @param {boolean=} cut
+     * @param {boolean=} isShapeMask
      * @returns {DrawRectObject}
      */
-    rect(x, y, width, height, backgroundColor, cut) {
-        return new DrawRectObject(x, y, width, height, backgroundColor, cut); 
+    rect(x, y, width, height, backgroundColor, isShapeMask) {
+        return new DrawRectObject(x, y, width, height, backgroundColor, isShapeMask); 
     }
 
     /**
@@ -32,10 +32,11 @@ export class DrawObjectFactory {
      * @param {string} text 
      * @param {string} font - size fontFamily
      * @param {string} color - rgba(r,g,b,a)
+     * @param {boolean=} isShapeMask
      * @returns {DrawTextObject}
      */
-    text(x, y, text, font, color) {
-        return new DrawTextObject(x, y, text, font, color);
+    text(x, y, text, font, color, isShapeMask) {
+        return new DrawTextObject(x, y, text, font, color, isShapeMask);
     }
 
     /**
@@ -43,23 +44,23 @@ export class DrawObjectFactory {
      * @param {number} radius 
      * @param {string} bgColor - rgba(r,g,b,a)
      * @param {number=} angle
-     * @param {boolean=} [cut=false]
+     * @param {boolean=} [isShapeMask=false]
      * @param {number=} [fade=0] (0 - 1)
      * @returns {DrawConusObject}
      */
-    conus(x, y, radius, bgColor, angle, cut=false, fade = 0) {
-        return new DrawConusObject(x, y, radius, bgColor, angle, cut, fade);
+    conus(x, y, radius, bgColor, angle, isShapeMask=false, fade = 0) {
+        return new DrawConusObject(x, y, radius, bgColor, angle, isShapeMask, fade);
     }
 
     /**
      * 
      * @param {number} radius 
      * @param {string} bgColor - rgba(r,g,b,a)
-     * @param {boolean=} cut
+     * @param {boolean=} isShapeMask
      * @returns {DrawCircleObject}
      */
-    circle(x, y, radius, bgColor, cut) {
-        return new DrawCircleObject(x, y, radius, bgColor, cut);
+    circle(x, y, radius, bgColor, isShapeMask) {
+        return new DrawCircleObject(x, y, radius, bgColor, isShapeMask);
     }
 
     /**
@@ -88,10 +89,10 @@ export class DrawObjectFactory {
     /**
      * @param {Array<{x:number, y:number}>} vertices - should go in anticlockwise order
      * @param {string} bgColor - rgba(r,g,b,a) 
-     * @param {boolean=} cut
+     * @param {boolean=} isShapeMask
      * @returns {DrawPolygonObject}
      */
-    polygon(vertices, bgColor, cut) {
-        return new DrawPolygonObject(vertices, bgColor, cut);
+    polygon(vertices, bgColor, isShapeMask) {
+        return new DrawPolygonObject(vertices, bgColor, isShapeMask);
     }
 }

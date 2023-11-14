@@ -13,7 +13,6 @@ export class DrawShapeObject {
      * @enum {CONST.DRAW_TYPE}
      */
     #type;
-    #cut;
     /**
      * Is used for blending pixel arithmetic
      * https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc.
@@ -24,7 +23,7 @@ export class DrawShapeObject {
     /**
      * @type {number}
      */
-    #zIndex = 0;
+    #sortIndex = 0;
     /**
      * @type {number}
      */
@@ -37,16 +36,18 @@ export class DrawShapeObject {
      * @type {boolean}
      */
     #isRemoved = false;
-
+    /**
+     * @type {undefined | number | null}
+     */
+    #attachedMaskId;
     /**
      * @hideconstructor
      */
-    constructor(type, mapX, mapY, bgColor, cut) {
+    constructor(type, mapX, mapY, bgColor) {
         this.#x = mapX;
         this.#y = mapY;
         this.#bg = bgColor;
         this.#type = type;
-        this.#cut = cut;
     }
 
     /**
@@ -92,21 +93,14 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {boolean}
-     */
-    get cut() {
-        return this.#cut;
-    }
-
-    /**
      * @type {number}
      */
-    get zIndex () {
-        return this.#zIndex;
+    get sortIndex () {
+        return this.#sortIndex;
     }
 
-    set zIndex(value) {
-        this.#zIndex = value;
+    set sortIndex(value) {
+        this.#sortIndex = value;
     }
 
     get blendFunc () {
@@ -149,6 +143,25 @@ export class DrawShapeObject {
         this.#isRemoved = true;
     }
 
+    get isMaskAttached() {
+        return !!this.#attachedMaskId;
+    }
+
+    get _maskId() {
+        return this.#attachedMaskId;
+    }
+
+    /**
+     * 
+     * @param {DrawShapeObject} mask 
+     */
+    setMask(mask) {
+        this.#attachedMaskId = mask.id;
+    }
+
+    removeMask() {
+        this.#attachedMaskId = null;
+    }
     /**
      * @param {number} width 
      * @param {number} height 

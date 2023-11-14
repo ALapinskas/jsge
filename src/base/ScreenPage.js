@@ -18,6 +18,7 @@ import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
 import { isPointLineIntersect, isPolygonLineIntersect, angle_2points } from "../utils.js";
 import { Vector } from "./Primitives.js";
+import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * Represents the page of the game,<br>
@@ -183,13 +184,11 @@ export class ScreenPage {
      * and set it to the #views
      * @param {string} name
      * @param {boolean} [isOffsetTurnedOff = false] - determines if offset is affected on this layer or not
-     * @param {number=} zIndex
      * @returns {CanvasView}
      */
-    createCanvasView = (name, isOffsetTurnedOff = false, zIndex) => {
+    createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
-            const z = zIndex ? zIndex : this.#views.size + 1;
-            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff, z);
+            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
             this.#views.set(name, newView);
             return newView;
         } else
@@ -223,7 +222,7 @@ export class ScreenPage {
         } else {
             const view = this.#views.get(canvasKey);
             view._renderObject = renderObject;
-            view._sortRenderObjectsByZIndex();
+            view._sortRenderObjectsBySortIndex();
         }
     };
 
@@ -233,15 +232,16 @@ export class ScreenPage {
      * @param {string} layerKey 
      * @param {string} tileMapKey 
      * @param {boolean=} setBoundaries 
+     * @param {DrawShapeObject=} shapeMask
      */
-    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries) => {
+    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries, shapeMask) => {
         if (!canvasKey) {
             Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
         } else if (!this.#views.has(canvasKey)) {
             Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
             const view = this.#views.get(canvasKey);
-            view._renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries);
+            view._renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
             if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
                 view._enableMapBoundaries();
             }

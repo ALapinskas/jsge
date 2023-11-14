@@ -38,7 +38,7 @@ export class SystemInterface {
         this.#systemSettings = systemSettings;
         this.#canvasContainer = canvasContainer;
         this.#canvas = document.createElement("canvas");
-        this.#drawContext = this.#canvas.getContext("webgl");
+        this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
         this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettings.gameOptions.checkWebGlErrors);
         this.#canvasContainer.appendChild(this.#canvas);
         this.#registeredPages = registeredPages;

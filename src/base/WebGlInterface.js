@@ -80,7 +80,6 @@ export class WebGlInterface {
         uniform vec2 u_scale;
 
         uniform vec2 u_resolution;
-        uniform float u_zIndex;
 
         varying vec2 v_texCoord;
 
@@ -191,7 +190,6 @@ export class WebGlInterface {
         uniform vec2 u_scale;
 
         uniform vec2 u_resolution;
-        uniform float u_zIndex;
 
         void main(void) {
             float c = cos(-u_rotation);
@@ -301,8 +299,9 @@ export class WebGlInterface {
 
     _initWebGlAttributes() {
         const gl = this.#gl;
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthFunc(gl.ALWAYS);
+        gl.enable(gl.STENCIL_TEST);
+        gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
+        gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         return Promise.resolve();
     }
     
@@ -318,7 +317,7 @@ export class WebGlInterface {
      * @param {*} scale 
      * @returns {Promise<void>}
      */
-    _bindTileImages(vectors, textures, image, imageName, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1], zIndex) {
+    _bindTileImages(vectors, textures, image, imageName, shapeMaskId, drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"], rotation = 0, translation = [0, 0], scale = [1, 1]) {
         return new Promise((resolve) => {
             const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
                 existingProgramData = this.#programsData.filter((data) => data.programName === programName);
@@ -327,14 +326,14 @@ export class WebGlInterface {
 
             for(let i = 0; i < existingProgramData.length; i++) {
                 const data = existingProgramData[i];
-                if (data.isProgramDataCanBeMerged(imageName, drawMask, 0, [0,0], [1,1], zIndex)) {
+                if (data.isProgramDataCanBeMerged(imageName, shapeMaskId, drawMask, 0, [0,0], [1,1])) {
                     data.mergeProgramData(vectors, textures);
                     isProgramDataMerged = true;
                 }
             }
 
             if (!isProgramDataMerged) {
-                this.#programsData.push(new WebGlDrawProgramData(programName, vectors, textures, image, imageName, drawMask, rotation, translation, scale, zIndex));
+                this.#programsData.push(new WebGlDrawProgramData(programName, vectors, textures, image, imageName, shapeMaskId, drawMask, rotation, translation, scale));
             }
 
             resolve();
@@ -406,15 +405,21 @@ export class WebGlInterface {
                 gl.uniform1i(u_imageLocation, bind_number);
                 gl.blendFunc(gl[data.drawMask[0]], gl[data.drawMask[1]]);
                 this.#verticesNumber = data.programVerticesNum;
+                if (data.shapeMaskId) {
+                    gl.stencilFunc(gl.EQUAL, data.shapeMaskId, 0xFF);
+                    //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+                }
+                
                 // Upload the image into the texture.
                 this.#executeGlslProgram();
             }
-
+            //clear the array
+            this.#programsData = [];
             resolve();
         });
     }
 
-    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1], zIndex) {
+    _bindAndDrawTileImages(vectors, textures, image, image_name, rotation = 0, translation = [0, 0], scale = [1, 1], shapeMaskId) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.IMAGES,
             program = this.#getProgram(programName),
             { translationLocation,
@@ -475,6 +480,10 @@ export class WebGlInterface {
         gl.uniform1i(u_imageLocation, bind_number );
         // make image transparent parts transparent
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        if (shapeMaskId) {
+            gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+            //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+        }
         // Upload the image into the texture.
         this.#executeGlslProgram();
     }
@@ -494,7 +503,6 @@ export class WebGlInterface {
         //@toDo: add additional info to the #images_bind and avoid this call, if image is already created
         const { boxWidth, boxHeight, ctx } = this.#createCanvasText(renderObject),
             texture = ctx.canvas,
-            zIndex = renderObject.renderObject,
             image_name = renderObject.text;
 
         y = y - boxHeight;
@@ -654,7 +662,7 @@ export class WebGlInterface {
         this.#executeGlslProgram(0, null, true);
     }
 
-    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0], zIndex) {
+    _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.#getProgram(programName),
             { resolutionUniformLocation,
@@ -709,7 +717,7 @@ export class WebGlInterface {
         this.#executeGlslProgram(0, gl.LINES);
     }
 
-    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0], zIndex) {
+    _drawPolygon(vertices, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const programName = CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES,
             program = this.#getProgram(programName),
             { resolutionUniformLocation,
@@ -826,6 +834,12 @@ export class WebGlInterface {
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
+        if (renderObject.isMaskAttached) {
+            gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
+        } else {
+            gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+        }
+        //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         this.#executeGlslProgram(0, gl.TRIANGLE_FAN, true);
     }
 
@@ -835,7 +849,7 @@ export class WebGlInterface {
         this.#programsData = [];
         gl.clearColor(0, 0, 0, 0);
         // Clear the color buffer with specified clear color
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     }
 
     #setProgram(name, program) {
@@ -880,6 +894,7 @@ export class WebGlInterface {
             gl.drawArrays(primitiveTypeValue, offset, this.#verticesNumber);
             this.#verticesNumber = 0;
             // set blend to default
+            gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
             if (resetEquation) {
                 gl.blendEquation(  gl.FUNC_ADD );
             }

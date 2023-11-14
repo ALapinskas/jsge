@@ -1,14 +1,20 @@
+import { DrawShapeObject } from "./DrawShapeObject.js";
+
 export class RenderLayer {
     #layerKey;
     #tileMapKey;
     #setBoundaries;
     #drawBoundaries;
+    #attachedMaskId;
 
-    constructor(layerKey, tileMapKey, setBoundaries = false) {
+    constructor(layerKey, tileMapKey, setBoundaries = false, shapeMask) {
         this.#layerKey = layerKey;
         this.#tileMapKey = tileMapKey;
         this.#setBoundaries = setBoundaries;
         this.#drawBoundaries = setBoundaries ? setBoundaries : false;
+        if (shapeMask) {
+            this.setMask(shapeMask);
+        }
     }
 
     /**
@@ -47,5 +53,20 @@ export class RenderLayer {
 
     set drawBoundaries(value) {
         this.#drawBoundaries = value;
+    }
+
+    get _maskId() {
+        return this.#attachedMaskId;
+    }
+    /**
+     * 
+     * @param {DrawShapeObject} mask 
+     */
+    setMask(mask) {
+        this.#attachedMaskId = mask.id;
+    }
+
+    removeMask() {
+        this.#attachedMaskId = null;
     }
 }
