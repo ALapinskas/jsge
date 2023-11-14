@@ -65,10 +65,7 @@ export class MapPage extends ScreenPage {
         
         this.greenLight = this.draw.conus(315,369,100,"rgba(0,128,0,0.5", Math.PI, false, 20);
         this.greenLight.setMask(this.sightView);
-
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.fireRange);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.greenLight);
+        
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         
 
@@ -85,6 +82,10 @@ export class MapPage extends ScreenPage {
         this.#enemies.push(monster1);
         this.#enemies.push(monster2);
         this.#enemies.push(monster3);
+
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.greenLight);
+        this.addRenderObject(CONST.LAYERS.DEFAULT, this.fireRange);
 
         this.audio.registerAudio(this.fireballCastKey);
         this.audio.registerAudio(this.#fireballDestroyAudioKey);

@@ -416,6 +416,8 @@ export class WebGlInterface {
                     gl.uniform1f(depthIdLocation, data.shapeMaskId);
                     //gl.stencilFunc(gl.EQUAL, data.shapeMaskId, 0xFF);
                     //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+                } else {
+                    gl.uniform1f(depthIdLocation, 1);
                 }
                 
                 // Upload the image into the texture.
