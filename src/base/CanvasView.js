@@ -35,10 +35,6 @@ const INDEX_X1 = 0,
  */
 export class CanvasView {
     /**
-     * @type {HTMLCanvasElement}
-     */
-    #canvas;
-    /**
      * @type {boolean}
      */
     #isCleared;
@@ -50,8 +46,6 @@ export class CanvasView {
      * @type {boolean}
      */
     #isWorldBoundariesEnabled;
-
-    #drawContext;
     /**
      * @type {WebGlInterface}
      */
@@ -81,9 +75,6 @@ export class CanvasView {
     #bindRenderLayerMethod;
 
     constructor(name, systemSettings, screenPageData, loader, webGlInterface, isOffsetTurnedOff) {
-        this.#canvas = document.createElement("canvas");
-        this.#canvas.id = name;
-        this.#canvas.style.position = "absolute";
         this.#isCleared = false;
         this.#isOffsetTurnedOff = isOffsetTurnedOff;
 
@@ -116,10 +107,6 @@ export class CanvasView {
         return this.#renderObjects;
     }
 
-    get canvas() {
-        return this.#canvas;
-    }
-
     /**
      * Retrieve specific objects instances
      * @param {Object} instance - drawObjectInstance to retrieve 
@@ -127,23 +114,6 @@ export class CanvasView {
      */
     getObjectsByInstance(instance) {
         return this.#renderObjects.filter((object) => object instanceof instance);
-    }
-
-    /**
-     * 
-     * @returns {Promise}
-     */
-    initiateContext() {
-        const webgl = this.#canvas.getContext("webgl");
-        if (webgl) {
-            this.#drawContext = webgl;
-            this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettings.gameOptions.checkWebGlErrors);
-            
-            return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
-                this.#webGlInterface._initPrimitivesDrawProgram()]);
-        } else {
-            Exception(ERROR_CODES.WEBGL_ERROR, "webgl is not supported in this browser");
-        }
     }
 
     /**
@@ -209,8 +179,6 @@ export class CanvasView {
     }
 
     _setCanvasSize(width, height) {
-        this.canvas.width = width;
-        this.canvas.height = height;
         if (this.#webGlInterface) {
             this.#webGlInterface._fixCanvasSize(width, height);
         }

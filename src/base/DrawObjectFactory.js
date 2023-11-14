@@ -44,12 +44,11 @@ export class DrawObjectFactory {
      * @param {number} radius 
      * @param {string} bgColor - rgba(r,g,b,a)
      * @param {number=} angle
-     * @param {boolean=} [isShapeMask=false]
      * @param {number=} [fade=0] (0 - 1)
      * @returns {DrawConusObject}
      */
-    conus(x, y, radius, bgColor, angle, isShapeMask=false, fade = 0) {
-        return new DrawConusObject(x, y, radius, bgColor, angle, isShapeMask, fade);
+    conus(x, y, radius, bgColor, angle, fade = 0) {
+        return new DrawConusObject(x, y, radius, bgColor, angle, fade);
     }
 
     /**

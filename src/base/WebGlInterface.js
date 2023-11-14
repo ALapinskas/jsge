@@ -301,6 +301,7 @@ export class WebGlInterface {
         const gl = this.#gl;
         gl.enable(gl.STENCIL_TEST);
         gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
+        //if stencil test and depth test pass we replace the initial value
         gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         return Promise.resolve();
     }

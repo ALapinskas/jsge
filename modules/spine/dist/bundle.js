@@ -16031,7 +16031,7 @@ class SpineModuleInitialization {
      * @param {CanvasView} view 
      */
     registerView(view) {
-        const canvas = view.canvas;
+        const canvas = this.#systemInterface.canvas;
         this.#registeredView = view;
         
         this.#setCanvasSize(view);

@@ -53,17 +53,16 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(OVERLAY_LAYER_KEY, "walls", this.tilemapKey);
 
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)"); //shapeMask
-        this.sightView.sortIndex = 1;
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
 
         this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);
-        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.2", Math.PI/8, false, 60);
+        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.2", Math.PI/8, 60);
 
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "background", this.tilemapKey, false, this.sightView);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "walls", this.tilemapKey, true, this.sightView);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "decs", this.tilemapKey, false, this.sightView);
         
-        this.greenLight = this.draw.conus(315,369,100,"rgba(0,128,0,0.5", Math.PI, false, 20);
+        this.greenLight = this.draw.conus(315,369,100,"rgba(0,128,0,0.5", Math.PI, 20);
         this.greenLight.setMask(this.sightView);
 
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);

@@ -125,8 +125,10 @@ export class StartPage extends ScreenPage {
 
     unregisterEventListeners() {
         const canvas = this.canvas;
+        canvas.removeEventListener("mousemove", this.#mouseHoverEvent); 
         canvas.removeEventListener("click", this.#mouseClickEvent);
         document.removeEventListener("keydown", this.#pressKeyAction);
+        canvas.style.cursor = "default";
     }
 
     #pressKeyAction = (event) => {
