@@ -19,11 +19,10 @@ export class DrawObjectFactory {
      * @param {number} width 
      * @param {number} height 
      * @param {string} backgroundColor - rgba(r,g,b,a)
-     * @param {boolean=} isShapeMask
      * @returns {DrawRectObject}
      */
-    rect(x, y, width, height, backgroundColor, isShapeMask) {
-        return new DrawRectObject(x, y, width, height, backgroundColor, isShapeMask); 
+    rect(x, y, width, height, backgroundColor) {
+        return new DrawRectObject(x, y, width, height, backgroundColor); 
     }
 
     /**
@@ -32,11 +31,10 @@ export class DrawObjectFactory {
      * @param {string} text 
      * @param {string} font - size fontFamily
      * @param {string} color - rgba(r,g,b,a)
-     * @param {boolean=} isShapeMask
      * @returns {DrawTextObject}
      */
-    text(x, y, text, font, color, isShapeMask) {
-        return new DrawTextObject(x, y, text, font, color, isShapeMask);
+    text(x, y, text, font, color) {
+        return new DrawTextObject(x, y, text, font, color);
     }
 
     /**
@@ -55,11 +53,10 @@ export class DrawObjectFactory {
      * 
      * @param {number} radius 
      * @param {string} bgColor - rgba(r,g,b,a)
-     * @param {boolean=} isShapeMask
      * @returns {DrawCircleObject}
      */
-    circle(x, y, radius, bgColor, isShapeMask) {
-        return new DrawCircleObject(x, y, radius, bgColor, isShapeMask);
+    circle(x, y, radius, bgColor) {
+        return new DrawCircleObject(x, y, radius, bgColor);
     }
 
     /**
@@ -87,11 +84,10 @@ export class DrawObjectFactory {
 
     /**
      * @param {Array<{x:number, y:number}>} vertices - should go in anticlockwise order
-     * @param {string} bgColor - rgba(r,g,b,a) 
-     * @param {boolean=} isShapeMask
+     * @param {string} bgColor - rgba(r,g,b,a)
      * @returns {DrawPolygonObject}
      */
-    polygon(vertices, bgColor, isShapeMask) {
-        return new DrawPolygonObject(vertices, bgColor, isShapeMask);
+    polygon(vertices, bgColor) {
+        return new DrawPolygonObject(vertices, bgColor);
     }
 }
