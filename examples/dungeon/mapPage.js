@@ -53,7 +53,7 @@ export class MapPage extends ScreenPage {
         this.addRenderLayer(OVERLAY_LAYER_KEY, "walls", this.tilemapKey);
 
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)"); //shapeMask
-        this.sightView.sortIndex = 1;
+        //this.sightView.sortIndex = 1;
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
 
         this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);

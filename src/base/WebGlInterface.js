@@ -80,6 +80,7 @@ export class WebGlInterface {
         uniform vec2 u_scale;
 
         uniform vec2 u_resolution;
+        uniform float u_depth_id;
 
         varying vec2 v_texCoord;
 
@@ -132,7 +133,7 @@ export class WebGlInterface {
             //convert from 0->2 to -1->+1
             vec2 clipSpace = zeroToTwo - 1.0;
 
-            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+            gl_Position = vec4(clipSpace * vec2(1, -1), 1.0/u_depth_id, 1);
             
             v_texCoord = a_texCoord;
         }
@@ -162,7 +163,8 @@ export class WebGlInterface {
             resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution"),
             positionAttributeLocation = gl.getAttribLocation(program, "a_position"),
             texCoordLocation = gl.getAttribLocation(program, "a_texCoord"),
-            u_imageLocation = gl.getUniformLocation(program, "u_image");
+            u_imageLocation = gl.getUniformLocation(program, "u_image"),
+            depthIdLocation = gl.getUniformLocation(program, "u_depth_id");;
 
         gl.enable(gl.BLEND);
         // turn attribute on
@@ -174,7 +176,8 @@ export class WebGlInterface {
             resolutionUniformLocation,
             positionAttributeLocation,
             texCoordLocation,
-            u_imageLocation
+            u_imageLocation,
+            depthIdLocation
         });
         return Promise.resolve();
     }
@@ -188,6 +191,7 @@ export class WebGlInterface {
         uniform vec2 u_translation;
         uniform float u_rotation;
         uniform vec2 u_scale;
+        uniform float u_depth_id;
 
         uniform vec2 u_resolution;
 
@@ -243,7 +247,7 @@ export class WebGlInterface {
             //convert from 0->2 to -1->+1
             vec2 clipSpace = zeroToTwo - 1.0;
 
-            gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+            gl_Position = vec4(clipSpace * vec2(1, -1), 1.0/u_depth_id, 1);
         }
         `;
         this.#fragmentShaderSource = `
@@ -282,7 +286,8 @@ export class WebGlInterface {
             colorUniformLocation = gl.getUniformLocation(program, "u_color"),
             positionAttributeLocation = gl.getAttribLocation(program, "a_position"),
             fadeMinLocation = gl.getUniformLocation(program, "u_fade_min"),
-            fadeMaxLocation =  gl.getUniformLocation(program, "u_fade_max");
+            fadeMaxLocation =  gl.getUniformLocation(program, "u_fade_max"),
+            depthIdLocation = gl.getUniformLocation(program, "u_depth_id");
 
         this.#coordsLocations.set(programName, {
             translationLocation,
@@ -292,16 +297,16 @@ export class WebGlInterface {
             colorUniformLocation,
             positionAttributeLocation,
             fadeMinLocation,
-            fadeMaxLocation
+            fadeMaxLocation,
+            depthIdLocation
         });
         return Promise.resolve();
     }
 
     _initWebGlAttributes() {
         const gl = this.#gl;
-        gl.enable(gl.STENCIL_TEST);
-        gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
-        gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.ALWAYS);
         return Promise.resolve();
     }
     
@@ -354,7 +359,8 @@ export class WebGlInterface {
                     resolutionUniformLocation,
                     positionAttributeLocation,
                     texCoordLocation,
-                    u_imageLocation } = this.#coordsLocations.get(programName),
+                    u_imageLocation,
+                    depthIdLocation } = this.#coordsLocations.get(programName),
                 gl = this.#gl,
                 programsData = this.#programsData.filter(programData => programData.programName === programName);
            
@@ -406,7 +412,9 @@ export class WebGlInterface {
                 gl.blendFunc(gl[data.drawMask[0]], gl[data.drawMask[1]]);
                 this.#verticesNumber = data.programVerticesNum;
                 if (data.shapeMaskId) {
-                    gl.stencilFunc(gl.EQUAL, data.shapeMaskId, 0xFF);
+                    gl.depthFunc(gl.EQUAL);
+                    gl.uniform1f(depthIdLocation, data.shapeMaskId);
+                    //gl.stencilFunc(gl.EQUAL, data.shapeMaskId, 0xFF);
                     //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
                 }
                 
@@ -428,7 +436,8 @@ export class WebGlInterface {
                 resolutionUniformLocation,
                 positionAttributeLocation,
                 texCoordLocation,
-                u_imageLocation } = this.#coordsLocations.get(programName),
+                u_imageLocation,
+                depthIdLocation } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
         gl.useProgram(program);
@@ -481,7 +490,9 @@ export class WebGlInterface {
         // make image transparent parts transparent
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         if (shapeMaskId) {
-            gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+            gl.depthFunc(gl.EQUAL);
+            gl.uniform1f(depthIdLocation, shapeMaskId);
+            //gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
             //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         }
         // Upload the image into the texture.
@@ -497,7 +508,8 @@ export class WebGlInterface {
                 resolutionUniformLocation,
                 positionAttributeLocation,
                 texCoordLocation,
-                u_imageLocation } = this.#coordsLocations.get(programName),
+                u_imageLocation,
+                depthIdLocation } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
         //@toDo: add additional info to the #images_bind and avoid this call, if image is already created
@@ -581,6 +593,7 @@ export class WebGlInterface {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
         gl.uniform1i(u_imageLocation, bind_number);
+        gl.uniform1f(depthIdLocation, renderObject.id);
         //console.log("vertex attrib 1 :", gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING));
         this.#executeGlslProgram();
     }
@@ -595,7 +608,8 @@ export class WebGlInterface {
                 resolutionUniformLocation,
                 colorUniformLocation,
                 positionAttributeLocation,
-                fadeMinLocation
+                fadeMinLocation,
+                depthIdLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl;
 
@@ -653,12 +667,13 @@ export class WebGlInterface {
             gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
         }
         if (renderObject.cut) {
-            gl.blendEquation(gl.FUNC_SUBTRACT);
+            //gl.blendEquation(gl.FUNC_SUBTRACT);
         }
         //disable attribute which is not used in this program
         //if (gl.getVertexAttrib(1, gl.VERTEX_ATTRIB_ARRAY_ENABLED)) {
         //gl.disableVertexAttribArray(1);
         //}
+        gl.uniform1f(depthIdLocation, renderObject.id);
         this.#executeGlslProgram(0, null, true);
     }
 
@@ -778,7 +793,8 @@ export class WebGlInterface {
                 colorUniformLocation,
                 positionAttributeLocation,
                 fadeMinLocation,
-                fadeMaxLocation
+                fadeMaxLocation,
+                depthIdLocation
             } = this.#coordsLocations.get(programName),
             gl = this.#gl,
             coords = renderObject.vertices,
@@ -835,10 +851,13 @@ export class WebGlInterface {
         //gl.disableVertexAttribArray(1);
         //}
         if (renderObject.isMaskAttached) {
-            gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
+            gl.depthFunc(gl.EQUAL);
+            gl.uniform1f(depthIdLocation, renderObject._maskId);
         } else {
-            gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+            //gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+            gl.uniform1f(depthIdLocation, renderObject.id);
         }
+        
         //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         this.#executeGlslProgram(0, gl.TRIANGLE_FAN, true);
     }
@@ -849,7 +868,7 @@ export class WebGlInterface {
         this.#programsData = [];
         gl.clearColor(0, 0, 0, 0);
         // Clear the color buffer with specified clear color
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
     #setProgram(name, program) {
@@ -894,7 +913,7 @@ export class WebGlInterface {
             gl.drawArrays(primitiveTypeValue, offset, this.#verticesNumber);
             this.#verticesNumber = 0;
             // set blend to default
-            gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
+            gl.depthFunc(gl.ALWAYS);
             if (resetEquation) {
                 gl.blendEquation(  gl.FUNC_ADD );
             }
