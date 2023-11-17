@@ -15,7 +15,14 @@ const loadingPageName = "loadingPage";
  */
 export class System {
     #registeredPages;
+    /**
+     * @type {SystemInterface}
+     */
     #system;
+    /**
+     * @type {HTMLElement}
+     */
+    #canvasContainer
     /**
      * @param {SystemSettings} systemSettings - holds system settings
      * @param {HTMLElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
@@ -29,9 +36,10 @@ export class System {
         if (!canvasContainer) {
             canvasContainer = document.createElement("div");
             document.body.appendChild(canvasContainer);
+            this.#canvasContainer = canvasContainer;
         }
 
-        this.#system = new SystemInterface(systemSettings, canvasContainer, this.#registeredPages);
+        this.#system = new SystemInterface(systemSettings, this._startScreenPage, this._stopScreenPage);
         
         this.registerPage(loadingPageName, LoadingScreen);
 
@@ -62,6 +70,36 @@ export class System {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
         }
     }
+
+    /**
+     * @method
+     * @param {string} screenPageName
+     * @param {Object} [options] - options
+     */
+    _startScreenPage = (screenPageName, options) => {
+        if (this.#registeredPages.has(screenPageName)) {
+            const page = this.#registeredPages.get(screenPageName);
+            if (page.isInitiated === false) {
+                page._init();
+            }
+            page._attachViewsToContainer(this.#canvasContainer);
+            page._start(options);
+        } else {
+            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+        }
+    };
+
+    /**
+     * @method
+     * @param {string} screenPageName
+     */
+    _stopScreenPage = (screenPageName) => {
+        if (this.#registeredPages.has(screenPageName)) {
+            this.#registeredPages.get(screenPageName)._stop();
+        } else {
+            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+        }
+    };
 
     /**
      * Preloads assets for all registered pages

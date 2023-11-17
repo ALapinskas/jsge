@@ -1,4 +1,4 @@
-import { RenderLayer } from "./RenderLayer.js";
+import { TiledRenderLayer } from "./TiledRenderLayer.js";
 import { Exception, Warning } from "./Exception.js";
 import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { WebGlInterface } from "./WebGlInterface.js";
@@ -33,58 +33,50 @@ const INDEX_X1 = 0,
  * @see {@link ScreenPage} a part of ScreenPage
  * @hideconstructor
  */
-export class CanvasView {
+export class RenderInterface {
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    #canvas;
+    /**
+     * @type {WebGLRenderingContext}
+     */
+    #drawContext;
     /**
      * @type {boolean}
      */
     #isCleared;
-    /**
-     * @type {boolean}
-     */
-    #isOffsetTurnedOff;
-    /**
-     * @type {boolean}
-     */
-    #isWorldBoundariesEnabled;
     /**
      * @type {WebGlInterface}
      */
     #webGlInterface;
 
     /**
+     * SystemInterface.systemSettings
      * @type {SystemSettings}
      */
-    #systemSettings;
+    #systemSettingsReference;
     /**
      * @type {ScreenPageData}
      */
     #screenPageData;
     /**
+     * A reference to the systemInterface.loader
      * @type {AssetsManager}
      */
-    #loader;
-
-    /**
-     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject>}
-     */
-    #renderObjects;
-    /**
-     * @type {Array<RenderLayer>}
-     */
-    #renderLayers;
+    #loaderReference;
     #bindRenderLayerMethod;
 
-    constructor(name, systemSettings, screenPageData, loader, webGlInterface, isOffsetTurnedOff) {
+    constructor(systemSettings, loader) {
         this.#isCleared = false;
-        this.#isOffsetTurnedOff = isOffsetTurnedOff;
+        this.#canvas = document.createElement("canvas");
+        this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
 
-        this.#screenPageData = screenPageData;
-        this.#systemSettings = systemSettings;
-        this.#loader = loader;
-        this.#webGlInterface = webGlInterface;
-        this.#renderObjects = [];
-        this.#renderLayers = [];
+        this.#systemSettingsReference = systemSettings;
+        this.#loaderReference = loader;
 
+        this.#screenPageData = new ScreenPageData();
+        this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettingsReference.gameOptions.checkWebGlErrors);
         this.#bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this.#bindRenderLayerWM : this.#bindRenderLayer;
     }
 
@@ -93,39 +85,47 @@ export class CanvasView {
     }
 
     get systemSettings() {
-        return this.#systemSettings;
+        return this.#systemSettingsReference;
     }
 
     get loader() {
-        return this.#loader;
+        return this.#loaderReference;
+    }
+
+    get canvas() {
+        return this.#canvas;
+    }
+
+    get drawContext() {
+        return this.#drawContext;
+    }
+
+    initiateContext() {
+        return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
+            this.#webGlInterface._initPrimitivesDrawProgram(), this.#webGlInterface._initWebGlAttributes()]);
+    }
+
+    clearContext() {
+        this.#webGlInterface._clearView();
+    }
+
+    setCanvasSize(width, height) {
+        this.#canvas.width = width;
+        this.#canvas.height = height;
+        if (this.#webGlInterface) {
+            this.#webGlInterface._fixCanvasSize(width, height);
+        }
     }
 
     /**
-     * a getter to retrieve all attached renderObjects
-     */
-    get renderObjects() {
-        return this.#renderObjects;
-    }
-
-    /**
-     * Retrieve specific objects instances
-     * @param {Object} instance - drawObjectInstance to retrieve 
-     * @returns {Array<Object>}
-     */
-    getObjectsByInstance(instance) {
-        return this.#renderObjects.filter((object) => object instanceof instance);
-    }
-
-    /**
-     * @param {string} key
      * @returns {Promise<void>}
      */
-    async render(key) {
+    async render() {
         return new Promise(async(resolve, reject) => {
             //if (!this._isCleared) {
             //    this.#clearWebGlContext();
             //}
-            const renderLayers = this._renderLayers;
+            /*const renderLayers = this._renderLayers;
             if (renderLayers.length !== 0) {
                 let renderLayerPromises = [];
                 for (const layer of renderLayers) {
@@ -138,9 +138,9 @@ export class CanvasView {
                     }
                 });
                 await this.#webGlInterface._executeTileImagesDraw();
-            }
+            }*/
             
-            const renderObjects = this.renderObjects;
+            const renderObjects = this.screenPageData.renderObjects;
             if (renderObjects.length !== 0) {
                 let renderObjectsPromises = [];
                 //this.#checkCollisions(view.renderObjects);
@@ -153,22 +153,29 @@ export class CanvasView {
                     //if (object.isAnimations) {
                     //    object._processActiveAnimations();
                     //}
-                    const promise = this._bindRenderObject(object).catch((err) => {
+                    const promise = await this._bindRenderObject(object).catch((err) => {
                         reject(err);
                     });
                     renderObjectsPromises.push(promise);
                 }
-                if (key === CONST.LAYERS.BOUNDARIES) {
+                if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
                     renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
                         reject(err);
-                    }));
+                    })); 
                 }
+                //if (key === CONST.LAYERS.BOUNDARIES) {
+                //    renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
+                //        reject(err);
+                //    }));
+                //}
                 const bindResults = await Promise.allSettled(renderObjectsPromises);
                 bindResults.forEach((result) => {
                     if (result.status === "rejected") {
                         reject(result.reason);
                     }
                 });
+
+                //await this.#webGlInterface._executeImagesDraw();
 
                 this.#postRenderActions();
                     
@@ -184,32 +191,6 @@ export class CanvasView {
         }
     }
 
-    _sortRenderObjectsBySortIndex() {
-        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.sortIndex - obj1.sortIndex);
-    }
-
-    /**
-     * @returns {Array<RenderLayer>}
-     */
-    get _renderLayers() {
-        return this.#renderLayers;
-    }
-
-    set _renderObject(object) {
-        this.#renderObjects.push(object);
-    } 
-
-    set _renderObjects(objects) {
-        this.#renderObjects = objects;
-    } 
-
-    /**
-     * @param {RenderLayer} layer
-     */
-    set _renderLayers(layer) {
-        this.#renderLayers.push(layer);
-    }
-
     set _isCleared(value) {
         this.#isCleared = value;
     }
@@ -219,20 +200,13 @@ export class CanvasView {
     }
 
     _createBoundariesPrecalculations() {
-        const promises = [];
-        for (const layer of this.#renderLayers) {
-            promises.push(this.#layerBoundariesPrecalculation(layer).catch((err) => {
-                Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
-            }));
-        }
-        return promises;
-    }
-
-    /**
-     * @ignore
-     */
-    _enableMapBoundaries() {
-        this.#isWorldBoundariesEnabled = true;
+        //const promises = [];
+        //for (const layer of this.#renderLayers) {
+        //    promises.push(this.#layerBoundariesPrecalculation(layer).catch((err) => {
+        //        Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
+        //    }));
+        //}
+        //return promises;
     }
 
     #clearWebGlContext() {
@@ -242,14 +216,14 @@ export class CanvasView {
 
     /**
      * 
-     * @param {RenderLayer} renderLayer 
+     * @param {TiledRenderLayer} renderLayer 
      * @returns {Promise<void>}
      */
     #bindRenderLayerWM(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
-                tilesetImages = tilesets.map((tileset) => this.#getImage(tileset.data.name)),
+                tilesetImages = tilesets.map((tileset) => this.loader.getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 setBoundaries = false;//, //renderLayer.setBoundaries,
@@ -292,21 +266,21 @@ export class CanvasView {
 
     /**
      * 
-     * @param {RenderLayer} renderLayer 
+     * @param {TiledRenderLayer} renderLayer 
      * @returns {Promise<void>}
      */
     #bindRenderLayer(renderLayer) {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
-                tilesetImages = tilesets.map((tileset) => this.#getImage(tileset.data.name)),
+                tilesetImages = tilesets.map((tileset) => this.loader.getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 tilewidth = dtwidth,
                 tileheight = dtheight,
                 [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
                 [ canvasW, canvasH ] = this.screenPageData.canvasDimensions,
-                [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
+                [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
                 boundariesCalculations = this.systemSettings.gameOptions.render.boundaries.realtimeCalculations,
                 setBoundaries = renderLayer.setBoundaries && boundariesCalculations;
                 
@@ -354,7 +328,7 @@ export class CanvasView {
                     }
                     
                     // boundaries cleanups every draw circle, we need to set world boundaries again
-                    if (this.#isWorldBoundariesEnabled) {
+                    if (this.screenPageData.isWorldBoundariesEnabled) {
                         this.screenPageData._setMapBoundaries();
                     }
                 }
@@ -558,17 +532,13 @@ export class CanvasView {
     }
 
     #postRenderActions() {
-        const images = this.getObjectsByInstance(DrawImageObject);
+        const images = this.screenPageData.getObjectsByInstance(DrawImageObject);
         for (let i = 0; i < images.length; i++) {
             const object = images[i];
             if (object.isAnimations) {
                 object._processActiveAnimations();
             }
         }
-    }
-
-    #getImage(key) {
-        return this.loader.getImage(key);
     }
 
     #bindTileImages(verticesBufferData, texturesBufferData, atlasImage, image_name, shapeMaskId, drawMask, rotation, translation) {
@@ -581,7 +551,7 @@ export class CanvasView {
 
     /**
      * 
-     * @param {RenderLayer} renderLayer 
+     * @param {TiledRenderLayer} renderLayer 
      * @returns {Promise<void>}
      */
     #layerBoundariesPrecalculation(renderLayer) {
@@ -613,7 +583,7 @@ export class CanvasView {
                         this.screenPageData._setWorldDimensions(worldW, worldH);
                     }
                     
-                    if (this.#isWorldBoundariesEnabled) {
+                    if (this.screenPageData.isWorldBoundariesEnabled) {
                         this.screenPageData._setWholeWorldMapBoundaries();
                     }
 
@@ -651,70 +621,75 @@ export class CanvasView {
 
     /**
      * 
-     * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject} renderObject 
+     * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | TiledRenderLayer} renderObject 
      * @returns {Promise<void>}
      */
     _bindRenderObject(renderObject) {
-        return new Promise((resolve) => {
-            const [ xOffset, yOffset ] = this.#isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
-                x = renderObject.x - xOffset,
-                y = renderObject.y - yOffset;
+        if (renderObject instanceof TiledRenderLayer) {
+            return this.#bindRenderLayerMethod(renderObject)
+                .then(() => this.#webGlInterface._executeTileImagesDraw());
+        } else {
+            return new Promise((resolve) => {
+                const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : this.screenPageData.worldOffset,
+                    x = renderObject.x - xOffset,
+                    y = renderObject.y - yOffset;
 
-            if (renderObject.type === CONST.DRAW_TYPE.IMAGE) {
-                const atlasImage = this.#getImage(renderObject.key),
-                    animationIndex = renderObject.imageIndex;
-                let imageX = 0,
-                    imageY = 0;
-                if (animationIndex !== 0) {
-                    const imageColsNumber = atlasImage.width / renderObject.width;
-                    imageX = animationIndex % imageColsNumber * renderObject.width,
-                    imageY = Math.floor(animationIndex / imageColsNumber) * renderObject.height;
+                if (renderObject.type === CONST.DRAW_TYPE.IMAGE) {
+                    const atlasImage = this.loader.getImage(renderObject.key),
+                        animationIndex = renderObject.imageIndex;
+                    let imageX = 0,
+                        imageY = 0;
+                    if (animationIndex !== 0) {
+                        const imageColsNumber = atlasImage.width / renderObject.width;
+                        imageX = animationIndex % imageColsNumber * renderObject.width,
+                        imageY = Math.floor(animationIndex / imageColsNumber) * renderObject.height;
+                    }
+                    const posX = x - renderObject.width / 2,
+                        posY = y - renderObject.height / 2;
+                    const vecX1 = posX,
+                        vecY1 = posY,
+                        vecX2 = vecX1 + renderObject.width,
+                        vecY2 = vecY1 + renderObject.height,
+                        texX1 = 1 / atlasImage.width * imageX,
+                        texY1 = 1 / atlasImage.height * imageY,
+                        texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
+                        texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
+                    const verticesBufferData = [
+                            vecX1, vecY1,
+                            vecX2, vecY1,
+                            vecX1, vecY2,
+                            vecX1, vecY2,
+                            vecX2, vecY1,
+                            vecX2, vecY2
+                        ],
+                        texturesBufferData = [
+                            texX1, texY1,
+                            texX2, texY1,
+                            texX1, texY2,
+                            texX1, texY2,
+                            texX2, texY1,
+                            texX2, texY2
+                        ];
+                    this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y], [1, 1], renderObject._maskId);
+                    if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
+                        const shiftX = x,// - renderObject.boundaries[0],
+                            shiftY = y,// - renderObject.boundaries[1],
+                            rotation = renderObject.rotation ? renderObject.rotation : 0;
+                        this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
+                    }
+                    //ctx.restore();
+                } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {
+                    this.#webGlInterface._bindText(x, y, renderObject);
+                } else if (renderObject.type === CONST.DRAW_TYPE.CIRCLE || renderObject.type === CONST.DRAW_TYPE.CONUS) {
+                    this.#webGlInterface._bindConus(renderObject, renderObject.rotation, [x, y]);
+                } else if (renderObject.type === CONST.DRAW_TYPE.LINE) {
+                    this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth, renderObject.rotation, [x, y]);
+                } else {
+                    this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
                 }
-                const posX = x - renderObject.width / 2,
-                    posY = y - renderObject.height / 2;
-                const vecX1 = posX,
-                    vecY1 = posY,
-                    vecX2 = vecX1 + renderObject.width,
-                    vecY2 = vecY1 + renderObject.height,
-                    texX1 = 1 / atlasImage.width * imageX,
-                    texY1 = 1 / atlasImage.height * imageY,
-                    texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
-                    texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
-                const verticesBufferData = [
-                        vecX1, vecY1,
-                        vecX2, vecY1,
-                        vecX1, vecY2,
-                        vecX1, vecY2,
-                        vecX2, vecY1,
-                        vecX2, vecY2
-                    ],
-                    texturesBufferData = [
-                        texX1, texY1,
-                        texX2, texY1,
-                        texX1, texY2,
-                        texX1, texY2,
-                        texX2, texY1,
-                        texX2, texY2
-                    ];
-                this.#webGlInterface._bindAndDrawTileImages(verticesBufferData, texturesBufferData, atlasImage, renderObject.key, renderObject.rotation, [x, y], [1, 1], renderObject._maskId);
-                if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
-                    const shiftX = x,// - renderObject.boundaries[0],
-                        shiftY = y,// - renderObject.boundaries[1],
-                        rotation = renderObject.rotation ? renderObject.rotation : 0;
-                    this.#webGlInterface._drawPolygon(renderObject.vertices, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth, rotation, [shiftX, shiftY]);
-                }
-                //ctx.restore();
-            } else if (renderObject.type === CONST.DRAW_TYPE.TEXT) {
-                this.#webGlInterface._bindText(x, y, renderObject);
-            } else if (renderObject.type === CONST.DRAW_TYPE.CIRCLE || renderObject.type === CONST.DRAW_TYPE.CONUS) {
-                this.#webGlInterface._bindConus(renderObject, renderObject.rotation, [x, y]);
-            } else if (renderObject.type === CONST.DRAW_TYPE.LINE) {
-                this.#webGlInterface._drawLines(renderObject.vertices, renderObject.bgColor, this.systemSettings.gameOptions.boundariesWidth, renderObject.rotation, [x, y]);
-            } else {
-                this.#webGlInterface._bindPrimitives(renderObject, renderObject.rotation, [x, y]);
-            }
-            return resolve();
-        });
+                return resolve();
+            });
+        }
     }
 
     //#clearRenderObjectPromises() {

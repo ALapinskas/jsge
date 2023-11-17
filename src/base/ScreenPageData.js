@@ -28,6 +28,30 @@ export class ScreenPageData {
      * @type {Array<Array<number>>}
      */
     #wholeWorldBoundaries = [];
+    /**
+     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | TiledRenderLayer>}
+     */
+    #renderObjects = [];
+    
+    /**
+     * @type {boolean}
+     */
+    #isOffsetTurnedOff;
+    /**
+     * @type {boolean}
+     */
+    #isWorldBoundariesEnabled = false;
+
+    /**
+     * 
+     * @returns {boolean}
+     */
+    isOffsetTurnedOff() {
+        return this.#isOffsetTurnedOff;
+    }
+    set mapRotate(value) {
+        this.#rotate = value;
+    }
 
     /**
      * Add a Boundaries line
@@ -63,10 +87,6 @@ export class ScreenPageData {
     _setWorldDimensions(width, height) {
         this.#worldWidth = width;
         this.#worldHeight = height;
-    }
-
-    set mapRotate(value) {
-        this.#rotate = value;
     }
 
     /**
@@ -151,6 +171,13 @@ export class ScreenPageData {
     }
 
     /**
+     * @ignore
+     */
+    _enableMapBoundaries() {
+        this.#isWorldBoundariesEnabled = true;
+    }
+
+    /**
      * 
      * @returns {Array<Array<number>>}
      */
@@ -160,6 +187,10 @@ export class ScreenPageData {
 
     getWholeWorldBoundaries() {
         return this.#wholeWorldBoundaries;
+    }
+
+    get isWorldBoundariesEnabled() {
+        return this.#isWorldBoundariesEnabled;
     }
     /**
      * @type {Array<number>}
@@ -273,4 +304,32 @@ export class ScreenPageData {
         Logger.debug("center: ", this.mapCenter);   
         */
     };
+
+    /**
+     * a getter to retrieve all attached renderObjects
+     */
+    get renderObjects() {
+        return this.#renderObjects;
+    }
+
+     /**
+     * Retrieve specific objects instances
+     * @param {Object} instance - drawObjectInstance to retrieve 
+     * @returns {Array<Object>}
+     */
+    getObjectsByInstance(instance) {
+        return this.#renderObjects.filter((object) => object instanceof instance);
+    }
+
+    _sortRenderObjectsBySortIndex() {
+        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.sortIndex - obj1.sortIndex);
+    }
+
+    set _renderObject(object) {
+        this.#renderObjects.push(object);
+    } 
+
+    set _renderObjects(objects) {
+        this.#renderObjects = objects;
+    } 
 }

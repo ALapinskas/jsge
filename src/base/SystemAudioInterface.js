@@ -16,10 +16,10 @@ export class SystemAudioInterface {
     /**
      * @type {AssetsManager}
      */
-    #loader;
+    #loaderReference;
 
     constructor(loader) {
-        this.#loader = loader;
+        this.#loaderReference = loader;
     }
 
     /**
@@ -88,7 +88,7 @@ export class SystemAudioInterface {
      * @param {string} name
      */
     registerAudio(name) {
-        let mediaElement = this.#loader.getAudio(name);
+        let mediaElement = this.#loaderReference.getAudio(name);
         this.#audio.set(name, mediaElement);
     }
 }

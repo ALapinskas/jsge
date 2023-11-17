@@ -19,9 +19,7 @@ const SPINE = {
 export class SpinePage extends ScreenPage {
 
     register() {
-        this.createCanvasView(CONST.LAYERS.DEFAULT);
-        const spineView = this.createCanvasView(SPINE_VIEW_KEY, true);
-        this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets", spineView);
+        this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets", this.canvasInterface);
         // spine methods will be available after spine module installation
         this.loader.addSpineJson(SPINE.SpineText, "./spine/spine-assets/spineboy-pro.json");
         this.loader.addSpineBinary(SPINE.SpineBinary, "./spine/spine-assets/spineboy-pro.skel");
@@ -45,7 +43,6 @@ export class SpinePage extends ScreenPage {
         
         this.addRenderObject(SPINE_VIEW_KEY, spineDrawObject);
         spineDrawObject.animationState.setAnimation(0, "run", true);
-
         this.addRenderObject(SPINE_VIEW_KEY, this.spineGoblinObject);
         this.spineGoblinObject.setSkin("goblin");
 

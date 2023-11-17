@@ -37,20 +37,20 @@ export class MapPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
 
-        this.createCanvasView(OVERLAY_LAYER_KEY);
-        this.createCanvasView(CONST.LAYERS.DEFAULT);
+        //this.createCanvasView(OVERLAY_LAYER_KEY);
+        //this.createCanvasView(CONST.LAYERS.DEFAULT);
 
-        if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
-            this.createCanvasView(CONST.LAYERS.BOUNDARIES);
-        }
+        //if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
+            //this.createCanvasView(CONST.LAYERS.BOUNDARIES);
+        //}
 
         this.shadowRect = this.draw.rect(0, 0, w, h, "rgba(0, 0, 0, 0.5)");        
         this.shadowRect.sortIndex = 2;
         this.shadowRect.blendFunc = [WebGLRenderingContext.ONE, WebGLRenderingContext.DST_COLOR];
 
-        this.addRenderObject(OVERLAY_LAYER_KEY, this.shadowRect);
         this.addRenderLayer(OVERLAY_LAYER_KEY, "background", this.tilemapKey);
         this.addRenderLayer(OVERLAY_LAYER_KEY, "walls", this.tilemapKey);
+        this.addRenderObject(OVERLAY_LAYER_KEY, this.shadowRect);
 
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)"); //shapeMask
         this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);

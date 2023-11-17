@@ -3,8 +3,8 @@ import { ScreenPageData } from "./ScreenPageData.js";
 import { Exception, Warning } from "./Exception.js";
 import { Logger } from "./Logger.js";
 import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
-import { RenderLayer } from "./RenderLayer.js";
-import { CanvasView } from "./CanvasView.js";
+import { TiledRenderLayer } from "./TiledRenderLayer.js";
+import { RenderInterface } from "./RenderInterface.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { DrawCircleObject } from "./DrawCircleObject.js";
 import { DrawConusObject } from "./DrawConusObject.js";
@@ -22,7 +22,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * Represents the page of the game,<br>
- * Register and holds CanvasView.<br>
+ * Register and holds CanvasInterface.<br>
  * Contains pages logic.<br>
  * Instances should be created and registered with System.registerPage() factory method
  * 
@@ -45,19 +45,11 @@ export class ScreenPage {
     /**
      * @type {SystemInterface}
      */
-    #system;
+    #systemReference;
     /**
-     * @type {Map<String, CanvasView>}
+     * @type {RenderInterface}
      */
-    #views;
-    /**
-     * @type {ScreenPageData}
-     */
-    #screenPageData;
-    /**
-     * @type {DrawObjectFactory}
-     */
-    #drawObjectFactory = new DrawObjectFactory();
+    #renderInterface;
     /**
      * @type {Array<number>}
      */
@@ -78,8 +70,7 @@ export class ScreenPage {
 
     constructor() {
         this.#isActive = false;
-        this.#views = new Map();
-        this.#screenPageData = new ScreenPageData();
+        //this.#views = new Map();
         this.#tempFPStime = [];
     }
 
@@ -122,9 +113,10 @@ export class ScreenPage {
      */
     _register(name, system) {
         this.#name = name;
-        this.#system = system;
+        this.#systemReference = system;
         this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
         this.#minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
+        this.#renderInterface = new RenderInterface(this.#systemReference.systemSettings, this.loader);
         this.#setWorldDimensions();
         this.#setCanvasSize();
         this.register();
@@ -169,14 +161,14 @@ export class ScreenPage {
      * @type {AssetsManager}
      */
     get loader() {
-        return this.#system.loader;
+        return this.#systemReference.loader;
     }
 
     /**
      * @type {DrawObjectFactory}
      */
     get draw() {
-        return this.#system.drawObjectFactory;
+        return this.#systemReference.drawObjectFactory;
     }
 
     /**
@@ -188,9 +180,10 @@ export class ScreenPage {
      */
     createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
-            const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
-            this.#views.set(name, newView);
-            return newView;
+            console.warn("createCanvasView is deprecated");
+            //const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
+            //this.#views.set(name, newView);
+            return {};//newView;
         } else
             Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
     };
@@ -201,9 +194,10 @@ export class ScreenPage {
      * @ignore
      */
     _attachViewsToContainer(container) {
-        for (const view of this.#views.values()) {
-            this.#attachElementToContainer(view.canvas, container);
-        }
+        this.#attachElementToContainer(this.canvasHtmlElement, container);
+        //for (const view of this.#views.values()) {
+        //    this.#attachElementToContainer(view.canvas, container);
+        //}
     }
 
     /**
@@ -217,12 +211,13 @@ export class ScreenPage {
     addRenderObject = (canvasKey, renderObject) => {
         if (!canvasKey) {
             Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
-        } else if (!this.#views.has(canvasKey)) {
-            Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
+        //} else if (!this.#views.has(canvasKey)) {
+        //    Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
-            const view = this.#views.get(canvasKey);
-            view._renderObject = renderObject;
-            view._sortRenderObjectsBySortIndex();
+            //const view = this.#views.get(canvasKey);
+            const data = this.screenPageData;
+            data._renderObject = renderObject;
+            data._sortRenderObjectsBySortIndex();
         }
     };
 
@@ -237,14 +232,16 @@ export class ScreenPage {
     addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries, shapeMask) => {
         if (!canvasKey) {
             Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
-        } else if (!this.#views.has(canvasKey)) {
-            Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
+        //} else if (!this.#views.has(canvasKey)) {
+        //    Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
-            const view = this.#views.get(canvasKey);
-            view._renderLayers = new RenderLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
+            //const view = this.#views.get(canvasKey);
+            const data = this.screenPageData;
+            data._renderObject = new TiledRenderLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
             if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
-                view._enableMapBoundaries();
+                data._enableMapBoundaries();
             }
+            data._sortRenderObjectsBySortIndex();
         }
     };
 
@@ -284,32 +281,39 @@ export class ScreenPage {
      * @type {ScreenPageData}
      */
     get screenPageData() {
-        return this.#screenPageData;
+        return this.#renderInterface.screenPageData;
     }
 
     /**
      * @type {SystemSettings}
      */
     get systemSettings() {
-        return this.#system.systemSettings;
+        return this.#systemReference.systemSettings;
     }
 
     /**
      * @type {SystemAudioInterface}
      */
     get audio() {
-        return this.#system.audio;
+        return this.#systemReference.audio;
     }
 
     /**
      * @type {SystemInterface}
      */
     get system() {
-        return this.#system;
+        return this.#systemReference;
     }
 
-    get canvas() {
-        return this.#system.canvas;
+    get canvasHtmlElement() {
+        return this.#renderInterface.canvas;
+    }
+
+    /**
+     * 
+     */
+    get canvasInterface() {
+        return this.#renderInterface;
     }
     
     /**
@@ -318,12 +322,15 @@ export class ScreenPage {
      * @returns {CanvasView | undefined}
      */
     getView = (key) => {
+        console.warn("ScreenPage.getView() is deprecated. Use ScreenPage.canvas instead");
+        return;
+        /*
         const ctx = this.#views.get(key);
         if (ctx) {
             return this.#views.get(key);
         } else {
             Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", cannot find canvas with key " + key);
-        }
+        }*/
     };
 
     /**
@@ -335,9 +342,9 @@ export class ScreenPage {
         this.#isActive = true;
         window.addEventListener("resize", this._resize);
         this._resize();
-        if (this.#views.size > 0) {
+        //if (this.#views.size > 0) {
             requestAnimationFrame(this.#render);
-        }
+        //}
         this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
         this.start(options);
     }
@@ -350,7 +357,7 @@ export class ScreenPage {
         this.#isActive = false;
         window.removeEventListener("resize", this._resize);
         this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
-        //this.#removeCanvasFromDom();
+        this.#removeCanvasFromDom();
         clearInterval(this.#fpsAverageCountTimer);
         this.stop();
     }
@@ -373,11 +380,14 @@ export class ScreenPage {
         container.appendChild(htmlElement);
     }
 
-    //#removeCanvasFromDom() {
-    //    for (const view of this.#views.values()) {
-    //        document.getElementById(view.canvas.id).remove();
-    //    }
-    //}
+    #removeCanvasFromDom() {
+        for (const canvas of document.getElementsByTagName("canvas")) {
+            canvas.remove();
+        }
+        //for (const view of this.#views.values()) {
+        //        document.getElementById(view.canvas.id).remove();
+        //    }
+    }
 
     #setWorldDimensions() {
         const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
@@ -612,7 +622,7 @@ export class ScreenPage {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
         this.screenPageData._setCanvasDimensions(canvasWidth, canvasHeight);
-        this.system.setCanvasSize(canvasWidth, canvasHeight)
+        this.#renderInterface.setCanvasSize(canvasWidth, canvasHeight)
         //for (const view of this.#views.values()) {
         //    view._setCanvasSize(canvasWidth, canvasHeight);
         //}
@@ -661,11 +671,12 @@ export class ScreenPage {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
             const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
-            viewPromises.push(this.system.initiateContext());
+            viewPromises.push(this.#renderInterface.initiateContext());
             if (isBoundariesPrecalculations) {
-                for (const view of this.#views.values()) {
-                    viewPromises.push(view._createBoundariesPrecalculations());
-                }
+                console.warn("isBoundariesPrecalculations() is turned off");
+                //for (const view of this.#views.values()) {
+                //viewPromises.push(this.#renderInterface._createBoundariesPrecalculations());
+                //}
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {
                 drawingResults.forEach((result) => {
@@ -687,12 +698,14 @@ export class ScreenPage {
         let viewPromises = [];
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
         this.screenPageData._clearBoundaries();
-        this.system.clearContext();
+        this.#renderInterface.clearContext();
         
-        for (const [key, view] of this.#views.entries()) {
-            const render = await view.render(key);
-            viewPromises.push(render);
-        }
+        //for (const [key, view] of this.#views.entries()) {
+        //    const render = await view.render(key);
+        //    viewPromises.push(render);
+        //}
+        const render = await this.#renderInterface.render();
+        viewPromises.push(render);
         Promise.allSettled(viewPromises).then((drawingResults) => {
             drawingResults.forEach((result) => {
                 if (result.status === "rejected") {

@@ -7,7 +7,7 @@ export const SystemSettings = {
     
     gameOptions: {
         library: CONST.LIBRARY.WEBGL,
-        checkWebGlErrors: false,
+        checkWebGlErrors: true,
         debugMobileTouch: false,
         optimization: null,
         loadingScreen: {

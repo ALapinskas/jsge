@@ -65,6 +65,7 @@ export class MapPage extends ScreenPage {
             }], "rgba(100,120,100,1)");
         this.#windDirectionPointer.x = 50;
         this.#windDirectionPointer.y = 50;
+        this.#windDirectionPointer.turnOffOffset();
         this.audio.registerAudio(SAILS_UP_AUDIO);
         this.addRenderObject(CONTROLS_LAYER, this.#windDirectionPointer);
 

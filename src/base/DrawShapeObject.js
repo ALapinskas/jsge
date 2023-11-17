@@ -41,6 +41,11 @@ export class DrawShapeObject {
      */
     #attachedMaskId;
     /**
+     * @type {boolean}
+     */
+    #isOffsetTurnedOff;
+
+    /**
      * @hideconstructor
      */
     constructor(type, mapX, mapY, bgColor) {
@@ -161,6 +166,13 @@ export class DrawShapeObject {
 
     removeMask() {
         this.#attachedMaskId = null;
+    }
+    get isOffsetTurnedOff() {
+        return this.#isOffsetTurnedOff;
+    }
+
+    turnOffOffset() {
+        this.#isOffsetTurnedOff = true;
     }
     /**
      * @param {number} width 

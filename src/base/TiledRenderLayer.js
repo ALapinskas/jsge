@@ -1,11 +1,12 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
-export class RenderLayer {
+export class TiledRenderLayer {
     #layerKey;
     #tileMapKey;
     #setBoundaries;
     #drawBoundaries;
     #attachedMaskId;
+    #isOffsetTurnedOff;
 
     constructor(layerKey, tileMapKey, setBoundaries = false, shapeMask) {
         this.#layerKey = layerKey;
@@ -68,5 +69,12 @@ export class RenderLayer {
 
     removeMask() {
         this.#attachedMaskId = null;
+    }
+
+    get isOffsetTurnedOff() {
+        return this.#isOffsetTurnedOff;
+    }
+    turnOffOffset() {
+        this.#isOffsetTurnedOff = true;
     }
 }
