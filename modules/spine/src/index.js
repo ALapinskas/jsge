@@ -115,10 +115,8 @@ class DrawSpineTexture {
 }
 //console.log(new Skeleton());
 export default class SpineModuleInitialization {
-    #registeredView;
+    #renderInterface;
     #systemInterface;
-    #context;
-    #sceneRenderer;
     constructor(systemInterface, spineFolder, renderInterface) {
         this.#systemInterface = systemInterface;
         this.#registerSpineLoaders(this.#systemInterface.loader, spineFolder);
@@ -165,7 +163,7 @@ export default class SpineModuleInitialization {
         spineTexture = (x, y, width, height, imageKey) => {
             const image = this.#systemInterface.loader.getImage(imageKey);
             if (image) {
-                return new DrawSpineTexture(x, y, width, height, new GLTexture(this.#registeredView.drawContext, image));
+                return new DrawSpineTexture(x, y, width, height, new GLTexture(this.#renderInterface.drawContext, image));
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
             }
@@ -197,11 +195,11 @@ export default class SpineModuleInitialization {
         for (let page of textureAtlas.pages) {
             const img = this.#systemInterface.loader.getImage(page.name);
             for (let region of page.regions) {
-                if (!this.#registeredView.drawContext) {
+                if (!this.#renderInterface.drawContext) {
                     console.error("no view is registered on the module!");
                     return;
                 }
-                region.texture = new GLTexture(this.#registeredView.drawContext, img);
+                region.texture = new GLTexture(this.#renderInterface.drawContext, img);
             }
         }
     }
@@ -219,23 +217,28 @@ export default class SpineModuleInitialization {
      * @param {RenderInterface} renderInterface
      */
     extendRenderInterface(renderInterface) {
-        this.#registeredView = renderInterface;
+        this.#renderInterface = renderInterface;
         
         this.#setCanvasSize(renderInterface);
-        this.#sceneRenderer = new SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+        //this.#sceneRenderer = new SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
 
         // rewrite default render init
-        //this.#registeredView.initiateContext = () => Promise.resolve();
+        const currentInit = this.#renderInterface.initiateContext;
+        this.#renderInterface.initiateContext = () => currentInit().then(() => {
+            // introduce a custom renderer
+            this.#renderInterface.sceneRenderer = new SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+        });
 
         const gl = renderInterface.drawContext;
-        this.#registeredView.render = async() => {
+        this.#renderInterface.render = async() => {
             //gl.clearColor(0, 0, 0, 0);
             // Clear the color buffer with specified clear color
             //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            this.#registeredView.clearContext();
-            const renderObjects = this.#registeredView.screenPageData.renderObjects;
-            this.#registeredView._bindRenderObjectPromises = [];
-            this.time.update();
+            const sceneRenderer = this.#renderInterface.sceneRenderer;
+            this.#renderInterface.clearContext();
+            const renderObjects = this.#renderInterface.screenPageData.renderObjects;
+            this.#renderInterface._bindRenderObjectPromises = [];
+            
             for (let i = 0; i < renderObjects.length; i++) {
                 const object = renderObjects[i];
                 if (object.isRemoved) {
@@ -245,30 +248,31 @@ export default class SpineModuleInitialization {
                 let promise;
                 if (object instanceof DrawSpineObject) {
                     promise = new Promise((resolve, reject) => {
+                        this.time.update();
                         // a workaround for drawing different objects(switch draw programs)
-                        this.#sceneRenderer.end();
+                        sceneRenderer.end();
                         //
                         object.update(this.time.delta);
-                        this.#sceneRenderer.drawSkeleton(object.skeleton, false);
+                        sceneRenderer.drawSkeleton(object.skeleton, false);
                         resolve();
                     });
                 } else if (object instanceof DrawSpineTexture) {
                     promise = new Promise((resolve, reject) => {
                         // a workaround for drawing different objects(switch draw programs)
-                        this.#sceneRenderer.end();
+                        sceneRenderer.end();
                         //
-                        this.#sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
+                        sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
                         resolve();
                     });
                 } else {
-                    promise = await this.#registeredView._bindRenderObject(object).then(()=> {
+                    promise = await this.#renderInterface._bindRenderObject(object).then(()=> {
                         return Promise.resolve();
                     }).catch((err) => Promise.reject(err));
                 }
-                this.#registeredView._bindRenderObjectPromises.push(promise);
+                this.#renderInterface._bindRenderObjectPromises.push(promise);
             }
 
-            return Promise.allSettled(this.#registeredView._bindRenderObjectPromises)
+            return Promise.allSettled(this.#renderInterface._bindRenderObjectPromises)
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {

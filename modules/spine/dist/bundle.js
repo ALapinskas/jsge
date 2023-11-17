@@ -16037,22 +16037,25 @@ class SpineModuleInitialization {
         this.#registeredView = renderInterface;
         
         this.#setCanvasSize(renderInterface);
-        this.#sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+        //this.#sceneRenderer = new SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
 
         // rewrite default render init
-        //this.#registeredView.initiateContext = () => Promise.resolve();
+        const currentInit = this.#registeredView.initiateContext;
+        this.#registeredView.initiateContext = () => currentInit().then(() => {
+            // introduce a custom renderer
+            this.#registeredView.sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+        });
 
         const gl = renderInterface.drawContext;
         this.#registeredView.render = async() => {
             //gl.clearColor(0, 0, 0, 0);
             // Clear the color buffer with specified clear color
             //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            const sceneRenderer = this.#registeredView.sceneRenderer;
             this.#registeredView.clearContext();
             const renderObjects = this.#registeredView.screenPageData.renderObjects;
             this.#registeredView._bindRenderObjectPromises = [];
-            // Begin rendering.
-            //this.#sceneRenderer.begin();
-            this.time.update();
+            
             for (let i = 0; i < renderObjects.length; i++) {
                 const object = renderObjects[i];
                 if (object.isRemoved) {
@@ -16062,21 +16065,24 @@ class SpineModuleInitialization {
                 let promise;
                 if (object instanceof DrawSpineObject) {
                     promise = new Promise((resolve, reject) => {
+                        this.time.update();
+                        // a workaround for drawing different objects(switch draw programs)
+                        sceneRenderer.end();
+                        //
                         object.update(this.time.delta);
-                        this.#sceneRenderer.drawSkeleton(object.skeleton, false);
+                        sceneRenderer.drawSkeleton(object.skeleton, false);
                         resolve();
                     });
                 } else if (object instanceof DrawSpineTexture) {
                     promise = new Promise((resolve, reject) => {
-                        this.#sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
+                        // a workaround for drawing different objects(switch draw programs)
+                        sceneRenderer.end();
+                        //
+                        sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
                         resolve();
                     });
                 } else {
                     promise = await this.#registeredView._bindRenderObject(object).then(()=> {
-                        this.#sceneRenderer.end();
-                        console.log("end drawing object");
-                        //renderInterface.drawContext.disable(gl.BLEND);
-                        //renderInterface.drawContext.disable(gl.STENCIL_TEST);
                         return Promise.resolve();
                     }).catch((err) => Promise.reject(err));
                 }
@@ -16085,7 +16091,6 @@ class SpineModuleInitialization {
 
             return Promise.allSettled(this.#registeredView._bindRenderObjectPromises)
                 .then((bindResults) => {
-                    //this.#sceneRenderer.end();
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {
                             console.error(result.reason);
