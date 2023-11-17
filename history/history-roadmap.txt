@@ -21,6 +21,18 @@ r: code refactoring
 f: fixed defects
 
 # History
+0.3.0:
+    r: CanvasView -> RenderInterface
+    r: removed multiple layers and layers create
+    r: ScreenPage.ScreenPageData moved to RenderInterface.ScreenPageData
+    r: removed RenderInterface.#renderLayers, any draw object will be added to #renderObjects array now
+    r: RenderInterface.#renderObjects moved to RenderInterface.ScreenPageData.#renderObjects
+    r: RenderLayer -> TiledRenderLayer
+    +: drawMasks introduced
+    +: DrawShapeObject.setMask(), DrawShapeObject.removeMask()
+    +: TiledRenderLayer.setMask(), TiledRenderLayer.removeMask()
+    +: SystemInterface.registerDrawObject() for add new drawObjects
+    
 0.2.0:
     +: modules installing with system.installModule(key, moduleClass, ...params)
     +: spine module, integration spine runtimes

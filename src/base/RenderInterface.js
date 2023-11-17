@@ -100,7 +100,7 @@ export class RenderInterface {
         return this.#drawContext;
     }
 
-    initiateContext() {
+    initiateContext = () => {
         return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
             this.#webGlInterface._initPrimitivesDrawProgram(), this.#webGlInterface._initWebGlAttributes()]);
     }

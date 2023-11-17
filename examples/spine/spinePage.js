@@ -33,7 +33,7 @@ export class SpinePage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
 
-        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.8)");        
+        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
 
         const spineDrawObject = this.draw.spine(-300, -300, SPINE.SpineText, SPINE.SpineAtlas);
