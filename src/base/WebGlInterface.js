@@ -370,7 +370,7 @@ export class WebGlInterface {
                 gl.uniform1f(rotationRotation, data.rotation);
                 
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vectors), gl.STATIC_DRAW);
+                gl.bufferData(gl.ARRAY_BUFFER, data.vectors, gl.STATIC_DRAW);
 
                 gl.enableVertexAttribArray(positionAttributeLocation);
                 //Tell the attribute how to get data out of positionBuffer
@@ -383,7 +383,7 @@ export class WebGlInterface {
 
                 //textures buffer
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.textures), gl.STATIC_DRAW);
+                gl.bufferData(gl.ARRAY_BUFFER, data.textures, gl.STATIC_DRAW);
 
                 gl.enableVertexAttribArray(texCoordLocation);
                 gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);

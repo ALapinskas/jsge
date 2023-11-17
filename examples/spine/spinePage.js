@@ -1,10 +1,6 @@
 import { ScreenPage, CONST } from "../../src/index.js";
-import { utils } from "../../src/index.js";
 import SpineModuleInitialization from "../../modules/spine/dist/bundle.js";
 
-const isPointRectIntersect = utils.isPointRectIntersect;
-const LEFT_SHIFT = -70;
-const MENU_CLICK_AUDIO_NAME = "menu_click";
 const SPINE_VIEW_KEY = "spine-module-layer";
 
 const SPINE = {
@@ -36,6 +32,7 @@ export class SpinePage extends ScreenPage {
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
 
+        //this.spineModule.activateSpineRender(this.name);
         const spineDrawObject = this.draw.spine(-300, -300, SPINE.SpineText, SPINE.SpineAtlas);
         spineDrawObject.scale(0.5);
 
@@ -58,6 +55,7 @@ export class SpinePage extends ScreenPage {
     }
 
     start() {
+        //this.spineModule.activateSpineRender(SPINE_VIEW_KEY);
         this.registerEventListeners();
     }
 
@@ -68,21 +66,17 @@ export class SpinePage extends ScreenPage {
     registerEventListeners() {
         document.addEventListener("mousemove", this.#mouseHoverEvent);            
         document.addEventListener("click", this.#mouseClickEvent);
-        document.addEventListener("keydown", this.pressKeyAction);
+        document.addEventListener("keydown", this.#pressKeyAction);
         this.changeGoblinSkinButton.addEventListener("click", this.#changeGoblinSkin);
     }
 
     #mouseHoverEvent = (event) => {
-       
-        
     };
 
     #mouseClickEvent = (event) => {
-
     };
 
     #changeGoblinSkin = () => {
-        
         const currentSkin = this.spineGoblinObject.skeleton.skin,
             availableSkins = this.spineGoblinObject.skeleton.data.skins,
             index = this.spineGoblinObject.skeleton.data.skins.indexOf(currentSkin),
@@ -99,7 +93,7 @@ export class SpinePage extends ScreenPage {
     unregisterEventListeners() {
         document.removeEventListener("mousemove", this.#mouseHoverEvent);            
         document.removeEventListener("click", this.#mouseClickEvent);
-        document.removeEventListener("keydown", this.pressKeyAction);
+        document.removeEventListener("keydown", this.#pressKeyAction);
         this.changeGoblinSkinButton.removeEventListener("click", this.#changeGoblinSkin);
     }
 

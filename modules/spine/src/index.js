@@ -9,12 +9,17 @@ import {
 	Vector2,
 } from "@esotericsoftware/spine-core";
 import { AtlasAttachmentLoader, GLTexture, SceneRenderer, SkeletonBinary, SkeletonData, ResizeMode, SkeletonJson, TextureAtlas, ManagedWebGLRenderingContext } from "@esotericsoftware/spine-webgl";
+import { ERROR_MESSAGES } from "./const.js";
 
+const SPINE_ERROR = "SPINE_MODULE_ERROR: ";
 class DrawSpineObject {
     /**
      * @type {Skeleton}
      */
     #skeleton;
+    /**
+     * @type {boolean}
+     */
     #isRemoved = false;
     constructor(mapX, mapY, key, imageIndex = 0, boundaries, skeleton) {
         this.#skeleton = skeleton;
@@ -24,6 +29,9 @@ class DrawSpineObject {
         this.animationState = new AnimationState(this.animationStateData);
     }
 
+    /**
+     * @returns {Skeleton}
+     */
     get skeleton() {
         return this.#skeleton;
     }
@@ -58,7 +66,7 @@ class DrawSpineObject {
             this.#skeleton.setToSetupPose();
             this.#skeleton.updateWorldTransform();
         } else {
-            console.error("no skin with key ", skinKey, " was found");
+            console.error(SPINE_ERROR + "no skin with key ", skinKey, " was found");
         }
 
         // Calculate the bounds so we can center and zoom
@@ -67,6 +75,9 @@ class DrawSpineObject {
         //this.skeleton.getBounds(offset, size);
     }
 
+    /**
+     * @returns {boolean}
+     */
     get isRemoved() {
         return this.#isRemoved;
     }
@@ -77,9 +88,21 @@ class DrawSpineObject {
 }
 
 class DrawSpineTexture {
+    /**
+     * @type {number}
+     */
     #x;
+    /**
+     * @type {number}
+     */
     #y;
+    /**
+     * @type {number}
+     */
     #width;
+    /**
+     * @type {number}
+     */
     #height;
     /**
      * @type {GLTexture}
@@ -155,7 +178,7 @@ export default class SpineModuleInitialization {
         const spine = (x, y, dataKey, atlasKey, imageIndex, boundaries) => {
             const skeleton = this.#createSkeleton(dataKey, atlasKey);
             if (!skeleton || !(skeleton instanceof Skeleton)) {
-                console.error("couldn't create spine skeleton!");
+                throw new Error(SPINE_ERROR + ERROR_MESSAGES.SKELETON_ERROR);
             } else {
                 return new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
             }
@@ -166,6 +189,7 @@ export default class SpineModuleInitialization {
                 return new DrawSpineTexture(x, y, width, height, new GLTexture(this.#renderInterface.drawContext, image));
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
+                return;
             }
         };
         systemInterface.registerDrawObject("spine", spine);
@@ -177,6 +201,9 @@ export default class SpineModuleInitialization {
             spineBinaryFile = this.#systemInterface.loader.getSpineBinary(dataKey),
             spineJsonFile = this.#systemInterface.loader.getSpineJson(dataKey);
 
+        if (!atlas || !(atlas instanceof TextureAtlas)) {
+            throw new Error(SPINE_ERROR + ERROR_MESSAGES.NO_ATLAS);
+        }
         this.#attachAtlasGraphicsData(atlas);
         
         let skeletonData;
@@ -186,12 +213,31 @@ export default class SpineModuleInitialization {
         } else if (spineJsonFile) {
             let json = new SkeletonJson(new AtlasAttachmentLoader(atlas));
             skeletonData = json.readSkeletonData(spineJsonFile);
+        } else {
+            throw new Error(SPINE_ERROR + ERROR_MESSAGES.NO_DATA);
         }
 
         return new Skeleton(skeletonData);
     }
 
+    get context() {
+        if (this.#renderInterface) {
+            return this.#renderInterface.drawContext;
+        } else {
+            throw new Error(SPINE_ERROR + ERROR_MESSAGES.NO_ACTIVATED_VIEW);
+        }
+    }
+
+    get sceneRenderer() {
+        if (this.#renderInterface) {
+            return this.#renderInterface.sceneRenderer;
+        } else {
+            throw new Error(SPINE_ERROR + ERROR_MESSAGES.NO_ACTIVATED_VIEW);
+        }
+    }
+
     #attachAtlasGraphicsData(textureAtlas) {
+        const context = this.context;
         for (let page of textureAtlas.pages) {
             const img = this.#systemInterface.loader.getImage(page.name);
             for (let region of page.regions) {
@@ -244,6 +290,7 @@ export default class SpineModuleInitialization {
                 if (object.isRemoved) {
                     renderObjects.splice(i, 1);
                     i--;
+                    continue;
                 }
                 let promise;
                 if (object instanceof DrawSpineObject) {
@@ -261,6 +308,9 @@ export default class SpineModuleInitialization {
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
                         //
+                        //console.log("draw texture");
+                        //gl.disable(gl.BLEND);
+                        //gl.disable(gl.STENCIL_TEST);
                         sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
                         resolve();
                     });
@@ -276,11 +326,33 @@ export default class SpineModuleInitialization {
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {
-                            console.error(result.reason);
+                            return Promise.reject(result);
                         }
                     });
                     return Promise.resolve();
                 });
         }
     }
+
+    /**
+     * Activate spine render 
+     * @param {string} viewName 
+     */
+    activateSpineRender(viewName) {
+        //const canvasView = this.#renderInterface;
+        //if (canvasView) {
+        //    this.#renderInterface = viewName;
+        //    this.#updateViewRender(canvasView);
+        //} else {
+        //    throw new Error(SPINE_ERROR + "no view " + viewName + " is registered");
+        //}
+    }
+
+    /**
+     * Deactivate spine render
+     * @param {string} viewName
+     */
+    //deactivateSpineRender(viewName) {
+    //    this.#activeView = null;
+    //}
 }

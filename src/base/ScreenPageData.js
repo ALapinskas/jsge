@@ -105,14 +105,17 @@ export class ScreenPageData {
      * @ignore
      */
     _setMapBoundaries() {
-        const [w, h] = [this.#worldWidth, this.#worldHeight];
+        const [w, h] = [this.#worldWidth, this.#worldHeight],
+            [offsetX, offsetY] = [this.#xOffset, this.#yOffset],
+            wOffset = w - offsetX,
+            hOffset = h -offsetY;
         if (!w || !h) {
             Warning(WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
         }
-        this.#addBoundaries({x1: 0, y1: 0, x2: w, y2: 0});
-        this.#addBoundaries({x1: w, y1: 0, x2: w, y2: h});
-        this.#addBoundaries({x1: w, y1: h, x2: 0, y2: h});
-        this.#addBoundaries({x1: 0, y1: h, x2: 0, y2: 0});
+        this.#addBoundaries({x1: 0, y1: 0, x2: wOffset, y2: 0});
+        this.#addBoundaries({x1: wOffset, y1: 0, x2: wOffset, y2: hOffset});
+        this.#addBoundaries({x1: wOffset, y1: hOffset, x2: 0, y2: hOffset});
+        this.#addBoundaries({x1: 0, y1: hOffset, x2: 0, y2: 0});
     }
 
     _setWholeWorldMapBoundaries() {

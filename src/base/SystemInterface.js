@@ -1,10 +1,11 @@
-import { ERROR_CODES } from "../constants.js";
+import { CONST, ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { Exception, Warning } from "./Exception.js";
 import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
 import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
+import { ScreenPage } from "./ScreenPage.js";
 
 /**
  * Public interface for a System<br>
@@ -15,10 +16,22 @@ import { DrawObjectFactory } from "./DrawObjectFactory.js";
  * @see {@link ScreenPage} a part of ScreenPage class instance
  */
 export class SystemInterface {
+    /**
+     * @type {Object}
+     */
     #systemSettings;
     #systemServerConnection;
+    /**
+     * @type {SystemAudioInterface}
+     */
     #systemAudioInterface;
+    /**
+     * @type {AssetsManager}
+     */
     #loader = new AssetsManager();
+    /**
+     * @type {DrawObjectFactory}
+     */
     #drawObjectFactory = new DrawObjectFactory();
     /**
      * @hideconstructor
@@ -56,21 +69,42 @@ export class SystemInterface {
         return this.#systemAudioInterface;
     }
 
+    /**
+     * @type {AssetsManager}
+     */
     get loader() {
         return this.#loader;
     }
 
+    /**
+     * @type {DrawObjectFactory}
+     */
     get drawObjectFactory() {
         return this.#drawObjectFactory;
     }
 
+    /**
+     * @type {Map<string, Object>}
+     */
     get modules() {
         return this.#modules;
     }
 
+    /**
+     * 
+     * @param {string} moduleKey 
+     * @param {Object} moduleClass 
+     * @param  {...any} args 
+     * @returns {Object}
+     */
     installModule = (moduleKey, moduleClass, ...args) => {
         const moduleInstance = new moduleClass(this, ...args);
-        this.#modules.set(moduleKey, moduleInstance);
+        if (this.#modules.has(moduleKey)) {
+            Warning(WARNING_CODES.MODULE_ALREADY_INSTALLED, "module " + moduleKey + " is already installed");
+            return this.#modules.get(moduleKey);
+        } else {
+            this.#modules.set(moduleKey, moduleInstance);
+        }
         return moduleInstance;
     }
     

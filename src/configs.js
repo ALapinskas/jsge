@@ -7,9 +7,9 @@ export const SystemSettings = {
     
     gameOptions: {
         library: CONST.LIBRARY.WEBGL,
-        checkWebGlErrors: true,
+        checkWebGlErrors: false,
         debugMobileTouch: false,
-        optimization: null,
+        optimization: CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
         loadingScreen: {
             backgroundColor:  "rgba(128, 128, 128, 0.6)",
             loadingBarBg: "rgba(128, 128, 128, 1)",

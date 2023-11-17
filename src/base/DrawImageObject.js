@@ -36,6 +36,10 @@ export class DrawImageObject extends DrawShapeObject {
      * @type {Array<Array<number>>}
      */
     #vertices;
+    /**
+     * @type {Object | null}
+     */
+    #circleBoundaries;
 
     /**
      * @hideconstructor
@@ -48,7 +52,8 @@ export class DrawImageObject extends DrawShapeObject {
         this.#imageIndex = imageIndex;
         this.#w = width;
         this.#h = height;
-        this.#vertices = boundaries ? this._convertVerticesArray(boundaries) : this._calculateRectVertices(width, height);
+        this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : this._calculateRectVertices(width, height);
+        this.#circleBoundaries = boundaries && typeof boundaries.r !== "undefined" ? boundaries : null;
     }
 
     /**
@@ -111,6 +116,10 @@ export class DrawImageObject extends DrawShapeObject {
 
     get vertices() {
         return this.#vertices;
+    }
+
+    get circleBoundaries() {
+        return this.#circleBoundaries;
     }
 
     /**

@@ -33,6 +33,29 @@ f: fixed defects
     +: TiledRenderLayer.setMask(), TiledRenderLayer.removeMask()
     +: SystemInterface.registerDrawObject() for add new drawObjects
     
+0.2.3
+    +: circle boundaries
+    +: circle/circle/polygon/boundaries collisions
+    +: spine-animation tutorial
+    
+0.2.21
+    f: fixed removing drawObjects
+    
+0.2.2:
+    +: added system class types
+    r: spine module design updated
+    +: introduced spineModule.activateSpineRender()
+
+0.2.12:
+    f: fixed boundaries drawing
+    f: left and bottom map boundaries count
+    
+0.2.11:
+    f: fixed dependency issue
+
+0.2.1:
+    +: web assembly experiments
+
 0.2.0:
     +: modules installing with system.installModule(key, moduleClass, ...params)
     +: spine module, integration spine runtimes

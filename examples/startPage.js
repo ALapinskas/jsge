@@ -12,11 +12,29 @@ const START_PAGE_NAME = "start",
     RACING_GAME = "racing",
     SPINE_PAGE = "spine";
 
+const SPINE = {
+    SpineTexture: "spineTexture",
+    SpineText: "spineText",
+    SpineBinary: "spineBinary",
+    SpineAtlas: "spineAtlas",
+    SpineGoblinsAtlas: "GoblinsAtlas",
+    SpineGoblinsBinary: "GoblinsBinary"
+};
+
 export class StartPage extends ScreenPage {
     #menuClickMediaElement;
 
     register() {
         this.loader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
+        this.spineModule = this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets");
+        // spine methods will be available after spine module installation
+        this.loader.addSpineJson(SPINE.SpineText, "./spine/spine-assets/spineboy-pro.json");
+        this.loader.addSpineBinary(SPINE.SpineBinary, "./spine/spine-assets/spineboy-pro.skel");
+        this.loader.addSpineAtlas(SPINE.SpineAtlas, "./spine/spine-assets/spineboy-pma.atlas");
+        this.loader.addSpineAtlas(SPINE.SpineGoblinsAtlas, "./spine/spine-assets/goblins-pma.atlas");
+        this.loader.addSpineBinary(SPINE.SpineGoblinsBinary, "./spine/spine-assets/goblins-pro.skel");
+
+        this.loader.addImage(SPINE.SpineTexture, "./spine/spine-assets/spineboy-pma.png");
     }
 
     init() {
@@ -26,7 +44,7 @@ export class StartPage extends ScreenPage {
         
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
-
+        
         this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
         this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");
         this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "black");
@@ -88,9 +106,9 @@ export class StartPage extends ScreenPage {
         }
 
         if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed) {
-            canvas.style.cursor = "pointer";
+            document.body.style.cursor = "pointer";
         } else {
-            canvas.style.cursor = "default";
+            document.body.style.cursor = "default";
         }
 
         

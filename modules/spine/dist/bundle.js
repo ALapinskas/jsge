@@ -15752,6 +15752,28 @@ __webpack_require__.r(__webpack_exports__);
 
 //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEsY0FBYyxnQkFBZ0IsQ0FBQztBQUMvQixjQUFjLFVBQVUsQ0FBQztBQUN6QixjQUFjLG9CQUFvQixDQUFDO0FBQ25DLGNBQWMsYUFBYSxDQUFDO0FBQzVCLGNBQWMsU0FBUyxDQUFDO0FBQ3hCLGNBQWMsaUJBQWlCLENBQUM7QUFDaEMsY0FBYyxXQUFXLENBQUM7QUFDMUIsY0FBYyxRQUFRLENBQUM7QUFDdkIsY0FBYyxrQkFBa0IsQ0FBQztBQUNqQyxjQUFjLGlCQUFpQixDQUFDO0FBQ2hDLGNBQWMsVUFBVSxDQUFDO0FBQ3pCLGNBQWMsaUJBQWlCLENBQUM7QUFDaEMsY0FBYyx5QkFBeUIsQ0FBQztBQUN4QyxjQUFjLG9CQUFvQixDQUFDO0FBQ25DLGNBQWMsZUFBZSxDQUFDO0FBQzlCLGNBQWMsV0FBVyxDQUFDO0FBQzFCLGNBQWMsU0FBUyxDQUFDO0FBQ3hCLGNBQWMsOEJBQThCLENBQUMifQ==
 
+/***/ }),
+
+/***/ "./src/const.js":
+/*!**********************!*\
+  !*** ./src/const.js ***!
+  \**********************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "ERROR_MESSAGES": () => (/* binding */ ERROR_MESSAGES)
+/* harmony export */ });
+const ERROR_MESSAGES = {
+    NOT_REGISTERED: "not registered",
+    NO_ACTIVATED_VIEW: "no view is activated",
+    NO_ATLAS: "no atlas found",
+    NO_DATA: "no json, or binary data",
+    SKELETON_ERROR: "couldn't create spine skeleton!",
+    VIEW_IS_REGISTERED: "view is already registered in the module",
+    UNHANDLED_RENDER_ERROR: "unhandled render error"
+}
+
 /***/ })
 
 /******/ });
@@ -15822,14 +15844,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @esotericsoftware/spine-core */ "./node_modules/@esotericsoftware/spine-core/dist/index.js");
 /* harmony import */ var _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @esotericsoftware/spine-webgl */ "./node_modules/@esotericsoftware/spine-webgl/dist/index.js");
+/* harmony import */ var _const_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./const.js */ "./src/const.js");
 
 
 
+
+const SPINE_ERROR = "SPINE_MODULE_ERROR: ";
 class DrawSpineObject {
     /**
      * @type {Skeleton}
      */
     #skeleton;
+    /**
+     * @type {boolean}
+     */
     #isRemoved = false;
     constructor(mapX, mapY, key, imageIndex = 0, boundaries, skeleton) {
         this.#skeleton = skeleton;
@@ -15839,6 +15867,9 @@ class DrawSpineObject {
         this.animationState = new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.AnimationState(this.animationStateData);
     }
 
+    /**
+     * @returns {Skeleton}
+     */
     get skeleton() {
         return this.#skeleton;
     }
@@ -15873,7 +15904,7 @@ class DrawSpineObject {
             this.#skeleton.setToSetupPose();
             this.#skeleton.updateWorldTransform();
         } else {
-            console.error("no skin with key ", skinKey, " was found");
+            console.error(SPINE_ERROR + "no skin with key ", skinKey, " was found");
         }
 
         // Calculate the bounds so we can center and zoom
@@ -15882,6 +15913,9 @@ class DrawSpineObject {
         //this.skeleton.getBounds(offset, size);
     }
 
+    /**
+     * @returns {boolean}
+     */
     get isRemoved() {
         return this.#isRemoved;
     }
@@ -15892,9 +15926,21 @@ class DrawSpineObject {
 }
 
 class DrawSpineTexture {
+    /**
+     * @type {number}
+     */
     #x;
+    /**
+     * @type {number}
+     */
     #y;
+    /**
+     * @type {number}
+     */
     #width;
+    /**
+     * @type {number}
+     */
     #height;
     /**
      * @type {GLTexture}
@@ -15930,10 +15976,8 @@ class DrawSpineTexture {
 }
 //console.log(new Skeleton());
 class SpineModuleInitialization {
-    #registeredView;
+    #renderInterface;
     #systemInterface;
-    #context;
-    #sceneRenderer;
     constructor(systemInterface, spineFolder, renderInterface) {
         this.#systemInterface = systemInterface;
         this.#registerSpineLoaders(this.#systemInterface.loader, spineFolder);
@@ -15972,7 +16016,7 @@ class SpineModuleInitialization {
         const spine = (x, y, dataKey, atlasKey, imageIndex, boundaries) => {
             const skeleton = this.#createSkeleton(dataKey, atlasKey);
             if (!skeleton || !(skeleton instanceof _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.Skeleton)) {
-                console.error("couldn't create spine skeleton!");
+                throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.SKELETON_ERROR);
             } else {
                 return new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
             }
@@ -15980,9 +16024,10 @@ class SpineModuleInitialization {
         spineTexture = (x, y, width, height, imageKey) => {
             const image = this.#systemInterface.loader.getImage(imageKey);
             if (image) {
-                return new DrawSpineTexture(x, y, width, height, new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(this.#registeredView.drawContext, image));
+                return new DrawSpineTexture(x, y, width, height, new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(this.#renderInterface.drawContext, image));
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
+                return;
             }
         };
         systemInterface.registerDrawObject("spine", spine);
@@ -15994,6 +16039,9 @@ class SpineModuleInitialization {
             spineBinaryFile = this.#systemInterface.loader.getSpineBinary(dataKey),
             spineJsonFile = this.#systemInterface.loader.getSpineJson(dataKey);
 
+        if (!atlas || !(atlas instanceof _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.TextureAtlas)) {
+            throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.NO_ATLAS);
+        }
         this.#attachAtlasGraphicsData(atlas);
         
         let skeletonData;
@@ -16003,20 +16051,39 @@ class SpineModuleInitialization {
         } else if (spineJsonFile) {
             let json = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SkeletonJson(new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.AtlasAttachmentLoader(atlas));
             skeletonData = json.readSkeletonData(spineJsonFile);
+        } else {
+            throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.NO_DATA);
         }
 
         return new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.Skeleton(skeletonData);
     }
 
+    get context() {
+        if (this.#renderInterface) {
+            return this.#renderInterface.drawContext;
+        } else {
+            throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.NO_ACTIVATED_VIEW);
+        }
+    }
+
+    get sceneRenderer() {
+        if (this.#renderInterface) {
+            return this.#renderInterface.sceneRenderer;
+        } else {
+            throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.NO_ACTIVATED_VIEW);
+        }
+    }
+
     #attachAtlasGraphicsData(textureAtlas) {
+        const context = this.context;
         for (let page of textureAtlas.pages) {
             const img = this.#systemInterface.loader.getImage(page.name);
             for (let region of page.regions) {
-                if (!this.#registeredView.drawContext) {
+                if (!this.#renderInterface.drawContext) {
                     console.error("no view is registered on the module!");
                     return;
                 }
-                region.texture = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(this.#registeredView.drawContext, img);
+                region.texture = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(this.#renderInterface.drawContext, img);
             }
         }
     }
@@ -16034,33 +16101,34 @@ class SpineModuleInitialization {
      * @param {RenderInterface} renderInterface
      */
     extendRenderInterface(renderInterface) {
-        this.#registeredView = renderInterface;
+        this.#renderInterface = renderInterface;
         
         this.#setCanvasSize(renderInterface);
         //this.#sceneRenderer = new SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
 
         // rewrite default render init
-        const currentInit = this.#registeredView.initiateContext;
-        this.#registeredView.initiateContext = () => currentInit().then(() => {
+        const currentInit = this.#renderInterface.initiateContext;
+        this.#renderInterface.initiateContext = () => currentInit().then(() => {
             // introduce a custom renderer
-            this.#registeredView.sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+            this.#renderInterface.sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
         });
 
         const gl = renderInterface.drawContext;
-        this.#registeredView.render = async() => {
+        this.#renderInterface.render = async() => {
             //gl.clearColor(0, 0, 0, 0);
             // Clear the color buffer with specified clear color
             //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            const sceneRenderer = this.#registeredView.sceneRenderer;
-            this.#registeredView.clearContext();
-            const renderObjects = this.#registeredView.screenPageData.renderObjects;
-            this.#registeredView._bindRenderObjectPromises = [];
+            const sceneRenderer = this.#renderInterface.sceneRenderer;
+            this.#renderInterface.clearContext();
+            const renderObjects = this.#renderInterface.screenPageData.renderObjects;
+            this.#renderInterface._bindRenderObjectPromises = [];
             
             for (let i = 0; i < renderObjects.length; i++) {
                 const object = renderObjects[i];
                 if (object.isRemoved) {
                     renderObjects.splice(i, 1);
                     i--;
+                    continue;
                 }
                 let promise;
                 if (object instanceof DrawSpineObject) {
@@ -16069,6 +16137,7 @@ class SpineModuleInitialization {
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
                         //
+                        this
                         object.update(this.time.delta);
                         sceneRenderer.drawSkeleton(object.skeleton, false);
                         resolve();
@@ -16078,28 +16147,53 @@ class SpineModuleInitialization {
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
                         //
+                        //console.log("draw texture");
+                        gl.disable(gl.BLEND);
+                        gl.disable(gl.STENCIL_TEST);
                         sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
                         resolve();
                     });
                 } else {
-                    promise = await this.#registeredView._bindRenderObject(object).then(()=> {
+                    promise = await this.#renderInterface._bindRenderObject(object).then(()=> {
                         return Promise.resolve();
                     }).catch((err) => Promise.reject(err));
                 }
-                this.#registeredView._bindRenderObjectPromises.push(promise);
+                this.#renderInterface._bindRenderObjectPromises.push(promise);
             }
 
-            return Promise.allSettled(this.#registeredView._bindRenderObjectPromises)
+            return Promise.allSettled(this.#renderInterface._bindRenderObjectPromises)
                 .then((bindResults) => {
                     bindResults.forEach((result) => {
                         if (result.status === "rejected") {
-                            console.error(result.reason);
+                            return Promise.reject(result);
                         }
                     });
                     return Promise.resolve();
                 });
         }
     }
+
+    /**
+     * Activate spine render 
+     * @param {string} viewName 
+     */
+    activateSpineRender(viewName) {
+        //const canvasView = this.#renderInterface;
+        //if (canvasView) {
+        //    this.#renderInterface = viewName;
+        //    this.#updateViewRender(canvasView);
+        //} else {
+        //    throw new Error(SPINE_ERROR + "no view " + viewName + " is registered");
+        //}
+    }
+
+    /**
+     * Deactivate spine render
+     * @param {string} viewName
+     */
+    //deactivateSpineRender(viewName) {
+    //    this.#activeView = null;
+    //}
 }
 })();
 

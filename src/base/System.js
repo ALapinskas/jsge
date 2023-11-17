@@ -14,6 +14,9 @@ const loadingPageName = "loadingPage";
  * init and preload data for them,<br>
  */
 export class System {
+    /**
+     * @type {Map<string, ScreenPage>}
+     */
     #registeredPages;
     /**
      * @type {SystemInterface}

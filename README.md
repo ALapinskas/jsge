@@ -1,4 +1,4 @@
-# JsGE@0.2.0
+# JsGE@0.2.3
 
 Javascript Game Engine
 
@@ -20,7 +20,7 @@ What you can do with it:
 6. Map centering. Cutting off everything out off screen.
 7. Boundaries could be extracted from tiles and used further.
 8. Map objects supports boundaries(dot, polygon).
-9. Collision detection for dots, lines and polygons included.
+9. Collision detection for dots, lines, circles and polygons included.
 10. Boundaries helper drawing as debug option.
 
 How to run examples:

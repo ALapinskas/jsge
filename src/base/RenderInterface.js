@@ -67,9 +67,10 @@ export class RenderInterface {
     #loaderReference;
     #bindRenderLayerMethod;
 
-    constructor(systemSettings, loader) {
+    constructor(name, systemSettings, loader) {
         this.#isCleared = false;
         this.#canvas = document.createElement("canvas");
+        this.#canvas.id = name;
         this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
 
         this.#systemSettingsReference = systemSettings;
@@ -77,7 +78,47 @@ export class RenderInterface {
 
         this.#screenPageData = new ScreenPageData();
         this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettingsReference.gameOptions.checkWebGlErrors);
-        this.#bindRenderLayerMethod = this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT ? this.#bindRenderLayerWM : this.#bindRenderLayer;
+        switch (this.systemSettings.gameOptions.optimization) {
+            case CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
+                this.#bindRenderLayerMethod = this.#bindRenderLayer;
+                break;
+            case CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
+                this.#bindRenderLayerMethod = this.#bindRenderLayerOld;
+                break;
+            case CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM:
+                this.#bindRenderLayerMethod = this.#bindRenderLayerWM;
+                break;
+            case CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
+                Warning("Sorry, " + CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT + ", is not supported, switching to default");
+            default:
+                this.#bindRenderLayerMethod = this.#bindRenderLayer;
+        }
+    }
+
+     /**
+     * 
+     * @returns {Promise<void>}
+     */
+     initiateWasm = () => {
+        return new Promise((resolve, reject) => {
+            this.layerData = new WebAssembly.Memory({initial:50});
+            this.layerDataFloat32 = new Float32Array(this.layerData.buffer);
+            const importObject = {
+                env: {
+                    data: this.layerData,
+                    logi: console.log,
+                    logf: console.log
+                }
+            };
+
+            fetch("/src/wa/calculateBufferData.wasm")
+            .then((response) => response.arrayBuffer())
+            .then((module) => WebAssembly.instantiate(module, importObject))
+            .then((obj) => {
+                this.calculateBufferData = obj.instance.exports.calculateBufferData;
+                resolve();
+            });
+        })
     }
 
     get screenPageData() {
@@ -139,20 +180,20 @@ export class RenderInterface {
                 });
                 await this.#webGlInterface._executeTileImagesDraw();
             }*/
-            
+            let renderObjectsPromises = [];
             const renderObjects = this.screenPageData.renderObjects;
             if (renderObjects.length !== 0) {
-                let renderObjectsPromises = [];
                 //this.#checkCollisions(view.renderObjects);
                 for (let i = 0; i < renderObjects.length; i++) {
                     const object = renderObjects[i];
                     if (object.isRemoved) {
                         renderObjects.splice(i, 1);
                         i--;
+                        continue;
                     }
-                    //if (object.isAnimations) {
-                    //    object._processActiveAnimations();
-                    //}
+                    if (object.isAnimations) {
+                        object._processActiveAnimations();
+                    }
                     const promise = await this._bindRenderObject(object).catch((err) => {
                         reject(err);
                     });
@@ -163,11 +204,6 @@ export class RenderInterface {
                         reject(err);
                     })); 
                 }
-                //if (key === CONST.LAYERS.BOUNDARIES) {
-                //    renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
-                //        reject(err);
-                //    }));
-                //}
                 const bindResults = await Promise.allSettled(renderObjectsPromises);
                 bindResults.forEach((result) => {
                     if (result.status === "rejected") {
@@ -181,6 +217,16 @@ export class RenderInterface {
                     
                 this._isCleared = false;
             }
+            const bindResults = await Promise.allSettled(renderObjectsPromises);
+            bindResults.forEach((result) => {
+                if (result.status === "rejected") {
+                    reject(result.reason);
+                }
+            });
+
+            this.#postRenderActions();
+                
+            this._isCleared = false;
             resolve();
         });
     }
@@ -219,23 +265,29 @@ export class RenderInterface {
      * @param {TiledRenderLayer} renderLayer 
      * @returns {Promise<void>}
      */
-    #bindRenderLayerWM(renderLayer) {
+    #bindRenderLayerWM = (renderLayer) => {
         return new Promise((resolve, reject) => {
             const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
                 tilesets = tilemap.tilesets,
                 tilesetImages = tilesets.map((tileset) => this.loader.getImage(tileset.data.name)),
                 layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                setBoundaries = false;//, //renderLayer.setBoundaries,
-                //[ worldW, worldH ] = this.screenPageData.worldDimensions,
+                offsetDataItemsFullNum = layerData.data.length,
+                offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
+                setBoundaries = false, //renderLayer.setBoundaries,
+                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
                 //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
                 //[ xOffset, yOffset ] = this.screenPageData.worldOffset;
-                
+
+            //clear data
+            //this.layerDataFloat32.fill(0);
+            this.layerDataFloat32.set(layerData.data);
             if (!layerData) {
                 Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
                 reject();
             }
-            for (let i = 0; i <= tilesets.length - 1; i++) {
+            
+            for (let i = 0; i < tilesets.length; i++) {
                 const tileset = tilesets[i].data,
                     //tilesetImages = this.loader.getTilesetImageArray(tileset.name),
                     tilewidth = tileset.tilewidth,
@@ -248,12 +300,38 @@ export class RenderInterface {
                     //visibleRows = Math.ceil(canvasH / tileheight),
                     //offsetCols = layerCols - visibleCols,
                     //offsetRows = layerRows - visibleRows,
+                    worldW = tilewidth * layerCols,
+                    worldH = tileheight * layerRows,
                     atlasImage = tilesetImages[i],
                     atlasWidth = atlasImage.width,
-                    atlasHeight = atlasImage.height;
-                    
+                    atlasHeight = atlasImage.height,
+                    items = layerRows * layerCols,
+                    dataCellSizeBytes = 4,
+                    vectorCoordsItemsNum = 12,
+                    texturesCoordsItemsNum = 12,
+                    vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
+                    texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum;
+                
+                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                    this.screenPageData._setWorldDimensions(worldW, worldH);
+                }
+
+                //if (this.canvas.width !== worldW || this.canvas.height !== worldH) {
+                //    this._setCanvasSize(worldW, worldH);
+                //}
+
+                // boundaries cleanups every draw circle, we need to set world boundaries again
+                if (this.screenPageData.isWorldBoundariesEnabled) {
+                    this.screenPageData._setMapBoundaries();
+                }
+                this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 //const [verticesBufferData, texturesBufferData] = calculateBufferData(layerRows, layerCols, layerData.data, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);
                 
+                const verticesBufferData = this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum),
+                    texturesBufferData = this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum);
+                //console.log(verticesBufferData);
+                //console.log(texturesBufferData);
                 this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name);
                 if (setBoundaries) {
                     this.screenPageData._mergeBoundaries();
@@ -261,6 +339,97 @@ export class RenderInterface {
                 }
                 resolve();
             }
+        });
+    }
+
+    #bindRenderLayerOld = (renderLayer) => {
+        return new Promise((resolve, reject) => {
+            const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
+                tilesets = tilemap.tilesets,
+                tilesetImages = tilesets.map((tileset) => this.loader.getImage(tileset.data.name)),
+                layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
+                { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                setBoundaries = renderLayer.setBoundaries,
+                [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions,
+                [ canvasW, canvasH ] = this.screenPageData.canvasDimensions,
+                [ xOffset, yOffset ] = this.screenPageData.worldOffset,
+                verticesBufferData = [],
+                texturesBufferData = [];
+                
+            if (!layerData) {
+                Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
+                reject();
+            }
+            for (let i = 0; i <= tilesets.length - 1; i++) {
+                const tileset = tilesets[i].data,
+                    //tilesetImages = this.loader.getTilesetImageArray(tileset.name),
+                    
+                    tilewidth = tileset.tilewidth,
+                    tileheight = tileset.tileheight,
+                    atlasRows = tileset.imageheight / tileheight,
+                    atlasColumns = tileset.imagewidth / tilewidth,
+                    layerCols = layerData.width,
+                    layerRows = layerData.height,
+                    worldW = tilewidth * layerCols,
+                    worldH = tileheight * layerRows,
+                    visibleCols = Math.ceil(canvasW / tilewidth),
+                    visibleRows = Math.ceil(canvasH / tileheight),
+                    offsetCols = layerCols - visibleCols,
+                    offsetRows = layerRows - visibleRows,
+                    atlasImage = tilesetImages[i],
+                    atlasWidth = atlasImage.width,
+                    atlasHeight = atlasImage.height;
+                    
+                let mapIndex = 0;
+                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                    this.screenPageData._setWorldDimensions(worldW, worldH);
+                }
+                for (let row = 0; row < layerRows; row++) {
+                    for (let col = 0; col < layerCols; col++) {
+                        let tile = layerData.data[mapIndex],
+                            mapPosX = col * dtwidth,
+                            mapPosY = row * dtheight,
+                            mapPosXWithOffset = col * dtwidth - xOffset,
+                            mapPosYWithOffset = row * dtheight - yOffset;
+                        
+                        if (tile !== 0) {
+                            tile -= 1;
+                            const atlasPosX = tile % atlasColumns * tilewidth,
+                                atlasPosY = Math.floor(tile / atlasColumns) * tileheight,
+                                vecX1 = mapPosXWithOffset,
+                                vecY1 = mapPosYWithOffset,
+                                vecX2 = mapPosXWithOffset + tilewidth,
+                                vecY2 = mapPosYWithOffset + tileheight,
+                                texX1 = 1 / atlasWidth * atlasPosX,
+                                texY1 = 1 / atlasHeight * atlasPosY,
+                                texX2 = texX1 + (1 / atlasWidth * tilewidth),
+                                texY2 = texY1 + (1 / atlasHeight * tileheight);
+                            verticesBufferData.push(
+                                vecX1, vecY1,
+                                vecX2, vecY1,
+                                vecX1, vecY2,
+                                vecX1, vecY2,
+                                vecX2, vecY1,
+                                vecX2, vecY2);
+                            texturesBufferData.push(
+                                texX1, texY1,
+                                texX2, texY1,
+                                texX1, texY2,
+                                texX1, texY2,
+                                texX2, texY1,
+                                texX2, texY2
+                            );
+
+                        }
+                        mapIndex++;
+                    }
+                }
+                const v = new Float32Array(verticesBufferData);
+                const t = new Float32Array(texturesBufferData);
+                this.#bindTileImages(v, t, atlasImage, tileset.name);
+            }
+            resolve();
         });
     }
 
@@ -518,7 +687,10 @@ export class RenderInterface {
                     mapIndex += skipColsRight;
                 }
                 if (verticesBufferData.length > 0 && texturesBufferData.length > 0) {
-                    this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name, renderLayer._maskId);
+                    //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name, renderLayer._maskId);
+                    const v = new Float32Array(verticesBufferData);
+                    const t = new Float32Array(texturesBufferData);
+                    this.#bindTileImages(v, t, atlasImage, tileset.name, renderLayer._maskId);
                 }
             }
             

@@ -194,7 +194,7 @@ export class MapPage extends ScreenPage {
             movementForce = forceToUse * 1,
             newCoordX = person.x + movementForce * Math.cos(direction),
             newCoordY = person.y + movementForce * Math.sin(direction);
-            
+        
         if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
@@ -229,7 +229,7 @@ export class MapPage extends ScreenPage {
     }
 
     #createFireball = () => {
-        const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 36, [[-8,0], [0, -4], [8, 0], [0,4]]);
+        const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 36, {r:4});
         f.addAnimation(ANIMATION_FIREMOVE, [36, 37, 38, 39], true);
         f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118]);
 

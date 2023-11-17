@@ -38,10 +38,6 @@ export class MapPage extends ScreenPage {
         this.createCanvasView(CONST.LAYERS.DEFAULT);
         this.createCanvasView(CONTROLS_LAYER, true);
         
-        if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
-            this.createCanvasView(CONST.LAYERS.BOUNDARIES);
-        }
-        
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "water", this.tilemapKey);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "items", this.tilemapKey);
@@ -172,6 +168,7 @@ export class MapPage extends ScreenPage {
             
         person.isMoving = true;
         person.isAiming = false;
+        
         if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;

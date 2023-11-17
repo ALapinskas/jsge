@@ -29,10 +29,6 @@ export class MapPage extends ScreenPage {
 
         this.createCanvasView(CONST.LAYERS.DEFAULT);
         
-        if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
-            this.createCanvasView(CONST.LAYERS.BOUNDARIES);
-        }
-        
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground_b", this.tilemapKey);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "road", this.tilemapKey);

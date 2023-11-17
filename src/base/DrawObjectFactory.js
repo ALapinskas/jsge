@@ -66,7 +66,7 @@ export class DrawObjectFactory {
      * @param {number} height 
      * @param {string} key 
      * @param {number} [imageIndex = 0]
-     * @param {Array<{x:Number, y:Number}>=} boundaries 
+     * @param {Array<{x:Number, y:Number}> | {r:number}=} boundaries - boundaries as polygon, or circle
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries) {
