@@ -147,9 +147,6 @@ export default class SpineModuleInitialization {
         if (renderInterface) {
             this.extendRenderInterface(renderInterface);
         }
-        //if (spineView) {
-        //    this.registerView(spineView);
-        //}
         this.time = new TimeKeeper();
     }
 
@@ -307,15 +304,15 @@ export default class SpineModuleInitialization {
                     promise = new Promise((resolve, reject) => {
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
-                        //
-                        //console.log("draw texture");
+                        console.log("draw texture");
                         //gl.disable(gl.BLEND);
                         //gl.disable(gl.STENCIL_TEST);
+                        //sceneRenderer.enableRenderer(sceneRenderer.batcher);
                         sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
                         resolve();
                     });
                 } else {
-                    promise = await this.#renderInterface._bindRenderObject(object).then(()=> {
+                    promise = this.#renderInterface._bindRenderObject(object).then(()=> {
                         return Promise.resolve();
                     }).catch((err) => Promise.reject(err));
                 }
@@ -333,26 +330,4 @@ export default class SpineModuleInitialization {
                 });
         }
     }
-
-    /**
-     * Activate spine render 
-     * @param {string} viewName 
-     */
-    activateSpineRender(viewName) {
-        //const canvasView = this.#renderInterface;
-        //if (canvasView) {
-        //    this.#renderInterface = viewName;
-        //    this.#updateViewRender(canvasView);
-        //} else {
-        //    throw new Error(SPINE_ERROR + "no view " + viewName + " is registered");
-        //}
-    }
-
-    /**
-     * Deactivate spine render
-     * @param {string} viewName
-     */
-    //deactivateSpineRender(viewName) {
-    //    this.#activeView = null;
-    //}
 }

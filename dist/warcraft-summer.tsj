@@ -1,0 +1,14 @@
+{ "columns":19,
+ "image":"..\/..\/..\/art\/warcraft2\/warcraft-summer.png",
+ "imageheight":659,
+ "imagewidth":626,
+ "margin":0,
+ "name":"warcraft-summer",
+ "spacing":1,
+ "tilecount":380,
+ "tiledversion":"1.10.1",
+ "tileheight":32,
+ "tilewidth":32,
+ "type":"tileset",
+ "version":"1.10"
+}

@@ -16137,7 +16137,6 @@ class SpineModuleInitialization {
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
                         //
-                        this
                         object.update(this.time.delta);
                         sceneRenderer.drawSkeleton(object.skeleton, false);
                         resolve();
@@ -16146,15 +16145,15 @@ class SpineModuleInitialization {
                     promise = new Promise((resolve, reject) => {
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
-                        //
-                        //console.log("draw texture");
-                        gl.disable(gl.BLEND);
-                        gl.disable(gl.STENCIL_TEST);
+                        console.log("draw texture");
+                        //gl.disable(gl.BLEND);
+                        //gl.disable(gl.STENCIL_TEST);
+                        //sceneRenderer.enableRenderer(sceneRenderer.batcher);
                         sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
                         resolve();
                     });
                 } else {
-                    promise = await this.#renderInterface._bindRenderObject(object).then(()=> {
+                    promise = this.#renderInterface._bindRenderObject(object).then(()=> {
                         return Promise.resolve();
                     }).catch((err) => Promise.reject(err));
                 }

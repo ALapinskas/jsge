@@ -85,7 +85,7 @@ export class System {
             if (page.isInitiated === false) {
                 page._init();
             }
-            page._attachViewsToContainer(this.#canvasContainer);
+            page._attachCanvasToContainer(this.#canvasContainer);
             page._start(options);
         } else {
             Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");

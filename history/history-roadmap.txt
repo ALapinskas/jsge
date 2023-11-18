@@ -10,8 +10,35 @@
         huge images cut for a screen size
         centering map
         sprites animations
-        few different canvas for a page
         canvas overlapping effects
+    Does system required a new canvas for every ScreenPage? Probably it can use only one for all of them,
+    and the RenderInterface will be the same for every page. Then, ScreenPageData will have to be divided for two parts,
+    ScreenPageData for each page, and common data, probably it is a GameSettings.
+    3. Modules requirements:
+        1. Modules are external installable parts of application that should extend the application functionality.
+        2. Application functionality by that could be extended by modules should have an endpoint to do that.
+        
+        Modules types:
+        1. System modules. Which will have access to systemInterface and its child functionality.
+        2. ScreenPage modules. Which will have same access as system modules and additionally
+         screenPage child functionality, such as ScreenPage.start, stop, render, context and screenPageData.
+        ScreenPage modules should be installed for every screenPage separately, or installed for one page 
+        and activated for the others.
+        3. Render modules, is ScreenPage modules, focused on render objects:
+            1. Modules could extend current render system by doing:
+                * Extend drawObjectFactory to have new drawObjects
+                * Provide information to the RenderInterface on how this objects should be drawn, 
+                    the webgl programs they should use,
+                    this webgl programs itself,
+                    init render phase if needed,
+                    render method for this objects
+            2. Render modules will need to access next part of application:
+                * a loader, which could be accessed via SystemInterface.
+                * SystemSettings, which could be accessed via SystemInterface.
+                * draw context, which is a part of RenderInterface and could be accessed via ScreenPage.
+                * ScreenPageData, which is a part of RenderInterface and could be accessed via ScreenPage.
+                * ScreenPage.start, .stop methods
+        
 
 Todo: https://github.com/users/ALapinskas/projects/2
 
@@ -19,6 +46,8 @@ Todo: https://github.com/users/ALapinskas/projects/2
 r: code refactoring
 +  added new functionality/classes
 f: fixed defects
+
+
 
 # History
 0.3.0:

@@ -5,6 +5,8 @@ import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
 import { DrawCircleObject } from "./DrawCircleObject.js";
+import { TiledRenderLayer } from "./TiledRenderLayer.js";
+import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
  * Creates drawObjects instances.<br>
@@ -89,5 +91,17 @@ export class DrawObjectFactory {
      */
     polygon(vertices, bgColor) {
         return new DrawPolygonObject(vertices, bgColor);
+    }
+
+    /**
+     * 
+     * @param {string} layerKey 
+     * @param {string} tileMapKey 
+     * @param {boolean} setBoundaries 
+     * @param {DrawShapeObject} shapeMask 
+     * @returns {TiledRenderLayer}
+     */
+    tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
+        return new TiledRenderLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
     }
 }

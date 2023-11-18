@@ -15,15 +15,8 @@ const SPINE = {
 export class SpinePage extends ScreenPage {
 
     register() {
-        this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets", this.canvasInterface);
-        // spine methods will be available after spine module installation
-        this.loader.addSpineJson(SPINE.SpineText, "./spine/spine-assets/spineboy-pro.json");
-        this.loader.addSpineBinary(SPINE.SpineBinary, "./spine/spine-assets/spineboy-pro.skel");
-        this.loader.addSpineAtlas(SPINE.SpineAtlas, "./spine/spine-assets/spineboy-pma.atlas");
-        this.loader.addSpineAtlas(SPINE.SpineGoblinsAtlas, "./spine/spine-assets/goblins-pma.atlas");
-        this.loader.addSpineBinary(SPINE.SpineGoblinsBinary, "./spine/spine-assets/goblins-pro.skel");
-
-        this.loader.addImage(SPINE.SpineTexture, "./spine/spine-assets/spineboy-pma.png");
+        //spine module already installed
+        this.spineModule = this.system.modules.get("spineModule");
     }
 
     init() {
@@ -31,7 +24,7 @@ export class SpinePage extends ScreenPage {
 
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
-
+        this.spineModule.extendRenderInterface(this.renderInterface);
         //this.spineModule.activateSpineRender(this.name);
         const spineDrawObject = this.draw.spine(-300, -300, SPINE.SpineText, SPINE.SpineAtlas);
         spineDrawObject.scale(0.5);
@@ -55,7 +48,7 @@ export class SpinePage extends ScreenPage {
     }
 
     start() {
-        //this.spineModule.activateSpineRender(SPINE_VIEW_KEY);
+        
         this.registerEventListeners();
     }
 

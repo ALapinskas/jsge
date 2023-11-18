@@ -6,6 +6,7 @@ import { SystemSettings } from "../configs.js";
 import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { ScreenPage } from "./ScreenPage.js";
+import { TiledRenderLayer } from "../../modules/tiled/tiledRender.js";
 
 /**
  * Public interface for a System<br>

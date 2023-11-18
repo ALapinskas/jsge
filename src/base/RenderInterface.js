@@ -67,6 +67,10 @@ export class RenderInterface {
     #loaderReference;
     #bindRenderLayerMethod;
 
+    #registeredWebGlPrograms = new Map();
+    #registeredRenderObjects;
+
+    #extendedInitMethods = [];
     constructor(name, systemSettings, loader) {
         this.#isCleared = false;
         this.#canvas = document.createElement("canvas");
@@ -143,7 +147,8 @@ export class RenderInterface {
 
     initiateContext = () => {
         return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
-            this.#webGlInterface._initPrimitivesDrawProgram(), this.#webGlInterface._initWebGlAttributes()]);
+            this.#webGlInterface._initPrimitivesDrawProgram(), this.#webGlInterface._initWebGlAttributes(),
+        ...this.#extendedInitMethods]);
     }
 
     clearContext() {
@@ -157,6 +162,46 @@ export class RenderInterface {
             this.#webGlInterface._fixCanvasSize(width, height);
         }
     }
+
+    /****************************
+     *  Extend functionality
+     ****************************/
+    /**
+     * 
+     * @param {*} programName 
+     * @param {*} vertexShader 
+     * @param {*} fragmentShader 
+     */
+    registerWebGlProgram(programName, vertexShader, fragmentShader) {
+
+    }
+
+    /**
+     * 
+     * @param {Promise} method 
+     * @returns {void}
+     */
+    registerRenderInit(method) {
+        if (method instanceof Promise) {
+            this.#extendedInitMethods.push(method);
+        } else {
+            Exception(ERROR_CODES.UNEXPECTED_METHOD_TYPE, "registerRenderInit() accept only Promise based methods!");
+        }
+    }
+
+    /**
+     * 
+     * @param {string} objectName - object name registered to DrawObjectFactory
+     * @param {Promise} objectRenderMethod 
+     * @param {*=} objectWebGlDrawProgram 
+     */
+    registerObjectRender(objectName, objectRenderMethod, objectWebGlDrawProgram) {
+
+    }
+
+    /****************************
+     *  End of Extend functionality
+     ****************************/
 
     /**
      * @returns {Promise<void>}

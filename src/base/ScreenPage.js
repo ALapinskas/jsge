@@ -76,8 +76,8 @@ export class ScreenPage {
 
     /**
      * 
-     * @param {string} eventName 
-     * @param  {...any} eventParams 
+     * @param {string} eventName
+     * @param  {...any} eventParams
      */
     emit = (eventName, ...eventParams) => {
         const event = new Event(eventName);
@@ -128,9 +128,6 @@ export class ScreenPage {
      */
     _init() {
         this.init();
-        if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
-            this.createCanvasView(CONST.LAYERS.BOUNDARIES);
-        }
         this.#isInitiated = true;
     }
 
@@ -196,7 +193,7 @@ export class ScreenPage {
      * @param {HTMLElement} container
      * @ignore
      */
-    _attachViewsToContainer(container) {
+    _attachCanvasToContainer(container) {
         this.#attachElementToContainer(this.canvasHtmlElement, container);
         //for (const view of this.#views.values()) {
         //    this.#attachElementToContainer(view.canvas, container);
@@ -315,7 +312,7 @@ export class ScreenPage {
     /**
      * 
      */
-    get canvasInterface() {
+    get renderInterface() {
         return this.#renderInterface;
     }
     

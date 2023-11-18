@@ -164,7 +164,7 @@ export class WebGlInterface {
             texCoordLocation = gl.getAttribLocation(program, "a_texCoord"),
             u_imageLocation = gl.getUniformLocation(program, "u_image");
 
-        gl.enable(gl.BLEND);
+        //
         // turn attribute on
 
         this.#coordsLocations.set(programName, {
@@ -299,6 +299,7 @@ export class WebGlInterface {
 
     _initWebGlAttributes() {
         const gl = this.#gl;
+        gl.enable(gl.BLEND);
         gl.enable(gl.STENCIL_TEST);
         gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         //if stencil test and depth test pass we replace the initial value
