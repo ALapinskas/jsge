@@ -7,6 +7,7 @@ import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { ScreenPage } from "./ScreenPage.js";
 import { TiledRenderLayer } from "../../modules/tiled/tiledRender.js";
+import { RenderInterface } from "./RenderInterface.js";
 
 /**
  * Public interface for a System<br>
@@ -31,6 +32,10 @@ export class SystemInterface {
      */
     #loader = new AssetsManager();
     /**
+     * @type {RenderInterface}
+     */
+    #renderInterface;
+    /**
      * @type {DrawObjectFactory}
      */
     #drawObjectFactory = new DrawObjectFactory();
@@ -38,17 +43,61 @@ export class SystemInterface {
      * @hideconstructor
      */
     #modules = new Map();
-    constructor(systemSettings, _startScreenPage, _stopScreenPage) {
+    /**
+     * @type {Map<string, ScreenPage>}
+     */
+    #registeredPagesReference;
+    /**
+     * @type {EventTarget}
+     */
+    #emitter = new EventTarget();
+    constructor(systemSettings, registeredPages, canvasContainer) {
         if (!systemSettings) {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
         }
         this.#systemSettings = systemSettings;
         this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
-        this.startScreenPage = _startScreenPage;
-        this.stopScreenPage = _stopScreenPage;
+        this.#renderInterface = new RenderInterface(this.systemSettings, this.loader, canvasContainer);
+        //this.startScreenPage = _startScreenPage;
+        //this.stopScreenPage = _stopScreenPage;
+        this.#registeredPagesReference = registeredPages;
+        // broadcast render events
+        this.#renderInterface.addEventListener(CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.START));
+        this.#renderInterface.addEventListener(CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.END));
     }
 
+    /**
+     * 
+     * @param {string} eventName
+     * @param  {...any} eventParams
+     */
+    emit = (eventName, ...eventParams) => {
+        const event = new Event(eventName);
+        event.data = [...eventParams];
+        this.#emitter.dispatchEvent(event);
+    };
+
+     /**
+     * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
+     */
+    addEventListener = (eventName, listener, options) => {
+        this.#emitter.addEventListener(eventName, listener, options);
+    };
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
+     */
+    removeEventListener = (eventName, listener, options) => {
+        this.#emitter.removeEventListener(eventName, listener, options);
+    };
+    
     /**
      * @type { SystemSocketConnection }
      */
@@ -117,4 +166,38 @@ export class SystemInterface {
     registerDrawObject(createInstanceKey, createInstanceMethod) {
         this.#drawObjectFactory[createInstanceKey] = createInstanceMethod;
     }
+
+    /**
+     * @method
+     * @param {string} screenPageName
+     * @param {Object} [options] - options
+     */
+    startScreenPage = (screenPageName, options) => {
+        if (this.#registeredPagesReference.has(screenPageName)) {
+            const page = this.#registeredPagesReference.get(screenPageName);
+            if (page.isInitiated === false) {
+                page._init();
+            }
+            //page._attachCanvasToContainer(this.#canvasContainer);
+            page._start(options);
+            this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
+            this.#renderInterface.startRender(page.screenPageData);
+        } else {
+            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+        }
+    };
+
+    /**
+     * @method
+     * @param {string} screenPageName
+     */
+    stopScreenPage = (screenPageName) => {
+        if (this.#registeredPagesReference.has(screenPageName)) {
+            this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
+            this.#renderInterface.stopRender();
+            this.#registeredPagesReference.get(screenPageName)._stop();
+        } else {
+            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+        }
+    };
 }

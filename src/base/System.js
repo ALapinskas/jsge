@@ -42,8 +42,8 @@ export class System {
             this.#canvasContainer = canvasContainer;
         }
 
-        this.#system = new SystemInterface(systemSettings, this._startScreenPage, this._stopScreenPage);
-        
+        this.#system = new SystemInterface(systemSettings, this.#registeredPages, this.#canvasContainer);
+
         this.registerPage(loadingPageName, LoadingScreen);
 
         this.#system.loader.addEventListener("loadstart", this.#loadStart);
@@ -73,36 +73,6 @@ export class System {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
         }
     }
-
-    /**
-     * @method
-     * @param {string} screenPageName
-     * @param {Object} [options] - options
-     */
-    _startScreenPage = (screenPageName, options) => {
-        if (this.#registeredPages.has(screenPageName)) {
-            const page = this.#registeredPages.get(screenPageName);
-            if (page.isInitiated === false) {
-                page._init();
-            }
-            page._attachCanvasToContainer(this.#canvasContainer);
-            page._start(options);
-        } else {
-            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
-        }
-    };
-
-    /**
-     * @method
-     * @param {string} screenPageName
-     */
-    _stopScreenPage = (screenPageName) => {
-        if (this.#registeredPages.has(screenPageName)) {
-            this.#registeredPages.get(screenPageName)._stop();
-        } else {
-            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
-        }
-    };
 
     /**
      * Preloads assets for all registered pages

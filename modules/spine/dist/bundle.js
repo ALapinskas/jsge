@@ -15985,9 +15985,6 @@ class SpineModuleInitialization {
         if (renderInterface) {
             this.extendRenderInterface(renderInterface);
         }
-        //if (spineView) {
-        //    this.registerView(spineView);
-        //}
         this.time = new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.TimeKeeper();
     }
 
@@ -16136,7 +16133,6 @@ class SpineModuleInitialization {
                         this.time.update();
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
-                        //
                         object.update(this.time.delta);
                         sceneRenderer.drawSkeleton(object.skeleton, false);
                         resolve();
@@ -16145,11 +16141,15 @@ class SpineModuleInitialization {
                     promise = new Promise((resolve, reject) => {
                         // a workaround for drawing different objects(switch draw programs)
                         sceneRenderer.end();
-                        console.log("draw texture");
-                        //gl.disable(gl.BLEND);
-                        //gl.disable(gl.STENCIL_TEST);
-                        //sceneRenderer.enableRenderer(sceneRenderer.batcher);
                         sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
+                        // sceneRenderer.drawTexture() skips first draw call, for some reasons, 
+                        // and only prepare the vertices
+                        // and if next call will be with different draw program, 
+                        // it will break the drawing of the texture,
+                        // thats why flush() call required here
+                        // 1. prepare texture
+                        // 2. draw call
+                        sceneRenderer.batcher.flush();
                         resolve();
                     });
                 } else {
@@ -16171,28 +16171,6 @@ class SpineModuleInitialization {
                 });
         }
     }
-
-    /**
-     * Activate spine render 
-     * @param {string} viewName 
-     */
-    activateSpineRender(viewName) {
-        //const canvasView = this.#renderInterface;
-        //if (canvasView) {
-        //    this.#renderInterface = viewName;
-        //    this.#updateViewRender(canvasView);
-        //} else {
-        //    throw new Error(SPINE_ERROR + "no view " + viewName + " is registered");
-        //}
-    }
-
-    /**
-     * Deactivate spine render
-     * @param {string} viewName
-     */
-    //deactivateSpineRender(viewName) {
-    //    this.#activeView = null;
-    //}
 }
 })();
 

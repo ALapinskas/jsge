@@ -53,14 +53,18 @@ f: fixed defects
 0.3.0:
     r: CanvasView -> RenderInterface
     r: removed multiple layers and layers create
-    r: ScreenPage.ScreenPageData moved to RenderInterface.ScreenPageData
+    r: RenderInterface is now part of the SystemInterface
+    r: render() itself moved to the RenderInterface
     r: removed RenderInterface.#renderLayers, any draw object will be added to #renderObjects array now
-    r: RenderInterface.#renderObjects moved to RenderInterface.ScreenPageData.#renderObjects
+    r: RenderInterface.#renderObjects moved to ScreenPage.ScreenPageData.#renderObjects
     r: RenderLayer -> TiledRenderLayer
     +: drawMasks introduced
     +: DrawShapeObject.setMask(), DrawShapeObject.removeMask()
     +: TiledRenderLayer.setMask(), TiledRenderLayer.removeMask()
     +: SystemInterface.registerDrawObject() for add new drawObjects
+    +: new methods introduced: RenderInterface.registerRenderInit() for register init drawing methods
+    +: SystemInterface.registerDrawObject() for register new types of drawing objects
+    +: RenderInterface.registerObjectRender() for register object drawing methods
     
 0.2.3
     +: circle boundaries

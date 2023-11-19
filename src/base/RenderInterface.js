@@ -26,10 +26,8 @@ const INDEX_X1 = 0,
     INDEX_Y2 = 3;
 
 /**
- * Canvas view represents each canvas on the page<br> 
- * Should be created via ScreenPage.createCanvasView(),<br>
- * Contains draw logic and holds DrawObjects and Tile
- * Can retrieved by ScreenPage.getView()
+ * RenderInterface class represents on how the drawObjects
+ * should be drawn and the render itself
  * @see {@link ScreenPage} a part of ScreenPage
  * @hideconstructor
  */
@@ -47,9 +45,17 @@ export class RenderInterface {
      */
     #isCleared;
     /**
+     * @type {boolean}
+     */
+    #isActive;
+    /**
      * @type {WebGlInterface}
      */
     #webGlInterface;
+    /**
+     * @type {ScreenPageData}
+     */
+    #currentScreenPageData;
 
     /**
      * SystemInterface.systemSettings
@@ -57,30 +63,50 @@ export class RenderInterface {
      */
     #systemSettingsReference;
     /**
-     * @type {ScreenPageData}
-     */
-    #screenPageData;
-    /**
      * A reference to the systemInterface.loader
      * @type {AssetsManager}
      */
     #loaderReference;
+    /**
+     * @type {Array<number>}
+     */
+    #tempFPStime;
+    /**
+     * @type {NodeJS.Timer}
+     */
+    #fpsAverageCountTimer;
+    /**
+     * @type {boolean}
+     */
+    #isBoundariesPrecalculations = false;
+    #minCircleTime;
+    /**
+     * @type {EventTarget}
+     */
+    #emitter = new EventTarget();
     #bindRenderLayerMethod;
 
     #registeredWebGlPrograms = new Map();
-    #registeredRenderObjects;
+    #registeredRenderObjects = new Map();
 
-    #extendedInitMethods = [];
-    constructor(name, systemSettings, loader) {
+    /**
+     * @type {Array<() => Promise<void>>}
+     */
+    #initPromises = [];
+    constructor(systemSettings, loader, canvasContainer) {
         this.#isCleared = false;
         this.#canvas = document.createElement("canvas");
-        this.#canvas.id = name;
+        canvasContainer.appendChild(this.#canvas);
         this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
 
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = loader;
 
-        this.#screenPageData = new ScreenPageData();
+        this.#tempFPStime = [];
+        this.#minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
+
+        this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
+
         this.#webGlInterface = new WebGlInterface(this.#drawContext, this.#systemSettingsReference.gameOptions.checkWebGlErrors);
         switch (this.systemSettings.gameOptions.optimization) {
             case CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
@@ -91,19 +117,44 @@ export class RenderInterface {
                 break;
             case CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM:
                 this.#bindRenderLayerMethod = this.#bindRenderLayerWM;
+                this.registerRenderInit(this._initiateWasm);
                 break;
             case CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
                 Warning("Sorry, " + CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT + ", is not supported, switching to default");
             default:
                 this.#bindRenderLayerMethod = this.#bindRenderLayer;
         }
+
+        this.registerRenderInit(this.#webGlInterface._initiateImagesDrawProgram);
+        this.registerRenderInit(this.#webGlInterface._initPrimitivesDrawProgram);
+        this.registerRenderInit(this.#webGlInterface._initWebGlAttributes);
     }
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
+     */
+    addEventListener = (eventName, listener, options) => {
+        this.#emitter.addEventListener(eventName, listener, options);
+    };
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
+     */
+    removeEventListener = (eventName, listener, options) => {
+        this.#emitter.removeEventListener(eventName, listener, options);
+    };
 
      /**
      * 
      * @returns {Promise<void>}
      */
-     initiateWasm = () => {
+    _initiateWasm = () => {
         return new Promise((resolve, reject) => {
             this.layerData = new WebAssembly.Memory({initial:50});
             this.layerDataFloat32 = new Float32Array(this.layerData.buffer);
@@ -126,7 +177,7 @@ export class RenderInterface {
     }
 
     get screenPageData() {
-        return this.#screenPageData;
+        return this.#currentScreenPageData;
     }
 
     get systemSettings() {
@@ -145,10 +196,27 @@ export class RenderInterface {
         return this.#drawContext;
     }
 
+    /**
+     * 
+     * @param {string} eventName
+     * @param  {...any} eventParams
+     */
+    emit = (eventName, ...eventParams) => {
+        const event = new Event(eventName);
+        event.data = [...eventParams];
+        this.#emitter.dispatchEvent(event);
+    };
+
+    /**
+     * Determines if all added files was loaded or not
+     * @returns {boolean}
+     */
+    isAllFilesLoaded = () => {
+        return this.loader.filesWaitingForUpload === 0;
+    };
+
     initiateContext = () => {
-        return Promise.all([this.#webGlInterface._initiateImagesDrawProgram(),
-            this.#webGlInterface._initPrimitivesDrawProgram(), this.#webGlInterface._initWebGlAttributes(),
-        ...this.#extendedInitMethods]);
+        return Promise.all(this.#initPromises);
     }
 
     clearContext() {
@@ -178,12 +246,12 @@ export class RenderInterface {
 
     /**
      * 
-     * @param {Promise} method 
+     * @param {() => Promise<void>} method 
      * @returns {void}
      */
     registerRenderInit(method) {
-        if (method instanceof Promise) {
-            this.#extendedInitMethods.push(method);
+        if (method() instanceof Promise) {
+            this.#initPromises.push(method);
         } else {
             Exception(ERROR_CODES.UNEXPECTED_METHOD_TYPE, "registerRenderInit() accept only Promise based methods!");
         }
@@ -191,12 +259,16 @@ export class RenderInterface {
 
     /**
      * 
-     * @param {string} objectName - object name registered to DrawObjectFactory
-     * @param {Promise} objectRenderMethod 
+     * @param {string} objectClassName - object name registered to DrawObjectFactory
+     * @param {() => Promise<void>} objectRenderMethod - should be promise based
      * @param {*=} objectWebGlDrawProgram 
      */
-    registerObjectRender(objectName, objectRenderMethod, objectWebGlDrawProgram) {
-
+    registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
+        if (objectRenderMethod() instanceof Promise) {
+            this.#registeredRenderObjects.set(objectClassName, {method: objectRenderMethod, webglProgramName: objectWebGlDrawProgram});
+        } else {
+            Exception(ERROR_CODES.UNEXPECTED_METHOD_TYPE, "registerObjectRender() accept only Promise based methods!");
+        }
     }
 
     /****************************
@@ -932,4 +1004,113 @@ export class RenderInterface {
             resolve();
         });
     }
+
+    #countFPSaverage() {
+        const timeLeft = this.systemSettings.gameOptions.render.averageFPStime,
+            steps = this.#tempFPStime.length;
+        let fullTime = 0;
+
+        for(let i = 0; i < steps; i++) {
+            const timeStep = this.#tempFPStime[i];
+            fullTime += timeStep;
+        }
+        console.log("FPS average for ", timeLeft/1000, "sec, is ", fullTime / steps);
+
+        // cleanup
+        this.#tempFPStime = [];
+    }
+
+    startRender = async (/*time*/screenPageData) => {
+        //Logger.debug("_render " + this.name + " class");
+        this.#isActive = true;
+        this.#currentScreenPageData = screenPageData;
+        const [canvasWidth, canvasHeight] = this.#currentScreenPageData.canvasDimensions;
+        this.setCanvasSize(canvasWidth, canvasHeight);
+        switch (this.systemSettings.gameOptions.library) {
+            case CONST.LIBRARY.WEBGL:
+                //if (this.isAllFilesLoaded()) {
+                    //render
+                    await this.#prepareViews();
+                //} else {
+                //    Warning(WARNING_CODES.ASSETS_NOT_READY, "Is page initialization phase missed?");
+                //    this.stopRender();
+                //}
+                // wait for the end of the execution stack, before start next iteration
+                setTimeout(() => requestAnimationFrame(this.#drawViews));
+                break;
+        }
+        this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.averageFPStime);
+    };
+
+    stopRender = () => {
+        this.#isActive = false;
+        this.#currentScreenPageData = null;
+        clearInterval(this.#fpsAverageCountTimer);
+    }
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
+    #prepareViews() {
+        return new Promise((resolve, reject) => {
+            let viewPromises = [];
+            const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
+            viewPromises.push(this.initiateContext());
+            if (isBoundariesPrecalculations) {
+                console.warn("isBoundariesPrecalculations() is turned off");
+                //for (const view of this.#views.values()) {
+                //viewPromises.push(this.#renderInterface._createBoundariesPrecalculations());
+                //}
+            }
+            Promise.allSettled(viewPromises).then((drawingResults) => {
+                drawingResults.forEach((result) => {
+                    if (result.status === "rejected") {
+                        const error = result.reason;
+                        Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, error);
+                        reject(error);
+                    }
+                });
+                resolve();
+            });
+        });
+    }
+
+    #drawViews = async (/*drawTime*/) => {
+        const pt0 = performance.now(),
+            minCircleTime = this.#minCircleTime;
+            
+        let viewPromises = [];
+        this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
+        this.screenPageData._clearBoundaries();
+        this.clearContext();
+        
+        //for (const [key, view] of this.#views.entries()) {
+        //    const render = await view.render(key);
+        //    viewPromises.push(render);
+        //}
+        const render = await this.render();
+        viewPromises.push(render);
+        Promise.allSettled(viewPromises).then((drawingResults) => {
+            drawingResults.forEach((result) => {
+                if (result.status === "rejected") {
+                    Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
+                    this.stopRender();
+                }
+            });
+            const r_time = performance.now() - pt0,
+                r_time_less = minCircleTime - r_time,
+                wait_time = r_time_less > 0 ? r_time_less : 0,
+                fps = 1000 / (r_time + wait_time);
+            //console.log("draw circle done, take: ", (r_time), " ms");
+            //console.log("fps: ", fps);
+            this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
+            if(fps === Infinity) {
+                console.log("infinity time");
+            }
+            this.#tempFPStime.push(fps);
+            if (this.#isActive) {
+                setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
+            }
+        });
+    };
 }

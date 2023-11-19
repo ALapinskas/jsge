@@ -49,61 +49,31 @@ export class ScreenPage {
     /**
      * @type {RenderInterface}
      */
-    #renderInterface;
+    //#renderInterface;
     /**
      * @type {Array<number>}
      */
-    #tempFPStime;
+    //#tempFPStime;
     /**
      * @type {NodeJS.Timer}
      */
-    #fpsAverageCountTimer;
-    /**
-     * @type {EventTarget}
-     */
-    #emitter = new EventTarget();
+    //#fpsAverageCountTimer;
     /**
      * @type {boolean}
      */
-    #isBoundariesPrecalculations = false;
-    #minCircleTime;
+    //#isBoundariesPrecalculations = false;
+    //#minCircleTime;
+    /**
+     * @type {ScreenPageData}
+     */
+    #screenPageData;
 
     constructor() {
         this.#isActive = false;
         //this.#views = new Map();
-        this.#tempFPStime = [];
+        this.#screenPageData = new ScreenPageData();
+        //this.#tempFPStime = [];
     }
-
-    /**
-     * 
-     * @param {string} eventName
-     * @param  {...any} eventParams
-     */
-    emit = (eventName, ...eventParams) => {
-        const event = new Event(eventName);
-        event.data = [...eventParams];
-        this.#emitter.dispatchEvent(event);
-    };
-
-    /**
-     * 
-     * @param {string} eventName 
-     * @param {*} listener 
-     * @param {*=} options 
-     */
-    addEventListener = (eventName, listener, options) => {
-        this.#emitter.addEventListener(eventName, listener, options);
-    };
-
-    /**
-     * 
-     * @param {string} eventName 
-     * @param {*} listener 
-     * @param {*=} options 
-     */
-    removeEventListener = (eventName, listener, options) => {
-        this.#emitter.removeEventListener(eventName, listener, options);
-    };
 
     /**
      * Register stage
@@ -114,9 +84,7 @@ export class ScreenPage {
     _register(name, system) {
         this.#name = name;
         this.#systemReference = system;
-        this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
-        this.#minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
-        this.#renderInterface = new RenderInterface(this.#name, this.#systemReference.systemSettings, this.loader);
+        //this.#renderInterface = new RenderInterface(this.#name, this.#systemReference.systemSettings, this.loader);
         this.#setWorldDimensions();
         this.#setCanvasSize();
         this.register();
@@ -273,15 +241,15 @@ export class ScreenPage {
      * Determines if all added files was loaded or not
      * @returns {boolean}
      */
-    isAllFilesLoaded = () => {
-        return this.loader.filesWaitingForUpload === 0;
-    };
+    //isAllFilesLoaded = () => {
+    //   return this.loader.filesWaitingForUpload === 0;
+    //};
 
     /**
      * @type {ScreenPageData}
      */
     get screenPageData() {
-        return this.#renderInterface.screenPageData;
+        return this.#screenPageData;
     }
 
     /**
@@ -306,15 +274,35 @@ export class ScreenPage {
     }
 
     get canvasHtmlElement() {
-        return this.#renderInterface.canvas;
+        return document.getElementsByTagName("canvas")[0];
     }
 
     /**
      * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
      */
-    get renderInterface() {
-        return this.#renderInterface;
-    }
+    addEventListener = (eventName, listener, options) => {
+        this.system.addEventListener(eventName, listener, options);
+    };
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
+     */
+    removeEventListener = (eventName, listener, options) => {
+        this.system.removeEventListener(eventName, listener, options);
+    };
+
+    /**
+     * 
+     */
+    //get renderInterface() {
+    //    return this.#renderInterface;
+    //}
     
     /**
      * @method
@@ -340,14 +328,13 @@ export class ScreenPage {
      */
     _start(options) {
         this.start(options);
+        //this.#renderInterfaceReference = renderInterface;
         this.#isActive = true;
         window.addEventListener("resize", this._resize);
         this._resize();
         //if (this.#views.size > 0) {
-            requestAnimationFrame(this.#render);
+            //requestAnimationFrame(this.#render);
         //}
-        this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
-        this._resize();
     }
 
     /**
@@ -357,9 +344,8 @@ export class ScreenPage {
     _stop() {
         this.#isActive = false;
         window.removeEventListener("resize", this._resize);
-        this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
-        this.#removeCanvasFromDom();
-        clearInterval(this.#fpsAverageCountTimer);
+        //this.#removeCanvasFromDom();
+        //clearInterval(this.#fpsAverageCountTimer);
         this.stop();
     }
 
@@ -758,114 +744,24 @@ export class ScreenPage {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
         this.screenPageData._setCanvasDimensions(canvasWidth, canvasHeight);
-        this.#renderInterface.setCanvasSize(canvasWidth, canvasHeight)
+        //this.#renderInterface.setCanvasSize(canvasWidth, canvasHeight)
         //for (const view of this.#views.values()) {
         //    view._setCanvasSize(canvasWidth, canvasHeight);
         //}
     }
 
-    #countFPSaverage() {
-        const timeLeft = this.systemSettings.gameOptions.render.averageFPStime,
-            steps = this.#tempFPStime.length;
-        let fullTime = 0;
+    //#countFPSaverage() {
+    //    const timeLeft = this.systemSettings.gameOptions.render.averageFPStime,
+    //        steps = this.#tempFPStime.length;
+    //    let fullTime = 0;
 
-        for(let i = 0; i < steps; i++) {
-            const timeStep = this.#tempFPStime[i];
-            fullTime += timeStep;
-        }
-        console.log("FPS average for ", timeLeft/1000, "sec, is ", fullTime / steps);
+    //    for(let i = 0; i < steps; i++) {
+    //        const timeStep = this.#tempFPStime[i];
+    //        fullTime += timeStep;
+    //    }
+    //    console.log("FPS average for ", timeLeft/1000, "sec, is ", fullTime / steps);
 
         // cleanup
-        this.#tempFPStime = [];
-    }
-
-    #render = async (/*time*/) => {
-        Logger.debug("_render " + this.name + " class");
-        if (this.#isActive) {
-            switch (this.systemSettings.gameOptions.library) {
-            case CONST.LIBRARY.WEBGL:
-                if (this.isAllFilesLoaded()) {
-                    //render
-                    await this.#prepareViews();
-                } else {
-                    Warning(WARNING_CODES.ASSETS_NOT_READY, "Is page initialization phase missed?");
-                    this.#isActive = false;
-                }
-                // wait for the end of the execution stack, before start next iteration
-                setTimeout(() => requestAnimationFrame(this.#drawViews));
-                break;
-            }
-            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.averageFPStime);
-        }
-    };
-
-    /**
-     * 
-     * @returns {Promise<void>}
-     */
-    #prepareViews() {
-        return new Promise((resolve, reject) => {
-            let viewPromises = [];
-            const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
-            viewPromises.push(this.#renderInterface.initiateContext());
-            if (isBoundariesPrecalculations) {
-                console.warn("isBoundariesPrecalculations() is turned off");
-                //for (const view of this.#views.values()) {
-                //viewPromises.push(this.#renderInterface._createBoundariesPrecalculations());
-                //}
-            }
-            if (this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM) {
-                viewPromises.push(this.#renderInterface.initiateWasm());
-            }
-            Promise.allSettled(viewPromises).then((drawingResults) => {
-                drawingResults.forEach((result) => {
-                    if (result.status === "rejected") {
-                        const error = result.reason;
-                        Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, error);
-                        reject(error);
-                    }
-                });
-                resolve();
-            });
-        });
-    }
-
-    #drawViews = async (/*drawTime*/) => {
-        const pt0 = performance.now(),
-            minCircleTime = this.#minCircleTime;
-            
-        let viewPromises = [];
-        this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
-        this.screenPageData._clearBoundaries();
-        this.#renderInterface.clearContext();
-        
-        //for (const [key, view] of this.#views.entries()) {
-        //    const render = await view.render(key);
-        //    viewPromises.push(render);
-        //}
-        const render = await this.#renderInterface.render();
-        viewPromises.push(render);
-        Promise.allSettled(viewPromises).then((drawingResults) => {
-            drawingResults.forEach((result) => {
-                if (result.status === "rejected") {
-                    Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
-                    this.#isActive = false;
-                }
-            });
-            const r_time = performance.now() - pt0,
-                r_time_less = minCircleTime - r_time,
-                wait_time = r_time_less > 0 ? r_time_less : 0,
-                fps = 1000 / (r_time + wait_time);
-            //console.log("draw circle done, take: ", (r_time), " ms");
-            //console.log("fps: ", fps);
-            this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
-            if(fps === Infinity) {
-                console.log("infinity time");
-            }
-            this.#tempFPStime.push(fps);
-            if (this.#isActive) {
-                setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
-            }
-        });
-    };
+    //    this.#tempFPStime = [];
+    //}
 }

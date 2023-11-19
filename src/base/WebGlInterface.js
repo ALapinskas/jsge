@@ -69,7 +69,7 @@ export class WebGlInterface {
         this.#gl.viewport(0, 0, width, height);
     }
 
-    _initiateImagesDrawProgram() {
+    _initiateImagesDrawProgram = () => {
         this.#vertexShaderSource = `
             attribute vec2 a_texCoord;
 
@@ -179,7 +179,7 @@ export class WebGlInterface {
         return Promise.resolve();
     }
 
-    _initPrimitivesDrawProgram() {
+    _initPrimitivesDrawProgram = () => {
         this.#vertexShaderSource = `
             precision mediump float;
 
@@ -297,7 +297,7 @@ export class WebGlInterface {
         return Promise.resolve();
     }
 
-    _initWebGlAttributes() {
+    _initWebGlAttributes = () => {
         const gl = this.#gl;
         gl.enable(gl.BLEND);
         gl.enable(gl.STENCIL_TEST);
