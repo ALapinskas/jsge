@@ -15974,18 +15974,11 @@ class DrawSpineTexture {
         return this.#image;
     }
 }
-//console.log(new Skeleton());
 class SpineModuleInitialization {
-    #renderInterface;
-    #systemInterface;
     constructor(systemInterface, spineFolder, renderInterface) {
-        this.#systemInterface = systemInterface;
-        this.#registerSpineLoaders(this.#systemInterface.loader, spineFolder);
-        this.#registerDrawObjects(this.#systemInterface);
-        if (renderInterface) {
-            this.extendRenderInterface(renderInterface);
-        }
-        this.time = new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.TimeKeeper();
+        this.#registerSpineLoaders(systemInterface.loader, spineFolder);
+        this.#registerDrawObjects(systemInterface, renderInterface.drawContext);
+        this.#extendRenderInterface(renderInterface);
     }
 
     #registerSpineLoaders(loader, spineFolder = "") {
@@ -16009,9 +16002,10 @@ class SpineModuleInitialization {
         loader.registerLoader("SpineAtlas", spineAtlasLoader);
     }
 
-    #registerDrawObjects(systemInterface) {
+    #registerDrawObjects(systemInterface, context) {
+        const loader = systemInterface.loader;
         const spine = (x, y, dataKey, atlasKey, imageIndex, boundaries) => {
-            const skeleton = this.#createSkeleton(dataKey, atlasKey);
+            const skeleton = this.#createSkeleton(dataKey, atlasKey, loader, context);
             if (!skeleton || !(skeleton instanceof _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.Skeleton)) {
                 throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.SKELETON_ERROR);
             } else {
@@ -16019,9 +16013,9 @@ class SpineModuleInitialization {
             }
         },
         spineTexture = (x, y, width, height, imageKey) => {
-            const image = this.#systemInterface.loader.getImage(imageKey);
+            const image = systemInterface.loader.getImage(imageKey);
             if (image) {
-                return new DrawSpineTexture(x, y, width, height, new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(this.#renderInterface.drawContext, image));
+                return new DrawSpineTexture(x, y, width, height, new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(context, image));
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
                 return;
@@ -16031,15 +16025,15 @@ class SpineModuleInitialization {
         systemInterface.registerDrawObject("spineTexture", spineTexture);
     }
 
-    #createSkeleton(dataKey, atlasKey) {
-        const atlas = this.#systemInterface.loader.getSpineAtlas(atlasKey), 
-            spineBinaryFile = this.#systemInterface.loader.getSpineBinary(dataKey),
-            spineJsonFile = this.#systemInterface.loader.getSpineJson(dataKey);
+    #createSkeleton(dataKey, atlasKey, loader, context) {
+        const atlas = loader.getSpineAtlas(atlasKey), 
+            spineBinaryFile = loader.getSpineBinary(dataKey),
+            spineJsonFile = loader.getSpineJson(dataKey);
 
         if (!atlas || !(atlas instanceof _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.TextureAtlas)) {
             throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.NO_ATLAS);
         }
-        this.#attachAtlasGraphicsData(atlas);
+        this.#attachAtlasGraphicsData(atlas, loader, context);
         
         let skeletonData;
         if (spineBinaryFile) {
@@ -16054,122 +16048,50 @@ class SpineModuleInitialization {
 
         return new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.Skeleton(skeletonData);
     }
-
-    get context() {
-        if (this.#renderInterface) {
-            return this.#renderInterface.drawContext;
-        } else {
-            throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.NO_ACTIVATED_VIEW);
-        }
-    }
-
-    get sceneRenderer() {
-        if (this.#renderInterface) {
-            return this.#renderInterface.sceneRenderer;
-        } else {
-            throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.NO_ACTIVATED_VIEW);
-        }
-    }
-
-    #attachAtlasGraphicsData(textureAtlas) {
-        const context = this.context;
+    #attachAtlasGraphicsData(textureAtlas, loader, context) {
         for (let page of textureAtlas.pages) {
-            const img = this.#systemInterface.loader.getImage(page.name);
+            const img = loader.getImage(page.name);
             for (let region of page.regions) {
-                if (!this.#renderInterface.drawContext) {
-                    console.error("no view is registered on the module!");
-                    return;
-                }
-                region.texture = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(this.#renderInterface.drawContext, img);
+                region.texture = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(context, img);
             }
         }
-    }
-
-    #setCanvasSize(view) {
-        const settings = this.#systemInterface.systemSettings;
-        const canvasWidth = settings.canvasMaxSize.width && (settings.canvasMaxSize.width < window.innerWidth) ? settings.canvasMaxSize.width : window.innerWidth,
-            canvasHeight = settings.canvasMaxSize.height && (settings.canvasMaxSize.height < window.innerHeight) ? settings.canvasMaxSize.height : window.innerHeight;
-            
-        view._setCanvasSize(canvasWidth, canvasHeight);
     }
 
     /**
      * 
      * @param {RenderInterface} renderInterface
      */
-    extendRenderInterface(renderInterface) {
-        this.#renderInterface = renderInterface;
-        
-        this.#setCanvasSize(renderInterface);
-        //this.#sceneRenderer = new SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+    #extendRenderInterface(renderInterface) {
+        const renderInitMethod = () => {
+            renderInterface.time = new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.TimeKeeper();
+            renderInterface.sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+            return Promise.resolve();
+        };
+        const drawSpineObjectMethod = (object) => {
+            renderInterface.time.update();
+            // a workaround for drawing different objects(switch draw programs)
+            renderInterface.sceneRenderer.end();
+            object.update(renderInterface.time.delta);
+            renderInterface.sceneRenderer.drawSkeleton(object.skeleton, false);
+            return Promise.resolve();
+        }; 
+        const drawSpineTextureMethod = (object) => {
+            renderInterface.sceneRenderer.end();
+            renderInterface.sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
+            // sceneRenderer.drawTexture() skips first draw call, for some reasons, 
+            // and only prepare the vertices
+            // and if next call will be with different draw program, 
+            // it will break the drawing of the texture,
+            // thats why flush() call required here
+            // 1. prepare texture
+            // 2. draw call
+            renderInterface.sceneRenderer.batcher.flush();
+            return Promise.resolve();
+        };
 
-        // rewrite default render init
-        const currentInit = this.#renderInterface.initiateContext;
-        this.#renderInterface.initiateContext = () => currentInit().then(() => {
-            // introduce a custom renderer
-            this.#renderInterface.sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
-        });
-
-        const gl = renderInterface.drawContext;
-        this.#renderInterface.render = async() => {
-            //gl.clearColor(0, 0, 0, 0);
-            // Clear the color buffer with specified clear color
-            //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            const sceneRenderer = this.#renderInterface.sceneRenderer;
-            this.#renderInterface.clearContext();
-            const renderObjects = this.#renderInterface.screenPageData.renderObjects;
-            this.#renderInterface._bindRenderObjectPromises = [];
-            
-            for (let i = 0; i < renderObjects.length; i++) {
-                const object = renderObjects[i];
-                if (object.isRemoved) {
-                    renderObjects.splice(i, 1);
-                    i--;
-                    continue;
-                }
-                let promise;
-                if (object instanceof DrawSpineObject) {
-                    promise = new Promise((resolve, reject) => {
-                        this.time.update();
-                        // a workaround for drawing different objects(switch draw programs)
-                        sceneRenderer.end();
-                        object.update(this.time.delta);
-                        sceneRenderer.drawSkeleton(object.skeleton, false);
-                        resolve();
-                    });
-                } else if (object instanceof DrawSpineTexture) {
-                    promise = new Promise((resolve, reject) => {
-                        // a workaround for drawing different objects(switch draw programs)
-                        sceneRenderer.end();
-                        sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
-                        // sceneRenderer.drawTexture() skips first draw call, for some reasons, 
-                        // and only prepare the vertices
-                        // and if next call will be with different draw program, 
-                        // it will break the drawing of the texture,
-                        // thats why flush() call required here
-                        // 1. prepare texture
-                        // 2. draw call
-                        sceneRenderer.batcher.flush();
-                        resolve();
-                    });
-                } else {
-                    promise = this.#renderInterface._bindRenderObject(object).then(()=> {
-                        return Promise.resolve();
-                    }).catch((err) => Promise.reject(err));
-                }
-                this.#renderInterface._bindRenderObjectPromises.push(promise);
-            }
-
-            return Promise.allSettled(this.#renderInterface._bindRenderObjectPromises)
-                .then((bindResults) => {
-                    bindResults.forEach((result) => {
-                        if (result.status === "rejected") {
-                            return Promise.reject(result);
-                        }
-                    });
-                    return Promise.resolve();
-                });
-        }
+        renderInterface.registerRenderInit(renderInitMethod);
+        renderInterface.registerObjectRender("DrawSpineObject", drawSpineObjectMethod);
+        renderInterface.registerObjectRender("DrawSpineTexture", drawSpineTextureMethod);
     }
 }
 })();

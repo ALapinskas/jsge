@@ -252,7 +252,7 @@ export default class SpineModuleInitialization {
         };
 
         renderInterface.registerRenderInit(renderInitMethod);
-        renderInterface.registerObjectRender(drawSpineObjectMethod);
-        renderInterface.registerObjectRender(drawSpineTextureMethod);
+        renderInterface.registerObjectRender("DrawSpineObject", drawSpineObjectMethod);
+        renderInterface.registerObjectRender("DrawSpineTexture", drawSpineTextureMethod);
     }
 }

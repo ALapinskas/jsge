@@ -14,7 +14,13 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
  * @see {@link ScreenPage} a part of ScreenPage
  */
 export class DrawObjectFactory {
-
+    /**
+     * @type {AssetsManager}
+     */
+    #loader;
+    constructor(loader) {
+        this.#loader = loader;
+    }
     /**
      * @param {number} x 
      * @param {number} y 
@@ -72,7 +78,8 @@ export class DrawObjectFactory {
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries) {
-        return new DrawImageObject(x, y, width, height, key, imageIndex, boundaries);
+        const image = this.#loader.getImage(key);
+        return new DrawImageObject(x, y, width, height, key, imageIndex, image, boundaries);
     }
 
     /**
@@ -102,6 +109,10 @@ export class DrawObjectFactory {
      * @returns {TiledRenderLayer}
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
-        return new TiledRenderLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
+        const tilemap = this.#loader.getTileMap(tileMapKey),
+            tilesets = tilemap.tilesets,
+            tilesetImages = tilesets.map((tileset) => this.#loader.getImage(tileset.data.name)),
+            layerData = tilemap.layers.find((layer) => layer.name === layerKey);
+        return new TiledRenderLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
     }
 }

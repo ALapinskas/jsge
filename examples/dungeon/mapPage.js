@@ -71,9 +71,9 @@ export class MapPage extends ScreenPage {
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         
 
-        const monster1 = new Ghost(255,250, 16, 16, "tilemap_packed", 108);
-        const monster2 = new Ghost(255,420, 16, 16, "tilemap_packed", 108);
-        const monster3 = new Ghost(285,420, 16, 16, "tilemap_packed", 108);
+        const monster1 = new Ghost(255, 250, 16, 16, "tilemap_packed", 108);
+        const monster2 = new Ghost(255, 420, 16, 16, "tilemap_packed", 108);
+        const monster3 = new Ghost(285, 420, 16, 16, "tilemap_packed", 108);
         monster1.setMask(this.sightView);
         monster2.setMask(this.sightView);
         monster3.setMask(this.sightView);

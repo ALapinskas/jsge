@@ -21,6 +21,10 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #key;
     /**
+     * @type {ImageBitmap}
+     */
+    #image;
+    /**
      * @type {EventTarget}
      */
     #emitter;
@@ -44,11 +48,12 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, image, boundaries) {
         super(CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();
+        this.#image = image;
         this.#imageIndex = imageIndex;
         this.#w = width;
         this.#h = height;
@@ -84,6 +89,17 @@ export class DrawImageObject extends DrawShapeObject {
      */
     get key() {
         return this.#key;
+    }
+
+    /**
+     * @type {ImageBitmap}
+     */
+    get image() {
+        return this.#image;
+    }
+
+    set image(value) {
+        this.#image = value;
     }
 
     /**

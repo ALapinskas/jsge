@@ -205,7 +205,7 @@ export class ScreenPage {
         } else {
             //const view = this.#views.get(canvasKey);
             const data = this.screenPageData;
-            data._renderObject = new TiledRenderLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
+            data._renderObject = this.draw.tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
             if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
                 data._enableMapBoundaries();
             }

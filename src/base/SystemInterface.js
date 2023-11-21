@@ -38,7 +38,7 @@ export class SystemInterface {
     /**
      * @type {DrawObjectFactory}
      */
-    #drawObjectFactory = new DrawObjectFactory();
+    #drawObjectFactory = new DrawObjectFactory(this.#loader);
     /**
      * @hideconstructor
      */
@@ -131,6 +131,10 @@ export class SystemInterface {
      */
     get drawObjectFactory() {
         return this.#drawObjectFactory;
+    }
+
+    get renderInterface() {
+        return this.#renderInterface;
     }
 
     /**

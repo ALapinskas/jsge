@@ -16,7 +16,6 @@ export class SpinePage extends ScreenPage {
 
     register() {
         //spine module already installed
-        this.spineModule = this.system.modules.get("spineModule");
     }
 
     init() {
@@ -24,8 +23,7 @@ export class SpinePage extends ScreenPage {
 
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
-        this.spineModule.extendRenderInterface(this.renderInterface);
-        //this.spineModule.activateSpineRender(this.name);
+        
         const spineDrawObject = this.draw.spine(-300, -300, SPINE.SpineText, SPINE.SpineAtlas);
         spineDrawObject.scale(0.5);
 
