@@ -14,7 +14,6 @@ export class LoadingScreen extends ScreenPage {
         const [w, h] = this.screenPageData.canvasDimensions,
             barWidth = w/3,
             barHeight = 20;
-        this.createCanvasView(CONST.LAYERS.DEFAULT);
         //this.logo = this.draw.image(w/2, h/2, 300, 200, logoKey);
         this.text = this.draw.text(w/2 - 20, h/2 - 2 * barHeight, "JsGE", "24px sans-serif", "black");
         this.background = this.draw.rect(0, 0, w, h, this.systemSettings.gameOptions.loadingScreen.backgroundColor);  
