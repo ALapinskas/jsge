@@ -23,10 +23,6 @@ export class System {
      */
     #system;
     /**
-     * @type {HTMLElement}
-     */
-    #canvasContainer
-    /**
      * @param {SystemSettings} systemSettings - holds system settings
      * @param {HTMLElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
      */
@@ -39,10 +35,9 @@ export class System {
         if (!canvasContainer) {
             canvasContainer = document.createElement("div");
             document.body.appendChild(canvasContainer);
-            this.#canvasContainer = canvasContainer;
         }
 
-        this.#system = new SystemInterface(systemSettings, this.#registeredPages, this.#canvasContainer);
+        this.#system = new SystemInterface(systemSettings, this.#registeredPages, canvasContainer);
 
         this.registerPage(loadingPageName, LoadingScreen);
 

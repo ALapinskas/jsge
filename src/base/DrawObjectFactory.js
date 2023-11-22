@@ -7,6 +7,7 @@ import { DrawPolygonObject } from "./DrawPolygonObject.js";
 import { DrawCircleObject } from "./DrawCircleObject.js";
 import { TiledRenderLayer } from "./TiledRenderLayer.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
+import { ScreenPageData } from "./ScreenPageData.js";
 
 /**
  * Creates drawObjects instances.<br>
@@ -79,7 +80,7 @@ export class DrawObjectFactory {
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries) {
         const image = this.#loader.getImage(key);
-        return new DrawImageObject(x, y, width, height, key, imageIndex, image, boundaries);
+        return new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image);
     }
 
     /**

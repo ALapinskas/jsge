@@ -5,11 +5,11 @@ Javascript Game Engine
 This engine was designed to work with maps from Tiled editor.
 
 Advantages:
-* Fresh codebase, depends on latest javascript features such as classes and privacy.
-* Strict OPP structure, no circle dependencies.
-* Modular structure.
+* Fresh codebase, depends on latest javascript features such as classes and privacy. 
+* Strict OPP structure.
+* Modular structure, any custom webgl render can be added as a plugin.
 * Webgl 1 under the hood, wide browser support and fast rendering on desktop and mobile screens.
-* Flexible multilayer design. Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
+* Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
 * Spine 2d skeletal animation runtimes integrated.
 
 What you can do with it:

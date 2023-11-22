@@ -263,13 +263,13 @@ export class RenderInterface {
                         i--;
                         continue;
                     }
-                    if (object.isAnimations) {
-                        object._processActiveAnimations();
-                    }
                     const promise = await this._bindRenderObject(object).catch((err) => {
                         reject(err);
                     });
                     renderObjectsPromises.push(promise);
+                    if (object.isAnimations) {
+                        object._processActiveAnimations();
+                    }
                 }
                 if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
                     renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
@@ -285,7 +285,7 @@ export class RenderInterface {
 
                 //await this.#webGlEngine._executeImagesDraw();
 
-                this.#postRenderActions();
+                //this.#postRenderActions();
                     
                 this._isCleared = false;
             }
@@ -321,13 +321,13 @@ export class RenderInterface {
         //return promises;
     }
     #postRenderActions() {
-        const images = this.screenPageData.getObjectsByInstance(DrawImageObject);
-        for (let i = 0; i < images.length; i++) {
-            const object = images[i];
-            if (object.isAnimations) {
-                object._processActiveAnimations();
-            }
-        }
+        //const images = this.screenPageData.getObjectsByInstance(DrawImageObject);
+        //for (let i = 0; i < images.length; i++) {
+        //    const object = images[i];
+        //    if (object.isAnimations) {
+        //        object._processActiveAnimations();
+        //    }
+        //}
     }
 
     //#clearTileMapPromises() {
@@ -482,7 +482,7 @@ export class RenderInterface {
         this.#tempFPStime = [];
     }
 
-    startRender = async (/*time*/screenPageData) => {
+    _startRender = async (/*time*/screenPageData) => {
         //Logger.debug("_render " + this.name + " class");
         this.#isActive = true;
         this.#currentScreenPageData = screenPageData;
@@ -500,7 +500,7 @@ export class RenderInterface {
         this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.averageFPStime);
     };
 
-    stopRender = () => {
+    _stopRender = () => {
         this.#isActive = false;
         this.#currentScreenPageData = null;
         clearInterval(this.#fpsAverageCountTimer);
@@ -542,17 +542,13 @@ export class RenderInterface {
         this.screenPageData._clearBoundaries();
         this.clearContext();
         
-        //for (const [key, view] of this.#views.entries()) {
-        //    const render = await view.render(key);
-        //    viewPromises.push(render);
-        //}
         const render = await this.render();
         viewPromises.push(render);
         Promise.allSettled(viewPromises).then((drawingResults) => {
             drawingResults.forEach((result) => {
                 if (result.status === "rejected") {
                     Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
-                    this.stopRender();
+                    this._stopRender();
                 }
             });
             const r_time = performance.now() - pt0,

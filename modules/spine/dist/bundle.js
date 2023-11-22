@@ -16073,6 +16073,7 @@ class SpineModuleInitialization {
             renderInterface.sceneRenderer.end();
             object.update(renderInterface.time.delta);
             renderInterface.sceneRenderer.drawSkeleton(object.skeleton, false);
+            renderInterface.sceneRenderer.batcher.flush();
             return Promise.resolve();
         }; 
         const drawSpineTextureMethod = (object) => {

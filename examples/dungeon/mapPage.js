@@ -32,17 +32,11 @@ export class MapPage extends ScreenPage {
         this.backgroundSounds = new SystemAudioInterface(this.loader);
         this.speed = 0;
         this.movingInterval = null;
+        this.fireballs = [];
     }
 
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
-
-        //this.createCanvasView(OVERLAY_LAYER_KEY);
-        //this.createCanvasView(CONST.LAYERS.DEFAULT);
-
-        //if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
-            //this.createCanvasView(CONST.LAYERS.BOUNDARIES);
-        //}
 
         this.shadowRect = this.draw.rect(0, 0, w, h, "rgba(0, 0, 0, 0.5)");        
         this.shadowRect.sortIndex = 2;
@@ -167,6 +161,11 @@ export class MapPage extends ScreenPage {
                 enemy.idle();
             } 
         }
+        if(this.fireballs.length > 0) {
+            for (const fireball of this.fireballs) {
+                this.#fireballFly(fireball);
+            }
+        }
     }
 
     #pressKeyAction = (event) => {
@@ -225,12 +224,12 @@ export class MapPage extends ScreenPage {
 
     #mouseClickAction = () => {
         const fireball = this.#createFireball();
-        this.#fireballFly(fireball);
+        this.fireballs.push(fireball);
     }
 
     #createFireball = () => {
-        const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 36, {r:4});
-        f.addAnimation(ANIMATION_FIREMOVE, [36, 37, 38, 39], true);
+        const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 406, {r:4});
+        f.addAnimation(ANIMATION_FIREMOVE, [406, 407, 408, 409, 500], true);
         f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118]);
 
         this.addRenderObject(CONST.LAYERS.DEFAULT, f);
@@ -243,27 +242,25 @@ export class MapPage extends ScreenPage {
     #fireballFly = (fireball) => {
         //let distance = 0;
         const speed = 1,
-            direction = this.fireRange.rotation + Math.PI/28,
-            interval = setInterval(() => {
-                const newCoordX = fireball.x + speed * Math.cos(direction),
-                    newCoordY = fireball.y + speed * Math.sin(direction);
-                fireball.x = newCoordX;
-                fireball.y = newCoordY;
-                //console.log(newCoordX);
-                if (this.isBoundariesCollision(newCoordX, newCoordY, fireball) 
-                || this.isObjectsCollision(newCoordX, newCoordY, fireball, this.#enemies)) {
-                    //stop itself
-                    clearInterval(interval);
-                    //console.log("boundaries collision happen");
-                    fireball.stopRepeatedAnimation(ANIMATION_FIREMOVE);
-                    fireball.emit(ANIMATION_REACHWALL);
-                    setTimeout(() => {
-                        //remove fireball
-                        fireball.destroy();
-                        this.audio.getAudioCloned(this.#fireballDestroyAudioKey).play();
-                    }, 36);
-                }
-            }, 10);
+        direction = this.fireRange.rotation + Math.PI/28;
+
+        const newCoordX = fireball.x + speed * Math.cos(direction),
+            newCoordY = fireball.y + speed * Math.sin(direction);
+        fireball.x = newCoordX;
+        fireball.y = newCoordY;
+        //console.log(newCoordX);
+        if (this.isBoundariesCollision(newCoordX, newCoordY, fireball) 
+        || this.isObjectsCollision(newCoordX, newCoordY, fireball, this.#enemies)) {
+            //console.log("boundaries collision happen");
+            this.fireballs.splice(this.fireballs.indexOf(fireball), 1);
+            fireball.stopRepeatedAnimation(ANIMATION_FIREMOVE);
+            fireball.emit(ANIMATION_REACHWALL);
+            setTimeout(() => {
+                //remove fireball
+                fireball.destroy();
+                this.audio.getAudioCloned(this.#fireballDestroyAudioKey).play();
+            }, 64);
+        }
     }
 
     calculateCircleVertices(renderObject, offset, angle, width, step) {

@@ -148,7 +148,7 @@ export class ScreenPage {
      */
     createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
-            console.warn("createCanvasView is deprecated");
+            console.warn("createCanvasView is deprecated. For layer masks use .setMask(drawObject).");
             //const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
             //this.#views.set(name, newView);
             return {};//newView;
@@ -310,7 +310,7 @@ export class ScreenPage {
      * @returns {CanvasView | undefined}
      */
     getView = (key) => {
-        console.warn("ScreenPage.getView() is deprecated. Use ScreenPage.canvas instead");
+        console.warn("ScreenPage.getView() is deprecated. Use ScreenPage.system.renderInterface for render, and ScreenPage.screenPageData for data instead");
         return;
         /*
         const ctx = this.#views.get(key);
@@ -669,7 +669,7 @@ export class ScreenPage {
                 } else {
                     if (isPointLineIntersect({ x: renderObject.x, y: renderObject.y }, object)) {
                         this.emit(CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
-                        console.log("boundaries collision detected");
+                        //console.log("boundaries collision detected");
                     }
                 }
             }
@@ -695,7 +695,7 @@ export class ScreenPage {
             if (intersect) {
                 //console.log("rotation: ", rotation);
                 //console.log("polygon: ", polygonWithOffsetAndRotation);
-                console.log("intersect: ", intersect);
+                //console.log("intersect: ", intersect);
                 return intersect;
             }
         }
@@ -749,19 +749,4 @@ export class ScreenPage {
         //    view._setCanvasSize(canvasWidth, canvasHeight);
         //}
     }
-
-    //#countFPSaverage() {
-    //    const timeLeft = this.systemSettings.gameOptions.render.averageFPStime,
-    //        steps = this.#tempFPStime.length;
-    //    let fullTime = 0;
-
-    //    for(let i = 0; i < steps; i++) {
-    //        const timeStep = this.#tempFPStime[i];
-    //        fullTime += timeStep;
-    //    }
-    //    console.log("FPS average for ", timeLeft/1000, "sec, is ", fullTime / steps);
-
-        // cleanup
-    //    this.#tempFPStime = [];
-    //}
 }

@@ -40,8 +40,6 @@ export class StartPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
         
-        this.createCanvasView(CONST.LAYERS.DEFAULT);
-        
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");        
         this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
         

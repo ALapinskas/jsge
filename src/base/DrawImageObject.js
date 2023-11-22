@@ -48,7 +48,7 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, image, boundaries) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image) {
         super(CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();

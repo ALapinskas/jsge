@@ -23,7 +23,7 @@ export const SystemSettings = {
         },
         render: {
             averageFPStime: 10000,
-            minCircleTime: 1, //ms which is ~60 FPS
+            minCircleTime: 16, //ms which is ~60 FPS
             boundaries: {
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,

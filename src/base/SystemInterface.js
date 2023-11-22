@@ -3,10 +3,9 @@ import { Exception, Warning } from "./Exception.js";
 import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
-import AssetsManager from "../../node_modules/assetsm/dist/assetsm.min.js";
+import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { ScreenPage } from "./ScreenPage.js";
-import { TiledRenderLayer } from "../../modules/tiled/tiledRender.js";
 import { RenderInterface } from "./RenderInterface.js";
 
 /**
@@ -185,7 +184,8 @@ export class SystemInterface {
             //page._attachCanvasToContainer(this.#canvasContainer);
             page._start(options);
             this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
-            this.#renderInterface.startRender(page.screenPageData);
+            const pageData = page.screenPageData;
+            this.#renderInterface._startRender(pageData);
         } else {
             Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
         }
@@ -198,7 +198,7 @@ export class SystemInterface {
     stopScreenPage = (screenPageName) => {
         if (this.#registeredPagesReference.has(screenPageName)) {
             this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
-            this.#renderInterface.stopRender();
+            this.#renderInterface._stopRender();
             this.#registeredPagesReference.get(screenPageName)._stop();
         } else {
             Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");

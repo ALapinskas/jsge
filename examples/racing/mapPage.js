@@ -26,8 +26,6 @@ export class MapPage extends ScreenPage {
 
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
-
-        this.createCanvasView(CONST.LAYERS.DEFAULT);
         
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground", this.tilemapKey, true);
         this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground_b", this.tilemapKey);
