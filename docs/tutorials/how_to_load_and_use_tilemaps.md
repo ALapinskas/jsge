@@ -1,20 +1,25 @@
 Tilemaps(.tmg files) is a good way to draw and organize the system levels, they could be created by Tiled editor. 
-To load them:
+Loading them is now the same as the other objects:
 1. [Add and load a tilemap]{@tutorial assets_manager}
-2. Add the tilemap layer to the render layer in the init() or start() [stage]{@tutorial screen_pages_stages}:
+2. Create a draw object in the init() or start() [stage]{@tutorial screen_pages_stages}:
 ```
 init() {
-    this.addRenderLayer("system_layer_key", "tilemap_layer_key", "tilemap_key");
+    this.tiledLayer = this.draw.tiledLayer("tilemap_layer_key", "tilemap_key", setBoundaries, shapeMask);
+    ...
 }
+```
+3. Add it to the render:
+```
+    this.addRenderObject(this.tiledLayer)
 ```
 This will render the tilemap layer on your canvas.
 
 ### Extracting boundaries:
 For example, you have a walls layer:
 <img src="tiled_boundaries_layer.png">
-And you want that tiles to be unreachable by the player, or to detect the collision happens. To do that pass true as 4 parameter, for extracting boundaries from the tilemap layer :
+And you want that tiles to be unreachable by the player, or to detect the collision happens. To do that pass true as 3 parameter, for extracting boundaries from the tilemap layer :
 ```
-this.addRenderLayer("system_layer_key", "walls", "tilemap_key", true);
+ this.draw.tiledLayer("tilemap_layer_key", "tilemap_key", true, shapeMask);
 ```
 * This boundaries could be then retrieved:
 ```

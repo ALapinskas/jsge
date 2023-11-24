@@ -26,7 +26,7 @@ export class StartPage extends ScreenPage {
 
     register() {
         this.loader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
-        this.spineModule = this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets", this.system.renderInterface);
+        this.spineModule = this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets");
         // spine methods will be available after spine module installation
         this.loader.addSpineJson(SPINE.SpineText, "./spine/spine-assets/spineboy-pro.json");
         this.loader.addSpineBinary(SPINE.SpineBinary, "./spine/spine-assets/spineboy-pro.skel");

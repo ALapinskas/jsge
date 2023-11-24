@@ -15975,10 +15975,10 @@ class DrawSpineTexture {
     }
 }
 class SpineModuleInitialization {
-    constructor(systemInterface, spineFolder, renderInterface) {
+    constructor(systemInterface, spineFolder) {
         this.#registerSpineLoaders(systemInterface.loader, spineFolder);
-        this.#registerDrawObjects(systemInterface, renderInterface.drawContext);
-        this.#extendRenderInterface(renderInterface);
+        this.#registerDrawObjects(systemInterface);
+        this.#extendRenderInterface(systemInterface);
     }
 
     #registerSpineLoaders(loader, spineFolder = "") {
@@ -16002,8 +16002,9 @@ class SpineModuleInitialization {
         loader.registerLoader("SpineAtlas", spineAtlasLoader);
     }
 
-    #registerDrawObjects(systemInterface, context) {
-        const loader = systemInterface.loader;
+    #registerDrawObjects(systemInterface) {
+        const loader = systemInterface.loader,
+            context = systemInterface.renderInterface.drawContext;
         const spine = (x, y, dataKey, atlasKey, imageIndex, boundaries) => {
             const skeleton = this.#createSkeleton(dataKey, atlasKey, loader, context);
             if (!skeleton || !(skeleton instanceof _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.Skeleton)) {
@@ -16021,8 +16022,8 @@ class SpineModuleInitialization {
                 return;
             }
         };
-        systemInterface.registerDrawObject("spine", spine);
-        systemInterface.registerDrawObject("spineTexture", spineTexture);
+        systemInterface.extensionInterface.registerDrawObject("spine", spine);
+        systemInterface.extensionInterface.registerDrawObject("spineTexture", spineTexture);
     }
 
     #createSkeleton(dataKey, atlasKey, loader, context) {
@@ -16059,26 +16060,27 @@ class SpineModuleInitialization {
 
     /**
      * 
-     * @param {RenderInterface} renderInterface
+     * @param {SystemInterface} systemInterface
      */
-    #extendRenderInterface(renderInterface) {
+    #extendRenderInterface(systemInterface) {
+        const renderInterface = systemInterface.renderInterface;
         const renderInitMethod = () => {
-            renderInterface.time = new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.TimeKeeper();
-            renderInterface.sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+            this.time = new _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.TimeKeeper();
+            this.sceneRenderer = new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
             return Promise.resolve();
         };
         const drawSpineObjectMethod = (object) => {
-            renderInterface.time.update();
+            this.time.update();
             // a workaround for drawing different objects(switch draw programs)
-            renderInterface.sceneRenderer.end();
-            object.update(renderInterface.time.delta);
-            renderInterface.sceneRenderer.drawSkeleton(object.skeleton, false);
-            renderInterface.sceneRenderer.batcher.flush();
+            this.sceneRenderer.end();
+            object.update(this.time.delta);
+            this.sceneRenderer.drawSkeleton(object.skeleton, false);
+            this.sceneRenderer.batcher.flush();
             return Promise.resolve();
         }; 
         const drawSpineTextureMethod = (object) => {
-            renderInterface.sceneRenderer.end();
-            renderInterface.sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
+            this.sceneRenderer.end();
+            this.sceneRenderer.drawTexture(object.image, object.x, object.y, object.width, object.height);
             // sceneRenderer.drawTexture() skips first draw call, for some reasons, 
             // and only prepare the vertices
             // and if next call will be with different draw program, 
@@ -16086,13 +16088,13 @@ class SpineModuleInitialization {
             // thats why flush() call required here
             // 1. prepare texture
             // 2. draw call
-            renderInterface.sceneRenderer.batcher.flush();
+            this.sceneRenderer.batcher.flush();
             return Promise.resolve();
         };
 
-        renderInterface.registerRenderInit(renderInitMethod);
-        renderInterface.registerObjectRender("DrawSpineObject", drawSpineObjectMethod);
-        renderInterface.registerObjectRender("DrawSpineTexture", drawSpineTextureMethod);
+        systemInterface.extensionInterface.registerRenderInit(renderInitMethod);
+        systemInterface.extensionInterface.registerObjectRender("DrawSpineObject", drawSpineObjectMethod);
+        systemInterface.extensionInterface.registerObjectRender("DrawSpineTexture", drawSpineTextureMethod);
     }
 }
 })();

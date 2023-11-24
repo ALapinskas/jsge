@@ -50,6 +50,13 @@ f: fixed defects
 
 
 # History
+0.3.1:
+    +: introduced ExtensionInterface
+    r: removed spine module 3 parameter
+    r: fixed jsdocs according last changes
+    r: fixed jsdocs schemes
+    r: added jsdoc switcher for prev versions
+
 0.3.0:
     r: CanvasView -> RenderInterface
     r: removed multiple layers and layers create

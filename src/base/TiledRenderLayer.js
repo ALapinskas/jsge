@@ -1,5 +1,9 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
+/**
+ * A render object represents a layer from tiled editor
+ * @see {@link DrawObjectFactory} should be created with factory method
+ */
 export class TiledRenderLayer {
     #layerKey;
     #tileMapKey;
@@ -12,6 +16,9 @@ export class TiledRenderLayer {
     #attachedMaskId;
     #isOffsetTurnedOff;
 
+    /**
+     * @hideconstructor
+     */
     constructor(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries = false, shapeMask) {
         this.#layerKey = layerKey;
         this.#tileMapKey = tileMapKey;
@@ -79,6 +86,9 @@ export class TiledRenderLayer {
         this.#drawBoundaries = value;
     }
 
+    /**
+     * @ignore
+     */
     get _maskId() {
         return this.#attachedMaskId;
     }

@@ -1,4 +1,4 @@
-# JsGE@.3.0
+# JsGE0@.3.1
 
 Javascript Game Engine
 
@@ -10,7 +10,7 @@ Advantages:
 * Modular structure, any custom webgl render can be added as a plugin.
 * Webgl 1 under the hood, wide browser support and fast rendering on desktop and mobile screens.
 * Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
-* Spine 2d skeletal animation runtimes integrated.
+* Spine 2d skeletal animation render integrated.
 
 What you can do with it:
 1. Draw primitives, texts, load images, audio and tilemaps with tilesets from Tiled editor.

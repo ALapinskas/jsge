@@ -19,6 +19,9 @@ export class DrawObjectFactory {
      * @type {AssetsManager}
      */
     #loader;
+    /**
+     * @hideconstructor 
+     */
     constructor(loader) {
         this.#loader = loader;
     }
@@ -115,5 +118,14 @@ export class DrawObjectFactory {
             tilesetImages = tilesets.map((tileset) => this.#loader.getImage(tileset.data.name)),
             layerData = tilemap.layers.find((layer) => layer.name === layerKey);
         return new TiledRenderLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+    }
+
+    /**
+     * @ignore
+     * @param {string} methodKey 
+     * @param {fun} methodFn 
+     */
+    _addNewObject = (methodKey, methodFn) => {
+        this[methodKey] = methodFn;
     }
 }

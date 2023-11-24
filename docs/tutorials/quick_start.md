@@ -38,7 +38,7 @@ npm start
 </body>
 ```
 2. Then create index.js file, which will store app logic. 
-3. Inside index.js create a {@link System} instance, passing game options, or a {@link SystemSettings} object and game canvas container name:
+3. Inside index.js create a {@link System} instance, passing game options, or a {@link SystemSettings} object and game canvas container:
 ```
 import { System, SystemSettings } from "/node_modules/jsge/src/index.js";
 const app = new System(SystemSettings, document.getElementById("game_map"));
@@ -58,37 +58,29 @@ class CustomPage extends ScreenPage {
     }
 }
 ```
-6. Create {@link CanvasView} on CustomPage.init(), or CustomPage.start() [stages]{@tutorial screen_pages_stages}:
-```
-class CustomPage extends ScreenPage {
-    ...
-    init() {
-        this.createCanvasView("view_key");
-        ...
-```
-7. Attach data you added on step 5.to the view from step 6.:
+6. Create an DrawImageObject and add it to the page, use image key, added on step 5:
 ```
         ...
         this.player = this.draw.image(100, 200, 16, 28, "image_key", 0);
-        this.addRenderObject("view_key", this.player);
+        this.addRenderObject(this.player);
     }
 }
 ```
-8. Register pages in the application:
+7. Register pages in the application:
 ```
 app.registerPage("CustomPageKey", CustomPage);
 ```
-9. Run [preloadAllData()]{@link System#preloadAllData} to load all data you added on step 5:
+8. Run [preloadAllData()]{@link System#preloadAllData} to load all data you added on step 5:
 ```
 app.preloadAllData().then(() => {
 ```
-10. After preloadAllData() resolves, start the page rendering with app.system.startScreenPage(pageKey):
+9. After preloadAllData() resolves, start the page rendering with app.system.startScreenPage(pageKey):
 ```
 app.preloadAllData().then(() => {
     app.system.startScreenPage("CustomPageKey");
 });
 ```
-11. Now visit http://127.0.0.1:9000
-12. Your image now will be rendered! \
+10. Now visit http://127.0.0.1:9000
+11. Your image now will be rendered! \
 Use document.addEventListener to attach mouse or keyboard controllers and \
 move attached object on the screen changing x, y, or rotation properties

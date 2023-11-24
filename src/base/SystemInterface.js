@@ -7,11 +7,13 @@ import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { ScreenPage } from "./ScreenPage.js";
 import { RenderInterface } from "./RenderInterface.js";
+import { ExtensionInterface } from "./ExtensionInterface.js";
 
 /**
  * Public interface for a System<br>
  * Can be used to start/stop ScreenPage render, <br>
  * And provides access to SystemSettings, SystemSocketConnection and SystemAudioInterface <br>
+ * RenderInterface, DrawObjectFactory, AssetsManager and external modules
  * accessible via ScreenPage.system and System.system
  * @see {@link System} a part of System class instance
  * @see {@link ScreenPage} a part of ScreenPage class instance
@@ -21,6 +23,13 @@ export class SystemInterface {
      * @type {Object}
      */
     #systemSettings;
+    /**
+     * @type {ExtensionInterface}
+     */
+    #extensionInterface;
+    /**
+     * @type {SystemSocketConnection}
+     */
     #systemServerConnection;
     /**
      * @type {SystemAudioInterface}
@@ -38,9 +47,7 @@ export class SystemInterface {
      * @type {DrawObjectFactory}
      */
     #drawObjectFactory = new DrawObjectFactory(this.#loader);
-    /**
-     * @hideconstructor
-     */
+    
     #modules = new Map();
     /**
      * @type {Map<string, ScreenPage>}
@@ -50,16 +57,18 @@ export class SystemInterface {
      * @type {EventTarget}
      */
     #emitter = new EventTarget();
+    /**
+     * @hideconstructor
+     */
     constructor(systemSettings, registeredPages, canvasContainer) {
         if (!systemSettings) {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
         }
         this.#systemSettings = systemSettings;
+        this.#extensionInterface = new ExtensionInterface(this);
         this.#systemAudioInterface = new SystemAudioInterface(this.loader);
         this.#systemServerConnection = new SystemSocketConnection(systemSettings);
         this.#renderInterface = new RenderInterface(this.systemSettings, this.loader, canvasContainer);
-        //this.startScreenPage = _startScreenPage;
-        //this.stopScreenPage = _stopScreenPage;
         this.#registeredPagesReference = registeredPages;
         // broadcast render events
         this.#renderInterface.addEventListener(CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.START));
@@ -136,6 +145,9 @@ export class SystemInterface {
         return this.#renderInterface;
     }
 
+    get extensionInterface() {
+        return this.#extensionInterface;
+    }
     /**
      * @type {Map<string, Object>}
      */
@@ -159,15 +171,6 @@ export class SystemInterface {
             this.#modules.set(moduleKey, moduleInstance);
         }
         return moduleInstance;
-    }
-    
-    /**
-     * 
-     * @param {string} createInstanceKey 
-     * @param {*} createInstanceMethod 
-     */
-    registerDrawObject(createInstanceKey, createInstanceMethod) {
-        this.#drawObjectFactory[createInstanceKey] = createInstanceMethod;
     }
 
     /**

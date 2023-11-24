@@ -152,6 +152,9 @@ export class DrawShapeObject {
         return !!this.#attachedMaskId;
     }
 
+    /**
+     * @ignore
+     */
     get _maskId() {
         return this.#attachedMaskId;
     }
@@ -175,6 +178,7 @@ export class DrawShapeObject {
         this.#isOffsetTurnedOff = true;
     }
     /**
+     * @ignore
      * @param {number} width 
      * @param {number} height 
      * @returns {Array<Array<number>>}

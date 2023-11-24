@@ -80,7 +80,7 @@ export class RenderInterface {
     #registeredRenderObjects = new Map();
 
     /**
-     * @type {Array<() => Promise<void>>}
+     * @type {Array<function():Promise<void>>}
      */
     #initPromises = [];
     constructor(systemSettings, loader, canvasContainer) {
@@ -99,25 +99,25 @@ export class RenderInterface {
 
         this.#webGlEngine = new WebGlEngine(this.#drawContext, this.#systemSettingsReference.gameOptions);
         if (this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM) {
-            this.registerRenderInit(this.#webGlEngine._initiateWasm);
+            this._registerRenderInit(this.#webGlEngine._initiateWasm);
         }
 
-        this.registerRenderInit(this.fixCanvasSize);
-        this.registerRenderInit(
-            () => this.registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES, imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes)
+        this._registerRenderInit(this.fixCanvasSize);
+        this._registerRenderInit(
+            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES, imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes)
         );
-        this.registerRenderInit(
-            () => this.registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes)
+        this._registerRenderInit(
+            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes)
         );
-        this.registerRenderInit(this.#webGlEngine._initWebGlAttributes);
+        this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
 
-        this.registerObjectRender("DrawTextObject", this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this.registerObjectRender("DrawRectObject", this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this.registerObjectRender("DrawPolygonObject", this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this.registerObjectRender("DrawCircleObject", this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this.registerObjectRender("DrawConusObject", this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this.registerObjectRender("TiledRenderLayer", this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this.registerObjectRender("DrawLineObject", this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender("DrawTextObject", this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender("DrawRectObject", this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender("DrawPolygonObject", this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender("DrawCircleObject", this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender("DrawConusObject", this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender("TiledRenderLayer", this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender("DrawLineObject", this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
     }
 
     /**
@@ -207,7 +207,7 @@ export class RenderInterface {
      *  Extend functionality
      ****************************/
     /**
-     * 
+     * @ignore
      * @param {string} programName
      * @param {string} vertexShader - raw vertex shader program
      * @param {string} fragmentShader - raw fragment shader program 
@@ -215,17 +215,17 @@ export class RenderInterface {
      * @param {Array<string>} aVars - program attribute variables names
      * @returns {Promise<void>}
      */
-    registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars) {
+    _registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars) {
         this.#webGlEngine._registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars);
         return Promise.resolve();
     }
 
     /**
-     * 
-     * @param {() => Promise<void>} method 
+     * @ignore
+     * @param {function():Promise<void>} method 
      * @returns {void}
      */
-    registerRenderInit(method) {
+    _registerRenderInit(method) {
         if (method() instanceof Promise) {
             this.#initPromises.push(method);
         } else {
@@ -234,12 +234,12 @@ export class RenderInterface {
     }
 
     /**
-     * 
+     * @ignore
      * @param {string} objectClassName - object name registered to DrawObjectFactory
-     * @param {(renderObject, gl, pageData, program, vars) => Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
-     * @param {*=} objectWebGlDrawProgram 
+     * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
+     * @param {string=} objectWebGlDrawProgram 
      */
-    registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
+    _registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
         this.#registeredRenderObjects.set(objectClassName, {method: objectRenderMethod, webglProgramName: objectWebGlDrawProgram});
     }
 
@@ -303,10 +303,16 @@ export class RenderInterface {
         });
     }
 
+    /**
+     * @ignore
+     */
     set _isCleared(value) {
         this.#isCleared = value;
     }
 
+    /**
+     * @ignore
+     */
     get _isCleared() {
         return this.#isCleared;
     }
@@ -405,7 +411,7 @@ export class RenderInterface {
     }
 
     /**
-     * 
+     * @ignore
      * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | TiledRenderLayer} renderObject 
      * @returns {Promise<void>}
      */
@@ -482,6 +488,10 @@ export class RenderInterface {
         this.#tempFPStime = [];
     }
 
+    /**
+     * @ignore
+     * @param {ScreenPageData} screenPageData 
+     */
     _startRender = async (/*time*/screenPageData) => {
         //Logger.debug("_render " + this.name + " class");
         this.#isActive = true;
@@ -500,6 +510,9 @@ export class RenderInterface {
         this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.averageFPStime);
     };
 
+    /**
+     * @ignore
+     */
     _stopRender = () => {
         this.#isActive = false;
         this.#currentScreenPageData = null;
@@ -537,20 +550,11 @@ export class RenderInterface {
         const pt0 = performance.now(),
             minCircleTime = this.#minCircleTime;
             
-        let viewPromises = [];
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
         this.screenPageData._clearBoundaries();
         this.clearContext();
         
-        const render = await this.render();
-        viewPromises.push(render);
-        Promise.allSettled(viewPromises).then((drawingResults) => {
-            drawingResults.forEach((result) => {
-                if (result.status === "rejected") {
-                    Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, result.reason);
-                    this._stopRender();
-                }
-            });
+        this.render().then(() => {
             const r_time = performance.now() - pt0,
                 r_time_less = minCircleTime - r_time,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
@@ -565,6 +569,9 @@ export class RenderInterface {
             if (this.#isActive) {
                 setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
             }
+        }).catch((err) => {
+            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
+            this._stopRender();
         });
     };
 }

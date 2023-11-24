@@ -118,6 +118,9 @@ export class ScreenPageData {
         this.#addBoundaries({x1: 0, y1: hOffset, x2: 0, y2: 0});
     }
 
+    /**
+     * @ignore
+     */
     _setWholeWorldMapBoundaries() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
         if (!w || !h) {
@@ -169,6 +172,10 @@ export class ScreenPageData {
         boundariesSet.clear();
     }
 
+    /**
+     * @ignore
+     * @param {Array<Array<number>>} boundaries 
+     */
     _setWholeMapBoundaries(boundaries) {
         this.#wholeWorldBoundaries.push(...boundaries);
     }
@@ -324,14 +331,23 @@ export class ScreenPageData {
         return this.#renderObjects.filter((object) => object instanceof instance);
     }
 
+    /**
+     * @ignore
+     */
     _sortRenderObjectsBySortIndex() {
         this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj2.sortIndex - obj1.sortIndex);
     }
 
+    /**
+     * @ignore
+     */
     set _renderObject(object) {
         this.#renderObjects.push(object);
     } 
 
+    /**
+     * @ignore
+     */
     set _renderObjects(objects) {
         this.#renderObjects = objects;
     } 

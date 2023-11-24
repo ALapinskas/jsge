@@ -47,32 +47,13 @@ export class ScreenPage {
      */
     #systemReference;
     /**
-     * @type {RenderInterface}
-     */
-    //#renderInterface;
-    /**
-     * @type {Array<number>}
-     */
-    //#tempFPStime;
-    /**
-     * @type {NodeJS.Timer}
-     */
-    //#fpsAverageCountTimer;
-    /**
-     * @type {boolean}
-     */
-    //#isBoundariesPrecalculations = false;
-    //#minCircleTime;
-    /**
      * @type {ScreenPageData}
      */
     #screenPageData;
 
     constructor() {
         this.#isActive = false;
-        //this.#views = new Map();
         this.#screenPageData = new ScreenPageData();
-        //this.#tempFPStime = [];
     }
 
     /**
@@ -84,7 +65,6 @@ export class ScreenPage {
     _register(name, system) {
         this.#name = name;
         this.#systemReference = system;
-        //this.#renderInterface = new RenderInterface(this.#name, this.#systemReference.systemSettings, this.loader);
         this.#setWorldDimensions();
         this.#setCanvasSize();
         this.register();
@@ -170,23 +150,22 @@ export class ScreenPage {
 
     /**
      * Add render object to the view
-     * @param {string} canvasKey 
+     * @param {string} canvasKey - deprecated parameter
      * @param { DrawConusObject | DrawImageObject | 
      *          DrawLineObject | DrawPolygonObject | 
      *          DrawRectObject | DrawCircleObject | 
      *          DrawTextObject } renderObject 
      */
     addRenderObject = (canvasKey, renderObject) => {
-        if (!canvasKey) {
-            Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
-        //} else if (!this.#views.has(canvasKey)) {
-        //    Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
+        //a small workaround for 
+        if (!renderObject) {
+            renderObject = canvasKey;
         } else {
-            //const view = this.#views.get(canvasKey);
-            const data = this.screenPageData;
-            data._renderObject = renderObject;
-            data._sortRenderObjectsBySortIndex();
+            Warning("canvasKey parameter is deprecated and no longer needed");
         }
+        const data = this.screenPageData;
+        data._renderObject = renderObject;
+        data._sortRenderObjectsBySortIndex(); 
     };
 
     /**
@@ -305,6 +284,7 @@ export class ScreenPage {
     //}
     
     /**
+     * @deprecated
      * @method
      * @param {string} key 
      * @returns {CanvasView | undefined}

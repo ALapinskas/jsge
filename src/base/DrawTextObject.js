@@ -114,6 +114,9 @@ export class DrawTextObject extends DrawShapeObject {
         return this.#textMetrics;
     }
 
+    /**
+     * @ignore
+     */
     set _textMetrics(value) {
         this.#textMetrics = value;
     }
