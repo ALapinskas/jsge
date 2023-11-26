@@ -8,10 +8,6 @@ init() {
     ...
 }
 ```
-3. Add it to the render:
-```
-    this.addRenderObject(this.tiledLayer)
-```
 This will render the tilemap layer on your canvas.
 
 ### Extracting boundaries:

@@ -27,13 +27,12 @@ export class MapPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
         
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground", this.tilemapKey, true);
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground_b", this.tilemapKey);
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "road", this.tilemapKey);
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "objects", this.tilemapKey);
+        this.draw.tiledLayer("ground", this.tilemapKey, true);
+        this.draw.tiledLayer("ground_b", this.tilemapKey);
+        this.draw.tiledLayer("road", this.tilemapKey);
+        this.draw.tiledLayer("objects", this.tilemapKey);
         
         this.player = this.draw.image(100, 200, 16, 28, BLACK_CAR_KEY, 0, [{x:-8,y:-14}, {x:0,y:-15}, {x:8,y:-14}, {x:8,y:14}, {x:-8,y:14}]);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
 
         this.audioGearUp = this.loader.getAudio(AUDIO_GEAR_UP);
         this.audioCarCrush = this.loader.getAudio(AUDIO_CAR_CRUSH);

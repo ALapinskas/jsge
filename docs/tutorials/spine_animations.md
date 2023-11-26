@@ -25,16 +25,11 @@ init() {
     const spineDrawObject = this.draw.spine(0, 0, "spine-text-key", "spine-atlas");
     ...
 ```
-5. This objects should be added to the page same as the other draw objects:
-```
-    ...
-    this.addRenderObject(spineDrawObject);
-    ...
-```
-6. Spine specific methods will be available:
+5. This objects should be added to the page same as the other draw objects. <br />
+    Spine specific methods will be available:
 ```
     spineDrawObject.scale(0.5);
     spineDrawObject.animationState.setAnimation(0, "run", true);
     spineDrawObject.setSkin("goblin");
 ```
-7. After that spine objects will be rendered.
+6. After that spine objects will be rendered.

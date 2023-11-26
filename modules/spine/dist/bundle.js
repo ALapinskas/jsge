@@ -16010,13 +16010,19 @@ class SpineModuleInitialization {
             if (!skeleton || !(skeleton instanceof _esotericsoftware_spine_core__WEBPACK_IMPORTED_MODULE_0__.Skeleton)) {
                 throw new Error(SPINE_ERROR + _const_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_MESSAGES.SKELETON_ERROR);
             } else {
-                return new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
+                const renderObject = new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
+                systemInterface.drawObjectFactory.screenPageData._renderObject = renderObject;
+                systemInterface.drawObjectFactory.screenPageData._sortRenderObjectsBySortIndex(); 
+                return renderObject;
             }
         },
         spineTexture = (x, y, width, height, imageKey) => {
             const image = systemInterface.loader.getImage(imageKey);
             if (image) {
-                return new DrawSpineTexture(x, y, width, height, new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(context, image));
+                const renderObject = new DrawSpineTexture(x, y, width, height, new _esotericsoftware_spine_webgl__WEBPACK_IMPORTED_MODULE_1__.GLTexture(context, image));
+                systemInterface.drawObjectFactory.screenPageData._renderObject = renderObject;
+                systemInterface.drawObjectFactory.screenPageData._sortRenderObjectsBySortIndex(); 
+                return renderObject;
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
                 return;

@@ -62,7 +62,6 @@ class CustomPage extends ScreenPage {
 ```
         ...
         this.player = this.draw.image(100, 200, 16, 28, "image_key", 0);
-        this.addRenderObject(this.player);
     }
 }
 ```

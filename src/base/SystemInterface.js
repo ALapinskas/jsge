@@ -180,14 +180,15 @@ export class SystemInterface {
      */
     startScreenPage = (screenPageName, options) => {
         if (this.#registeredPagesReference.has(screenPageName)) {
-            const page = this.#registeredPagesReference.get(screenPageName);
+            const page = this.#registeredPagesReference.get(screenPageName),
+                pageData = page.screenPageData;
+            this.#drawObjectFactory._attachPageData(pageData);
             if (page.isInitiated === false) {
                 page._init();
             }
             //page._attachCanvasToContainer(this.#canvasContainer);
             page._start(options);
             this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
-            const pageData = page.screenPageData;
             this.#renderInterface._startRender(pageData);
         } else {
             Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
@@ -201,6 +202,7 @@ export class SystemInterface {
     stopScreenPage = (screenPageName) => {
         if (this.#registeredPagesReference.has(screenPageName)) {
             this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
+            this.drawObjectFactory._detachPageData();
             this.#renderInterface._stopRender();
             this.#registeredPagesReference.get(screenPageName)._stop();
         } else {

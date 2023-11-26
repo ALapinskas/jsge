@@ -15,17 +15,11 @@ export class LoadingScreen extends ScreenPage {
             barWidth = w/3,
             barHeight = 20;
         //this.logo = this.draw.image(w/2, h/2, 300, 200, logoKey);
-        this.text = this.draw.text(w/2 - 20, h/2 - 2 * barHeight, "JsGE", "24px sans-serif", "black");
         this.background = this.draw.rect(0, 0, w, h, this.systemSettings.gameOptions.loadingScreen.backgroundColor);  
         this.loadingBarBg = this.draw.rect(w/2 - (barWidth/2), h/2 - (barHeight/2), barWidth, barHeight, this.systemSettings.gameOptions.loadingScreen.loadingBarBg);
         this.loadingBarProgress = this.draw.rect(w/2 - (barWidth/2), h/2 - (barHeight/2), barWidth, barHeight, this.systemSettings.gameOptions.loadingScreen.loadingBarProgress);
-
+        this.text = this.draw.text(w/2 - 20, h/2 - 2 * barHeight, "JsGE", "24px sans-serif", "black");
         this.#barWidth = barWidth;
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.text);
-        //this.addRenderObject(CONST.LAYERS.DEFAULT, this.logo);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.loadingBarBg);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.loadingBarProgress);
     }
 
     _progress = (loaded, left) => {

@@ -43,6 +43,10 @@ export class DrawShapeObject {
     /**
      * @type {boolean}
      */
+    #isMask;
+    /**
+     * @type {boolean}
+     */
     #isOffsetTurnedOff;
 
     /**
@@ -164,12 +168,22 @@ export class DrawShapeObject {
      * @param {DrawShapeObject} mask 
      */
     setMask(mask) {
+        mask._isMask = true;
         this.#attachedMaskId = mask.id;
     }
 
     removeMask() {
         this.#attachedMaskId = null;
     }
+
+    set _isMask(isSet) {
+        this.#isMask = isSet;
+    }
+
+    get _isMask() {
+        return this.#isMask;
+    }
+
     get isOffsetTurnedOff() {
         return this.#isOffsetTurnedOff;
     }
@@ -208,6 +222,27 @@ export class DrawShapeObject {
 
         return conusPolygonCoords;
     }
+
+    /**
+     * @param {number} radius 
+     * @param {number} [angle = 2 * Math.PI]
+     * @param {number} [step = Math.PI/12] 
+     * @returns {Array<Array<number>>}
+     * @ignore
+     */
+    _calculateConusBoundaries(radius, angle = 2*Math.PI, step = Math.PI/14) {
+        let conusPolygonCoords = [];
+
+        for (let r = 0; r <= angle; r += step) {
+            let x2 = Math.cos(r) * radius,
+                y2 = Math.sin(r) * radius;
+
+            conusPolygonCoords.push([x2, y2]);
+        }
+
+        return conusPolygonCoords;
+    }
+
 
     /**
      * @param {Array<Array<number>> | Array<{x:number, y:number}>} boundaries

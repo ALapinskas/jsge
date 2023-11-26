@@ -50,6 +50,17 @@ f: fixed defects
 
 
 # History
+0.3.2:
+    f: circle-polygon collision
+    f: sort by sortIndex
+    f: removed setting stensil id for non mask objects
+    +: introduced DrawShapeObject.#isMask property
+    +: setting isMask property if object used as a mask
+    +: setting stensil id only for mask and filtered by mask objects
+    +: sortIndex added to TiledRenderLayer
+    +: drawObjectFactory will now add items to the screenPageData
+    +: draw circle boundaries
+
 0.3.1:
     +: introduced ExtensionInterface
     r: removed spine module 3 parameter

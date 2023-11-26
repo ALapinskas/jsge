@@ -21,17 +21,14 @@ export class SpinePage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
 
-        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");        
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
+        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)"); 
         
         const spineDrawObject = this.draw.spine(-300, -300, SPINE.SpineText, SPINE.SpineAtlas);
         spineDrawObject.scale(0.5);
 
         this.spineGoblinObject = this.draw.spine(0, -300, SPINE.SpineGoblinsBinary, SPINE.SpineGoblinsAtlas);
         
-        this.addRenderObject(SPINE_VIEW_KEY, spineDrawObject);
         spineDrawObject.animationState.setAnimation(0, "run", true);
-        this.addRenderObject(SPINE_VIEW_KEY, this.spineGoblinObject);
         this.spineGoblinObject.setSkin("goblin");
 
         this.changeGoblinSkinButton = document.createElement("button");
@@ -41,8 +38,7 @@ export class SpinePage extends ScreenPage {
         this.changeGoblinSkinButton.style.top = "50%";
         this.changeGoblinSkinButton.innerText = "Switch goblin skin";
 
-        const spineTexture = this.draw.spineTexture(100, 100, 200, 100, SPINE.SpineTexture);
-        this.addRenderObject(SPINE_VIEW_KEY, spineTexture);
+        this.draw.spineTexture(100, 100, 200, 100, SPINE.SpineTexture);
     }
 
     start() {

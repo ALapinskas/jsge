@@ -35,9 +35,9 @@ export class MapPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
         
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "water", this.tilemapKey);
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "ground", this.tilemapKey, true);
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "items", this.tilemapKey);
+        this.draw.tiledLayer("water", this.tilemapKey);
+        this.draw.tiledLayer("ground", this.tilemapKey, true);
+        this.draw.tiledLayer("items", this.tilemapKey);
 
         this.#windDirectionPointer = this.draw.polygon([
             {
@@ -60,10 +60,8 @@ export class MapPage extends ScreenPage {
         this.#windDirectionPointer.y = 50;
         this.#windDirectionPointer.turnOffOffset();
         this.audio.registerAudio(SAILS_UP_AUDIO);
-        this.addRenderObject(CONTROLS_LAYER, this.#windDirectionPointer);
 
         this.player = this.draw.image(100, 300, 35, 57, SHIPS_KEY, 0, [{x:0,y:-30}, {x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
     }
 
     #getRandomIntFromTo = (min, max) => (Math.random() * (max - min) + min);

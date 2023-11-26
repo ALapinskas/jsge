@@ -284,6 +284,12 @@ export class WebGlEngine {
         if (renderObject.blendFunc) {
             gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
         }
+        
+        if (renderObject.isMaskAttached) {
+            gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
+        } else if (renderObject._isMask) {
+            gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+        }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
     }
     _bindConus = (renderObject, gl, pageData, program, vars) => {
@@ -343,7 +349,7 @@ export class WebGlEngine {
         
         if (renderObject.isMaskAttached) {
             gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
-        } else {
+        } else if (renderObject._isMask) {
             gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
         }
         

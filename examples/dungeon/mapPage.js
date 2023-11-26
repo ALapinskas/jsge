@@ -38,33 +38,22 @@ export class MapPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
 
+        this.draw.tiledLayer("background", this.tilemapKey);
+        this.draw.tiledLayer("walls", this.tilemapKey);
+
         this.shadowRect = this.draw.rect(0, 0, w, h, "rgba(0, 0, 0, 0.5)");        
-        this.shadowRect.sortIndex = 2;
+        //this.shadowRect.sortIndex = 2;
         this.shadowRect.blendFunc = [WebGLRenderingContext.ONE, WebGLRenderingContext.DST_COLOR];
 
-        this.addRenderLayer(OVERLAY_LAYER_KEY, "background", this.tilemapKey);
-        this.addRenderLayer(OVERLAY_LAYER_KEY, "walls", this.tilemapKey);
-        this.addRenderObject(OVERLAY_LAYER_KEY, this.shadowRect);
-
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)"); //shapeMask
-        this.addRenderObject(OVERLAY_LAYER_KEY, this.sightView);
 
-        this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84);
-        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.2", Math.PI/8, 60);
-
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "background", this.tilemapKey, false, this.sightView);
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "walls", this.tilemapKey, true, this.sightView);
-        this.addRenderLayer(CONST.LAYERS.DEFAULT, "decs", this.tilemapKey, false, this.sightView);
+        this.draw.tiledLayer("background", this.tilemapKey, false, this.sightView);
+        this.draw.tiledLayer("walls", this.tilemapKey, true, this.sightView);
+        this.draw.tiledLayer("walls", this.tilemapKey, false, this.sightView);
         
-        this.greenLight = this.draw.conus(315,369,100,"rgba(0,128,0,0.5", Math.PI, 20);
-        this.greenLight.setMask(this.sightView);
-
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.player);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.fireRange);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.greenLight);
-        //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
+        this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.4)", Math.PI/8, 60);
+        this.fireRange.setMask(this.sightView);
         
-
         const monster1 = new Ghost(255, 250, 16, 16, "tilemap_packed", 108);
         const monster2 = new Ghost(255, 420, 16, 16, "tilemap_packed", 108);
         const monster3 = new Ghost(285, 420, 16, 16, "tilemap_packed", 108);
@@ -72,9 +61,16 @@ export class MapPage extends ScreenPage {
         monster2.setMask(this.sightView);
         monster3.setMask(this.sightView);
 
-        this.addRenderObject(CONST.LAYERS.DEFAULT, monster1);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, monster2);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, monster3);
+        this.addRenderObject(monster1);
+        this.addRenderObject(monster2);
+        this.addRenderObject(monster3);
+
+        this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84, {r: 8});
+        //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
+        
+        this.greenLight = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5", Math.PI, 20);
+        this.greenLight.setMask(this.sightView);
+        
         this.#enemies.push(monster1);
         this.#enemies.push(monster2);
         this.#enemies.push(monster3);
@@ -232,7 +228,6 @@ export class MapPage extends ScreenPage {
         f.addAnimation(ANIMATION_FIREMOVE, [406, 407, 408, 409, 500], true);
         f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118]);
 
-        this.addRenderObject(CONST.LAYERS.DEFAULT, f);
         f.emit(ANIMATION_FIREMOVE);
 
         this.audio.getAudioCloned(this.fireballCastKey).play();

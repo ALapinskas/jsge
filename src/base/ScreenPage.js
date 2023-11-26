@@ -161,15 +161,21 @@ export class ScreenPage {
         if (!renderObject) {
             renderObject = canvasKey;
         } else {
-            Warning("canvasKey parameter is deprecated and no longer needed");
+            Warning(WARNING_CODES.DEPRECATED_PARAMETER, "canvasKey parameter is deprecated and no longer needed");
         }
-        const data = this.screenPageData;
-        data._renderObject = renderObject;
-        data._sortRenderObjectsBySortIndex(); 
+        const data = this.screenPageData,
+            isDataAlreadyAdded = data.renderObjects.indexOf(renderObject) !== -1;
+        if (isDataAlreadyAdded) {
+            Warning(WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "page.draw methods add objects to pageData, no need to call addRenderObject");
+        } else {
+            data._renderObject = renderObject;
+            data._sortRenderObjectsBySortIndex(); 
+        }
     };
 
     /**
      * Add render layer to the view
+     * @deprecated
      * @param {string} canvasKey 
      * @param {string} layerKey 
      * @param {string} tileMapKey 
@@ -182,6 +188,7 @@ export class ScreenPage {
         //} else if (!this.#views.has(canvasKey)) {
         //    Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
+            Warning(WARNING_CODES.DEPRECATED_PARAMETER, "page.addRenderLayer is deprecated and will be removed, use page.draw.tiledLayer instead");
             //const view = this.#views.get(canvasKey);
             const data = this.screenPageData;
             data._renderObject = this.draw.tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask);

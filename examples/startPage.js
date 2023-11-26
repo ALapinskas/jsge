@@ -40,18 +40,12 @@ export class StartPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
         
-        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");        
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.background);
+        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");
         
         this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
         this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");
         this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "black");
         this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 60, "Spine module", "24px sans-serif", "black");
-        
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemDun);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemPir);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemRac);
-        this.addRenderObject(CONST.LAYERS.DEFAULT, this.navItemSpine);
         
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);

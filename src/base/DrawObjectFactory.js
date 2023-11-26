@@ -12,6 +12,8 @@ import { ScreenPageData } from "./ScreenPageData.js";
 /**
  * Creates drawObjects instances.<br>
  * accessible via ScreenPage.draw <br>
+ * Attach images for image objects and tilemaps <br>
+ * Adds drawObjects to current ScreenPage.screenPageData
  * @see {@link ScreenPage} a part of ScreenPage
  */
 export class DrawObjectFactory {
@@ -20,10 +22,21 @@ export class DrawObjectFactory {
      */
     #loader;
     /**
+     * @type {ScreenPageData | null}
+     */
+    #currentPageData;
+    /**
      * @hideconstructor 
      */
     constructor(loader) {
         this.#loader = loader;
+    }
+
+    /**
+     * @returns {ScreenPageData}
+     */
+    get screenPageData() {
+        return this.#currentPageData;
     }
     /**
      * @param {number} x 
@@ -34,7 +47,10 @@ export class DrawObjectFactory {
      * @returns {DrawRectObject}
      */
     rect(x, y, width, height, backgroundColor) {
-        return new DrawRectObject(x, y, width, height, backgroundColor); 
+        const renderObject = new DrawRectObject(x, y, width, height, backgroundColor);
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject; 
     }
 
     /**
@@ -46,7 +62,10 @@ export class DrawObjectFactory {
      * @returns {DrawTextObject}
      */
     text(x, y, text, font, color) {
-        return new DrawTextObject(x, y, text, font, color);
+        const renderObject = new DrawTextObject(x, y, text, font, color);;
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject;
     }
 
     /**
@@ -58,7 +77,10 @@ export class DrawObjectFactory {
      * @returns {DrawConusObject}
      */
     conus(x, y, radius, bgColor, angle, fade = 0) {
-        return new DrawConusObject(x, y, radius, bgColor, angle, fade);
+        const renderObject = new DrawConusObject(x, y, radius, bgColor, angle, fade);
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject;
     }
 
     /**
@@ -68,7 +90,10 @@ export class DrawObjectFactory {
      * @returns {DrawCircleObject}
      */
     circle(x, y, radius, bgColor) {
-        return new DrawCircleObject(x, y, radius, bgColor);
+        const renderObject = new DrawCircleObject(x, y, radius, bgColor);
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject;
     }
 
     /**
@@ -82,8 +107,11 @@ export class DrawObjectFactory {
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries) {
-        const image = this.#loader.getImage(key);
-        return new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image);
+        const image = this.#loader.getImage(key),
+            renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image);
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject;
     }
 
     /**
@@ -92,7 +120,10 @@ export class DrawObjectFactory {
      * @returns {DrawLineObject}
      */
     line(vertices, color) {
-        return new DrawLineObject(vertices, color);
+        const renderObject = new DrawLineObject(vertices, color);
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject;
     }
 
     /**
@@ -101,23 +132,30 @@ export class DrawObjectFactory {
      * @returns {DrawPolygonObject}
      */
     polygon(vertices, bgColor) {
-        return new DrawPolygonObject(vertices, bgColor);
+        const renderObject = new DrawPolygonObject(vertices, bgColor);
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject;
     }
 
     /**
      * 
      * @param {string} layerKey 
      * @param {string} tileMapKey 
-     * @param {boolean} setBoundaries 
-     * @param {DrawShapeObject} shapeMask 
+     * @param {boolean=} setBoundaries 
+     * @param {DrawShapeObject=} shapeMask 
      * @returns {TiledRenderLayer}
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
         const tilemap = this.#loader.getTileMap(tileMapKey),
             tilesets = tilemap.tilesets,
             tilesetImages = tilesets.map((tileset) => this.#loader.getImage(tileset.data.name)),
-            layerData = tilemap.layers.find((layer) => layer.name === layerKey);
-        return new TiledRenderLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+            layerData = tilemap.layers.find((layer) => layer.name === layerKey),
+            renderObject = new TiledRenderLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        return renderObject;
     }
 
     /**
@@ -127,5 +165,18 @@ export class DrawObjectFactory {
      */
     _addNewObject = (methodKey, methodFn) => {
         this[methodKey] = methodFn;
+    }
+    /**
+     * @ignore
+     * @param {ScreenPageData} pageData;
+     */
+    _attachPageData = (pageData) => {
+        this.#currentPageData = pageData;
+    }
+    /**
+     * @ignore
+     */
+    _detachPageData = () => {
+        this.#currentPageData = null;
     }
 }

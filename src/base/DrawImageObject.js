@@ -57,7 +57,7 @@ export class DrawImageObject extends DrawShapeObject {
         this.#imageIndex = imageIndex;
         this.#w = width;
         this.#h = height;
-        this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : this._calculateRectVertices(width, height);
+        this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : boundaries && boundaries.r ? this._calculateConusBoundaries(boundaries.r) : this._calculateRectVertices(width, height);
         this.#circleBoundaries = boundaries && typeof boundaries.r !== "undefined" ? boundaries : null;
     }
 

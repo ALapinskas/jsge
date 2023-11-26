@@ -172,13 +172,19 @@ export default class SpineModuleInitialization {
             if (!skeleton || !(skeleton instanceof Skeleton)) {
                 throw new Error(SPINE_ERROR + ERROR_MESSAGES.SKELETON_ERROR);
             } else {
-                return new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
+                const renderObject = new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
+                systemInterface.drawObjectFactory.screenPageData._renderObject = renderObject;
+                systemInterface.drawObjectFactory.screenPageData._sortRenderObjectsBySortIndex(); 
+                return renderObject;
             }
         },
         spineTexture = (x, y, width, height, imageKey) => {
             const image = systemInterface.loader.getImage(imageKey);
             if (image) {
-                return new DrawSpineTexture(x, y, width, height, new GLTexture(context, image));
+                const renderObject = new DrawSpineTexture(x, y, width, height, new GLTexture(context, image));
+                systemInterface.drawObjectFactory.screenPageData._renderObject = renderObject;
+                systemInterface.drawObjectFactory.screenPageData._sortRenderObjectsBySortIndex(); 
+                return renderObject;
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
                 return;

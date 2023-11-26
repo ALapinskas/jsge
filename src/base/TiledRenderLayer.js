@@ -14,6 +14,10 @@ export class TiledRenderLayer {
     #setBoundaries;
     #drawBoundaries;
     #attachedMaskId;
+    /**
+     * @type {number}
+     */
+    #sortIndex = 0;
     #isOffsetTurnedOff;
 
     /**
@@ -102,6 +106,17 @@ export class TiledRenderLayer {
 
     removeMask() {
         this.#attachedMaskId = null;
+    }
+
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
     }
 
     get isOffsetTurnedOff() {
