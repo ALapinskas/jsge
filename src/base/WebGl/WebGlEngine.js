@@ -843,7 +843,7 @@ export class WebGlEngine {
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
                 boundariesCalculations = this.#gameOptions.render.boundaries.realtimeCalculations,
-                setBoundaries = renderLayer.setBoundaries && boundariesCalculations;
+                setBoundaries = renderLayer.setBoundaries;
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [],
@@ -889,9 +889,8 @@ export class WebGlEngine {
                         Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                         pageData._setWorldDimensions(worldW, worldH);
                     }
-                    
                     // boundaries cleanups every draw circle, we need to set world boundaries again
-                    if (pageData.isWorldBoundariesEnabled) {
+                    if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                         pageData._setMapBoundaries();
                     }
                 }
@@ -1252,7 +1251,7 @@ export class WebGlEngine {
                 //}
 
                 // boundaries cleanups every draw circle, we need to set world boundaries again
-                if (pageData.isWorldBoundariesEnabled) {
+                if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                     pageData._setMapBoundaries();
                 }
                 this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, setBoundaries);

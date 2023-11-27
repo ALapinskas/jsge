@@ -50,6 +50,10 @@ f: fixed defects
 
 
 # History
+0.3.3:
+    f: fixed world boundaries calculations
+    r: change enableBoundariesCalculations option check
+    
 0.3.2:
     f: circle-polygon collision
     f: sort by sortIndex

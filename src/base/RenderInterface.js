@@ -374,7 +374,7 @@ export class RenderInterface {
                         this.screenPageData._setWorldDimensions(worldW, worldH);
                     }
                     
-                    if (this.screenPageData.isWorldBoundariesEnabled) {
+                    if (renderLayer.setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
                         this.screenPageData._setWholeWorldMapBoundaries();
                     }
 

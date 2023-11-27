@@ -38,6 +38,7 @@ export class ScreenPageData {
      */
     #isOffsetTurnedOff;
     /**
+     * @deprecated
      * @type {boolean}
      */
     #isWorldBoundariesEnabled = false;
@@ -181,6 +182,7 @@ export class ScreenPageData {
     }
 
     /**
+     * @deprecated
      * @ignore
      */
     _enableMapBoundaries() {
@@ -199,6 +201,9 @@ export class ScreenPageData {
         return this.#wholeWorldBoundaries;
     }
 
+    /**
+     * @deprecated
+     */
     get isWorldBoundariesEnabled() {
         return this.#isWorldBoundariesEnabled;
     }
