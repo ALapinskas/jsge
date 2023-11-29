@@ -1,6 +1,7 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { Rectangle } from "./Primitives.js";
-import { CONST } from "../constants.js";
+import { CONST, ERROR_CODES } from "../constants.js";
+import { Exception } from "./Exception.js";
 
 /**
  * @extends DrawShapeObject
@@ -14,6 +15,14 @@ export class DrawTextObject extends DrawShapeObject {
     #strokeStyle;
     #text;
     #textMetrics;
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    #texture;
+    /**
+     * @type {boolean}
+     */
+    #textureRebuilt = false;
 
     /**
      * @hideconstructor
@@ -24,6 +33,7 @@ export class DrawTextObject extends DrawShapeObject {
         this.#font = font;
         this.#fillStyle = fillStyle;
         this.#textMetrics;
+        this.#calculateCanvasTextureAndMeasurements();
     }
 
     /**
@@ -49,7 +59,10 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     set text(value) {
-        this.#text = value;
+        if (value !== this.#text) {
+            this.#text = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -60,7 +73,10 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     set font(value) {
-        this.#font = value;
+        if (value !== this.#font) {
+            this.#font = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -71,7 +87,10 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     set textAlign(value) {
-        this.#textAlign = value;
+        if (value !== this.#textAlign) {
+            this.#textAlign = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -82,7 +101,10 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     set textBaseline(value) {
-        this.#textBaseline = value;
+        if (value !== this.#textBaseline) {
+            this.#textBaseline = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -93,7 +115,10 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     set fillStyle(value) {
-        this.#fillStyle = value;
+        if (value !== this.#fillStyle) {
+            this.#fillStyle = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -104,7 +129,10 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     set strokeStyle(value) {
-        this.#strokeStyle = value;
+        if (value !== this.#strokeStyle) {
+            this.#strokeStyle = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -119,5 +147,57 @@ export class DrawTextObject extends DrawShapeObject {
      */
     set _textMetrics(value) {
         this.#textMetrics = value;
+    }
+
+    /**
+     * @ignore
+     */
+    get _texture() {
+        return this.#texture;
+    }
+
+    /**
+     * @ignore
+     */
+    get _textureRebuilt() {
+        return this.#textureRebuilt;
+    }
+
+    /**
+     * @ignore
+     */
+    set _textureRebuilt(value) {
+        this.#textureRebuilt = value;
+    }
+
+    /**
+     * 
+     * @returns {void}
+     */
+    #calculateCanvasTextureAndMeasurements() {
+        const canvas = document.createElement("canvas"),
+            ctx = canvas.getContext("2d");
+        if (ctx) { 
+            ctx.font = this.font;
+            this._textMetrics = ctx.measureText(this.text);
+            const boxWidth = this.boundariesBox.width, 
+                boxHeight = this.boundariesBox.height;
+            ctx.canvas.width = boxWidth;
+            ctx.canvas.height = boxHeight;
+            ctx.font = this.font;
+            ctx.textBaseline = "bottom";// bottom
+            if (this.fillStyle) {
+                ctx.fillStyle = this.fillStyle;
+                ctx.fillText(this.text, 0, boxHeight);
+            } 
+            if (this.strokeStyle) {
+                ctx.strokeStyle = this.strokeStyle;
+                ctx.strokeText(this.text, 0, boxHeight);
+            }
+            this.#textureRebuilt = true;
+            this.#texture = canvas;
+        } else {
+            Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
+        }
     }
 }

@@ -365,9 +365,8 @@ export class WebGlEngine {
                 a_texCoord: texCoordLocation,
                 u_image: u_imageLocation } = vars;
 
-        //@toDo: add additional info to the #images_bind and avoid this call, if image is already created
-        const { boxWidth, boxHeight, ctx } = this.#createCanvasText(renderObject),
-            texture = ctx.canvas,
+        const texture = renderObject._texture,
+            {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
             image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -428,8 +427,9 @@ export class WebGlEngine {
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         //gl.depthMask(false);
         let bind_number = this.#images_bind.get(image_name);
-        if (!bind_number) {
-            bind_number  = this.#images_bind.size + 1;
+        const isTextureRebuilt = bind_number && renderObject._textureRebuilt;
+        if (!bind_number || isTextureRebuilt) {
+            bind_number = isTextureRebuilt ? bind_number : this.#images_bind.size + 1;
 
             gl.activeTexture(gl["TEXTURE" + bind_number]);
             gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -441,7 +441,9 @@ export class WebGlEngine {
 
             // As image properties such as text stroke changes, image_name still the same,
             // and image won't replaced
-            //this.#images_bind.set(image_name, bind_number);
+            this.#images_bind.set(image_name, bind_number);
+            renderObject._textureRebuilt = false;
+        //if set and no need to rebuild
         } else {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
@@ -550,7 +552,7 @@ export class WebGlEngine {
         } else {
             gl.activeTexture(gl["TEXTURE" + bind_number]);
         }
-        gl.uniform1i(u_imageLocation, bind_number );
+        gl.uniform1i(u_imageLocation, bind_number);
         // make image transparent parts transparent
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         if (shapeMaskId) {
@@ -625,7 +627,7 @@ export class WebGlEngine {
 
             let bind_number  = this.#images_bind.get(image_name);
 
-            if (!bind_number ) {
+            if (!bind_number) {
                 bind_number  = this.#images_bind.size + 1;
                 gl.activeTexture(gl["TEXTURE" + bind_number]);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -634,7 +636,7 @@ export class WebGlEngine {
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-                this.#images_bind.set(data.imageName, bind_number);
+                this.#images_bind.set(image_name, bind_number);
             } else {
                 gl.activeTexture(gl["TEXTURE" + bind_number]);
             }
@@ -643,11 +645,7 @@ export class WebGlEngine {
             verticesNumber += vectors.length / 2;
             if (shapeMaskId) {
                 gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
-                //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
             }
-            
-            // Upload the image into the texture.
-            //this.#executeGlslProgram();
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
     }
@@ -1081,9 +1079,7 @@ export class WebGlEngine {
                 }
                 if (verticesBufferData.length > 0 && texturesBufferData.length > 0) {
                     //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name, renderLayer._maskId);
-                    const v = new Float32Array(verticesBufferData);
-                    const t = new Float32Array(texturesBufferData);
-                    tileImagesData.push([v, t, tileset.name, atlasImage]);
+                    tileImagesData.push([new Float32Array(verticesBufferData), new Float32Array(texturesBufferData), tileset.name, atlasImage]);
                 }
             }
             
@@ -1207,7 +1203,7 @@ export class WebGlEngine {
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions;
                 //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
                 //[ xOffset, yOffset ] = this.screenPageData.worldOffset;
-            let tileImagesData = [];
+            const tileImagesData = [];
             //clear data
             //this.layerDataFloat32.fill(0);
             this.layerDataFloat32.set(layerData.data);
@@ -1342,36 +1338,6 @@ export class WebGlEngine {
         }
         
         return triangulatedPolygon;
-    }
-
-    /**
-     * 
-     * @param {*} renderObject 
-     * @returns {{boxWidth:number, boxHeight:number, ctx:CanvasRenderingContext2D}}
-     */
-    #createCanvasText(renderObject) {
-        const ctx = document.createElement("canvas").getContext("2d");
-        if (ctx) { 
-            ctx.font = renderObject.font;
-            renderObject._textMetrics = ctx.measureText(renderObject.text);
-            const boxWidth = renderObject.boundariesBox.width, 
-                boxHeight = renderObject.boundariesBox.height;
-            ctx.canvas.width = boxWidth;
-            ctx.canvas.height = boxHeight;
-            ctx.font = renderObject.font;
-            ctx.textBaseline = "bottom";// bottom
-            if (renderObject.fillStyle) {
-                ctx.fillStyle = renderObject.fillStyle;
-                ctx.fillText(renderObject.text, 0, boxHeight);
-            } 
-            if (renderObject.strokeStyle) {
-                ctx.strokeStyle = renderObject.strokeStyle;
-                ctx.strokeText(renderObject.text, 0, boxHeight);
-            }
-            return { boxWidth, boxHeight, ctx };
-        } else {
-            Exception(ERROR_CODES.WEBGL_ERROR, "can't getContext('2d')");
-        }
     }
 
     #bindPolygon(vertices) {

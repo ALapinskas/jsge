@@ -52,7 +52,12 @@ f: fixed defects
 # History
 0.3.3:
     f: fixed world boundaries calculations
+    f: fixed examples/dungeon decs
+    f: tiled layers textures temp saving
     r: change enableBoundariesCalculations option check
+    r: moved text texture calculations inside text object
+    r: refactored text texture calculations
+    +: added current circle time calculations
     
 0.3.2:
     f: circle-polygon collision

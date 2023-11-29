@@ -276,18 +276,16 @@ export class RenderInterface {
                         reject(err);
                     })); 
                 }
-                const bindResults = await Promise.allSettled(renderObjectsPromises);
-                bindResults.forEach((result) => {
-                    if (result.status === "rejected") {
-                        reject(result.reason);
-                    }
-                });
+                //const bindResults = await Promise.allSettled(renderObjectsPromises);
+                //bindResults.forEach((result) => {
+                //    if (result.status === "rejected") {
+                //        reject(result.reason);
+                //    }
+                //});
 
                 //await this.#webGlEngine._executeImagesDraw();
 
                 //this.#postRenderActions();
-                    
-                this._isCleared = false;
             }
             const bindResults = await Promise.allSettled(renderObjectsPromises);
             bindResults.forEach((result) => {
@@ -474,7 +472,7 @@ export class RenderInterface {
     }
 
     #countFPSaverage() {
-        const timeLeft = this.systemSettings.gameOptions.render.averageFPStime,
+        const timeLeft = this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime,
             steps = this.#tempFPStime.length;
         let fullTime = 0;
 
@@ -507,7 +505,9 @@ export class RenderInterface {
                 setTimeout(() => requestAnimationFrame(this.#drawViews));
                 break;
         }
-        this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.averageFPStime);
+        if (this.systemSettings.gameOptions.render.circleTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
+            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime);
+        }
     };
 
     /**
@@ -559,8 +559,10 @@ export class RenderInterface {
                 r_time_less = minCircleTime - r_time,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
                 fps = 1000 / (r_time + wait_time);
-            //console.log("draw circle done, take: ", (r_time), " ms");
-            //console.log("fps: ", fps);
+            if (this.systemSettings.gameOptions.render.circleTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.CURRENT &&
+                r_time > minCircleTime) {
+                console.log("draw circle done, take: ", (r_time), " ms");
+            }
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
             if(fps === Infinity) {
                 console.log("infinity time");

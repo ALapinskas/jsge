@@ -47,8 +47,12 @@ export class DrawShapeObject {
     /**
      * @type {boolean}
      */
-    #isOffsetTurnedOff;
+    #isOffsetTurnedOff = false;
 
+    /**
+     * @type {boolean}
+     */
+    #isChanged = false;
     /**
      * @hideconstructor
      */
@@ -144,7 +148,6 @@ export class DrawShapeObject {
     get isRemoved() {
         return this.#isRemoved;
     }
-
     /**
      * Destroy object on next render iteration.
      */

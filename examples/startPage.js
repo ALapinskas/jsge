@@ -75,25 +75,25 @@ export class StartPage extends ScreenPage {
 
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
-        } else {
+        } else if (this.navItemDun.strokeStyle) {
             this.navItemDun.strokeStyle = undefined;
         }
 
         if (isNavP2PTraversed) {
             this.navItemPir.strokeStyle = "rgba(0, 0, 0, 0.3)";
-        } else {
+        } else if (this.navItemPir.strokeStyle) {
             this.navItemPir.strokeStyle = undefined;
         }
 
         if (isNav3Traversed) {
             this.navItemRac.strokeStyle = "rgba(0, 0, 0, 0.3)";
-        } else {
+        } else if (this.navItemRac.strokeStyle) {
             this.navItemRac.strokeStyle = undefined;
         }
 
         if (isNav4Traversed) {
             this.navItemSpine.strokeStyle = "rgba(0, 0, 0, 0.3)";
-        } else {
+        } else if (this.navItemSpine.strokeStyle) {
             this.navItemSpine.strokeStyle = undefined;
         }
 

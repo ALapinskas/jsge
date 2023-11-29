@@ -49,7 +49,7 @@ export class MapPage extends ScreenPage {
 
         this.draw.tiledLayer("background", this.tilemapKey, false, this.sightView);
         this.draw.tiledLayer("walls", this.tilemapKey, true, this.sightView);
-        this.draw.tiledLayer("walls", this.tilemapKey, false, this.sightView);
+        this.draw.tiledLayer("decs", this.tilemapKey, false, this.sightView);
         
         this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.4)", Math.PI/8, 60);
         this.fireRange.setMask(this.sightView);
@@ -89,9 +89,9 @@ export class MapPage extends ScreenPage {
         this.registerEventListeners();
         setTimeout(() => {
             // fix width height after render started, and sizes corrected
-            const [w, h] = this.screenPageData.worldDimensions;
-            this.shadowRect.width = w;
-            this.shadowRect.height = h;
+            //const [w, h] = this.screenPageData.worldDimensions;
+            //this.shadowRect.width = w;
+            //this.shadowRect.height = h;
         },1000);
     }
 
