@@ -62,6 +62,8 @@ export class MapPage extends ScreenPage {
         this.audio.registerAudio(SAILS_UP_AUDIO);
 
         this.player = this.draw.image(100, 300, 35, 57, SHIPS_KEY, 0, [{x:0,y:-30}, {x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
+
+        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
     }
 
     #getRandomIntFromTo = (min, max) => (Math.random() * (max - min) + min);
@@ -70,7 +72,7 @@ export class MapPage extends ScreenPage {
         // 10 - 120 sec
         const timeToChange = this.#getRandomIntFromTo(10, 50) * 1000; //ms
 
-        setTimeout(() => {
+        this.windDirectionTimeout = setTimeout(() => {
             const direction = this.#getRandomIntFromTo(-Math.PI, Math.PI),
                 strength = this.#getRandomIntFromTo(0, 1);
             console.log("wind direction changed: ", direction);
@@ -85,13 +87,15 @@ export class MapPage extends ScreenPage {
         this.registerEventListeners();
         this.#startWindDirectionChanging();
 
-        setInterval(() => {
+        this.moveVesselInterval = setInterval(() => {
             this.#moveVessel();
         }, 100);
     }
 
     stop() {
         this.unregisterEventListeners();
+        clearTimeout(this.windDirectionTimeout);
+        clearInterval(this.moveVesselInterval);
     }
 
     registerEventListeners() {
@@ -117,10 +121,12 @@ export class MapPage extends ScreenPage {
 
     #registerMouseListeners() {
         document.addEventListener("mousemove", this.#mouseMoveAction);
+        document.addEventListener("click", this.#mouseClickAction);
     }
 
     #unregisterMouseListeners() {
         document.removeEventListener("mousemove", this.#mouseMoveAction);
+        document.removeEventListener("click", this.#mouseClickAction);
     }
 
     #pressKeyAction = (event) => {
@@ -196,7 +202,28 @@ export class MapPage extends ScreenPage {
             rad = angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
             
             this.player.rotation = rad - Math.PI/2;
+
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+
+        if (isNav1Traversed) {
+            this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
+            this.canvasHtmlElement.style.cursor = "pointer";
+        } else if (this.navItemBack.strokeStyle) {
+            this.navItemBack.strokeStyle = undefined;
+            this.canvasHtmlElement.style.cursor = "default";
+        } else {
+            this.canvasHtmlElement.style.cursor = "default";
+        }
     };
+
+    #mouseClickAction = (e) => {
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+    
+        if (isNav1Click) {
+            this.system.stopScreenPage("pirates");
+            this.system.startScreenPage("start");
+        }
+    }
 
     fire(board) {
         if (board === "left") {

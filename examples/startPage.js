@@ -98,9 +98,9 @@ export class StartPage extends ScreenPage {
         }
 
         if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed) {
-            document.body.style.cursor = "pointer";
+            canvas.style.cursor = "pointer";
         } else {
-            document.body.style.cursor = "default";
+            canvas.style.cursor = "default";
         }
 
         

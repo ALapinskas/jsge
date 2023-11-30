@@ -34,6 +34,8 @@ export class MapPage extends ScreenPage {
         
         this.player = this.draw.image(100, 200, 16, 28, BLACK_CAR_KEY, 0, [{x:-8,y:-14}, {x:0,y:-15}, {x:8,y:-14}, {x:8,y:14}, {x:-8,y:14}]);
 
+        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
+
         this.audioGearUp = this.loader.getAudio(AUDIO_GEAR_UP);
         this.audioCarCrush = this.loader.getAudio(AUDIO_CAR_CRUSH);
         this.audioCarMoveBackward = this.loader.getAudio(AUDIO_GEAR_DOWN);
@@ -48,12 +50,12 @@ export class MapPage extends ScreenPage {
     }
 
     registerEventListeners() {
-        //this.#registerMouseListeners();
+        this.#registerMouseListeners();
         this.#registerKeyboardListeners();
     }
 
     unregisterEventListeners() {
-        //this.#unregisterMouseListeners();
+        this.#unregisterMouseListeners();
         this.#unregisterKeyboardListeners();
     }
 
@@ -69,10 +71,12 @@ export class MapPage extends ScreenPage {
 
     #registerMouseListeners() {
         document.addEventListener("mousemove", this.#mouseMoveAction);
+        document.addEventListener("click", this.#mouseClickAction);
     }
 
     #unregisterMouseListeners() {
         document.removeEventListener("mousemove", this.#mouseMoveAction);
+        document.removeEventListener("click", this.#mouseClickAction);
     }
 
     #pressKeyAction = (event) => {
@@ -166,5 +170,26 @@ export class MapPage extends ScreenPage {
             rad = utils.angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
             
             this.player.rotation = rad - Math.PI/2;
-    };
+
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+
+        if (isNav1Traversed) {
+            this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
+            this.canvasHtmlElement.style.cursor = "pointer";
+        } else if (this.navItemBack.strokeStyle) {
+            this.navItemBack.strokeStyle = undefined;
+            this.canvasHtmlElement.style.cursor = "default";
+        } else {
+            this.canvasHtmlElement.style.cursor = "default";
+        }
+    }
+
+    #mouseClickAction = (e) => {
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+    
+        if (isNav1Click) {
+            this.system.stopScreenPage("racing");
+            this.system.startScreenPage("start");
+        }
+    }
 }

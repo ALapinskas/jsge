@@ -69,6 +69,8 @@ export class WebGlEngine {
         gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         //if stencil test and depth test pass we replace the initial value
         gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+        // cleanup saved textures tracking
+        this.#images_bind.clear();
         return Promise.resolve();
     }
 
@@ -427,10 +429,16 @@ export class WebGlEngine {
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         //gl.depthMask(false);
         let bind_number = this.#images_bind.get(image_name);
-        const isTextureRebuilt = bind_number && renderObject._textureRebuilt;
-        if (!bind_number || isTextureRebuilt) {
-            bind_number = isTextureRebuilt ? bind_number : this.#images_bind.size + 1;
+        const isTextureRebuilt = renderObject._textureRebuilt;
+        if ((bind_number === undefined) || isTextureRebuilt) {
+            // rewrite texture if needed
+            bind_number = (bind_number !== undefined) && isTextureRebuilt ? bind_number : this.#images_bind.size;
 
+            if ((gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) === bind_number) {
+                Warning(WARNING_CODES.TEXTURE_IMAGE_TEMP_OVERFLOW, "Too much textures!!! Clean up.");
+                this.#images_bind.clear();
+                bind_number = 0;
+            }
             gl.activeTexture(gl["TEXTURE" + bind_number]);
             gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
             // Upload the image into the texture.
@@ -536,8 +544,14 @@ export class WebGlEngine {
 
         let bind_number  = this.#images_bind.get(image_name);
 
-        if (!bind_number ) {
-            bind_number  = this.#images_bind.size + 1;
+        if (bind_number === undefined) {
+            bind_number  = this.#images_bind.size;
+
+            if ((gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) === bind_number) {
+                Warning(WARNING_CODES.TEXTURE_IMAGE_TEMP_OVERFLOW, "Too much textures!!! Clean up.");
+                this.#images_bind.clear();
+                bind_number = 0;
+            }
 
             gl.activeTexture(gl["TEXTURE" + bind_number]);
             gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
@@ -625,10 +639,17 @@ export class WebGlEngine {
             gl.enableVertexAttribArray(texCoordLocation);
             gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
 
-            let bind_number  = this.#images_bind.get(image_name);
+            let bind_number = this.#images_bind.get(image_name);
 
-            if (!bind_number) {
-                bind_number  = this.#images_bind.size + 1;
+            if (bind_number === undefined) {
+                bind_number = this.#images_bind.size;
+    
+                if ((gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) === bind_number) {
+                    Warning(WARNING_CODES.TEXTURE_IMAGE_TEMP_OVERFLOW, "Too much textures!!! Clean up.");
+                    this.#images_bind.clear();
+                    bind_number = 0;
+                }
+                
                 gl.activeTexture(gl["TEXTURE" + bind_number]);
                 gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);

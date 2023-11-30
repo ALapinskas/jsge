@@ -50,6 +50,10 @@ f: fixed defects
 
 
 # History
+0.3.4:
+    f: fixed textures overflow
+    +: examples added "main menu" button
+    
 0.3.3:
     f: fixed world boundaries calculations
     f: fixed examples/dungeon decs

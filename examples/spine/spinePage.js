@@ -1,5 +1,6 @@
 import { ScreenPage, CONST } from "../../src/index.js";
 import SpineModuleInitialization from "../../modules/spine/dist/bundle.js";
+import { utils } from "../../src/index.js";
 
 const SPINE_VIEW_KEY = "spine-module-layer";
 
@@ -31,22 +32,23 @@ export class SpinePage extends ScreenPage {
         spineDrawObject.animationState.setAnimation(0, "run", true);
         this.spineGoblinObject.setSkin("goblin");
 
+        this.draw.spineTexture(100, 100, 200, 100, SPINE.SpineTexture);
+
+        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
+    }
+
+    start() {
         this.changeGoblinSkinButton = document.createElement("button");
         document.body.appendChild(this.changeGoblinSkinButton);
         this.changeGoblinSkinButton.style.position = "absolute";
         this.changeGoblinSkinButton.style.left = "50%";
         this.changeGoblinSkinButton.style.top = "50%";
         this.changeGoblinSkinButton.innerText = "Switch goblin skin";
-
-        this.draw.spineTexture(100, 100, 200, 100, SPINE.SpineTexture);
-    }
-
-    start() {
-        
         this.registerEventListeners();
     }
 
     stop() {
+        this.changeGoblinSkinButton.remove();
         this.unregisterEventListeners();
     }
 
@@ -57,10 +59,28 @@ export class SpinePage extends ScreenPage {
         this.changeGoblinSkinButton.addEventListener("click", this.#changeGoblinSkin);
     }
 
-    #mouseHoverEvent = (event) => {
+    #mouseHoverEvent = (e) => {
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+    
+        if (isNav1Traversed) {
+            this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
+            this.canvasHtmlElement.style.cursor = "pointer";
+        } else if (this.navItemBack.strokeStyle) {
+            this.navItemBack.strokeStyle = undefined;
+            this.canvasHtmlElement.style.cursor = "default";
+        } else {
+            this.canvasHtmlElement.style.cursor = "default";
+        }
     };
 
-    #mouseClickEvent = (event) => {
+    #mouseClickEvent = (e) => {
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+    
+        if (isNav1Click) {
+            this.system.stopScreenPage("spine");
+            this.canvasHtmlElement.style.cursor = "default";
+            this.system.startScreenPage("start");
+        }
     };
 
     #changeGoblinSkin = () => {

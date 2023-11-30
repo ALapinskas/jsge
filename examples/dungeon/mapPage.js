@@ -70,6 +70,8 @@ export class MapPage extends ScreenPage {
         
         this.greenLight = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5", Math.PI, 20);
         this.greenLight.setMask(this.sightView);
+
+        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black"),
         
         this.#enemies.push(monster1);
         this.#enemies.push(monster2);
@@ -80,23 +82,24 @@ export class MapPage extends ScreenPage {
         this.audio.registerAudio(this.#detectedByGhostAudioKey);
         this.backgroundSounds.registerAudio(this.defaultAudioKey);
         this.backgroundSounds.volume = .5;
-        const defaultAudio = this.backgroundSounds.getAudio(this.defaultAudioKey);
-        defaultAudio.loop = true;
-        defaultAudio.play();
+        this.defaultAudio = this.backgroundSounds.getAudio(this.defaultAudioKey);
+        this.defaultAudio.loop = true;
     }
 
     start() {
         this.registerEventListeners();
-        setTimeout(() => {
+        this.defaultAudio.play();
+        //setTimeout(() => {
             // fix width height after render started, and sizes corrected
             //const [w, h] = this.screenPageData.worldDimensions;
             //this.shadowRect.width = w;
             //this.shadowRect.height = h;
-        },1000);
+        //},1000);
     }
 
     stop() {
         this.unregisterEventListeners();
+        this.defaultAudio.pause();
     }
 
     registerEventListeners() {
@@ -216,11 +219,30 @@ export class MapPage extends ScreenPage {
             
         //this.player.rotation = rad;
         this.fireRange.rotation = rad - (Math.PI/20);
+
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+    
+        if (isNav1Traversed) {
+            this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
+            document.getElementsByTagName("canvas")[0].style.cursor = "pointer";
+        } else if (this.navItemBack.strokeStyle) {
+            this.navItemBack.strokeStyle = undefined;
+            document.getElementsByTagName("canvas")[0].style.cursor = "default";
+        } else {
+            document.getElementsByTagName("canvas")[0].style.cursor = "default";
+        }
     };
 
-    #mouseClickAction = () => {
-        const fireball = this.#createFireball();
-        this.fireballs.push(fireball);
+    #mouseClickAction = (e) => {
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+    
+        if (isNav1Click) {
+            this.system.stopScreenPage("dungeon");
+            this.system.startScreenPage("start");
+        } else {
+            const fireball = this.#createFireball();
+            this.fireballs.push(fireball);
+        }
     }
 
     #createFireball = () => {
