@@ -44,6 +44,14 @@ export class DrawImageObject extends DrawShapeObject {
      * @type {Object | null}
      */
     #circleBoundaries;
+    /**
+     * @type {WebGLTexture}
+     */
+    #texture;
+    /**
+     * @type {boolean}
+     */
+    #isTextureRecalculated = false;
 
     /**
      * @hideconstructor
@@ -53,7 +61,7 @@ export class DrawImageObject extends DrawShapeObject {
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();
-        this.#image = image;
+        this.image = image;
         this.#imageIndex = imageIndex;
         this.#w = width;
         this.#h = height;
@@ -99,6 +107,7 @@ export class DrawImageObject extends DrawShapeObject {
     }
 
     set image(value) {
+        this.#isTextureRecalculated = true;
         this.#image = value;
     }
 
@@ -148,6 +157,33 @@ export class DrawImageObject extends DrawShapeObject {
                 this.#imageIndex = animationEvent.currentSprite;
             }
         }
+    }
+     /**
+     * @ignore
+     */
+     get _texture() {
+        return this.#texture;
+    }
+
+    /**
+     * @ignore
+     */
+    set _texture(texture) {
+        this.#texture = texture;
+    }
+
+    /**
+     * @ignore
+     */
+    get _isTextureRecalculated() {
+        return this.#isTextureRecalculated;
+    }
+
+    /**
+     * @ignore
+     */
+    set _isTextureRecalculated(value) {
+        this.#isTextureRecalculated = value;
     }
 
     /**

@@ -372,8 +372,7 @@ export class WebGlEngine {
                 a_texCoord: texCoordLocation,
                 u_image: u_imageLocation } = vars;
 
-        const texture = renderObject._texture,
-            {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
+        const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
             image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -432,35 +431,19 @@ export class WebGlEngine {
         // remove box
         // fix text edges
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        //gl.depthMask(false);
-        let bind_number = this.#texture_temp_indexes.get(image_name);
-        const isTextureRebuilt = renderObject._textureRebuilt;
-        if ((bind_number === undefined) || isTextureRebuilt) {
-            // rewrite texture if needed
-            bind_number = (bind_number !== undefined) && isTextureRebuilt ? bind_number : this.#texture_temp_indexes.size;
-
-            if ( this.#maxTextureUnits === bind_number ) {
-                Warning(WARNING_CODES.TEXTURE_IMAGE_TEMP_OVERFLOW, "Too much textures!!! Clean up.");
-                this.#texture_temp_indexes.clear();
-                bind_number = 0;
-            }
-            gl.activeTexture(gl["TEXTURE" + bind_number]);
-            gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-            // Upload the image into the texture.
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-            // As image properties such as text stroke changes, image_name still the same,
-            // and image won't replaced
-            this.#texture_temp_indexes.set(image_name, bind_number);
-            renderObject._textureRebuilt = false;
-        //if set and no need to rebuild
+        
+        let texture = renderObject._texture;
+        if (!texture) {
+            texture = gl.createTexture();
+            renderObject._texture = texture;
+        } 
+        if (renderObject._isTextureRecalculated === true) { 
+            this.#updateWebGlTexture(gl, texture, renderObject._textureCanvas);
+            renderObject._isTextureRecalculated = false;
         } else {
-            gl.activeTexture(gl["TEXTURE" + bind_number]);
+            this.#bindTexture(gl, texture);
         }
-        gl.uniform1i(u_imageLocation, bind_number);
+        gl.uniform1i(u_imageLocation, 0);
         
         return Promise.resolve([verticesNumber, gl.TRIANGLES])
     }
@@ -547,31 +530,19 @@ export class WebGlEngine {
         gl.enableVertexAttribArray(texCoordLocation);
         gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
-        let bind_number  = this.#texture_temp_indexes.get(image_name);
-
-        if (bind_number === undefined) {
-            bind_number  = this.#texture_temp_indexes.size;
-
-            if ( this.#maxTextureUnits === bind_number ) {
-                Warning(WARNING_CODES.TEXTURE_IMAGE_TEMP_OVERFLOW, "Too much textures!!! Clean up.");
-                this.#texture_temp_indexes.clear();
-                bind_number = 0;
-            }
-
-            gl.activeTexture(gl["TEXTURE" + bind_number]);
-            gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-            
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, renderObject.image);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-            this.#texture_temp_indexes.set(image_name, bind_number);
+        let texture = renderObject._texture;
+        if (!texture) {
+            texture = gl.createTexture();
+            renderObject._texture = texture;
+        } 
+        if (renderObject._isTextureRecalculated === true) { 
+            this.#updateWebGlTexture(gl, texture, renderObject.image);
+            renderObject._isTextureRecalculated = false;
         } else {
-            gl.activeTexture(gl["TEXTURE" + bind_number]);
+            this.#bindTexture(gl, texture);
         }
-        gl.uniform1i(u_imageLocation, bind_number);
+
+        gl.uniform1i(u_imageLocation, 0);
         // make image transparent parts transparent
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         if (shapeMaskId) {
@@ -644,6 +615,18 @@ export class WebGlEngine {
             gl.enableVertexAttribArray(texCoordLocation);
             gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
 
+            let textureO = renderLayer._textures[i];
+            if (!textureO) {
+                textureO = { texture: gl.createTexture(), _isTextureRecalculated: true };
+                renderLayer._textures[i] = textureO;
+            } 
+            if (renderLayer._textures[i]._isTextureRecalculated === true) { 
+                this.#updateWebGlTexture(gl, textureO.texture, image);
+                renderLayer._textures[i]._isTextureRecalculated = false;
+            } else {
+                this.#bindTexture(gl, textureO.texture);
+            }
+            /*
             let bind_number = this.#texture_temp_indexes.get(image_name);
 
             if (bind_number === undefined) {
@@ -665,8 +648,8 @@ export class WebGlEngine {
                 this.#texture_temp_indexes.set(image_name, bind_number);
             } else {
                 gl.activeTexture(gl["TEXTURE" + bind_number]);
-            }
-            gl.uniform1i(u_imageLocation, bind_number);
+            }*/
+            gl.uniform1i(u_imageLocation, i);
             gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
             verticesNumber += vectors.length / 2;
             if (shapeMaskId) {
@@ -1390,4 +1373,30 @@ export class WebGlEngine {
     /*------------------------------------
      * End of Predefined Drawing programs
      -------------------------------------*/
+
+    /**-----------------------------------
+     * Textures
+     ------------------------------------*/
+    #updateWebGlTexture(gl, texture, textureImage, useMipMaps = false) {
+        this.#bindTexture(gl, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+        if (useMipMaps)
+            gl.generateMipmap(gl.TEXTURE_2D);
+    }
+
+    #bindTexture(gl, texture) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+    }
+
+    #removeTexture(gl, texture) {
+        gl.deleteTexture(texture);
+    }
+    /*------------------------------------
+     * End Textures
+    --------------------------------------*/
 }

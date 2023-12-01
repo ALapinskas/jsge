@@ -28,6 +28,7 @@ export class TiledRenderLayer {
         this.#tileMapKey = tileMapKey;
         this.#tilemap = tilemap;
         this.#tilesets = tilesets;
+        this._textures = Array(this.#tilesets.length);
         this.#tilesetImages = tilesetImages;
         this.#layerData = layerData;
         this.#setBoundaries = setBoundaries;

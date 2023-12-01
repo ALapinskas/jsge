@@ -18,11 +18,17 @@ export class DrawTextObject extends DrawShapeObject {
     /**
      * @type {HTMLCanvasElement}
      */
+    #textureCanvas;
+
+    /**
+     * @type {WebGLTexture}
+     */
     #texture;
+
     /**
      * @type {boolean}
      */
-    #textureRebuilt = false;
+    #isTextureRecalculated = false;
 
     /**
      * @hideconstructor
@@ -159,15 +165,29 @@ export class DrawTextObject extends DrawShapeObject {
     /**
      * @ignore
      */
-    get _textureRebuilt() {
-        return this.#textureRebuilt;
+    set _texture(texture) {
+        this.#texture = texture;
     }
 
     /**
      * @ignore
      */
-    set _textureRebuilt(value) {
-        this.#textureRebuilt = value;
+    get _textureCanvas() {
+        return this.#textureCanvas;
+    }
+
+    /**
+     * @ignore
+     */
+    get _isTextureRecalculated() {
+        return this.#isTextureRecalculated;
+    }
+
+    /**
+     * @ignore
+     */
+    set _isTextureRecalculated(value) {
+        this.#isTextureRecalculated = value;
     }
 
     /**
@@ -194,8 +214,8 @@ export class DrawTextObject extends DrawShapeObject {
                 ctx.strokeStyle = this.strokeStyle;
                 ctx.strokeText(this.text, 0, boxHeight);
             }
-            this.#textureRebuilt = true;
-            this.#texture = canvas;
+            this.#isTextureRecalculated = true;
+            this.#textureCanvas = canvas;
         } else {
             Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }
