@@ -52,7 +52,9 @@ f: fixed defects
 # History
 0.3.4:
     f: fixed textures overflow
+    f: fixed executing init methods
     +: examples added "main menu" button
+    +: DrawSpineObject and DrawSpineTexture .sortIndex property
     
 0.3.3:
     f: fixed world boundaries calculations

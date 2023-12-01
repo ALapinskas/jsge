@@ -21,6 +21,10 @@ class DrawSpineObject {
      * @type {boolean}
      */
     #isRemoved = false;
+    /**
+     * @type {number}
+     */
+    #sortIndex = 0;
     constructor(mapX, mapY, key, imageIndex = 0, boundaries, skeleton) {
         this.#skeleton = skeleton;
         this.#skeleton.x = mapX;
@@ -85,6 +89,16 @@ class DrawSpineObject {
     remove() {
         this.#isRemoved = true;
     }
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
+    }
 }
 
 class DrawSpineTexture {
@@ -108,6 +122,10 @@ class DrawSpineTexture {
      * @type {GLTexture}
      */
     #image;
+    /**
+     * @type {number}
+     */
+    #sortIndex = 0;
     constructor(x,y, width, height, image) {
         this.#x = x;
         this.#y = y;
@@ -134,6 +152,27 @@ class DrawSpineTexture {
 
     get image() {
         return this.#image;
+    }
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
+    }
+}
+
+class GLTextureExtended extends GLTexture {
+    constructor(context, image, useMipMaps){
+        super(context, image, useMipMaps);
+    }
+
+    bind(unit = 0) {
+        super.bind(unit);
+        this.boundUnit// this should be set to webgl.images_bind somehow
     }
 }
 export default class SpineModuleInitialization {
@@ -181,7 +220,7 @@ export default class SpineModuleInitialization {
         spineTexture = (x, y, width, height, imageKey) => {
             const image = systemInterface.loader.getImage(imageKey);
             if (image) {
-                const renderObject = new DrawSpineTexture(x, y, width, height, new GLTexture(context, image));
+                const renderObject = new DrawSpineTexture(x, y, width, height, new GLTextureExtended(context, image));
                 systemInterface.drawObjectFactory.screenPageData._renderObject = renderObject;
                 systemInterface.drawObjectFactory.screenPageData._sortRenderObjectsBySortIndex(); 
                 return renderObject;
@@ -221,7 +260,7 @@ export default class SpineModuleInitialization {
         for (let page of textureAtlas.pages) {
             const img = loader.getImage(page.name);
             for (let region of page.regions) {
-                region.texture = new GLTexture(context, img);
+                region.texture = new GLTextureExtended(context, img);
             }
         }
     }

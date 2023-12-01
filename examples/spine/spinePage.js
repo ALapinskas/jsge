@@ -23,6 +23,7 @@ export class SpinePage extends ScreenPage {
         const [w, h] = this.screenPageData.canvasDimensions;
 
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)"); 
+        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
         
         const spineDrawObject = this.draw.spine(-300, -300, SPINE.SpineText, SPINE.SpineAtlas);
         spineDrawObject.scale(0.5);
@@ -34,7 +35,7 @@ export class SpinePage extends ScreenPage {
 
         this.draw.spineTexture(100, 100, 200, 100, SPINE.SpineTexture);
 
-        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
+        
     }
 
     start() {

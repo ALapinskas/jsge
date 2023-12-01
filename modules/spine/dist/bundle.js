@@ -15859,6 +15859,10 @@ class DrawSpineObject {
      * @type {boolean}
      */
     #isRemoved = false;
+    /**
+     * @type {number}
+     */
+    #sortIndex = 0;
     constructor(mapX, mapY, key, imageIndex = 0, boundaries, skeleton) {
         this.#skeleton = skeleton;
         this.#skeleton.x = mapX;
@@ -15923,6 +15927,16 @@ class DrawSpineObject {
     remove() {
         this.#isRemoved = true;
     }
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
+    }
 }
 
 class DrawSpineTexture {
@@ -15946,6 +15960,10 @@ class DrawSpineTexture {
      * @type {GLTexture}
      */
     #image;
+    /**
+     * @type {number}
+     */
+    #sortIndex = 0;
     constructor(x,y, width, height, image) {
         this.#x = x;
         this.#y = y;
@@ -15972,6 +15990,16 @@ class DrawSpineTexture {
 
     get image() {
         return this.#image;
+    }
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
     }
 }
 class SpineModuleInitialization {

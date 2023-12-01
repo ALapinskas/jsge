@@ -180,7 +180,7 @@ export class RenderInterface {
     };
 
     initiateContext = () => {
-        return Promise.all(this.#initPromises);
+        return Promise.all(this.#initPromises.map(method => method()));
     }
 
     clearContext() {
@@ -226,11 +226,10 @@ export class RenderInterface {
      * @returns {void}
      */
     _registerRenderInit(method) {
-        if (method() instanceof Promise) {
-            this.#initPromises.push(method);
-        } else {
-            Exception(ERROR_CODES.UNEXPECTED_METHOD_TYPE, "registerRenderInit() accept only Promise based methods!");
-        }
+        this.#initPromises.push(method);
+        //} else {
+        //    Exception(ERROR_CODES.UNEXPECTED_METHOD_TYPE, "registerRenderInit() accept only Promise based methods!");
+        //}
     }
 
     /**
@@ -533,6 +532,7 @@ export class RenderInterface {
                 //viewPromises.push(this.#renderInterface._createBoundariesPrecalculations());
                 //}
             }
+            console.log(viewPromises);
             Promise.allSettled(viewPromises).then((drawingResults) => {
                 drawingResults.forEach((result) => {
                     if (result.status === "rejected") {

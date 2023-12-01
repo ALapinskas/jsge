@@ -162,15 +162,6 @@ export class MapPage extends ScreenPage {
     };
 
     #mouseMoveAction = (e) => {
-        const [xOffset, yOffset] = this.screenPageData.worldOffset,
-            x = e.offsetX,
-            y = e.offsetY,
-            cursorPosX = x + xOffset,
-            cursorPosY = y + yOffset,
-            rad = utils.angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
-            
-            this.player.rotation = rad - Math.PI/2;
-
         const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
 
         if (isNav1Traversed) {
