@@ -2,6 +2,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 import { Rectangle } from "./Primitives.js";
 import { CONST, ERROR_CODES } from "../constants.js";
 import { Exception } from "./Exception.js";
+import { TextureStorage } from "./WebGl/TextureStorage.js";
 
 /**
  * @extends DrawShapeObject
@@ -21,14 +22,9 @@ export class DrawTextObject extends DrawShapeObject {
     #textureCanvas;
 
     /**
-     * @type {WebGLTexture}
+     * @type {TextureStorage}
      */
-    #texture;
-
-    /**
-     * @type {boolean}
-     */
-    #isTextureRecalculated = false;
+    #textureStorage;
 
     /**
      * @hideconstructor
@@ -158,15 +154,15 @@ export class DrawTextObject extends DrawShapeObject {
     /**
      * @ignore
      */
-    get _texture() {
-        return this.#texture;
+    get _textureStorage() {
+        return this.#textureStorage;
     }
 
     /**
      * @ignore
      */
-    set _texture(texture) {
-        this.#texture = texture;
+    set _textureStorage(texture) {
+        this.#textureStorage = texture;
     }
 
     /**
@@ -174,20 +170,6 @@ export class DrawTextObject extends DrawShapeObject {
      */
     get _textureCanvas() {
         return this.#textureCanvas;
-    }
-
-    /**
-     * @ignore
-     */
-    get _isTextureRecalculated() {
-        return this.#isTextureRecalculated;
-    }
-
-    /**
-     * @ignore
-     */
-    set _isTextureRecalculated(value) {
-        this.#isTextureRecalculated = value;
     }
 
     /**
@@ -214,8 +196,10 @@ export class DrawTextObject extends DrawShapeObject {
                 ctx.strokeStyle = this.strokeStyle;
                 ctx.strokeText(this.text, 0, boxHeight);
             }
-            this.#isTextureRecalculated = true;
             this.#textureCanvas = canvas;
+            if (this.#textureStorage) {
+                this.#textureStorage._isTextureRecalculated = true;
+            }
         } else {
             Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }

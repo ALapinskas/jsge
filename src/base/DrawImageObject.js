@@ -1,6 +1,7 @@
 import { AnimationEventImageObj } from "./AnimationEventImageObj.js";
 import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
+import { TextureStorage } from "./WebGl/TextureStorage.js";
 /**
  * Image object to draw
  * @extends DrawShapeObject
@@ -45,13 +46,9 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #circleBoundaries;
     /**
-     * @type {WebGLTexture}
+     * @type {TextureStorage}
      */
-    #texture;
-    /**
-     * @type {boolean}
-     */
-    #isTextureRecalculated = false;
+    #textureStorage;
 
     /**
      * @hideconstructor
@@ -107,7 +104,10 @@ export class DrawImageObject extends DrawShapeObject {
     }
 
     set image(value) {
-        this.#isTextureRecalculated = true;
+        if (this.#textureStorage) {
+            this.#textureStorage._isTextureRecalculated = true;
+        }
+
         this.#image = value;
     }
 
@@ -161,29 +161,15 @@ export class DrawImageObject extends DrawShapeObject {
      /**
      * @ignore
      */
-     get _texture() {
-        return this.#texture;
+    get _textureStorage() {
+        return this.#textureStorage;
     }
 
     /**
      * @ignore
      */
-    set _texture(texture) {
-        this.#texture = texture;
-    }
-
-    /**
-     * @ignore
-     */
-    get _isTextureRecalculated() {
-        return this.#isTextureRecalculated;
-    }
-
-    /**
-     * @ignore
-     */
-    set _isTextureRecalculated(value) {
-        this.#isTextureRecalculated = value;
+    set _textureStorage(texture) {
+        this.#textureStorage = texture;
     }
 
     /**

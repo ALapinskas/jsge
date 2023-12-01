@@ -1,5 +1,5 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
-
+import { TextureStorage } from "./WebGl/TextureStorage.js";
 /**
  * A render object represents a layer from tiled editor
  * @see {@link DrawObjectFactory} should be created with factory method
@@ -10,6 +10,10 @@ export class TiledRenderLayer {
     #tilemap;
     #tilesets;
     #tilesetImages;
+    /**
+     * @type {Array<TextureStorage>}
+     */
+    #textureStorages;
     #layerData;
     #setBoundaries;
     #drawBoundaries;
@@ -28,7 +32,7 @@ export class TiledRenderLayer {
         this.#tileMapKey = tileMapKey;
         this.#tilemap = tilemap;
         this.#tilesets = tilesets;
-        this._textures = Array(this.#tilesets.length);
+        this.#textureStorages = [];
         this.#tilesetImages = tilesetImages;
         this.#layerData = layerData;
         this.#setBoundaries = setBoundaries;
@@ -125,5 +129,13 @@ export class TiledRenderLayer {
     }
     turnOffOffset() {
         this.#isOffsetTurnedOff = true;
+    }
+
+    get _textureStorages() {
+        return this.#textureStorages;
+    }
+
+    _setTextureStorage(index, value) {
+        this.#textureStorages[index] = value;
     }
 }

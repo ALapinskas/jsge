@@ -53,6 +53,8 @@ f: fixed defects
 0.3.4:
     f: fixed textures overflow
     f: fixed executing init methods
+    r: refactored texture binding
+    +: TextureStorage introduced
     +: examples added "main menu" button
     +: DrawSpineObject and DrawSpineTexture .sortIndex property
     
