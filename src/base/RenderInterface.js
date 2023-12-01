@@ -532,7 +532,6 @@ export class RenderInterface {
                 //viewPromises.push(this.#renderInterface._createBoundariesPrecalculations());
                 //}
             }
-            console.log(viewPromises);
             Promise.allSettled(viewPromises).then((drawingResults) => {
                 drawingResults.forEach((result) => {
                     if (result.status === "rejected") {
