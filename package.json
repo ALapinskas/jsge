@@ -4,6 +4,13 @@
   "description": "Javascript Game Engine",
   "main": "src/index.js",
   "type": "module",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ALapinskas/jsge.git"
+  },
   "keywords": [
     "javascript",
     "game",

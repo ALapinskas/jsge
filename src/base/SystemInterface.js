@@ -3,7 +3,7 @@ import { Exception, Warning } from "./Exception.js";
 import { SystemSocketConnection } from "./SystemSocketConnection.js";
 import { SystemAudioInterface } from "./SystemAudioInterface.js";
 import { SystemSettings } from "../configs.js";
-import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
+import AssetsManager from "../../modules/assetsm/src/AssetsManager.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { ScreenPage } from "./ScreenPage.js";
 import { RenderInterface } from "./RenderInterface.js";

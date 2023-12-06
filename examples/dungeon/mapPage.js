@@ -1,5 +1,6 @@
 import { ScreenPage, CONST, DrawImageObject, SystemAudioInterface } from "../../src/index.js";
 import { utils } from "../../src/index.js";
+import DialogModuleInit from "../../modules/dialog/src/index.js";
 
 const angle_2points = utils.angle_2points;
 
@@ -23,12 +24,19 @@ export class MapPage extends ScreenPage {
     #detectedByGhostAudioKey = "ghost_audio";
 
     register() {
+        this.dialogs = this.system.installModule("dialogs", DialogModuleInit);
+
         this.loader.addTileMap(this.tilemapKey, "./dungeon/map.tmj");
         this.loader.addImage(this.fireImagesKey, "./dungeon/images/All_Fire_Bullet_Pixel_16x16_00.png");
         this.loader.addAudio(this.fireballCastKey, "./dungeon/audio/zvuk-poleta-ognennogo-shara.mp3");
         this.loader.addAudio(this.#fireballDestroyAudioKey, "./dungeon/audio/ognennyiy-shar-vspyihnul.mp3");
         this.loader.addAudio(this.#detectedByGhostAudioKey, "./dungeon/audio/zvuk-prizraka-prividenie-24332.mp3");
         this.loader.addAudio(this.defaultAudioKey, "./dungeon/audio/ustrashayuschiy-nagnetayuschiy-zvuk-kapaniya-kapel-v-pustom-zabroshennom-pomeschenii.mp3");
+
+        //this.loader.addDialogJson("dialogJsonErr1", "./dungeon/dialog_uncorrect_ext.js");
+        //this.loader.addDialogJson("dialogJsonErr2", "./dungeon/dialog_uncorrect_type.json");
+
+        this.loader.addDialogJson("dialogJson", "./dungeon/dialog.json");
         this.backgroundSounds = new SystemAudioInterface(this.loader);
         this.speed = 0;
         this.movingInterval = null;
@@ -38,6 +46,8 @@ export class MapPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
 
+        this.dialogsJson = this.loader.getDialogJson("dialogJson");
+        console.log(this.dialogsJson);
         this.draw.tiledLayer("background", this.tilemapKey);
         this.draw.tiledLayer("walls", this.tilemapKey);
 

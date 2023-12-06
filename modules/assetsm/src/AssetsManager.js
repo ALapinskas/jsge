@@ -170,12 +170,20 @@ export default class AssetsManager {
     }
 
     #uploadFiles() {
-        const results = Array.from(this.#registeredLoaders.values()).map((fileType) => {
-            return Promise.allSettled(Array.from(fileType.loadingQueue.entries()).map((key_value) => {
-                return fileType.uploadMethod(key_value[0], key_value[1]);
-            }));
+        let results = [];
+        Array.from(this.#registeredLoaders.values()).forEach((fileType) => {
+            Array.from(fileType.loadingQueue.entries()).forEach((key_value) => {
+                results.push(fileType.uploadMethod(key_value[0], key_value[1]));
+            })});
+        return Promise.allSettled(results).then((results) => {
+            results.forEach((result) => {
+                if (result.status === "rejected") {
+                    const error = result.reason;
+                    Warning(error);
+                    this.#dispatchLoadingError(error);
+                }
+            });
         });
-        return Promise.all(results);
     }
 
     addEventListener(type, fn, ...args) {

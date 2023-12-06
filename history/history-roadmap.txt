@@ -38,7 +38,24 @@
                 * draw context, which is a part of RenderInterface and could be accessed via ScreenPage.
                 * ScreenPageData, which is a part of RenderInterface and could be accessed via ScreenPage.
                 * ScreenPage.start, .stop methods
+
+    Dialogs module requirements:
+        1. Dialogs module should provide two types of popups with texts:
+            *. a text block on the center, or bottom of the screen
+            *. bubble, bound to the map coords
+        2. Dialog texts should be able to be a running line.
+        3. Dialog box could be able to configure bg color and stroke color.
+        4. Dialog box could be able to configure round corners.
+        5. Dialogs should be stored as json file, or files
+            - json should have next structure: dialog keys on the root, inside dialogs have "text" property, 
+                which represents the text itself, and "opts" which represents user variants to choose, options inside
+                have next dialogs with its own "text" and "opts"
+            - if root doesn't contain keys, module assume that file has only one dialog, looking for "text" property
+            - if no "text" property will be found, the "incorrect file" error should be thrown
         
+        6. Module should provide a new type of file - DialogJson, extension should also validate file to have correct structure(point 5)
+        7. For each dialog key should be created a new Dialog class
+        8. Dialog should have characters, each character could have an image
 
 Todo: https://github.com/users/ALapinskas/projects/2
 

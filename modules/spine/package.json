@@ -9,7 +9,7 @@
     "build-prod": "webpack --mode=production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Arturas Lapinskas",
+  "author": "Arturas-Alfredas Lapinskas",
   "license": "MIT",
   "dependencies": {
     "@esotericsoftware/spine-core": "4.2.23",
