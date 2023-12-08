@@ -46,8 +46,8 @@ export class MapPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
 
-        this.dialogsJson = this.loader.getDialogJson("dialogJson");
-        console.log(this.dialogsJson);
+        this.dialogs = this.draw.dialogs("dialogJson");
+        console.log(this.dialogs);
         this.draw.tiledLayer("background", this.tilemapKey);
         this.draw.tiledLayer("walls", this.tilemapKey);
 

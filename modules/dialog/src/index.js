@@ -1,6 +1,54 @@
 import { ERROR_MESSAGES } from "./const.js";
 
-class DrawDialog {
+class BaseDrawDialog {   
+    /**
+     * @type {string}
+     */
+    #text;
+    /**
+     * @type {Map<string, BaseDrawDialog> | undefined}
+     */
+    #children = new Map();
+    /**
+     * @type {number}
+     */
+    #sortIndex = 0;
+    constructor(dialogJson) {
+        this.#text = dialogJson.text ? dialogJson.text : (typeof dialogJson === "string") ? dialogJson : undefined;
+        if (this.#text === undefined) {
+            throw(new Error(ERROR_MESSAGES.INCORRECT_FILE_STRUCTURE));
+        }
+        const opts = dialogJson.opts;
+        if (opts) {
+            for (const key in opts) {
+                const nestedDialog = opts[key];
+                this.#children.set(key, new BaseDrawDialog(nestedDialog));
+            }
+        }
+    }
+
+    get isChildren() {
+        return this.#children.size > 0;
+    }
+
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
+    }
+}
+class DrawDialogBlock extends BaseDrawDialog {
+    constructor(dialogJson) {
+        super(dialogJson);
+    }
+}
+
+class DrawDialogBubble extends BaseDrawDialog {
     /**
      * @type {number}
      */
@@ -17,17 +65,10 @@ class DrawDialog {
      * @type {number}
      */
     #height;
-    /**
-     * @type {number}
-     */
-    #sortIndex = 0;
-    constructor(x,y, width, height) {
-        this.#x = x;
-        this.#y = y;
-        this.#width = width;
-        this.#height = height;
-    }
 
+    constructor(dialogJson) {
+        super(dialogJson);
+    }
     get x() {
         return this.#x;
     }
@@ -42,17 +83,6 @@ class DrawDialog {
 
     get height() {
         return this.#height;
-    }
-
-    /**
-     * @type {number}
-     */
-    get sortIndex () {
-        return this.#sortIndex;
-    }
-
-    set sortIndex(value) {
-        this.#sortIndex = value;
     }
 }
 export default class DialogModuleInit {
@@ -72,42 +102,34 @@ export default class DialogModuleInit {
         }
     }
 
-    #validateFileStructure = (jsonStruct, root = false) => {
-        if (typeof jsonStruct === "string" && root === false) {
-            return;
-        }
-        if (jsonStruct.text || jsonStruct.opts || root === true) {
-            const keys = Object.keys(jsonStruct);
-            for (let i = 0; i < keys.length; i++) {
-                const key = keys[i];
-                const root = !!jsonStruct.opts;
-                this.#validateFileStructure(jsonStruct[key], root);
-            }
-        } else {
-            throw(new Error(ERROR_MESSAGES.INCORRECT_FILE_STRUCTURE));
-        }
-    }
-
     #registerDialogLoaders(loader) {
-        const dialogJsonLoader = (key, url) => fetch(this.#validateURL(url)).then(result => {
-            return result.json().then((jsonData) => {
-                this.#validateFileStructure(jsonData, true);
-                return jsonData;
-            });
-        });
+        const dialogJsonLoader = (key, url) => fetch(this.#validateURL(url)).then(result => result.json());
         loader.registerLoader("DialogJson", dialogJsonLoader);
     }
 
     #registerDrawObjects(systemInterface) {
         const loader = systemInterface.loader;
 
-        const dialog = (key) => {
-            const dialogJson = loader.getDialogJson(key),
-                dialogInstance = this.#createDialogInstance(dialogJson)
-            return dialogInstance;
+        const dialogs = (key) => {
+            const dialogsJson = loader.getDialogJson(key),
+                dialogInstances = this.#createDialogInstances(dialogsJson)
+            return dialogInstances;
         }
        
-        systemInterface.extensionInterface.registerDrawObject("dialog", dialog);
+        systemInterface.extensionInterface.registerDrawObject("dialogs", dialogs);
+    }
+
+    #createDialogInstances = (dialogsJson) => {
+        const dialogKeys = Object.keys(dialogsJson);
+        let dialogsMap = new Map();
+
+        for (let i = 0; i < dialogKeys.length; i++) {
+            const key = dialogKeys[i],
+                dialog = new DrawDialogBlock(dialogsJson[key]);
+            dialogsMap.set(key, dialog);
+        }
+
+        return dialogsMap;
     }
 
     /**

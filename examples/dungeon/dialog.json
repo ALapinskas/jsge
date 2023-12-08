@@ -12,8 +12,7 @@
             }
         }
     },
-    "just_text":
-    {
+    "just_text": {
         "text": "This is just text",
         "opts": {
             "continue": { 
