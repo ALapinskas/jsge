@@ -50,6 +50,10 @@ f: fixed defects
 
 
 # History
+0.3.5:
+    f: webpack builds
+    r: updated assetsm to 0.1.3
+
 0.3.4:
     f: fixed textures overflow
     f: fixed executing init methods
