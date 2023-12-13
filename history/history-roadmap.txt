@@ -50,6 +50,10 @@ f: fixed defects
 
 
 # History
+0.3.6:
+    f: webpack min rendering issue
+    f: examples: nav back button offset issue
+
 0.3.5:
     f: webpack builds
     r: updated assetsm to 0.1.3

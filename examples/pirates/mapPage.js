@@ -64,6 +64,7 @@ export class MapPage extends ScreenPage {
         this.player = this.draw.image(100, 300, 35, 57, SHIPS_KEY, 0, [{x:0,y:-30}, {x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
 
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
+        this.navItemBack.turnOffOffset();
     }
 
     #getRandomIntFromTo = (min, max) => (Math.random() * (max - min) + min);

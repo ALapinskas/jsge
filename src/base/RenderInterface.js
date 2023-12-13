@@ -111,13 +111,13 @@ export class RenderInterface {
         );
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
 
-        this._registerObjectRender("DrawTextObject", this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this._registerObjectRender("DrawRectObject", this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender("DrawPolygonObject", this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender("DrawCircleObject", this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender("DrawConusObject", this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender("TiledRenderLayer", this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this._registerObjectRender("DrawLineObject", this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawTextObject.name, this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(DrawRectObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawPolygonObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawCircleObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawConusObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(TiledRenderLayer.name, this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(DrawLineObject.name, this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
     }
 
     /**

@@ -15,12 +15,12 @@ var config = {
             type: 'module'
         },
     },
-    devServer: {
-        static: ["dist", "examples"],
-        compress: false,
-        hot: false,
-        port: 9000,
-    },
+    //devServer: {
+    //    static: ["dist", "examples"],
+    //    compress: false,
+    //    hot: false,
+    //    port: 9000,
+    //},
     experiments: {
         topLevelAwait: true,
         syncWebAssembly: true,
@@ -51,7 +51,7 @@ export default (env, argv) => {
     }
 
     if (argv.mode === "production") {
-        config.output.filename = "index.es6.min.js"
+        config.output.filename = "index.es6.min.js";
     }
     /*
     if (argv.mode === "production-es5") {
