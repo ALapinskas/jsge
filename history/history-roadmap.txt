@@ -50,6 +50,11 @@ f: fixed defects
 
 
 # History
+0.3.7:
+    +: addAnimation() circlesPerFrame parameter
+    f: spineModule registerObjectRender() parameters fixed
+    r: tutorials updated, live examples added
+
 0.3.6:
     f: webpack min rendering issue
     f: examples: nav back button offset issue

@@ -44,7 +44,7 @@ export class MapPage extends ScreenPage {
         this.shadowRect = this.draw.rect(0, 0, w, h, "rgba(0, 0, 0, 0.5)");        
         //this.shadowRect.sortIndex = 2;
         this.shadowRect.blendFunc = [WebGLRenderingContext.ONE, WebGLRenderingContext.DST_COLOR];
-
+        this.shadowRect.turnOffOffset();
         this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)"); //shapeMask
 
         this.draw.tiledLayer("background", this.tilemapKey, false, this.sightView);
@@ -247,8 +247,8 @@ export class MapPage extends ScreenPage {
 
     #createFireball = () => {
         const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 406, {r:4});
-        f.addAnimation(ANIMATION_FIREMOVE, [406, 407, 408, 409, 500], true);
-        f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118]);
+        f.addAnimation(ANIMATION_FIREMOVE, [406, 407, 408, 409, 500], true, 5);
+        f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118], false, 5);
 
         f.emit(ANIMATION_FIREMOVE);
 
@@ -276,7 +276,7 @@ export class MapPage extends ScreenPage {
                 //remove fireball
                 fireball.destroy();
                 this.audio.getAudioCloned(this.#fireballDestroyAudioKey).play();
-            }, 64);
+            }, 200);
         }
     }
 

@@ -161,7 +161,7 @@ export class DrawObjectFactory {
     /**
      * @ignore
      * @param {string} methodKey 
-     * @param {fun} methodFn 
+     * @param {Function} methodFn 
      */
     _addNewObject = (methodKey, methodFn) => {
         this[methodKey] = methodFn;

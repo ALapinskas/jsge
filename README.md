@@ -1,4 +1,4 @@
-# JsGE@0.3.6
+# JsGE@0.3.7
 
 Javascript Game Engine
 

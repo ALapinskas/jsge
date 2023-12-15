@@ -1,7 +1,8 @@
 import { AnimationEventImageObj } from "./AnimationEventImageObj.js";
-import { CONST } from "../constants.js";
+import { CONST, ERROR_CODES } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
+import { Exception } from "./Exception.js";
 /**
  * Image object to draw
  * @extends DrawShapeObject
@@ -208,9 +209,13 @@ export class DrawImageObject extends DrawShapeObject {
      * @param { string } eventName -animation name
      * @param { Array<number> } animationSpriteIndexes - animation image indexes
      * @param { boolean } [isRepeated = false] - animation is circled or not, circled animation could be stopped only with stopRepeatedAnimation();
+     * @param { number } [circlesPerFrame = 1] - determines on how many circles should one frame be shown, the actual speed depends on gameOptions.render.minCircleTime
      */
-    addAnimation (eventName, animationSpriteIndexes, isRepeated) {
-        const animationEvent = new AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated);
+    addAnimation (eventName, animationSpriteIndexes, isRepeated, circlesPerFrame = 1) {
+        if (circlesPerFrame < 1) {
+            Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " circlesPerFrame should be >= 1");
+        }
+        const animationEvent = new AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated, circlesPerFrame);
         this.#animations.set(eventName, animationEvent);
         this.addEventListener(eventName, this.#activateAnimation);
     }

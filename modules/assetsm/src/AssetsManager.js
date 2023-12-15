@@ -19,7 +19,7 @@ class Loader {
     #uploadMethod;
     /**
      * name: url
-     * @type { Map<String, String>}
+     * @type { Map<String, String[]>}
      */
     #loadingQueue = new Map();
     /**
@@ -76,11 +76,11 @@ class Loader {
         return this.#uploadMethod;
     }
 
-    _addFile = (key, url) => {
+    _addFile = (key, paramsArr) => {
         if (this.#loadingQueue.has(key)) {
             Warning("File " + this.#fileType + " with key " + key + " is already added");
         }
-        this.#loadingQueue.set(key, url);
+        this.#loadingQueue.set(key, paramsArr);
     }
 
     _isFileInQueue = (key) => {
@@ -118,6 +118,7 @@ export default class AssetsManager {
         this.registerLoader("Audio", this._loadAudio);
         this.registerLoader("Image", this._loadImage);
         this.registerLoader("TileMap", this._loadTileMap);
+        this.registerLoader("TileSet", this._loadTileSet)
     }
 
     get filesWaitingForUpload() {
@@ -133,10 +134,8 @@ export default class AssetsManager {
      * @returns {Promise | void}
      */
     registerLoader = (fileTypeName, loadMethod = this._defaultUploadMethod) => {
-        const registeredFileType = this.#registeredLoaders.get(fileTypeName) || new Loader(fileTypeName, loadMethod);
-
-        this["add" + fileTypeName] = (key, url) => {
-            this.addFile(fileTypeName, key, url);
+        this["add" + fileTypeName] = (key, url, ...args) => {
+            this.addFile(fileTypeName, key, url, ...args);
         }
         this["get" + fileTypeName] = (key) => {
             return this.getFile(fileTypeName, key);
@@ -144,6 +143,9 @@ export default class AssetsManager {
         this["is" + fileTypeName + ["InQueue"]] = (key) => {
             return this.isFileInQueue(fileTypeName, key);
         }
+
+        const registeredFileType = this.#registeredLoaders.get(fileTypeName) || new Loader(fileTypeName, loadMethod);
+
         this.#registeredLoaders.set(fileTypeName, registeredFileType);
     }
 
@@ -173,7 +175,7 @@ export default class AssetsManager {
         let results = [];
         Array.from(this.#registeredLoaders.values()).forEach((fileType) => {
             Array.from(fileType.loadingQueue.entries()).forEach((key_value) => {
-                results.push(fileType.uploadMethod(key_value[0], key_value[1]));
+                results.push(fileType.uploadMethod(key_value[0], ...key_value[1]));
             })});
         return Promise.allSettled(results).then((results) => {
             results.forEach((result) => {
@@ -198,20 +200,27 @@ export default class AssetsManager {
         this.#emitter.removeEventListener(type, fn, ...args);
     }
 
-    #loadTileSet = (tileset, relativePath) => {
-        const { firstgid:gid, source:url } = tileset;
+    /**
+     * Loads tileset
+     * @param {string} key
+     * @param {string} url 
+     * @param {number} [gid=1]
+     * @param {string=} relativePath
+     * @returns {Promise}
+     */
+    _loadTileSet = (key, url, gid=1, relativePath) => {
         this.#checkTilesetUrl(url);
-        return fetch("./" + relativePath ? relativePath + url : url)
+        return fetch(relativePath ? relativePath + url : url)
             .then((response) => response.json())
             .then((data) => {
                 const {name, image} = data;
-                if (name && image && !this.isImageInQueue(name)) {
-                    this.addImage(name, relativePath ? relativePath + image : image, data);
+                if (name && image && !this.isFileInQueue("Image", name)) {
+                    this.addImage(name, relativePath ? relativePath + image : image);
                 }
                 data.gid = gid;
                 return Promise.resolve(data);
             }).catch(() => {
-                const err = new Error("Can't load related tileset ", url);
+                const err = new Error("Can't load related tileset " + url);
                 return Promise.reject(err);
             });
     }
@@ -224,9 +233,10 @@ export default class AssetsManager {
      * Loads tilemap file and related data
      * @param {string} key 
      * @param {string} url 
+     * @param {boolean} [attachTileSetData = true] - indicates, whenever tilesetData is attached, or will be loaded separately
      * @returns {Promise}
      */
-    _loadTileMap = (key, url) => {
+    _loadTileMap = (key, url, attachTileSetData = true) => {
         this.#checkTilemapUrl(url);
         return fetch(url)
             .then((response) => response.json())
@@ -242,11 +252,12 @@ export default class AssetsManager {
                     relativePath = split.join("/") + "/";
                 }
                 
-                if (data.tilesets && data.tilesets.length > 0) {
+                if (attachTileSetData === true && data.tilesets && data.tilesets.length > 0) {
                     const tilesetPromises = [];
                     // upload additional tileset data
                     data.tilesets.forEach((tileset, idx) => {
-                        const loadTilesetPromise = this.#loadTileSet(tileset, relativePath).then((tilesetData) => {
+                        const { firstgid:gid, source:url } = tileset;
+                        const loadTilesetPromise = this._loadTileSet("default-" + gid, url, gid, relativePath).then((tilesetData) => {
                             this.#dispatchCurrentLoadingProgress();
                             return Promise.resolve(tilesetData);
                         });
@@ -260,6 +271,8 @@ export default class AssetsManager {
                         }
                         return Promise.resolve(data);
                     });
+                } else {
+                    return Promise.resolve(data);
                 }
             })
             .catch((err) => {
@@ -304,7 +317,7 @@ export default class AssetsManager {
     _loadImage = (key, url, cors = "anonymous") => {
         return new Promise((resolve, reject) => {
             const img = new Image();
-            img.crossOrigin = cors
+            img.crossOrigin = cors;
             img.onload = () => {
                 createImageBitmap(img).then((imageBitmap) => {
                     this.#dispatchCurrentLoadingProgress();
@@ -336,11 +349,11 @@ export default class AssetsManager {
         }
     }
 
-    addFile(fileType, fileKey, url) {
+    addFile(fileType, fileKey, url, ...args) {
         const loader = this.#registeredLoaders.get(fileType);
         if (loader) {
             this.#checkInputParams(fileKey, url);
-            loader._addFile(fileKey, url);
+            loader._addFile(fileKey, [url, ...args]);
         } else {
             Exception("Loader for " + fileType + " is not registered!");
         }

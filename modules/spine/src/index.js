@@ -300,7 +300,7 @@ export default class SpineModuleInitialization {
         };
 
         systemInterface.extensionInterface.registerRenderInit(renderInitMethod);
-        systemInterface.extensionInterface.registerObjectRender("DrawSpineObject", drawSpineObjectMethod);
-        systemInterface.extensionInterface.registerObjectRender("DrawSpineTexture", drawSpineTextureMethod);
+        systemInterface.extensionInterface.registerObjectRender(DrawSpineObject.name, drawSpineObjectMethod);
+        systemInterface.extensionInterface.registerObjectRender(DrawSpineTexture.name, drawSpineTextureMethod);
     }
 }

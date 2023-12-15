@@ -85,7 +85,7 @@ Use document.addEventListener to attach mouse or keyboard controllers and \
 move attached object on the screen changing x, y, or rotation properties
 
 ## Live example:
-<p class="codepen" data-height="300" data-default-tab="js,result" data-slug-hash="mdvgQyv" data-user="yaalfred" style="height: 300px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid; margin: 1em 0; padding: 1em;">
+<p class="codepen" data-height="500" data-default-tab="js,result" data-slug-hash="mdvgQyv" data-user="yaalfred" style="height: 500px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid; margin: 1em 0; padding: 1em;">
   <span>See the Pen <a href="https://codepen.io/yaalfred/pen/mdvgQyv">
   JsGE basic example</a> by Arturas-Alfredas Lapinskas (<a href="https://codepen.io/yaalfred">@yaalfred</a>)
   on <a href="https://codepen.io">CodePen</a>.</span>

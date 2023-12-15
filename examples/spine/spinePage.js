@@ -1,4 +1,4 @@
-import { ScreenPage, CONST } from "../../src/index.js";
+import { ScreenPage, CONST } from "../../dist/index.es6.min.js";
 import SpineModuleInitialization from "../../modules/spine/dist/bundle.js";
 import { utils } from "../../src/index.js";
 

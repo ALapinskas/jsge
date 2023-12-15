@@ -25,5 +25,12 @@ start() {
 }
 ```
 
-*be careful with loading tilemaps and attached tilesets and images, everything should be in the same folder or subfolder.\
+*be careful with loading tilemaps and attached tilesets and images, everything should be in the same folder or subfolder. \
+Or you can manage tilesets loading separately, passing false as 3d parameter to addTileMap and then \
+adding addTileSet() calls:
+```
+    page.loader.addTileMap(key, url, false);
+    page.loader.addTileSet(key, url, gui1);
+    page.loader.addTileSet(key, url, gui2);
+```
 *added audio files is better to register in the AudioInterface, {@tutorial how_to_add_and_use_audio}

@@ -16,9 +16,10 @@ export class ExtensionInterface {
         this.#systemReference = system;
     }
     /**
-     * 
-     * @param {string} createInstanceKey 
-     * @param {function} createInstanceMethod 
+     * Is used for registering new Object in DrawObjectFactory, \
+     * registered method could be then called with this.draw[createInstanceKey]
+     * @param {string} createInstanceKey - a key for calling method from DrawObjectFactory
+     * @param {function} createInstanceMethod - method 
      */
     registerDrawObject(createInstanceKey, createInstanceMethod) {
         this.#systemReference.drawObjectFactory._addNewObject(createInstanceKey, createInstanceMethod);
@@ -38,7 +39,7 @@ export class ExtensionInterface {
     }
 
     /**
-     * 
+     * Inject method to render.init stage. Should be Promise based.
      * @param {function():Promise<void>} method 
      * @returns {void}
      */
@@ -47,7 +48,7 @@ export class ExtensionInterface {
     }
 
     /**
-     * 
+     * Register render method for class.
      * @param {string} objectClassName - object name registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
      * @param {string=} objectWebGlDrawProgram 

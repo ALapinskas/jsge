@@ -1,6 +1,6 @@
 {
   "name": "jsge",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Javascript Game Engine",
   "main": "src/index.js",
   "type": "module",
@@ -28,7 +28,7 @@
   "author": "Arturas-Alfredas Lapinskas",
   "license": "MIT",
   "dependencies": {
-    "assetsm": "0.1.3",
+    "assetsm": "0.1.4",
     "socket.io-client": "4.5.4"
   },
   "devDependencies": {

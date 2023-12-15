@@ -262,13 +262,13 @@ export class RenderInterface {
                         i--;
                         continue;
                     }
+                    if (object.isAnimations) {
+                        object._processActiveAnimations();
+                    }
                     const promise = await this._bindRenderObject(object).catch((err) => {
                         reject(err);
                     });
                     renderObjectsPromises.push(promise);
-                    if (object.isAnimations) {
-                        object._processActiveAnimations();
-                    }
                 }
                 if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
                     renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
@@ -493,11 +493,7 @@ export class RenderInterface {
         //Logger.debug("_render " + this.name + " class");
         this.#isActive = true;
         this.#currentScreenPageData = screenPageData;
-        //const settings = this.systemSettings;
-        //const canvasWidth = settings.canvasMaxSize.width && (settings.canvasMaxSize.width < window.innerWidth) ? settings.canvasMaxSize.width : window.innerWidth,
-        //    canvasHeight = settings.canvasMaxSize.height && (settings.canvasMaxSize.height < window.innerHeight) ? settings.canvasMaxSize.height : window.innerHeight;
-        const [canvasWidth, canvasHeight] = this.#currentScreenPageData.canvasDimensions;
-        this.setCanvasSize(canvasWidth, canvasHeight);
+        this.fixCanvasSize();
         switch (this.systemSettings.gameOptions.library) {
             case CONST.LIBRARY.WEBGL:
                 await this.#prepareViews();
@@ -546,7 +542,7 @@ export class RenderInterface {
     }
 
     #drawViews = async (/*drawTime*/) => {
-        const pt0 = performance.now(),
+        const timeStart = performance.now(),
             minCircleTime = this.#minCircleTime;
             
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
@@ -554,13 +550,13 @@ export class RenderInterface {
         this.clearContext();
         
         this.render().then(() => {
-            const r_time = performance.now() - pt0,
-                r_time_less = minCircleTime - r_time,
+            const timeEnd = performance.now() - timeStart,
+                r_time_less = minCircleTime - timeEnd,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
-                fps = 1000 / (r_time + wait_time);
+                fps = 1000 / (timeEnd + wait_time);
             if (this.systemSettings.gameOptions.render.circleTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.CURRENT &&
-                r_time > minCircleTime) {
-                console.log("draw circle done, take: ", (r_time), " ms");
+                timeEnd > minCircleTime) {
+                console.log("draw circle done, take: ", (timeEnd), " ms");
             }
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
             if(fps === Infinity) {
