@@ -18,6 +18,7 @@ export class MapPage extends ScreenPage {
     defaultAudioKey = "default_audio_key";
     fireballCastKey = "fireball_cast_key";
 
+    #gameOverAudioKey = "game_over";
     #fireballDestroyAudioKey = "fireball_d";
 
     #detectedByGhostAudioKey = "ghost_audio";
@@ -29,6 +30,7 @@ export class MapPage extends ScreenPage {
         this.loader.addAudio(this.#fireballDestroyAudioKey, "./dungeon/audio/ognennyiy-shar-vspyihnul.mp3");
         this.loader.addAudio(this.#detectedByGhostAudioKey, "./dungeon/audio/zvuk-prizraka-prividenie-24332.mp3");
         this.loader.addAudio(this.defaultAudioKey, "./dungeon/audio/ustrashayuschiy-nagnetayuschiy-zvuk-kapaniya-kapel-v-pustom-zabroshennom-pomeschenii.mp3");
+        this.loader.addAudio(this.#gameOverAudioKey, "./dungeon/audio/nehvatka-vozduha-i-skoraya-konchina.mp3");
         this.backgroundSounds = new SystemAudioInterface(this.loader);
         this.speed = 0;
         this.movingInterval = null;
@@ -45,7 +47,8 @@ export class MapPage extends ScreenPage {
         //this.shadowRect.sortIndex = 2;
         this.shadowRect.blendFunc = [WebGLRenderingContext.ONE, WebGLRenderingContext.DST_COLOR];
         this.shadowRect.turnOffOffset();
-        this.sightView = this.draw.circle(55, 250, 150, "rgba(0, 0, 0, 1)"); //shapeMask
+        
+        this.sightView = this.draw.circle(55, 250, 150, "rgba(125, 112, 113, 1)"); //shapeMask
 
         this.draw.tiledLayer("background", this.tilemapKey, false, this.sightView);
         this.draw.tiledLayer("walls", this.tilemapKey, true, this.sightView);
@@ -54,9 +57,9 @@ export class MapPage extends ScreenPage {
         this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.4)", Math.PI/8, 60);
         this.fireRange.setMask(this.sightView);
         
-        const monster1 = new Ghost(255, 250, 16, 16, "tilemap_packed", 108);
-        const monster2 = new Ghost(255, 420, 16, 16, "tilemap_packed", 108);
-        const monster3 = new Ghost(285, 420, 16, 16, "tilemap_packed", 108);
+        const monster1 = new Ghost(455, 450, 16, 16, "tilemap", 108, 1);
+        const monster2 = new Ghost(570, 410, 16, 16, "tilemap", 108, 1);
+        const monster3 = new Ghost(455, 390, 16, 16, "tilemap", 108, 1);
         monster1.setMask(this.sightView);
         monster2.setMask(this.sightView);
         monster3.setMask(this.sightView);
@@ -65,7 +68,8 @@ export class MapPage extends ScreenPage {
         this.addRenderObject(monster2);
         this.addRenderObject(monster3);
 
-        this.player = this.draw.image(55, 250, 16, 16, "tilemap_packed", 84, {r: 8});
+        this.player = this.draw.image(55, 250, 16, 16, "tilemap", 84, {r: 8}, 1);
+        this.player.setMask(this.sightView);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         
         this.greenLight = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5", Math.PI, 20);
@@ -80,10 +84,13 @@ export class MapPage extends ScreenPage {
         this.audio.registerAudio(this.fireballCastKey);
         this.audio.registerAudio(this.#fireballDestroyAudioKey);
         this.audio.registerAudio(this.#detectedByGhostAudioKey);
+        this.audio.registerAudio(this.#gameOverAudioKey);
         this.backgroundSounds.registerAudio(this.defaultAudioKey);
         this.backgroundSounds.volume = .5;
         this.defaultAudio = this.backgroundSounds.getAudio(this.defaultAudioKey);
         this.defaultAudio.loop = true;
+
+        this.gameOverAudio = this.audio.getAudio(this.#gameOverAudioKey);
     }
 
     start() {
@@ -156,6 +163,11 @@ export class MapPage extends ScreenPage {
             if (utils.countDistance(enemy, this.player) < ENEMY_DETECT_DISTANCE) {
                 this.audio.getAudio(this.#detectedByGhostAudioKey).play();
                 enemy.moveTo(this.player.x, this.player.y);
+                if (utils.countDistance(enemy, this.player) < 15) {
+                    this.gameOverAudio.play();
+                    alert("Ghosts reach you!! Game over.");
+                    location.reload();
+                }
             } else {
                 enemy.idle();
             } 
@@ -247,6 +259,7 @@ export class MapPage extends ScreenPage {
 
     #createFireball = () => {
         const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 406, {r:4});
+        f.rotation = this.fireRange.rotation;
         f.addAnimation(ANIMATION_FIREMOVE, [406, 407, 408, 409, 500], true, 5);
         f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118], false, 5);
 
@@ -265,6 +278,7 @@ export class MapPage extends ScreenPage {
             newCoordY = fireball.y + speed * Math.sin(direction);
         fireball.x = newCoordX;
         fireball.y = newCoordY;
+        fireball.rotation = this.fireRange.rotation;
         //console.log(newCoordX);
         if (this.isBoundariesCollision(newCoordX, newCoordY, fireball) 
         || this.isObjectsCollision(newCoordX, newCoordY, fireball, this.#enemies)) {
@@ -318,10 +332,10 @@ export class MapPage extends ScreenPage {
 
 class Ghost extends DrawImageObject {
     #idle = true;
-    #moveSpeed = 0.5;
+    #moveSpeed = 0.4;
 
-    constructor(mapX, mapY, width, height, key, imageIndex) {
-        super(mapX, mapY, width, height, key, imageIndex);
+    constructor(mapX, mapY, width, height, key, imageIndex, spacing) {
+        super(mapX, mapY, width, height, key, imageIndex, null, null, spacing);
     }
 
     moveTo = (x, y) => {

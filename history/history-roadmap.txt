@@ -50,6 +50,17 @@ f: fixed defects
 
 
 # History
+0.3.8:
+    f: eslint issues
+    f: mask._isMask = true doesn't set tiledLayer objects
+    f: textures edges on rotate issue
+    f: examples dungeon ghosts edges artifacts
+    f: examples dungeon player - light overlay color artifact 
+    r: examples dungeon map rebuilt
+    r: increase default canvas size
+    +: added tileset.spacing > 0 support
+    +: images spaces property
+
 0.3.7:
     +: addAnimation() circlesPerFrame parameter
     f: spineModule registerObjectRender() parameters fixed

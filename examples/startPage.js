@@ -40,7 +40,7 @@ export class StartPage extends ScreenPage {
     init() {
         const [w, h] = this.screenPageData.canvasDimensions;
         
-        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.5)");
+        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");
         
         this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
         this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");

@@ -66,7 +66,7 @@ export class WebGlEngine {
         //if stencil test and depth test pass we replace the initial value
         gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         return Promise.resolve();
-    }
+    };
 
     /**
      * 
@@ -85,14 +85,14 @@ export class WebGlEngine {
             };
 
             fetch("/src/wa/calculateBufferData.wasm")
-            .then((response) => response.arrayBuffer())
-            .then((module) => WebAssembly.instantiate(module, importObject))
-            .then((obj) => {
-                this.calculateBufferData = obj.instance.exports.calculateBufferData;
-                resolve();
-            });
-        })
-    }
+                .then((response) => response.arrayBuffer())
+                .then((module) => WebAssembly.instantiate(module, importObject))
+                .then((obj) => {
+                    this.calculateBufferData = obj.instance.exports.calculateBufferData;
+                    resolve();
+                });
+        });
+    };
 
     _clearView() {
         const gl = this.#gl;
@@ -217,6 +217,7 @@ export class WebGlEngine {
             y = renderObject.y - yOffset,
             scale = [1, 1],
             rotation = renderObject.rotation,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             { 
                 u_translation: translationLocation,
                 u_rotation: rotationRotation,
@@ -277,8 +278,8 @@ export class WebGlEngine {
         const colorArray = this.#rgbaToArray(renderObject.bgColor);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
-        if (renderObject.blendFunc) {
-            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        if (blend) {
+            gl.blendFunc(blend[0], blend[1]);
         }
         
         if (renderObject.isMaskAttached) {
@@ -287,7 +288,7 @@ export class WebGlEngine {
             gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
-    }
+    };
     _bindConus = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -307,7 +308,8 @@ export class WebGlEngine {
             coords = renderObject.vertices,
             fillStyle = renderObject.bgColor,
             fade_min = renderObject.fade_min,
-            fadeLen = renderObject.radius;
+            fadeLen = renderObject.radius,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA];
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -335,8 +337,8 @@ export class WebGlEngine {
 
         verticesNumber += coords.length / 2;
 
-        if (renderObject.blendFunc) {
-            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        if (blend) {
+            gl.blendFunc(blend[0], blend[1]);
         }
 
         const colorArray = this.#rgbaToArray(fillStyle);
@@ -350,22 +352,23 @@ export class WebGlEngine {
         }
         
         return Promise.resolve([verticesNumber, gl.TRIANGLE_FAN]);
-    }
+    };
 
     _bindText = (renderObject, gl, pageData, program, vars) => {
         const { u_translation: translationLocation,
-                u_rotation: rotationRotation,
-                u_scale: scaleLocation,
-                u_resolution: resolutionUniformLocation,
-                a_position: positionAttributeLocation,
-                a_texCoord: texCoordLocation,
-                u_image: u_imageLocation } = vars;
+            u_rotation: rotationRotation,
+            u_scale: scaleLocation,
+            u_resolution: resolutionUniformLocation,
+            a_position: positionAttributeLocation,
+            a_texCoord: texCoordLocation,
+            u_image: u_imageLocation } = vars;
 
         const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
             image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
-            y = renderObject.y - yOffset - boxHeight;
+            y = renderObject.y - yOffset - boxHeight,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA];
 
         const rotation = 0,
             scale = [1, 1];
@@ -419,7 +422,7 @@ export class WebGlEngine {
         verticesNumber += 6;
         // remove box
         // fix text edges
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendFunc(blend[0], blend[1]);
         
         let textureStorage = renderObject._textureStorage;
         if (!textureStorage) {
@@ -434,8 +437,8 @@ export class WebGlEngine {
         }
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         
-        return Promise.resolve([verticesNumber, gl.TRIANGLES])
-    }
+        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
+    };
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
         const { 
@@ -448,21 +451,27 @@ export class WebGlEngine {
             u_image: u_imageLocation } = vars;
 
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
-                x = renderObject.x - xOffset,
-                y = renderObject.y - yOffset;
+            x = renderObject.x - xOffset,
+            y = renderObject.y - yOffset;
 
         const atlasImage = renderObject.image,
             animationIndex = renderObject.imageIndex,
             image_name = renderObject.key,
             shapeMaskId = renderObject._maskId,
+            spacing = renderObject.spacing,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             scale = [1, 1];
         let imageX = 0,
             imageY = 0,
+            colNum = 0,
+            rowNum = 0,
             verticesNumber = 0;
         if (animationIndex !== 0) {
-            const imageColsNumber = atlasImage.width / renderObject.width;
-            imageX = animationIndex % imageColsNumber * renderObject.width,
-            imageY = Math.floor(animationIndex / imageColsNumber) * renderObject.height;
+            const imageColsNumber = (atlasImage.width + spacing) / (renderObject.width + spacing);
+            colNum = animationIndex % imageColsNumber;
+            rowNum = Math.floor(animationIndex / imageColsNumber);
+            imageX = colNum * renderObject.width + (colNum * spacing),
+            imageY = rowNum * renderObject.height + (rowNum * spacing);
         }
         const posX = x - renderObject.width / 2,
             posY = y - renderObject.height / 2;
@@ -475,12 +484,12 @@ export class WebGlEngine {
             texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
             texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
         const vectors = [
-            vecX1, vecY1,
-            vecX2, vecY1,
-            vecX1, vecY2,
-            vecX1, vecY2,
-            vecX2, vecY1,
-            vecX2, vecY2
+                vecX1, vecY1,
+                vecX2, vecY1,
+                vecX1, vecY2,
+                vecX1, vecY2,
+                vecX2, vecY1,
+                vecX2, vecY2
             ],
             textures = [
                 texX1, texY1,
@@ -490,9 +499,7 @@ export class WebGlEngine {
                 texX2, texY1,
                 texX2, texY2
             ];
-
         gl.useProgram(program);
-
         // set the resolution
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
         gl.uniform2f(translationLocation, x, y);
@@ -533,14 +540,14 @@ export class WebGlEngine {
 
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         // make image transparent parts transparent
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendFunc(blend[0], blend[1]);
         if (shapeMaskId) {
             gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
             //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         }
 
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
-    }
+    };
 
     _bindTileImages = async(renderLayer, gl, pageData, program, vars) => {
         const { u_translation: translationLocation,
@@ -554,22 +561,22 @@ export class WebGlEngine {
         gl.useProgram(program);
         let renderLayerData;
         switch (this.#gameOptions.optimization) {
-            case CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
-                renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
-                break;
-            case CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM:
-                renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
-                break;
-            case CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
-                Warning("Sorry, " + CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT + ", is not supported, switching to default");
-            case CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
-            default:
-                renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
+        case CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
+            renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
+            break;
+        case CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM:
+            renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
+            break;
+        case CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
+            Warning("Sorry, " + CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT + ", is not supported, switching to default");
+        case CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
+        default:
+            renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
         const translation = [0, 0],
             scale = [1, 1],
             rotation = 0,
-            drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"],
+            drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
             shapeMaskId = renderLayer._maskId;
 
         let verticesNumber = 0;
@@ -623,16 +630,16 @@ export class WebGlEngine {
             }
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
-    }
+    };
 
     _drawPolygon(renderObject, pageData) {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
-                x = renderObject.x - xOffset,
-                y = renderObject.y - yOffset,
-                rotation = renderObject.rotation || 0,
-                vertices = renderObject.vertices,
-                color =  this.#gameOptions.boundaries.boundariesColor;
-        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);;
+            x = renderObject.x - xOffset,
+            y = renderObject.y - yOffset,
+            rotation = renderObject.rotation || 0,
+            vertices = renderObject.vertices,
+            color =  this.#gameOptions.boundaries.boundariesColor;
+        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
                 u_scale: scaleLocation,
@@ -737,10 +744,10 @@ export class WebGlEngine {
         gl.lineWidth(lineWidth);
 
         return Promise.resolve([0, gl.LINES]);
-    }
+    };
     
     _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
-        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);;
+        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
                 u_scale: scaleLocation,
@@ -840,7 +847,7 @@ export class WebGlEngine {
                     atlasWidth = tileset.imagewidth,
                     atlasHeight = tileset.imageheight,
                     //atlasRows = atlasHeight / tileheight,
-                    atlasColumns = Math.floor(atlasWidth / tilesetwidth),
+                    atlasColumns = tileset.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     worldW = tilewidth * layerCols,
@@ -853,6 +860,8 @@ export class WebGlEngine {
                     screenRows = worldH > canvasH ? Math.ceil(canvasH / tileheight) + 1 : layerRows,
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
+                    cellSpacing = tileset.spacing,
+                    cellMargin = tileset.margin,
 
                     verticesBufferData = [],
                     texturesBufferData = [];
@@ -869,11 +878,9 @@ export class WebGlEngine {
                 }
 
                 let mapIndex = skipRowsTop * layerCols;
-
                 for (let row = 0; row < screenRows; row++) {
                     mapIndex += skipColsLeft;
                     let currentRowIndexes = new Map();
-
                     for (let col = 0; col < screenCols; col++) {
                         let tile = layerData.data[mapIndex];
                         //if (tile !== 0)
@@ -882,14 +889,16 @@ export class WebGlEngine {
                                 mapPosY = row * dtheight - moduloTop;
 
                             tile -= firstgid;
-                            const atlasPosX = tile % atlasColumns * tilesetwidth,
-                                atlasPosY = Math.floor(tile / atlasColumns) * tilesetheight,
+                            const colNum = tile % atlasColumns,
+                                rowNum = Math.floor(tile / atlasColumns),
+                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
+                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing),
                                 vecX1 = mapPosX,
                                 vecY1 = mapPosY,
                                 vecX2 = mapPosX + tilesetwidth,
                                 vecY2 = mapPosY + tilesetheight,
-                                texX1 = 1 / atlasWidth * atlasPosX,
-                                texY1 = 1 / atlasHeight * atlasPosY,
+                                texX1 = (1 / atlasWidth) * atlasPosX,
+                                texY1 = (1 / atlasHeight) * atlasPosY,
                                 texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
                                 texY2 = texY1 + (1 / atlasHeight * tilesetheight);
                             verticesBufferData.push(
@@ -907,7 +916,6 @@ export class WebGlEngine {
                                 texX2, texY1,
                                 texX2, texY2
                             );
-                            
                             if (setBoundaries) {
                                 let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
                                     bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
@@ -1240,7 +1248,7 @@ export class WebGlEngine {
             }
             resolve(tileImagesData);
         });
-    }
+    };
 
     /**
      * 
@@ -1346,10 +1354,12 @@ export class WebGlEngine {
     #updateWebGlTexture(gl, texture, textureImage, textureNum = 0, useMipMaps = false) {
         this.#bindTexture(gl, texture, textureNum);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        // already default value
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        // for textures not power of 2 (texts for example)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST);
         if (useMipMaps)
             gl.generateMipmap(gl.TEXTURE_2D);
     }

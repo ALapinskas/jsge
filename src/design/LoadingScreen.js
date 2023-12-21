@@ -1,7 +1,5 @@
 import { ScreenPage } from "../base/ScreenPage.js";
-import { CONST } from "../index.js";
 
-const logoKey = "logoKey";
 export class LoadingScreen extends ScreenPage {
     #total = 0;
     #loaded = 0;
@@ -22,9 +20,8 @@ export class LoadingScreen extends ScreenPage {
         this.#barWidth = barWidth;
     }
 
-    _progress = (loaded, left) => {
-        const [w, h] = this.screenPageData.canvasDimensions,
-            widthPart = this.#barWidth / this.#total;
+    _progress = (loaded) => {
+        const widthPart = this.#barWidth / this.#total;
 
         this.#loaded = loaded;
         

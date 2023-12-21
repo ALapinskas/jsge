@@ -39,6 +39,10 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #imageIndex;
     /**
+     * @type {number}
+     */
+    #spacing = 0;
+    /**
      * @type {Array<Array<number>>}
      */
     #vertices;
@@ -54,13 +58,14 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0) {
         super(CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();
         this.image = image;
         this.#imageIndex = imageIndex;
+        this.#spacing = spacing;
         this.#w = width;
         this.#h = height;
         this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : boundaries && boundaries.r ? this._calculateConusBoundaries(boundaries.r) : this._calculateRectVertices(width, height);
@@ -125,6 +130,14 @@ export class DrawImageObject extends DrawShapeObject {
     }
 
     /**
+     * Image spacing (for tilesets.spacing > 0)
+     * @type {number}
+     */
+    get spacing() {
+        return this.#spacing;
+    }
+
+    /**
      * Determines if image is animated or not
      * @type {boolean}
      */
@@ -159,7 +172,7 @@ export class DrawImageObject extends DrawShapeObject {
             }
         }
     }
-     /**
+    /**
      * @ignore
      */
     get _textureStorage() {

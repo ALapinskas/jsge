@@ -327,7 +327,7 @@ export class ScreenPageData {
         return this.#renderObjects;
     }
 
-     /**
+    /**
      * Retrieve specific objects instances
      * @param {Object} instance - drawObjectInstance to retrieve 
      * @returns {Array<Object>}

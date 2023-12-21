@@ -312,6 +312,10 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     #imageIndex;
     /**
+     * @type {number}
+     */
+    #spacing = 0;
+    /**
      * @type {Array<Array<number>>}
      */
     #vertices;
@@ -327,13 +331,14 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();
         this.image = image;
         this.#imageIndex = imageIndex;
+        this.#spacing = spacing;
         this.#w = width;
         this.#h = height;
         this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : boundaries && boundaries.r ? this._calculateConusBoundaries(boundaries.r) : this._calculateRectVertices(width, height);
@@ -398,6 +403,14 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     }
 
     /**
+     * Image spacing (for tilesets.spacing > 0)
+     * @type {number}
+     */
+    get spacing() {
+        return this.#spacing;
+    }
+
+    /**
      * Determines if image is animated or not
      * @type {boolean}
      */
@@ -432,7 +445,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
             }
         }
     }
-     /**
+    /**
      * @ignore
      */
     get _textureStorage() {
@@ -659,7 +672,7 @@ class DrawObjectFactory {
      * @returns {DrawTextObject}
      */
     text(x, y, text, font, color) {
-        const renderObject = new _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawTextObject(x, y, text, font, color);;
+        const renderObject = new _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawTextObject(x, y, text, font, color);
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
         return renderObject;
@@ -701,11 +714,12 @@ class DrawObjectFactory {
      * @param {string} key 
      * @param {number} [imageIndex = 0]
      * @param {Array<{x:Number, y:Number}> | {r:number}=} boundaries - boundaries as polygon, or circle
+     * @param {number} [spacing = 0] - for tilesets.spacing > 0
      * @returns {DrawImageObject}
      */
-    image(x, y, width, height, key, imageIndex = 0, boundaries) {
+    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
         const image = this.#loader.getImage(key),
-            renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image);
+            renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
         return renderObject;
@@ -762,20 +776,20 @@ class DrawObjectFactory {
      */
     _addNewObject = (methodKey, methodFn) => {
         this[methodKey] = methodFn;
-    }
+    };
     /**
      * @ignore
      * @param {ScreenPageData} pageData;
      */
     _attachPageData = (pageData) => {
         this.#currentPageData = pageData;
-    }
+    };
     /**
      * @ignore
      */
     _detachPageData = () => {
         this.#currentPageData = null;
-    }
+    };
 }
 
 /***/ }),
@@ -1861,7 +1875,7 @@ class RenderInterface {
 
     initiateContext = () => {
         return Promise.all(this.#initPromises.map(method => method()));
-    }
+    };
 
     clearContext() {
         this.#webGlEngine._clearView();
@@ -1881,7 +1895,7 @@ class RenderInterface {
             canvasHeight = settings.canvasMaxSize.height && (settings.canvasMaxSize.height < window.innerHeight) ? settings.canvasMaxSize.height : window.innerHeight;
         this.setCanvasSize(canvasWidth, canvasHeight);
         return Promise.resolve();
-    }
+    };
 
     /****************************
      *  Extend functionality
@@ -2175,10 +2189,10 @@ class RenderInterface {
         this.#currentScreenPageData = screenPageData;
         this.fixCanvasSize();
         switch (this.systemSettings.gameOptions.library) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.LIBRARY.WEBGL:
-                await this.#prepareViews();
-                setTimeout(() => requestAnimationFrame(this.#drawViews));
-                break;
+        case _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.LIBRARY.WEBGL:
+            await this.#prepareViews();
+            setTimeout(() => requestAnimationFrame(this.#drawViews));
+            break;
         }
         if (this.systemSettings.gameOptions.render.circleTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
             this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime);
@@ -2192,7 +2206,7 @@ class RenderInterface {
         this.#isActive = false;
         this.#currentScreenPageData = null;
         clearInterval(this.#fpsAverageCountTimer);
-    }
+    };
     /**
      * 
      * @returns {Promise<void>}
@@ -2608,7 +2622,7 @@ class ScreenPage {
         window.addEventListener("resize", this._resize);
         this._resize();
         //if (this.#views.size > 0) {
-            //requestAnimationFrame(this.#render);
+        //requestAnimationFrame(this.#render);
         //}
     }
 
@@ -2741,20 +2755,20 @@ class ScreenPage {
             let coll;
             
             switch(drawMapObjectType) {
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
-                    coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
-                    break;
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-                    console.warn("isObjectCollision.circle check is not implemented yet!");
-                    break;
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                    break;
-                default:
-                    console.warn("unknown object type!");
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+                coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+                console.warn("isObjectCollision.circle check is not implemented yet!");
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                break;
+            default:
+                console.warn("unknown object type!");
             }
             if (coll) {
                 collisions.push(coll);
@@ -2781,24 +2795,24 @@ class ScreenPage {
             let coll;
             
             switch(drawMapObjectType) {
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
-                    if (!circleBoundaries) {
-                        coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
-                    } else {
-                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
-                    }
-                    break;
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-                    console.warn("isObjectCollision.circle check is not implemented yet!");
-                    break;
-                case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                    break;
-                default:
-                    console.warn("unknown object type!");
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+                if (!circleBoundaries) {
+                    coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
+                } else {
+                    coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
+                }
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+                console.warn("isObjectCollision.circle check is not implemented yet!");
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                break;
+            default:
+                console.warn("unknown object type!");
             }
             if (coll) {
                 collisions.push(coll);
@@ -2817,37 +2831,37 @@ class ScreenPage {
 
     #isCircleToPolygonCollision(x, y, radius, mapObject) {
         const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-        xWithOffset = x - mapOffsetX,
-        yWithOffset = y - mapOffsetY,
-        mapObjXWithOffset = mapObject.x - mapOffsetX,
-        mapObjYWithOffset = mapObject.y - mapOffsetY,
-        mapObjVertices = mapObject.vertices, 
-        mapObjRotation = mapObject.rotation,
-        len = mapObjVertices.length;
-    //console.log("map object check:");
-    //console.log(mapObject);
-    for (let i = 0; i < len; i+=1) {
-        const mapObjFirstVertex = mapObjVertices[i];
-        let mapObjNextVertex = mapObjVertices[i + 1];
-        if (!mapObjNextVertex) {
-            mapObjNextVertex = mapObjVertices[0];
-        }
-        const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-            nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-            edge = {
-                x1: vertex[0],
-                y1: vertex[1],
-                x2: nextVertex[0],
-                y2: nextVertex[1]
-            },
-            intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isCircleLineIntersect)(xWithOffset, yWithOffset, radius, edge);
-        if (intersect) {
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            mapObjXWithOffset = mapObject.x - mapOffsetX,
+            mapObjYWithOffset = mapObject.y - mapOffsetY,
+            mapObjVertices = mapObject.vertices, 
+            mapObjRotation = mapObject.rotation,
+            len = mapObjVertices.length;
+        //console.log("map object check:");
+        //console.log(mapObject);
+        for (let i = 0; i < len; i+=1) {
+            const mapObjFirstVertex = mapObjVertices[i];
+            let mapObjNextVertex = mapObjVertices[i + 1];
+            if (!mapObjNextVertex) {
+                mapObjNextVertex = mapObjVertices[0];
+            }
+            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                edge = {
+                    x1: vertex[0],
+                    y1: vertex[1],
+                    x2: nextVertex[0],
+                    y2: nextVertex[1]
+                },
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isCircleLineIntersect)(xWithOffset, yWithOffset, radius, edge);
+            if (intersect) {
             //console.log("polygon: ", polygonWithOffsetAndRotation);
             //console.log("intersect: ", intersect);
-            return intersect;
+                return intersect;
+            }
         }
-    }
-    return false;
+        return false;
     }
 
     #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
@@ -3369,7 +3383,7 @@ class ScreenPageData {
         return this.#renderObjects;
     }
 
-     /**
+    /**
      * Retrieve specific objects instances
      * @param {Object} instance - drawObjectInstance to retrieve 
      * @returns {Array<Object>}
@@ -3734,7 +3748,7 @@ class SystemInterface {
         this.#emitter.dispatchEvent(event);
     };
 
-     /**
+    /**
      * 
      * @param {string} eventName 
      * @param {*} listener 
@@ -3819,7 +3833,7 @@ class SystemInterface {
             this.#modules.set(moduleKey, moduleInstance);
         }
         return moduleInstance;
-    }
+    };
 
     /**
      * @method
@@ -4132,6 +4146,7 @@ class TiledRenderLayer {
      * @param {DrawShapeObject} mask 
      */
     setMask(mask) {
+        mask._isMask = true;
         this.#attachedMaskId = mask.id;
     }
 
@@ -4196,8 +4211,8 @@ const imgVertexShader =  `
     varying vec2 v_texCoord;
 
     void main(void) {
-        float c = cos(-u_rotation);
-        float s = sin(-u_rotation);
+        float c = cos(u_rotation);
+        float s = sin(u_rotation);
 
         mat3 translationMatrix1 = mat3(
             1, 0, 0,
@@ -4212,8 +4227,8 @@ const imgVertexShader =  `
         );
         
         mat3 rotationMatrix = mat3(
-            c, -s, 0,
-            s, c, 0,
+            c, s, 0,
+            -s, c, 0,
             0, 0, 1
         );
 
@@ -4224,25 +4239,10 @@ const imgVertexShader =  `
         );
 
         mat3 matrix = translationMatrix1 * rotationMatrix * translationMatrix2 * scalingMatrix;
-        //Scale
-        // vec2 scaledPosition = a_position * u_scale;
-        // Rotate the position
-        // vec2 rotatedPosition = vec2(
-        //    scaledPosition.x * u_rotation.y + scaledPosition.y * u_rotation.x,
-        //    scaledPosition.y * u_rotation.y - scaledPosition.x * u_rotation.x
-        //);
-        
-        //vec2 position = rotatedPosition + u_translation;
+    
         vec2 position = (matrix * vec3(a_position, 1)).xy;
 
-        //convert position from pixels to 0.0 to 1.0
-        vec2 zeroToOne = position / u_resolution;
-
-        //convert from 0->1 to 0->2
-        vec2 zeroToTwo = zeroToOne * 2.0;
-
-        //convert from 0->2 to -1->+1
-        vec2 clipSpace = zeroToTwo - 1.0;
+        vec2 clipSpace = position / u_resolution * 2.0 - 1.0;
 
         gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         
@@ -4292,8 +4292,8 @@ const primitivesVertexShader =  `
     uniform vec2 u_resolution;
 
     void main(void) {
-        float c = cos(-u_rotation);
-        float s = sin(-u_rotation);
+        float c = cos(u_rotation);
+        float s = sin(u_rotation);
 
         mat3 translationMatrix1 = mat3(
             1, 0, 0,
@@ -4308,8 +4308,8 @@ const primitivesVertexShader =  `
         //);
         
         mat3 rotationMatrix = mat3(
-            c, -s, 0,
-            s, c, 0,
+            c, s, 0,
+            -s, c, 0,
             0, 0, 1
         );
 
@@ -4318,30 +4318,12 @@ const primitivesVertexShader =  `
             0, u_scale.y, 0,
             0, 0, 1
         );
-
-        //mat3 matrix = translationMatrix1 * rotationMatrix * translationMatrix2 * scalingMatrix;
-
+        
         mat3 matrix = translationMatrix1 * rotationMatrix * scalingMatrix;
 
-        //Scale
-        // vec2 scaledPosition = a_position * u_scale;
-        // Rotate the position
-        // vec2 rotatedPosition = vec2(
-        //    scaledPosition.x * u_rotation.y + scaledPosition.y * u_rotation.x,
-        //    scaledPosition.y * u_rotation.y - scaledPosition.x * u_rotation.x
-        //);
-        
-        //vec2 position = rotatedPosition + u_translation;
         vec2 position = (matrix * vec3(a_position, 1)).xy;
 
-        //convert position from pixels to 0.0 to 1.0
-        vec2 zeroToOne = position / u_resolution;
-
-        //convert from 0->1 to 0->2
-        vec2 zeroToTwo = zeroToOne * 2.0;
-
-        //convert from 0->2 to -1->+1
-        vec2 clipSpace = zeroToTwo - 1.0;
+        vec2 clipSpace = position / u_resolution * 2.0 - 1.0;
 
         gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
     }
@@ -4405,7 +4387,7 @@ class TextureStorage {
     #isTextureRecalculated = true;
     constructor(texture, textureIndex = 0) {
         this.#texture = texture;
-        this.#textureIndex = textureIndex
+        this.#textureIndex = textureIndex;
     }
 
     get _isTextureRecalculated() {
@@ -4421,7 +4403,7 @@ class TextureStorage {
     }
 
     set _texture(value) {
-        this.#texture = value
+        this.#texture = value;
     }
 
     get _textureIndex() {
@@ -4514,7 +4496,7 @@ class WebGlEngine {
         //if stencil test and depth test pass we replace the initial value
         gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         return Promise.resolve();
-    }
+    };
 
     /**
      * 
@@ -4533,14 +4515,14 @@ class WebGlEngine {
             };
 
             fetch("/src/wa/calculateBufferData.wasm")
-            .then((response) => response.arrayBuffer())
-            .then((module) => WebAssembly.instantiate(module, importObject))
-            .then((obj) => {
-                this.calculateBufferData = obj.instance.exports.calculateBufferData;
-                resolve();
-            });
-        })
-    }
+                .then((response) => response.arrayBuffer())
+                .then((module) => WebAssembly.instantiate(module, importObject))
+                .then((obj) => {
+                    this.calculateBufferData = obj.instance.exports.calculateBufferData;
+                    resolve();
+                });
+        });
+    };
 
     _clearView() {
         const gl = this.#gl;
@@ -4665,6 +4647,7 @@ class WebGlEngine {
             y = renderObject.y - yOffset,
             scale = [1, 1],
             rotation = renderObject.rotation,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             { 
                 u_translation: translationLocation,
                 u_rotation: rotationRotation,
@@ -4725,8 +4708,8 @@ class WebGlEngine {
         const colorArray = this.#rgbaToArray(renderObject.bgColor);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
-        if (renderObject.blendFunc) {
-            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        if (blend) {
+            gl.blendFunc(blend[0], blend[1]);
         }
         
         if (renderObject.isMaskAttached) {
@@ -4735,7 +4718,7 @@ class WebGlEngine {
             gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
-    }
+    };
     _bindConus = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -4755,7 +4738,8 @@ class WebGlEngine {
             coords = renderObject.vertices,
             fillStyle = renderObject.bgColor,
             fade_min = renderObject.fade_min,
-            fadeLen = renderObject.radius;
+            fadeLen = renderObject.radius,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA];
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -4783,8 +4767,8 @@ class WebGlEngine {
 
         verticesNumber += coords.length / 2;
 
-        if (renderObject.blendFunc) {
-            gl.blendFunc(renderObject.blendFunc[0], renderObject.blendFunc[1]);
+        if (blend) {
+            gl.blendFunc(blend[0], blend[1]);
         }
 
         const colorArray = this.#rgbaToArray(fillStyle);
@@ -4798,22 +4782,23 @@ class WebGlEngine {
         }
         
         return Promise.resolve([verticesNumber, gl.TRIANGLE_FAN]);
-    }
+    };
 
     _bindText = (renderObject, gl, pageData, program, vars) => {
         const { u_translation: translationLocation,
-                u_rotation: rotationRotation,
-                u_scale: scaleLocation,
-                u_resolution: resolutionUniformLocation,
-                a_position: positionAttributeLocation,
-                a_texCoord: texCoordLocation,
-                u_image: u_imageLocation } = vars;
+            u_rotation: rotationRotation,
+            u_scale: scaleLocation,
+            u_resolution: resolutionUniformLocation,
+            a_position: positionAttributeLocation,
+            a_texCoord: texCoordLocation,
+            u_image: u_imageLocation } = vars;
 
         const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
             image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
-            y = renderObject.y - yOffset - boxHeight;
+            y = renderObject.y - yOffset - boxHeight,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA];
 
         const rotation = 0,
             scale = [1, 1];
@@ -4867,7 +4852,7 @@ class WebGlEngine {
         verticesNumber += 6;
         // remove box
         // fix text edges
-        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendFunc(blend[0], blend[1]);
         
         let textureStorage = renderObject._textureStorage;
         if (!textureStorage) {
@@ -4882,8 +4867,8 @@ class WebGlEngine {
         }
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         
-        return Promise.resolve([verticesNumber, gl.TRIANGLES])
-    }
+        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
+    };
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
         const { 
@@ -4896,21 +4881,27 @@ class WebGlEngine {
             u_image: u_imageLocation } = vars;
 
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
-                x = renderObject.x - xOffset,
-                y = renderObject.y - yOffset;
+            x = renderObject.x - xOffset,
+            y = renderObject.y - yOffset;
 
         const atlasImage = renderObject.image,
             animationIndex = renderObject.imageIndex,
             image_name = renderObject.key,
             shapeMaskId = renderObject._maskId,
+            spacing = renderObject.spacing,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             scale = [1, 1];
         let imageX = 0,
             imageY = 0,
+            colNum = 0,
+            rowNum = 0,
             verticesNumber = 0;
         if (animationIndex !== 0) {
-            const imageColsNumber = atlasImage.width / renderObject.width;
-            imageX = animationIndex % imageColsNumber * renderObject.width,
-            imageY = Math.floor(animationIndex / imageColsNumber) * renderObject.height;
+            const imageColsNumber = (atlasImage.width + spacing) / (renderObject.width + spacing);
+            colNum = animationIndex % imageColsNumber;
+            rowNum = Math.floor(animationIndex / imageColsNumber);
+            imageX = colNum * renderObject.width + (colNum * spacing),
+            imageY = rowNum * renderObject.height + (rowNum * spacing);
         }
         const posX = x - renderObject.width / 2,
             posY = y - renderObject.height / 2;
@@ -4923,12 +4914,12 @@ class WebGlEngine {
             texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
             texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
         const vectors = [
-            vecX1, vecY1,
-            vecX2, vecY1,
-            vecX1, vecY2,
-            vecX1, vecY2,
-            vecX2, vecY1,
-            vecX2, vecY2
+                vecX1, vecY1,
+                vecX2, vecY1,
+                vecX1, vecY2,
+                vecX1, vecY2,
+                vecX2, vecY1,
+                vecX2, vecY2
             ],
             textures = [
                 texX1, texY1,
@@ -4938,9 +4929,7 @@ class WebGlEngine {
                 texX2, texY1,
                 texX2, texY2
             ];
-
         gl.useProgram(program);
-
         // set the resolution
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
         gl.uniform2f(translationLocation, x, y);
@@ -4981,14 +4970,14 @@ class WebGlEngine {
 
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         // make image transparent parts transparent
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.blendFunc(blend[0], blend[1]);
         if (shapeMaskId) {
             gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
             //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         }
 
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
-    }
+    };
 
     _bindTileImages = async(renderLayer, gl, pageData, program, vars) => {
         const { u_translation: translationLocation,
@@ -5002,22 +4991,22 @@ class WebGlEngine {
         gl.useProgram(program);
         let renderLayerData;
         switch (this.#gameOptions.optimization) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
-                renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
-                break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM:
-                renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
-                break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
-                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)("Sorry, " + _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT + ", is not supported, switching to default");
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
-            default:
-                renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
+            renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
+            break;
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.WASM:
+            renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
+            break;
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)("Sorry, " + _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT + ", is not supported, switching to default");
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
+        default:
+            renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
         const translation = [0, 0],
             scale = [1, 1],
             rotation = 0,
-            drawMask = ["SRC_ALPHA", "ONE_MINUS_SRC_ALPHA"],
+            drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
             shapeMaskId = renderLayer._maskId;
 
         let verticesNumber = 0;
@@ -5071,16 +5060,16 @@ class WebGlEngine {
             }
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
-    }
+    };
 
     _drawPolygon(renderObject, pageData) {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
-                x = renderObject.x - xOffset,
-                y = renderObject.y - yOffset,
-                rotation = renderObject.rotation || 0,
-                vertices = renderObject.vertices,
-                color =  this.#gameOptions.boundaries.boundariesColor;
-        const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);;
+            x = renderObject.x - xOffset,
+            y = renderObject.y - yOffset,
+            rotation = renderObject.rotation || 0,
+            vertices = renderObject.vertices,
+            color =  this.#gameOptions.boundaries.boundariesColor;
+        const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
                 u_scale: scaleLocation,
@@ -5185,10 +5174,10 @@ class WebGlEngine {
         gl.lineWidth(lineWidth);
 
         return Promise.resolve([0, gl.LINES]);
-    }
+    };
     
     _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
-        const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);;
+        const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
                 u_scale: scaleLocation,
@@ -5288,7 +5277,7 @@ class WebGlEngine {
                     atlasWidth = tileset.imagewidth,
                     atlasHeight = tileset.imageheight,
                     //atlasRows = atlasHeight / tileheight,
-                    atlasColumns = Math.floor(atlasWidth / tilesetwidth),
+                    atlasColumns = tileset.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     worldW = tilewidth * layerCols,
@@ -5301,6 +5290,8 @@ class WebGlEngine {
                     screenRows = worldH > canvasH ? Math.ceil(canvasH / tileheight) + 1 : layerRows,
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
+                    cellSpacing = tileset.spacing,
+                    cellMargin = tileset.margin,
 
                     verticesBufferData = [],
                     texturesBufferData = [];
@@ -5317,11 +5308,9 @@ class WebGlEngine {
                 }
 
                 let mapIndex = skipRowsTop * layerCols;
-
                 for (let row = 0; row < screenRows; row++) {
                     mapIndex += skipColsLeft;
                     let currentRowIndexes = new Map();
-
                     for (let col = 0; col < screenCols; col++) {
                         let tile = layerData.data[mapIndex];
                         //if (tile !== 0)
@@ -5330,14 +5319,16 @@ class WebGlEngine {
                                 mapPosY = row * dtheight - moduloTop;
 
                             tile -= firstgid;
-                            const atlasPosX = tile % atlasColumns * tilesetwidth,
-                                atlasPosY = Math.floor(tile / atlasColumns) * tilesetheight,
+                            const colNum = tile % atlasColumns,
+                                rowNum = Math.floor(tile / atlasColumns),
+                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
+                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing),
                                 vecX1 = mapPosX,
                                 vecY1 = mapPosY,
                                 vecX2 = mapPosX + tilesetwidth,
                                 vecY2 = mapPosY + tilesetheight,
-                                texX1 = 1 / atlasWidth * atlasPosX,
-                                texY1 = 1 / atlasHeight * atlasPosY,
+                                texX1 = (1 / atlasWidth) * atlasPosX,
+                                texY1 = (1 / atlasHeight) * atlasPosY,
                                 texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
                                 texY2 = texY1 + (1 / atlasHeight * tilesetheight);
                             verticesBufferData.push(
@@ -5355,7 +5346,6 @@ class WebGlEngine {
                                 texX2, texY1,
                                 texX2, texY2
                             );
-                            
                             if (setBoundaries) {
                                 let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
                                     bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
@@ -5688,7 +5678,7 @@ class WebGlEngine {
             }
             resolve(tileImagesData);
         });
-    }
+    };
 
     /**
      * 
@@ -5794,10 +5784,12 @@ class WebGlEngine {
     #updateWebGlTexture(gl, texture, textureImage, textureNum = 0, useMipMaps = false) {
         this.#bindTexture(gl, texture, textureNum);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        // already default value
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        // for textures not power of 2 (texts for example)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST);
         if (useMipMaps)
             gl.generateMipmap(gl.TEXTURE_2D);
     }
@@ -5872,8 +5864,8 @@ const SystemSettings = {
     },
 
     canvasMaxSize: {
-        width: 900,
-        height: 960
+        width: 1800,
+        height: 1800
     },
 
     worldSize: {
@@ -6035,11 +6027,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "LoadingScreen": () => (/* binding */ LoadingScreen)
 /* harmony export */ });
 /* harmony import */ var _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../base/ScreenPage.js */ "./src/base/ScreenPage.js");
-/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../index.js */ "./src/index.js");
 
 
-
-const logoKey = "logoKey";
 class LoadingScreen extends _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__.ScreenPage {
     #total = 0;
     #loaded = 0;
@@ -6060,9 +6049,8 @@ class LoadingScreen extends _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__.Scr
         this.#barWidth = barWidth;
     }
 
-    _progress = (loaded, left) => {
-        const [w, h] = this.screenPageData.canvasDimensions,
-            widthPart = this.#barWidth / this.#total;
+    _progress = (loaded) => {
+        const widthPart = this.#barWidth / this.#total;
 
         this.#loaded = loaded;
         

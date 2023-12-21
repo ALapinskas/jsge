@@ -86,7 +86,7 @@ export class SystemInterface {
         this.#emitter.dispatchEvent(event);
     };
 
-     /**
+    /**
      * 
      * @param {string} eventName 
      * @param {*} listener 
@@ -171,7 +171,7 @@ export class SystemInterface {
             this.#modules.set(moduleKey, moduleInstance);
         }
         return moduleInstance;
-    }
+    };
 
     /**
      * @method

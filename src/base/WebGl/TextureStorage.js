@@ -16,7 +16,7 @@ export class TextureStorage {
     #isTextureRecalculated = true;
     constructor(texture, textureIndex = 0) {
         this.#texture = texture;
-        this.#textureIndex = textureIndex
+        this.#textureIndex = textureIndex;
     }
 
     get _isTextureRecalculated() {
@@ -32,7 +32,7 @@ export class TextureStorage {
     }
 
     set _texture(value) {
-        this.#texture = value
+        this.#texture = value;
     }
 
     get _textureIndex() {

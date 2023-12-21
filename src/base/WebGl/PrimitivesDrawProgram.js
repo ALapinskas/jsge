@@ -10,8 +10,8 @@ const primitivesVertexShader =  `
     uniform vec2 u_resolution;
 
     void main(void) {
-        float c = cos(-u_rotation);
-        float s = sin(-u_rotation);
+        float c = cos(u_rotation);
+        float s = sin(u_rotation);
 
         mat3 translationMatrix1 = mat3(
             1, 0, 0,
@@ -26,8 +26,8 @@ const primitivesVertexShader =  `
         //);
         
         mat3 rotationMatrix = mat3(
-            c, -s, 0,
-            s, c, 0,
+            c, s, 0,
+            -s, c, 0,
             0, 0, 1
         );
 
@@ -36,30 +36,12 @@ const primitivesVertexShader =  `
             0, u_scale.y, 0,
             0, 0, 1
         );
-
-        //mat3 matrix = translationMatrix1 * rotationMatrix * translationMatrix2 * scalingMatrix;
-
+        
         mat3 matrix = translationMatrix1 * rotationMatrix * scalingMatrix;
 
-        //Scale
-        // vec2 scaledPosition = a_position * u_scale;
-        // Rotate the position
-        // vec2 rotatedPosition = vec2(
-        //    scaledPosition.x * u_rotation.y + scaledPosition.y * u_rotation.x,
-        //    scaledPosition.y * u_rotation.y - scaledPosition.x * u_rotation.x
-        //);
-        
-        //vec2 position = rotatedPosition + u_translation;
         vec2 position = (matrix * vec3(a_position, 1)).xy;
 
-        //convert position from pixels to 0.0 to 1.0
-        vec2 zeroToOne = position / u_resolution;
-
-        //convert from 0->1 to 0->2
-        vec2 zeroToTwo = zeroToOne * 2.0;
-
-        //convert from 0->2 to -1->+1
-        vec2 clipSpace = zeroToTwo - 1.0;
+        vec2 clipSpace = position / u_resolution * 2.0 - 1.0;
 
         gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
     }

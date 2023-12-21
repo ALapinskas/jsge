@@ -181,7 +181,7 @@ export class RenderInterface {
 
     initiateContext = () => {
         return Promise.all(this.#initPromises.map(method => method()));
-    }
+    };
 
     clearContext() {
         this.#webGlEngine._clearView();
@@ -201,7 +201,7 @@ export class RenderInterface {
             canvasHeight = settings.canvasMaxSize.height && (settings.canvasMaxSize.height < window.innerHeight) ? settings.canvasMaxSize.height : window.innerHeight;
         this.setCanvasSize(canvasWidth, canvasHeight);
         return Promise.resolve();
-    }
+    };
 
     /****************************
      *  Extend functionality
@@ -495,10 +495,10 @@ export class RenderInterface {
         this.#currentScreenPageData = screenPageData;
         this.fixCanvasSize();
         switch (this.systemSettings.gameOptions.library) {
-            case CONST.LIBRARY.WEBGL:
-                await this.#prepareViews();
-                setTimeout(() => requestAnimationFrame(this.#drawViews));
-                break;
+        case CONST.LIBRARY.WEBGL:
+            await this.#prepareViews();
+            setTimeout(() => requestAnimationFrame(this.#drawViews));
+            break;
         }
         if (this.systemSettings.gameOptions.render.circleTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
             this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime);
@@ -512,7 +512,7 @@ export class RenderInterface {
         this.#isActive = false;
         this.#currentScreenPageData = null;
         clearInterval(this.#fpsAverageCountTimer);
-    }
+    };
     /**
      * 
      * @returns {Promise<void>}

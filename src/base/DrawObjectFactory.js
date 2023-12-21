@@ -62,7 +62,7 @@ export class DrawObjectFactory {
      * @returns {DrawTextObject}
      */
     text(x, y, text, font, color) {
-        const renderObject = new DrawTextObject(x, y, text, font, color);;
+        const renderObject = new DrawTextObject(x, y, text, font, color);
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
         return renderObject;
@@ -104,11 +104,12 @@ export class DrawObjectFactory {
      * @param {string} key 
      * @param {number} [imageIndex = 0]
      * @param {Array<{x:Number, y:Number}> | {r:number}=} boundaries - boundaries as polygon, or circle
+     * @param {number} [spacing = 0] - for tilesets.spacing > 0
      * @returns {DrawImageObject}
      */
-    image(x, y, width, height, key, imageIndex = 0, boundaries) {
+    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
         const image = this.#loader.getImage(key),
-            renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image);
+            renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
         return renderObject;
@@ -165,18 +166,18 @@ export class DrawObjectFactory {
      */
     _addNewObject = (methodKey, methodFn) => {
         this[methodKey] = methodFn;
-    }
+    };
     /**
      * @ignore
      * @param {ScreenPageData} pageData;
      */
     _attachPageData = (pageData) => {
         this.#currentPageData = pageData;
-    }
+    };
     /**
      * @ignore
      */
     _detachPageData = () => {
         this.#currentPageData = null;
-    }
+    };
 }

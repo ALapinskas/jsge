@@ -1,4 +1,4 @@
-# JsGE@0.3.7
+# JsGE@0.3.8
 
 Javascript Game Engine
 
@@ -6,22 +6,23 @@ This engine was designed to work with maps from Tiled editor.
 
 Advantages:
 * Fresh codebase, depends on latest javascript features such as classes and privacy. 
-* OPP structure.
-* Modular structure, any custom webgl render can be added as a plugin.
-* Webgl 1 under the hood, wide browser support and fast rendering on desktop and mobile screens.
+* OPP modular structure.
+* Webgl 1 under the hood.
 * Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
-* Spine 2d skeletal animation render integrated.
+* Frames animation.
+* Spine 2d skeletal animation.
 
 What you can do with it:
 1. Draw primitives, texts, load images, audio and tilemaps with tilesets from [Tiled editor](https://www.mapeditor.org).
 2. Render everything in a sequence.
-4. Images can be animated, switching their frames.
-5. Tiles can be rendered as layers on top of each other using webgl blend effects.
-6. Map centering. Cutting off everything out off screen.
-7. Boundaries could be extracted from tiles and used further.
-8. Map objects supports boundaries(dot, polygon).
-9. Collision detection for dots, lines, circles and polygons included.
-10. Boundaries helper drawing as debug option.
+4. Animate images, switching their frames.
+5. Render tiles on top of each other using webgl blend effects.
+6. Masks from primitives.
+7. Map centering. Cutting off everything out off screen.
+8. Extract boundaries from tiles.
+9. Custom boundaries(dot/rect/polygon/circle) for image objects.
+10. Collision detection.
+11. Boundaries drawing as debug option.
 
 How to run examples:
 1. npm i

@@ -320,7 +320,7 @@ export class ScreenPage {
         window.addEventListener("resize", this._resize);
         this._resize();
         //if (this.#views.size > 0) {
-            //requestAnimationFrame(this.#render);
+        //requestAnimationFrame(this.#render);
         //}
     }
 
@@ -453,20 +453,20 @@ export class ScreenPage {
             let coll;
             
             switch(drawMapObjectType) {
-                case CONST.DRAW_TYPE.TEXT:
-                case CONST.DRAW_TYPE.RECTANGLE:
-                case CONST.DRAW_TYPE.CONUS:
-                case CONST.DRAW_TYPE.IMAGE:
-                    coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
-                    break;
-                case CONST.DRAW_TYPE.CIRCLE:
-                    console.warn("isObjectCollision.circle check is not implemented yet!");
-                    break;
-                case CONST.DRAW_TYPE.LINE:
-                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                    break;
-                default:
-                    console.warn("unknown object type!");
+            case CONST.DRAW_TYPE.TEXT:
+            case CONST.DRAW_TYPE.RECTANGLE:
+            case CONST.DRAW_TYPE.CONUS:
+            case CONST.DRAW_TYPE.IMAGE:
+                coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
+                break;
+            case CONST.DRAW_TYPE.CIRCLE:
+                console.warn("isObjectCollision.circle check is not implemented yet!");
+                break;
+            case CONST.DRAW_TYPE.LINE:
+                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                break;
+            default:
+                console.warn("unknown object type!");
             }
             if (coll) {
                 collisions.push(coll);
@@ -493,24 +493,24 @@ export class ScreenPage {
             let coll;
             
             switch(drawMapObjectType) {
-                case CONST.DRAW_TYPE.TEXT:
-                case CONST.DRAW_TYPE.RECTANGLE:
-                case CONST.DRAW_TYPE.CONUS:
-                case CONST.DRAW_TYPE.IMAGE:
-                    if (!circleBoundaries) {
-                        coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
-                    } else {
-                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
-                    }
-                    break;
-                case CONST.DRAW_TYPE.CIRCLE:
-                    console.warn("isObjectCollision.circle check is not implemented yet!");
-                    break;
-                case CONST.DRAW_TYPE.LINE:
-                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                    break;
-                default:
-                    console.warn("unknown object type!");
+            case CONST.DRAW_TYPE.TEXT:
+            case CONST.DRAW_TYPE.RECTANGLE:
+            case CONST.DRAW_TYPE.CONUS:
+            case CONST.DRAW_TYPE.IMAGE:
+                if (!circleBoundaries) {
+                    coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
+                } else {
+                    coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
+                }
+                break;
+            case CONST.DRAW_TYPE.CIRCLE:
+                console.warn("isObjectCollision.circle check is not implemented yet!");
+                break;
+            case CONST.DRAW_TYPE.LINE:
+                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                break;
+            default:
+                console.warn("unknown object type!");
             }
             if (coll) {
                 collisions.push(coll);
@@ -529,37 +529,37 @@ export class ScreenPage {
 
     #isCircleToPolygonCollision(x, y, radius, mapObject) {
         const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
-        xWithOffset = x - mapOffsetX,
-        yWithOffset = y - mapOffsetY,
-        mapObjXWithOffset = mapObject.x - mapOffsetX,
-        mapObjYWithOffset = mapObject.y - mapOffsetY,
-        mapObjVertices = mapObject.vertices, 
-        mapObjRotation = mapObject.rotation,
-        len = mapObjVertices.length;
-    //console.log("map object check:");
-    //console.log(mapObject);
-    for (let i = 0; i < len; i+=1) {
-        const mapObjFirstVertex = mapObjVertices[i];
-        let mapObjNextVertex = mapObjVertices[i + 1];
-        if (!mapObjNextVertex) {
-            mapObjNextVertex = mapObjVertices[0];
-        }
-        const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-            nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-            edge = {
-                x1: vertex[0],
-                y1: vertex[1],
-                x2: nextVertex[0],
-                y2: nextVertex[1]
-            },
-            intersect = isCircleLineIntersect(xWithOffset, yWithOffset, radius, edge);
-        if (intersect) {
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            mapObjXWithOffset = mapObject.x - mapOffsetX,
+            mapObjYWithOffset = mapObject.y - mapOffsetY,
+            mapObjVertices = mapObject.vertices, 
+            mapObjRotation = mapObject.rotation,
+            len = mapObjVertices.length;
+        //console.log("map object check:");
+        //console.log(mapObject);
+        for (let i = 0; i < len; i+=1) {
+            const mapObjFirstVertex = mapObjVertices[i];
+            let mapObjNextVertex = mapObjVertices[i + 1];
+            if (!mapObjNextVertex) {
+                mapObjNextVertex = mapObjVertices[0];
+            }
+            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                edge = {
+                    x1: vertex[0],
+                    y1: vertex[1],
+                    x2: nextVertex[0],
+                    y2: nextVertex[1]
+                },
+                intersect = isCircleLineIntersect(xWithOffset, yWithOffset, radius, edge);
+            if (intersect) {
             //console.log("polygon: ", polygonWithOffsetAndRotation);
             //console.log("intersect: ", intersect);
-            return intersect;
+                return intersect;
+            }
         }
-    }
-    return false;
+        return false;
     }
 
     #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {

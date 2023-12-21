@@ -42,8 +42,8 @@ export const SystemSettings = {
     },
 
     canvasMaxSize: {
-        width: 900,
-        height: 960
+        width: 1800,
+        height: 1800
     },
 
     worldSize: {

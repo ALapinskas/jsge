@@ -106,6 +106,7 @@ export class TiledRenderLayer {
      * @param {DrawShapeObject} mask 
      */
     setMask(mask) {
+        mask._isMask = true;
         this.#attachedMaskId = mask.id;
     }
 
