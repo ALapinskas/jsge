@@ -1,69 +1,69 @@
 import { ERROR_CODES } from "../constants.js";
 import { Exception } from "./Exception.js";
-import { ScreenPage } from "./ScreenPage.js";
-import { SystemInterface } from "./SystemInterface.js";
+import { GameStage } from "./GameStage.js";
+import { ISystem } from "./ISystem.js";
 import { SystemSettings } from "../configs.js";
 
-import { LoadingScreen } from "../design/LoadingScreen.js";
+import { LoadingStage } from "../design/LoadingStage.js";
 
 const loadingPageName = "loadingPage";
 /**
  * A main app class, <br>
- * Holder class for ScreenPage,<br>
- * can register new ScreenPages,<br>
+ * Holder class for GameStage,<br>
+ * can register new GameStages,<br>
  * init and preload data for them,<br>
  */
 export class System {
     /**
-     * @type {Map<string, ScreenPage>}
+     * @type {Map<string, GameStage>}
      */
-    #registeredPages;
+    #registeredStages;
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
-    #system;
+    #iSystem;
     /**
-     * @param {SystemSettings} systemSettings - holds system settings
-     * @param {HTMLElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
+     * @param {SystemSettings} iSystemSettings - holds iSystem settings
+     * @param {HTMLElement} [canvasContainer] - If it is not passed, iSystem will create div element and attach it to body
      */
-    constructor(systemSettings, canvasContainer) {
-        if (!systemSettings) {
-            Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
+    constructor(iSystemSettings, canvasContainer) {
+        if (!iSystemSettings) {
+            Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "iSystemSettings should be passed to class instance");
         }
-        this.#registeredPages = new Map();
+        this.#registeredStages = new Map();
 
         if (!canvasContainer) {
             canvasContainer = document.createElement("div");
             document.body.appendChild(canvasContainer);
         }
 
-        this.#system = new SystemInterface(systemSettings, this.#registeredPages, canvasContainer);
+        this.#iSystem = new ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
 
-        this.registerPage(loadingPageName, LoadingScreen);
+        this.registerStage(loadingPageName, LoadingStage);
 
-        this.#system.loader.addEventListener("loadstart", this.#loadStart);
-        this.#system.loader.addEventListener("progress", this.#loadProgress);
-        this.#system.loader.addEventListener("load", this.#loadComplete);
+        this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
+        this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
+        this.#iSystem.iLoader.addEventListener("load", this.#loadComplete);
     }
 
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
-    get system() {
-        return this.#system;
+    get iSystem() {
+        return this.#iSystem;
     }
 
     /**
-     * A main factory method for create ScreenPage instances, <br>
-     * register them in a System and call ScreenPage.register() stage
+     * A main factory method for create GameStage instances, <br>
+     * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {ScreenPage} screen 
+     * @param {GameStage} stage
      */
-    registerPage(screenPageName, screen) {
+    registerStage(screenPageName, stage) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
-            const page = new screen();
-            page._register(screenPageName, this.system);
-            this.#registeredPages.set(screenPageName, page);
+            const stageInstance = new stage();
+            stageInstance._register(screenPageName, this.iSystem);
+            this.#registeredStages.set(screenPageName, stageInstance);
         } else {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
         }
@@ -74,22 +74,22 @@ export class System {
      * @return {Promise<void>}
      */
     preloadAllData() {
-        return this.#system.loader.preload();
+        return this.#iSystem.iLoader.preload();
     }
 
     #loadStart = (event) => {
-        this.#system.startScreenPage(loadingPageName, {total: event.total});
+        this.#iSystem.startGameStage(loadingPageName, {total: event.total});
     };
 
     #loadProgress = (event) => {
         const uploaded = event.loaded,
             left = event.total,
-            loadingPage = this.#registeredPages.get(loadingPageName);
+            loadingPage = this.#registeredStages.get(loadingPageName);
             
         loadingPage._progress(uploaded, left);
     };
 
     #loadComplete = () => {
-        this.#system.stopScreenPage(loadingPageName);
+        this.#iSystem.stopGameStage(loadingPageName);
     };
 }

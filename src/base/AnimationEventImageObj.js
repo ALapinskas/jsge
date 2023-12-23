@@ -19,14 +19,14 @@ export class AnimationEventImageObj {
     /**
      * @type {number}
      */
-    #circlesPerFrame;
+    #cyclesPerFrame;
     // first circle should be always skipped, eg showing the current frame
-    #circlesSkipped = 0;
+    #cyclesSkipped = 0;
     
-    constructor(eventName, animationSpriteIndexes, isRepeated = false, circlesPerFrame, currentSpriteIndex, isActive = false) {
+    constructor(eventName, animationSpriteIndexes, isRepeated = false, cyclesPerFrame, currentSpriteIndex, isActive = false) {
         this.#eventName = eventName;
         this.#animationSpriteIndexes = animationSpriteIndexes;
-        this.#circlesPerFrame = circlesPerFrame;
+        this.#cyclesPerFrame = cyclesPerFrame;
         this.#currentSpriteIndex = currentSpriteIndex ? currentSpriteIndex : 0;
         this.#isActive = isActive;
         this.#isRepeated = isRepeated;
@@ -45,7 +45,7 @@ export class AnimationEventImageObj {
     }
 
     iterateSprite() {
-        if (this.#circlesPerFrame <= this.#circlesSkipped) {
+        if (this.#cyclesPerFrame <= this.#cyclesSkipped) {
             if (!this.isLastSprite) {
                 this.#currentSpriteIndex = this.#currentSpriteIndex + 1;
             } else {
@@ -55,21 +55,21 @@ export class AnimationEventImageObj {
                     this.#currentSpriteIndex = 0;
                 }
             }
-            // if animation is in progress, we reset it to the first item, because the first circle already skipped
-            this.#circlesSkipped = 1;
+            // if animation is in progress, we reset it to the first item, because the first cycles already skipped
+            this.#cyclesSkipped = 1;
         } else {
-            this.#circlesSkipped += 1;
+            this.#cyclesSkipped += 1;
         }
     }
 
     activateAnimation = () => {
         this.#isActive = true;
         this.#currentSpriteIndex = 0;
-        this.#circlesSkipped = 0;
+        this.#cyclesSkipped = 0;
     };
 
     deactivateAnimation = () => {
         this.#isActive = false;
-        this.#circlesSkipped = 0;
+        this.#cyclesSkipped = 0;
     };
 }

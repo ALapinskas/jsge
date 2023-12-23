@@ -6,7 +6,7 @@ import { SystemEvent } from "./Events/SystemEvent.js";
 /**
  * Represents Socket connection
  */
-export class SystemSocketConnection extends EventTarget {
+export class INetwork extends EventTarget {
     #systemSettings;
     #socket;
 

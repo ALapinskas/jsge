@@ -5,37 +5,37 @@ import { DrawImageObject } from "./DrawImageObject.js";
 import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
 import { DrawCircleObject } from "./DrawCircleObject.js";
-import { TiledRenderLayer } from "./TiledRenderLayer.js";
+import { DrawTiledLayer } from "./DrawTiledLayer.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { ScreenPageData } from "./ScreenPageData.js";
+import { GameStageData } from "./GameStageData.js";
 
 /**
  * Creates drawObjects instances.<br>
- * accessible via ScreenPage.draw <br>
+ * accessible via GameStage.draw <br>
  * Attach images for image objects and tilemaps <br>
- * Adds drawObjects to current ScreenPage.screenPageData
- * @see {@link ScreenPage} a part of ScreenPage
+ * Adds drawObjects to current GameStage.stageData
+ * @see {@link GameStage} a part of GameStage
  */
 export class DrawObjectFactory {
     /**
      * @type {AssetsManager}
      */
-    #loader;
+    #iLoader;
     /**
-     * @type {ScreenPageData | null}
+     * @type {GameStageData | null}
      */
     #currentPageData;
     /**
      * @hideconstructor 
      */
-    constructor(loader) {
-        this.#loader = loader;
+    constructor(iLoader) {
+        this.#iLoader = iLoader;
     }
 
     /**
-     * @returns {ScreenPageData}
+     * @returns {GameStageData}
      */
-    get screenPageData() {
+    get stageData() {
         return this.#currentPageData;
     }
     /**
@@ -108,7 +108,7 @@ export class DrawObjectFactory {
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
-        const image = this.#loader.getImage(key),
+        const image = this.#iLoader.getImage(key),
             renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
@@ -145,14 +145,14 @@ export class DrawObjectFactory {
      * @param {string} tileMapKey 
      * @param {boolean=} setBoundaries 
      * @param {DrawShapeObject=} shapeMask 
-     * @returns {TiledRenderLayer}
+     * @returns {DrawTiledLayer}
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
-        const tilemap = this.#loader.getTileMap(tileMapKey),
+        const tilemap = this.#iLoader.getTileMap(tileMapKey),
             tilesets = tilemap.tilesets,
-            tilesetImages = tilesets.map((tileset) => this.#loader.getImage(tileset.data.name)),
+            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             layerData = tilemap.layers.find((layer) => layer.name === layerKey),
-            renderObject = new TiledRenderLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+            renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
 
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
@@ -169,7 +169,7 @@ export class DrawObjectFactory {
     };
     /**
      * @ignore
-     * @param {ScreenPageData} pageData;
+     * @param {GameStageData} pageData;
      */
     _attachPageData = (pageData) => {
         this.#currentPageData = pageData;

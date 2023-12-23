@@ -6,11 +6,11 @@ import { Warning } from "./Exception.js";
  * An audio interface, <br>
  * controls all application audio,<br>
  * holds and retrieves audio, changes volume<br> 
- * accessible via ScreenPage.audio
- * @see {@link ScreenPage} a part of ScreenPage
+ * accessible via GameStage.audio
+ * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
-export class SystemAudioInterface {
+export class ISystemAudio {
     #volume = 0.5;
     #audio = new Map();
     /**
@@ -18,8 +18,8 @@ export class SystemAudioInterface {
      */
     #loaderReference;
 
-    constructor(loader) {
-        this.#loaderReference = loader;
+    constructor(iLoader) {
+        this.#loaderReference = iLoader;
     }
 
     /**

@@ -4,7 +4,7 @@ import { TextureStorage } from "./WebGl/TextureStorage.js";
  * A render object represents a layer from tiled editor
  * @see {@link DrawObjectFactory} should be created with factory method
  */
-export class TiledRenderLayer {
+export class DrawTiledLayer {
     #layerKey;
     #tileMapKey;
     #tilemap;
@@ -75,7 +75,7 @@ export class TiledRenderLayer {
     }
     /**
      * Should the layer borders used as boundaries, or not
-     * Can be set in ScreenPage.addRenderLayer() method.
+     * Can be set in GameStage.addRenderLayer() method.
      * @type {boolean}
      */
     get setBoundaries() {

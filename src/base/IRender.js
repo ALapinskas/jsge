@@ -1,9 +1,9 @@
-import { TiledRenderLayer } from "./TiledRenderLayer.js";
+import { DrawTiledLayer } from "./DrawTiledLayer.js";
 import { Exception, Warning } from "./Exception.js";
 import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { WebGlEngine } from "./WebGl/WebGlEngine.js";
 import { SystemSettings } from "../configs.js";
-import { ScreenPageData } from "./ScreenPageData.js";
+import { GameStageData } from "./GameStageData.js";
 import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 //import { calculateBufferData } from "../wa/release.js";
 import { CONST } from "../constants.js";
@@ -18,12 +18,12 @@ import { imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes } from "
 import { primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes } from "./WebGl/PrimitivesDrawProgram.js";
 
 /**
- * RenderInterface class represents on how the drawObjects
- * should be drawn and the render itself
- * @see {@link ScreenPage} a part of ScreenPage
+ * IRender class controls the render(start/stop/speed) 
+ * And drawObjects(animations, removing, and rendering)
+ * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
-export class RenderInterface {
+export class IRender {
     /**
      * @type {HTMLCanvasElement}
      */
@@ -45,17 +45,17 @@ export class RenderInterface {
      */
     #webGlEngine;
     /**
-     * @type {ScreenPageData}
+     * @type {GameStageData}
      */
-    #currentScreenPageData;
+    #currentGameStageData;
 
     /**
-     * SystemInterface.systemSettings
+     * ISystem.systemSettings
      * @type {SystemSettings}
      */
     #systemSettingsReference;
     /**
-     * A reference to the systemInterface.loader
+     * A reference to the systemInterface.iLoader
      * @type {AssetsManager}
      */
     #loaderReference;
@@ -83,14 +83,14 @@ export class RenderInterface {
      * @type {Array<function():Promise<void>>}
      */
     #initPromises = [];
-    constructor(systemSettings, loader, canvasContainer) {
+    constructor(systemSettings, iLoader, canvasContainer) {
         this.#isCleared = false;
         this.#canvas = document.createElement("canvas");
         canvasContainer.appendChild(this.#canvas);
         this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
 
         this.#systemSettingsReference = systemSettings;
-        this.#loaderReference = loader;
+        this.#loaderReference = iLoader;
 
         this.#tempFPStime = [];
         this.#minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
@@ -116,7 +116,7 @@ export class RenderInterface {
         this._registerObjectRender(DrawPolygonObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawCircleObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawConusObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(TiledRenderLayer.name, this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(DrawTiledLayer.name, this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
         this._registerObjectRender(DrawLineObject.name, this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
     }
 
@@ -140,15 +140,15 @@ export class RenderInterface {
         this.#emitter.removeEventListener(eventName, listener, options);
     };
 
-    get screenPageData() {
-        return this.#currentScreenPageData;
+    get stageData() {
+        return this.#currentGameStageData;
     }
 
     get systemSettings() {
         return this.#systemSettingsReference;
     }
 
-    get loader() {
+    get iLoader() {
         return this.#loaderReference;
     }
 
@@ -176,7 +176,7 @@ export class RenderInterface {
      * @returns {boolean}
      */
     isAllFilesLoaded = () => {
-        return this.loader.filesWaitingForUpload === 0;
+        return this.iLoader.filesWaitingForUpload === 0;
     };
 
     initiateContext = () => {
@@ -252,7 +252,7 @@ export class RenderInterface {
     async render() {
         return new Promise(async(resolve, reject) => {
             let renderObjectsPromises = [];
-            const renderObjects = this.screenPageData.renderObjects;
+            const renderObjects = this.stageData.renderObjects;
             if (renderObjects.length !== 0) {
                 //this.#checkCollisions(view.renderObjects);
                 for (let i = 0; i < renderObjects.length; i++) {
@@ -324,7 +324,7 @@ export class RenderInterface {
         //return promises;
     }
     #postRenderActions() {
-        //const images = this.screenPageData.getObjectsByInstance(DrawImageObject);
+        //const images = this.stageData.getObjectsByInstance(DrawImageObject);
         //for (let i = 0; i < images.length; i++) {
         //    const object = images[i];
         //    if (object.isAnimations) {
@@ -339,19 +339,19 @@ export class RenderInterface {
 
     /**
      * 
-     * @param {TiledRenderLayer} renderLayer 
+     * @param {DrawTiledLayer} renderLayer 
      * @returns {Promise<void>}
      */
     #layerBoundariesPrecalculation(renderLayer) {
         return new Promise((resolve, reject) => {
             if (renderLayer.setBoundaries) {
-                const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
+                const tilemap = this.iLoader.getTileMap(renderLayer.tileMapKey),
                     tilesets = tilemap.tilesets,
                     layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                     { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                     tilewidth = dtwidth,
                     tileheight = dtheight,
-                    [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
+                    [ settingsWorldWidth, settingsWorldHeight ] = this.stageData.worldDimensions;
                 
                 let boundaries = [];
 
@@ -368,11 +368,11 @@ export class RenderInterface {
 
                     if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                         Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                        this.screenPageData._setWorldDimensions(worldW, worldH);
+                        this.stageData._setWorldDimensions(worldW, worldH);
                     }
                     
                     if (renderLayer.setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
-                        this.screenPageData._setWholeWorldMapBoundaries();
+                        this.stageData._setWholeWorldMapBoundaries();
                     }
 
                     //calculate boundaries
@@ -396,10 +396,10 @@ export class RenderInterface {
                         }
                     }
                 }
-                this.screenPageData._setWholeMapBoundaries(boundaries);
-                this.screenPageData._mergeBoundaries(true);
+                this.stageData._setWholeMapBoundaries(boundaries);
+                this.stageData._mergeBoundaries(true);
                 console.warn("precalculated boundaries set");
-                console.log(this.screenPageData.getWholeWorldBoundaries());
+                console.log(this.stageData.getWholeWorldBoundaries());
                 resolve();
             } else {
                 resolve();
@@ -409,7 +409,7 @@ export class RenderInterface {
 
     /**
      * @ignore
-     * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | TiledRenderLayer} renderObject 
+     * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer} renderObject 
      * @returns {Promise<void>}
      */
     _bindRenderObject(renderObject) {
@@ -420,10 +420,10 @@ export class RenderInterface {
             if (name) {
                 const program = this.#webGlEngine.getProgram(name),
                     vars = this.#webGlEngine.getProgramVarLocations(name);
-                return registeredRenderObject.method(renderObject, this.drawContext, this.screenPageData, program, vars)
+                return registeredRenderObject.method(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]));  
             } else {
-                return registeredRenderObject.method(renderObject, this.drawContext, this.screenPageData);
+                return registeredRenderObject.method(renderObject, this.drawContext, this.stageData);
             }
         } else {
             // a workaround for images and its extend classes drawing
@@ -432,13 +432,13 @@ export class RenderInterface {
                     vars = this.#webGlEngine.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
 
                 if (!renderObject.image) {
-                    renderObject.image = this.loader.getImage(renderObject.key);
+                    renderObject.image = this.iLoader.getImage(renderObject.key);
                 }
-                return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.screenPageData, program, vars)
+                return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]))
                     .then(() => {
                         if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
-                            return this.#webGlEngine._drawPolygon(renderObject, this.screenPageData);
+                            return this.#webGlEngine._drawPolygon(renderObject, this.stageData);
                         } else {
                             return Promise.resolve();
                         }
@@ -456,7 +456,7 @@ export class RenderInterface {
      */
     #drawBoundariesWebGl() {
         return new Promise((resolve) => {
-            const b = this.screenPageData.getBoundaries(),
+            const b = this.stageData.getBoundaries(),
                 len = b.length,
                 linesArray = [];
         
@@ -471,7 +471,7 @@ export class RenderInterface {
     }
 
     #countFPSaverage() {
-        const timeLeft = this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime,
+        const timeLeft = this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime,
             steps = this.#tempFPStime.length;
         let fullTime = 0;
 
@@ -487,12 +487,12 @@ export class RenderInterface {
 
     /**
      * @ignore
-     * @param {ScreenPageData} screenPageData 
+     * @param {GameStageData} stageData 
      */
-    _startRender = async (/*time*/screenPageData) => {
+    _startRender = async (/*time*/stageData) => {
         //Logger.debug("_render " + this.name + " class");
         this.#isActive = true;
-        this.#currentScreenPageData = screenPageData;
+        this.#currentGameStageData = stageData;
         this.fixCanvasSize();
         switch (this.systemSettings.gameOptions.library) {
         case CONST.LIBRARY.WEBGL:
@@ -500,8 +500,8 @@ export class RenderInterface {
             setTimeout(() => requestAnimationFrame(this.#drawViews));
             break;
         }
-        if (this.systemSettings.gameOptions.render.circleTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
-            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime);
+        if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
+            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime);
         }
     };
 
@@ -510,7 +510,7 @@ export class RenderInterface {
      */
     _stopRender = () => {
         this.#isActive = false;
-        this.#currentScreenPageData = null;
+        this.#currentGameStageData = null;
         clearInterval(this.#fpsAverageCountTimer);
     };
     /**
@@ -525,7 +525,7 @@ export class RenderInterface {
             if (isBoundariesPrecalculations) {
                 console.warn("isBoundariesPrecalculations() is turned off");
                 //for (const view of this.#views.values()) {
-                //viewPromises.push(this.#renderInterface._createBoundariesPrecalculations());
+                //viewPromises.push(this.#iRender._createBoundariesPrecalculations());
                 //}
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {
@@ -546,7 +546,7 @@ export class RenderInterface {
             minCircleTime = this.#minCircleTime;
             
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
-        this.screenPageData._clearBoundaries();
+        this.stageData._clearBoundaries();
         this.clearContext();
         
         this.render().then(() => {
@@ -554,9 +554,9 @@ export class RenderInterface {
                 r_time_less = minCircleTime - timeEnd,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
                 fps = 1000 / (timeEnd + wait_time);
-            if (this.systemSettings.gameOptions.render.circleTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.CURRENT &&
+            if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.CURRENT &&
                 timeEnd > minCircleTime) {
-                console.log("draw circle done, take: ", (timeEnd), " ms");
+                console.log("draw cycles done, take: ", (timeEnd), " ms");
             }
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
             if(fps === Infinity) {

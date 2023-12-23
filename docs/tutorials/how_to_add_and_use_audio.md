@@ -1,25 +1,25 @@
-In order to add a file, use page.loader.addAudio() in the [register stage]{@tutorial screen_pages_stages}:
+In order to add a file, use stage.iLoader.addAudio() in the [register method]{@tutorial stages_lifecycle}:
 ```
 register() {
-    this.loader.addAudio("audio_key", "./audio.mp3");
+    this.iLoader.addAudio("audio_key", "./audio.mp3");
     ...
 }
 ```
 ## Using AudioInterface:
 AudioInterface is a control center for all audio tracks, \
-default AudioInterface is available via page.audio, \
+default AudioInterface is available via stage.audio, \
 you could add any other audio interfaces with 
 ```
-this.music = new AudioInterface(this.loader);
+this.music = new AudioInterface(this.iLoader);
 ```
 ### How to use tracks with AudioInterface
-1. first, register the added and loaded audio file in [the init, or start stage]{@tutorial screen_pages_stages}:
+1. first, register the added and loaded audio file in [the init, or start method]{@tutorial stages_lifecycle}:
 ```
-page.audio.registerAudio("audio_key");
+stage.audio.registerAudio("audio_key");
 ```
 2. then get the audio track:
 ```
-const track = page.audio.getAudio("audio_key");
+const track = stage.audio.getAudio("audio_key");
 ```
 3. to play, or pause use:
 ```

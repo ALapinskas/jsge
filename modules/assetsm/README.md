@@ -64,7 +64,7 @@ npm start
 
 # Version 0.1.0 functionality:
 # adding new loaders
-1. Register a loader and uploadMethod using registerLoader(loaderType, loaderMethod)
+1. Register a iLoader and uploadMethod using registerLoader(loaderType, loaderMethod)
 2. Add upload item to the queue using add[loaderName](fileKey, url), or addFile(loaderName, fileKey, url).
 3. Executing preload(), will upload all items where added in step2 with loaderMethod provided in step1 and save them temporary.
 4. After that uploadingResults will be available with get[loaderName](fileKey), or getFile(loaderName, fileKey, url)

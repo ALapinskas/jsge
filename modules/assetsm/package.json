@@ -25,7 +25,7 @@
     "image",
     "audio",
     "assets",
-    "loader",
+    "iLoader",
     "manager",
     "tmj",
     "tsj"

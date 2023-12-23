@@ -1,5 +1,5 @@
 import { Primitives } from "../../src/index.js";
-import { ScreenPage, CONST } from "../../src/index.js";
+import { GameStage, CONST } from "../../src/index.js";
 import { utils } from "../../src/index.js";
 
 const Vertex = Primitives.Vertex;
@@ -17,7 +17,7 @@ const VESSEL_SPEED = 3;
 const CONTROLS_LAYER = "controls",
     SAILS_UP_AUDIO = "sails up";
 
-export class MapPage extends ScreenPage {
+export class MapPage extends GameStage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
 
     // radians
@@ -27,13 +27,13 @@ export class MapPage extends ScreenPage {
     #sails = SAILS_STATE.DOWN;
     register() {
         this.tilemapKey = "piratesGameMapTileset";
-        this.loader.addTileMap(this.tilemapKey, "./pirates/map.tmj");
-        this.loader.addImage(SHIPS_KEY, "./pirates/ship.png");
-        this.loader.addAudio(SAILS_UP_AUDIO, "./pirates/zakryivayuschiysya-mehanizm-2-32326.mp3");
+        this.iLoader.addTileMap(this.tilemapKey, "./pirates/map.tmj");
+        this.iLoader.addImage(SHIPS_KEY, "./pirates/ship.png");
+        this.iLoader.addAudio(SAILS_UP_AUDIO, "./pirates/zakryivayuschiysya-mehanizm-2-32326.mp3");
     }
 
     init() {
-        const [w, h] = this.screenPageData.canvasDimensions;
+        const [w, h] = this.stageData.canvasDimensions;
         
         this.draw.tiledLayer("water", this.tilemapKey);
         this.draw.tiledLayer("ground", this.tilemapKey, true);
@@ -174,7 +174,7 @@ export class MapPage extends ScreenPage {
         if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
-            this.screenPageData.centerCameraPosition(newCoordX, newCoordY);
+            this.stageData.centerCameraPosition(newCoordX, newCoordY);
         }
     }
 
@@ -195,7 +195,7 @@ export class MapPage extends ScreenPage {
     };
 
     #mouseMoveAction = (e) => {
-        const [xOffset, yOffset] = this.screenPageData.worldOffset,
+        const [xOffset, yOffset] = this.stageData.worldOffset,
             x = e.offsetX,
             y = e.offsetY,
             cursorPosX = x + xOffset,
@@ -221,8 +221,8 @@ export class MapPage extends ScreenPage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.system.stopScreenPage("pirates");
-            this.system.startScreenPage("start");
+            this.system.stopGameStage("pirates");
+            this.system.startGameStage("start");
         }
     }
 

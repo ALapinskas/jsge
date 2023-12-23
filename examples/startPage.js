@@ -1,4 +1,4 @@
-import { ScreenPage, CONST } from "../src/index.js";
+import { GameStage, CONST } from "../src/index.js";
 import { utils } from "../src/index.js";
 import SpineModuleInitialization from "../modules/spine/dist/bundle.js";
 
@@ -21,24 +21,24 @@ const SPINE = {
     SpineGoblinsBinary: "GoblinsBinary"
 };
 
-export class StartPage extends ScreenPage {
+export class StartPage extends GameStage {
     #menuClickMediaElement;
 
     register() {
-        this.loader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
+        this.iLoader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
         this.spineModule = this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets");
         // spine methods will be available after spine module installation
-        this.loader.addSpineJson(SPINE.SpineText, "./spine/spine-assets/spineboy-pro.json");
-        this.loader.addSpineBinary(SPINE.SpineBinary, "./spine/spine-assets/spineboy-pro.skel");
-        this.loader.addSpineAtlas(SPINE.SpineAtlas, "./spine/spine-assets/spineboy-pma.atlas");
-        this.loader.addSpineAtlas(SPINE.SpineGoblinsAtlas, "./spine/spine-assets/goblins-pma.atlas");
-        this.loader.addSpineBinary(SPINE.SpineGoblinsBinary, "./spine/spine-assets/goblins-pro.skel");
+        this.iLoader.addSpineJson(SPINE.SpineText, "./spine/spine-assets/spineboy-pro.json");
+        this.iLoader.addSpineBinary(SPINE.SpineBinary, "./spine/spine-assets/spineboy-pro.skel");
+        this.iLoader.addSpineAtlas(SPINE.SpineAtlas, "./spine/spine-assets/spineboy-pma.atlas");
+        this.iLoader.addSpineAtlas(SPINE.SpineGoblinsAtlas, "./spine/spine-assets/goblins-pma.atlas");
+        this.iLoader.addSpineBinary(SPINE.SpineGoblinsBinary, "./spine/spine-assets/goblins-pro.skel");
 
-        this.loader.addImage(SPINE.SpineTexture, "./spine/spine-assets/spineboy-pma.png");
+        this.iLoader.addImage(SPINE.SpineTexture, "./spine/spine-assets/spineboy-pma.png");
     }
 
     init() {
-        const [w, h] = this.screenPageData.canvasDimensions;
+        const [w, h] = this.stageData.canvasDimensions;
         
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");
         
@@ -110,26 +110,26 @@ export class StartPage extends ScreenPage {
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopScreenPage(START_PAGE_NAME);
-            this.system.startScreenPage(DUNGEON_GAME);
+            this.system.stopGameStage(START_PAGE_NAME);
+            this.system.startGameStage(DUNGEON_GAME);
         }
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopScreenPage(START_PAGE_NAME);
-            this.system.startScreenPage(PIRATES_GAME);
+            this.system.stopGameStage(START_PAGE_NAME);
+            this.system.startGameStage(PIRATES_GAME);
         }
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopScreenPage(START_PAGE_NAME);
-            this.system.startScreenPage(RACING_GAME);
+            this.system.stopGameStage(START_PAGE_NAME);
+            this.system.startGameStage(RACING_GAME);
         }
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopScreenPage(START_PAGE_NAME);
-            this.system.startScreenPage(SPINE_PAGE);
+            this.system.stopGameStage(START_PAGE_NAME);
+            this.system.startGameStage(SPINE_PAGE);
         }
     };
 

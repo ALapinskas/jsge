@@ -45,14 +45,14 @@ class AnimationEventImageObj {
     /**
      * @type {number}
      */
-    #circlesPerFrame;
+    #cyclesPerFrame;
     // first circle should be always skipped, eg showing the current frame
-    #circlesSkipped = 0;
+    #cyclesSkipped = 0;
     
-    constructor(eventName, animationSpriteIndexes, isRepeated = false, circlesPerFrame, currentSpriteIndex, isActive = false) {
+    constructor(eventName, animationSpriteIndexes, isRepeated = false, cyclesPerFrame, currentSpriteIndex, isActive = false) {
         this.#eventName = eventName;
         this.#animationSpriteIndexes = animationSpriteIndexes;
-        this.#circlesPerFrame = circlesPerFrame;
+        this.#cyclesPerFrame = cyclesPerFrame;
         this.#currentSpriteIndex = currentSpriteIndex ? currentSpriteIndex : 0;
         this.#isActive = isActive;
         this.#isRepeated = isRepeated;
@@ -71,7 +71,7 @@ class AnimationEventImageObj {
     }
 
     iterateSprite() {
-        if (this.#circlesPerFrame <= this.#circlesSkipped) {
+        if (this.#cyclesPerFrame <= this.#cyclesSkipped) {
             if (!this.isLastSprite) {
                 this.#currentSpriteIndex = this.#currentSpriteIndex + 1;
             } else {
@@ -82,21 +82,21 @@ class AnimationEventImageObj {
                 }
             }
             // if animation is in progress, we reset it to the first item, because the first circle already skipped
-            this.#circlesSkipped = 1;
+            this.#cyclesSkipped = 1;
         } else {
-            this.#circlesSkipped += 1;
+            this.#cyclesSkipped += 1;
         }
     }
 
     activateAnimation = () => {
         this.#isActive = true;
         this.#currentSpriteIndex = 0;
-        this.#circlesSkipped = 0;
+        this.#cyclesSkipped = 0;
     };
 
     deactivateAnimation = () => {
         this.#isActive = false;
-        this.#circlesSkipped = 0;
+        this.#cyclesSkipped = 0;
     };
 }
 
@@ -495,13 +495,13 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      * @param { string } eventName -animation name
      * @param { Array<number> } animationSpriteIndexes - animation image indexes
      * @param { boolean } [isRepeated = false] - animation is circled or not, circled animation could be stopped only with stopRepeatedAnimation();
-     * @param { number } [circlesPerFrame = 1] - determines on how many circles should one frame be shown, the actual speed depends on gameOptions.render.minCircleTime
+     * @param { number } [cyclesPerFrame = 1] - determines on how many cycles should one frame be shown, the actual speed depends on gameOptions.render.minCircleTime
      */
-    addAnimation (eventName, animationSpriteIndexes, isRepeated, circlesPerFrame = 1) {
-        if (circlesPerFrame < 1) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_4__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_1__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " circlesPerFrame should be >= 1");
+    addAnimation (eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame = 1) {
+        if (cyclesPerFrame < 1) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_4__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_1__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " cyclesPerFrame should be >= 1");
         }
-        const animationEvent = new _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__.AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated, circlesPerFrame);
+        const animationEvent = new _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__.AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame);
         this.#animations.set(eventName, animationEvent);
         this.addEventListener(eventName, this.#activateAnimation);
     }
@@ -605,9 +605,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
 /* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
 /* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
-/* harmony import */ var _TiledRenderLayer_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./TiledRenderLayer.js */ "./src/base/TiledRenderLayer.js");
+/* harmony import */ var _DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawTiledLayer.js */ "./src/base/DrawTiledLayer.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _ScreenPageData_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ScreenPageData.js */ "./src/base/ScreenPageData.js");
+/* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
 
 
 
@@ -621,31 +621,31 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * Creates drawObjects instances.<br>
- * accessible via ScreenPage.draw <br>
+ * accessible via GameStage.draw <br>
  * Attach images for image objects and tilemaps <br>
- * Adds drawObjects to current ScreenPage.screenPageData
- * @see {@link ScreenPage} a part of ScreenPage
+ * Adds drawObjects to current GameStage.stageData
+ * @see {@link GameStage} a part of GameStage
  */
 class DrawObjectFactory {
     /**
      * @type {AssetsManager}
      */
-    #loader;
+    #iLoader;
     /**
-     * @type {ScreenPageData | null}
+     * @type {GameStageData | null}
      */
     #currentPageData;
     /**
      * @hideconstructor 
      */
-    constructor(loader) {
-        this.#loader = loader;
+    constructor(iLoader) {
+        this.#iLoader = iLoader;
     }
 
     /**
-     * @returns {ScreenPageData}
+     * @returns {GameStageData}
      */
-    get screenPageData() {
+    get stageData() {
         return this.#currentPageData;
     }
     /**
@@ -718,7 +718,7 @@ class DrawObjectFactory {
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
-        const image = this.#loader.getImage(key),
+        const image = this.#iLoader.getImage(key),
             renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
@@ -755,14 +755,14 @@ class DrawObjectFactory {
      * @param {string} tileMapKey 
      * @param {boolean=} setBoundaries 
      * @param {DrawShapeObject=} shapeMask 
-     * @returns {TiledRenderLayer}
+     * @returns {DrawTiledLayer}
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
-        const tilemap = this.#loader.getTileMap(tileMapKey),
+        const tilemap = this.#iLoader.getTileMap(tileMapKey),
             tilesets = tilemap.tilesets,
-            tilesetImages = tilesets.map((tileset) => this.#loader.getImage(tileset.data.name)),
+            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             layerData = tilemap.layers.find((layer) => layer.name === layerKey),
-            renderObject = new _TiledRenderLayer_js__WEBPACK_IMPORTED_MODULE_7__.TiledRenderLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+            renderObject = new _DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__.DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
 
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex(); 
@@ -779,7 +779,7 @@ class DrawObjectFactory {
     };
     /**
      * @ignore
-     * @param {ScreenPageData} pageData;
+     * @param {GameStageData} pageData;
      */
     _attachPageData = (pageData) => {
         this.#currentPageData = pageData;
@@ -1474,26 +1474,26 @@ function Warning (code, message) {
 
 /***/ }),
 
-/***/ "./src/base/ExtensionInterface.js":
+/***/ "./src/base/IExtension.js":
 /*!****************************************!*\
-  !*** ./src/base/ExtensionInterface.js ***!
+  !*** ./src/base/IExtension.js ***!
   \****************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "ExtensionInterface": () => (/* binding */ ExtensionInterface)
+/* harmony export */   "IExtension": () => (/* binding */ IExtension)
 /* harmony export */ });
-/* harmony import */ var _SystemInterface_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./SystemInterface.js */ "./src/base/SystemInterface.js");
+/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
 
 
 /**
  * Class for creating modules
- * Accessed via SystemInterface.extensionInterface
+ * Accessed via ISystem.iExtension
  */
-class ExtensionInterface {
+class IExtension {
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     #systemReference;
     /**
@@ -1522,7 +1522,7 @@ class ExtensionInterface {
      * @returns {Promise<void>}
      */
     registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars) {
-        return this.#systemReference.renderInterface._registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars);
+        return this.#systemReference.iRender._registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars);
     }
 
     /**
@@ -1531,7 +1531,7 @@ class ExtensionInterface {
      * @returns {void}
      */
     registerRenderInit(method) {
-        this.#systemReference.renderInterface._registerRenderInit(method);
+        this.#systemReference.iRender._registerRenderInit(method);
     }
 
     /**
@@ -1541,7 +1541,7 @@ class ExtensionInterface {
      * @param {string=} objectWebGlDrawProgram 
      */
     registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
-        this.#systemReference.renderInterface._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);
+        this.#systemReference.iRender._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);
     }
 }
 
@@ -1666,22 +1666,22 @@ class Vector {
 
 /***/ }),
 
-/***/ "./src/base/RenderInterface.js":
+/***/ "./src/base/IRender.js":
 /*!*************************************!*\
-  !*** ./src/base/RenderInterface.js ***!
+  !*** ./src/base/IRender.js ***!
   \*************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "RenderInterface": () => (/* binding */ RenderInterface)
+/* harmony export */   "IRender": () => (/* binding */ IRender)
 /* harmony export */ });
-/* harmony import */ var _TiledRenderLayer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./TiledRenderLayer.js */ "./src/base/TiledRenderLayer.js");
+/* harmony import */ var _DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DrawTiledLayer.js */ "./src/base/DrawTiledLayer.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _WebGl_WebGlEngine_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./WebGl/WebGlEngine.js */ "./src/base/WebGl/WebGlEngine.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _ScreenPageData_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ScreenPageData.js */ "./src/base/ScreenPageData.js");
+/* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
 /* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
 /* harmony import */ var _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawImageObject.js */ "./src/base/DrawImageObject.js");
 /* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
@@ -1712,12 +1712,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * RenderInterface class represents on how the drawObjects
+ * IRender class represents on how the drawObjects
  * should be drawn and the render itself
- * @see {@link ScreenPage} a part of ScreenPage
+ * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
-class RenderInterface {
+class IRender {
     /**
      * @type {HTMLCanvasElement}
      */
@@ -1739,17 +1739,17 @@ class RenderInterface {
      */
     #webGlEngine;
     /**
-     * @type {ScreenPageData}
+     * @type {GameStageData}
      */
-    #currentScreenPageData;
+    #currentGameStageData;
 
     /**
-     * SystemInterface.systemSettings
+     * ISystem.systemSettings
      * @type {SystemSettings}
      */
     #systemSettingsReference;
     /**
-     * A reference to the systemInterface.loader
+     * A reference to the systemInterface.iLoader
      * @type {AssetsManager}
      */
     #loaderReference;
@@ -1777,14 +1777,14 @@ class RenderInterface {
      * @type {Array<function():Promise<void>>}
      */
     #initPromises = [];
-    constructor(systemSettings, loader, canvasContainer) {
+    constructor(systemSettings, iLoader, canvasContainer) {
         this.#isCleared = false;
         this.#canvas = document.createElement("canvas");
         canvasContainer.appendChild(this.#canvas);
         this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
 
         this.#systemSettingsReference = systemSettings;
-        this.#loaderReference = loader;
+        this.#loaderReference = iLoader;
 
         this.#tempFPStime = [];
         this.#minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
@@ -1810,7 +1810,7 @@ class RenderInterface {
         this._registerObjectRender(_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_11__.DrawPolygonObject.name, this.#webGlEngine._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_8__.DrawCircleObject.name, this.#webGlEngine._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_DrawConusObject_js__WEBPACK_IMPORTED_MODULE_9__.DrawConusObject.name, this.#webGlEngine._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(_TiledRenderLayer_js__WEBPACK_IMPORTED_MODULE_0__.TiledRenderLayer.name, this.#webGlEngine._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_0__.DrawTiledLayer.name, this.#webGlEngine._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
         this._registerObjectRender(_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_10__.DrawLineObject.name, this.#webGlEngine._bindLine, _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
     }
 
@@ -1834,15 +1834,15 @@ class RenderInterface {
         this.#emitter.removeEventListener(eventName, listener, options);
     };
 
-    get screenPageData() {
-        return this.#currentScreenPageData;
+    get stageData() {
+        return this.#currentGameStageData;
     }
 
     get systemSettings() {
         return this.#systemSettingsReference;
     }
 
-    get loader() {
+    get iLoader() {
         return this.#loaderReference;
     }
 
@@ -1870,7 +1870,7 @@ class RenderInterface {
      * @returns {boolean}
      */
     isAllFilesLoaded = () => {
-        return this.loader.filesWaitingForUpload === 0;
+        return this.iLoader.filesWaitingForUpload === 0;
     };
 
     initiateContext = () => {
@@ -1946,7 +1946,7 @@ class RenderInterface {
     async render() {
         return new Promise(async(resolve, reject) => {
             let renderObjectsPromises = [];
-            const renderObjects = this.screenPageData.renderObjects;
+            const renderObjects = this.stageData.renderObjects;
             if (renderObjects.length !== 0) {
                 //this.#checkCollisions(view.renderObjects);
                 for (let i = 0; i < renderObjects.length; i++) {
@@ -2018,7 +2018,7 @@ class RenderInterface {
         //return promises;
     }
     #postRenderActions() {
-        //const images = this.screenPageData.getObjectsByInstance(DrawImageObject);
+        //const images = this.stageData.getObjectsByInstance(DrawImageObject);
         //for (let i = 0; i < images.length; i++) {
         //    const object = images[i];
         //    if (object.isAnimations) {
@@ -2033,19 +2033,19 @@ class RenderInterface {
 
     /**
      * 
-     * @param {TiledRenderLayer} renderLayer 
+     * @param {DrawTiledLayer} renderLayer 
      * @returns {Promise<void>}
      */
     #layerBoundariesPrecalculation(renderLayer) {
         return new Promise((resolve, reject) => {
             if (renderLayer.setBoundaries) {
-                const tilemap = this.loader.getTileMap(renderLayer.tileMapKey),
+                const tilemap = this.iLoader.getTileMap(renderLayer.tileMapKey),
                     tilesets = tilemap.tilesets,
                     layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
                     { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                     tilewidth = dtwidth,
                     tileheight = dtheight,
-                    [ settingsWorldWidth, settingsWorldHeight ] = this.screenPageData.worldDimensions;
+                    [ settingsWorldWidth, settingsWorldHeight ] = this.stageData.worldDimensions;
                 
                 let boundaries = [];
 
@@ -2062,11 +2062,11 @@ class RenderInterface {
 
                     if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                         (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                        this.screenPageData._setWorldDimensions(worldW, worldH);
+                        this.stageData._setWorldDimensions(worldW, worldH);
                     }
                     
                     if (renderLayer.setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
-                        this.screenPageData._setWholeWorldMapBoundaries();
+                        this.stageData._setWholeWorldMapBoundaries();
                     }
 
                     //calculate boundaries
@@ -2090,10 +2090,10 @@ class RenderInterface {
                         }
                     }
                 }
-                this.screenPageData._setWholeMapBoundaries(boundaries);
-                this.screenPageData._mergeBoundaries(true);
+                this.stageData._setWholeMapBoundaries(boundaries);
+                this.stageData._mergeBoundaries(true);
                 console.warn("precalculated boundaries set");
-                console.log(this.screenPageData.getWholeWorldBoundaries());
+                console.log(this.stageData.getWholeWorldBoundaries());
                 resolve();
             } else {
                 resolve();
@@ -2103,7 +2103,7 @@ class RenderInterface {
 
     /**
      * @ignore
-     * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | TiledRenderLayer} renderObject 
+     * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer} renderObject 
      * @returns {Promise<void>}
      */
     _bindRenderObject(renderObject) {
@@ -2114,10 +2114,10 @@ class RenderInterface {
             if (name) {
                 const program = this.#webGlEngine.getProgram(name),
                     vars = this.#webGlEngine.getProgramVarLocations(name);
-                return registeredRenderObject.method(renderObject, this.drawContext, this.screenPageData, program, vars)
+                return registeredRenderObject.method(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]));  
             } else {
-                return registeredRenderObject.method(renderObject, this.drawContext, this.screenPageData);
+                return registeredRenderObject.method(renderObject, this.drawContext, this.stageData);
             }
         } else {
             // a workaround for images and its extend classes drawing
@@ -2126,13 +2126,13 @@ class RenderInterface {
                     vars = this.#webGlEngine.getProgramVarLocations(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
 
                 if (!renderObject.image) {
-                    renderObject.image = this.loader.getImage(renderObject.key);
+                    renderObject.image = this.iLoader.getImage(renderObject.key);
                 }
-                return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.screenPageData, program, vars)
+                return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]))
                     .then(() => {
                         if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
-                            return this.#webGlEngine._drawPolygon(renderObject, this.screenPageData);
+                            return this.#webGlEngine._drawPolygon(renderObject, this.stageData);
                         } else {
                             return Promise.resolve();
                         }
@@ -2150,7 +2150,7 @@ class RenderInterface {
      */
     #drawBoundariesWebGl() {
         return new Promise((resolve) => {
-            const b = this.screenPageData.getBoundaries(),
+            const b = this.stageData.getBoundaries(),
                 len = b.length,
                 linesArray = [];
         
@@ -2181,12 +2181,12 @@ class RenderInterface {
 
     /**
      * @ignore
-     * @param {ScreenPageData} screenPageData 
+     * @param {GameStageData} stageData 
      */
-    _startRender = async (/*time*/screenPageData) => {
+    _startRender = async (/*time*/stageData) => {
         //Logger.debug("_render " + this.name + " class");
         this.#isActive = true;
-        this.#currentScreenPageData = screenPageData;
+        this.#currentGameStageData = stageData;
         this.fixCanvasSize();
         switch (this.systemSettings.gameOptions.library) {
         case _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.LIBRARY.WEBGL:
@@ -2204,7 +2204,7 @@ class RenderInterface {
      */
     _stopRender = () => {
         this.#isActive = false;
-        this.#currentScreenPageData = null;
+        this.#currentGameStageData = null;
         clearInterval(this.#fpsAverageCountTimer);
     };
     /**
@@ -2219,7 +2219,7 @@ class RenderInterface {
             if (isBoundariesPrecalculations) {
                 console.warn("isBoundariesPrecalculations() is turned off");
                 //for (const view of this.#views.values()) {
-                //viewPromises.push(this.#renderInterface._createBoundariesPrecalculations());
+                //viewPromises.push(this.#iRender._createBoundariesPrecalculations());
                 //}
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {
@@ -2240,7 +2240,7 @@ class RenderInterface {
             minCircleTime = this.#minCircleTime;
             
         this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.EVENTS.SYSTEM.RENDER.START);
-        this.screenPageData._clearBoundaries();
+        this.stageData._clearBoundaries();
         this.clearContext();
         
         this.render().then(() => {
@@ -2269,23 +2269,23 @@ class RenderInterface {
 
 /***/ }),
 
-/***/ "./src/base/ScreenPage.js":
+/***/ "./src/base/GameStage.js":
 /*!********************************!*\
-  !*** ./src/base/ScreenPage.js ***!
+  !*** ./src/base/GameStage.js ***!
   \********************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "ScreenPage": () => (/* binding */ ScreenPage)
+/* harmony export */   "GameStage": () => (/* binding */ GameStage)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _ScreenPageData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ScreenPageData.js */ "./src/base/ScreenPageData.js");
+/* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
 /* harmony import */ var _Logger_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Logger.js */ "./src/base/Logger.js");
 /* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
-/* harmony import */ var _TiledRenderLayer_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./TiledRenderLayer.js */ "./src/base/TiledRenderLayer.js");
-/* harmony import */ var _RenderInterface_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./RenderInterface.js */ "./src/base/RenderInterface.js");
+/* harmony import */ var _DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DrawTiledLayer.js */ "./src/base/DrawTiledLayer.js");
+/* harmony import */ var _RenderEngine_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./IRender.js */ "./src/base/IRender.js");
 /* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
 /* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
 /* harmony import */ var _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./DrawConusObject.js */ "./src/base/DrawConusObject.js");
@@ -2294,8 +2294,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
 /* harmony import */ var _DrawRectObject_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./DrawRectObject.js */ "./src/base/DrawRectObject.js");
 /* harmony import */ var _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./DrawTextObject.js */ "./src/base/DrawTextObject.js");
-/* harmony import */ var _SystemInterface_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./SystemInterface.js */ "./src/base/SystemInterface.js");
-/* harmony import */ var _SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./SystemAudioInterface.js */ "./src/base/SystemAudioInterface.js");
+/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
+/* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
 /* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
@@ -2323,15 +2323,15 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * Represents the page of the game,<br>
+ * Represents the stage of the game,<br>
  * Register and holds CanvasInterface.<br>
  * Contains pages logic.<br>
- * Instances should be created and registered with System.registerPage() factory method
+ * Instances should be created and registered with System.registerStage() factory method
  * 
  * @see {@link System} instances of this class holds by the System class
  * @hideconstructor
  */
-class ScreenPage {
+class GameStage {
     /**
      * @type {string}
      */
@@ -2345,23 +2345,23 @@ class ScreenPage {
      */
     #isActive;
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     #systemReference;
     /**
-     * @type {ScreenPageData}
+     * @type {GameStageData}
      */
-    #screenPageData;
+    #stageData;
 
     constructor() {
         this.#isActive = false;
-        this.#screenPageData = new _ScreenPageData_js__WEBPACK_IMPORTED_MODULE_1__.ScreenPageData();
+        this.#stageData = new _GameStageData_js__WEBPACK_IMPORTED_MODULE_1__.GameStageData();
     }
 
     /**
      * Register stage
      * @param {string} name
-     * @param {SystemInterface} system 
+     * @param {ISystem} system 
      * @ignore
      */
     _register(name, system) {
@@ -2382,12 +2382,12 @@ class ScreenPage {
     }
 
     /**
-     * @tutorial screen_pages_stages
+     * @tutorial stages_lifecycle
      * Custom logic for register stage
      */
     register() {}
     /**
-     * @tutorial screen_pages_stages
+     * @tutorial stages_lifecycle
      * Custom logic for init stage
      */
     init() {}
@@ -2397,7 +2397,7 @@ class ScreenPage {
      */
     start(options) {}
     /**
-     * @tutorial screen_pages_stages
+     * @tutorial stages_lifecycle
      * Custom logic for stop stage
      */
     stop() {}
@@ -2410,8 +2410,8 @@ class ScreenPage {
      * @tutorial assets_manager
      * @type {AssetsManager}
      */
-    get loader() {
-        return this.#systemReference.loader;
+    get iLoader() {
+        return this.#systemReference.iLoader;
     }
 
     /**
@@ -2431,7 +2431,7 @@ class ScreenPage {
     createCanvasView = (name, isOffsetTurnedOff = false) => {
         if (name && name.trim().length > 0) {
             console.warn("createCanvasView is deprecated. For layer masks use .setMask(drawObject).");
-            //const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
+            //const newView = new CanvasView(name, this.#system.systemSettings, this.#stageData, this.iLoader, this.system.webGlInterface, isOffsetTurnedOff);
             //this.#views.set(name, newView);
             return {};//newView;
         } else
@@ -2465,10 +2465,10 @@ class ScreenPage {
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.DEPRECATED_PARAMETER, "canvasKey parameter is deprecated and no longer needed");
         }
-        const data = this.screenPageData,
+        const data = this.stageData,
             isDataAlreadyAdded = data.renderObjects.indexOf(renderObject) !== -1;
         if (isDataAlreadyAdded) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "page.draw methods add objects to pageData, no need to call addRenderObject");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "stage.draw methods add objects to pageData, no need to call addRenderObject");
         } else {
             data._renderObject = renderObject;
             data._sortRenderObjectsBySortIndex(); 
@@ -2490,9 +2490,9 @@ class ScreenPage {
         //} else if (!this.#views.has(canvasKey)) {
         //    Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
         } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.DEPRECATED_PARAMETER, "page.addRenderLayer is deprecated and will be removed, use page.draw.tiledLayer instead");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.DEPRECATED_PARAMETER, "stage.addRenderLayer is deprecated and will be removed, use stage.draw.tiledLayer instead");
             //const view = this.#views.get(canvasKey);
-            const data = this.screenPageData;
+            const data = this.stageData;
             data._renderObject = this.draw.tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
             if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
                 data._enableMapBoundaries();
@@ -2502,7 +2502,7 @@ class ScreenPage {
     };
 
     /**
-     * Determines if this page render is Active or not
+     * Determines if this stage render is Active or not
      * @type {boolean}
      */
     get isActive() {
@@ -2510,7 +2510,7 @@ class ScreenPage {
     }
 
     /**
-     * Determines if this page is initialized or not
+     * Determines if this stage is initialized or not
      * @type {boolean}
      */
     get isInitiated() {
@@ -2518,7 +2518,7 @@ class ScreenPage {
     }
 
     /**
-     * Current page name
+     * Current stage name
      * @type {string}
      */
     get name () {
@@ -2530,14 +2530,14 @@ class ScreenPage {
      * @returns {boolean}
      */
     //isAllFilesLoaded = () => {
-    //   return this.loader.filesWaitingForUpload === 0;
+    //   return this.iLoader.filesWaitingForUpload === 0;
     //};
 
     /**
-     * @type {ScreenPageData}
+     * @type {GameStageData}
      */
-    get screenPageData() {
-        return this.#screenPageData;
+    get stageData() {
+        return this.#stageData;
     }
 
     /**
@@ -2548,14 +2548,14 @@ class ScreenPage {
     }
 
     /**
-     * @type {SystemAudioInterface}
+     * @type {ISystemAudio}
      */
     get audio() {
         return this.#systemReference.audio;
     }
 
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     get system() {
         return this.#systemReference;
@@ -2588,8 +2588,8 @@ class ScreenPage {
     /**
      * 
      */
-    //get renderInterface() {
-    //    return this.#renderInterface;
+    //get iRender() {
+    //    return this.#iRender;
     //}
     
     /**
@@ -2599,7 +2599,7 @@ class ScreenPage {
      * @returns {CanvasView | undefined}
      */
     getView = (key) => {
-        console.warn("ScreenPage.getView() is deprecated. Use ScreenPage.system.renderInterface for render, and ScreenPage.screenPageData for data instead");
+        console.warn("GameStage.getView() is deprecated. Use GameStage.system.iRender for render, and GameStage.stageData for data instead");
         return;
         /*
         const ctx = this.#views.get(key);
@@ -2611,13 +2611,13 @@ class ScreenPage {
     };
 
     /**
-     * Start page render
+     * Start stage render
      * @param {Object=} options 
      * @ignore
      */
     _start(options) {
         this.start(options);
-        //this.#renderInterfaceReference = renderInterface;
+        //this.#renderEngineReference = iRender;
         this.#isActive = true;
         window.addEventListener("resize", this._resize);
         this._resize();
@@ -2627,7 +2627,7 @@ class ScreenPage {
     }
 
     /**
-     * Stop page render
+     * Stop stage render
      * @ignore
      */
     _stop() {
@@ -2669,7 +2669,7 @@ class ScreenPage {
         const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
             height = this.systemSettings.worldSize ? this.systemSettings.worldSize.height : 0;
             
-        this.screenPageData._setWorldDimensions(width, height);
+        this.stageData._setWorldDimensions(width, height);
     }
 
     //////////////////////////////////////////////////////
@@ -2830,7 +2830,7 @@ class ScreenPage {
     }
 
     #isCircleToPolygonCollision(x, y, radius, mapObject) {
-        const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             mapObjXWithOffset = mapObject.x - mapOffsetX,
@@ -2878,7 +2878,7 @@ class ScreenPage {
     }
 
     #isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject) {
-        const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             mapObjXWithOffset = mapObject.x - mapOffsetX,
@@ -2928,10 +2928,10 @@ class ScreenPage {
     }
 
     #checkCollisions(renderObjects) {
-        const boundaries = this.screenPageData.getBoundaries(),
+        const boundaries = this.stageData.getBoundaries(),
             boundariesLen = boundaries.length,
             objectsLen = renderObjects.length;
-        //console.log(this.screenPageData.worldOffset);
+        //console.log(this.stageData.worldOffset);
         for (let i = 0; i < objectsLen; i++) {
             const renderObject = renderObjects[i];
             for (let j = 0; j < objectsLen; j++) {
@@ -2966,8 +2966,8 @@ class ScreenPage {
     }
 
     #isCircleToBoundariesCollision(x, y, r) {
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const mapObjects = this.stageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             len = mapObjects.length;
@@ -3002,8 +3002,8 @@ class ScreenPage {
         //console.log("angle: ", rotation);
         //console.log("boundaries before calculations: ");
         //console.log(polygon);
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const mapObjects = this.stageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
@@ -3032,8 +3032,8 @@ class ScreenPage {
     #setCanvasSize() {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
-        this.screenPageData._setCanvasDimensions(canvasWidth, canvasHeight);
-        //this.#renderInterface.setCanvasSize(canvasWidth, canvasHeight)
+        this.stageData._setCanvasDimensions(canvasWidth, canvasHeight);
+        //this.#iRender.setCanvasSize(canvasWidth, canvasHeight)
         //for (const view of this.#views.values()) {
         //    view._setCanvasSize(canvasWidth, canvasHeight);
         //}
@@ -3042,15 +3042,15 @@ class ScreenPage {
 
 /***/ }),
 
-/***/ "./src/base/ScreenPageData.js":
+/***/ "./src/base/GameStageData.js":
 /*!************************************!*\
-  !*** ./src/base/ScreenPageData.js ***!
+  !*** ./src/base/GameStageData.js ***!
   \************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "ScreenPageData": () => (/* binding */ ScreenPageData)
+/* harmony export */   "GameStageData": () => (/* binding */ GameStageData)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
@@ -3059,11 +3059,11 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * An interface for common views data such as
  * boundaries, world dimensions, options
- * accessible via ScreenPage.screenPageData 
- * @see {@link ScreenPage} a part of ScreenPage
+ * accessible via GameStage.stageData 
+ * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
-class ScreenPageData {
+class GameStageData {
     #worldWidth;
     #worldHeight;
     #viewWidth;
@@ -3085,7 +3085,7 @@ class ScreenPageData {
      */
     #wholeWorldBoundaries = [];
     /**
-     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | TiledRenderLayer>}
+     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
      */
     #renderObjects = [];
     
@@ -3428,10 +3428,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _ScreenPage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ScreenPage.js */ "./src/base/ScreenPage.js");
-/* harmony import */ var _SystemInterface_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./SystemInterface.js */ "./src/base/SystemInterface.js");
+/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
+/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _design_LoadingScreen_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../design/LoadingScreen.js */ "./src/design/LoadingScreen.js");
+/* harmony import */ var _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../design/LoadingStage.js */ "./src/design/LoadingStage.js");
 
 
 
@@ -3443,17 +3443,17 @@ __webpack_require__.r(__webpack_exports__);
 const loadingPageName = "loadingPage";
 /**
  * A main app class, <br>
- * Holder class for ScreenPage,<br>
- * can register new ScreenPages,<br>
+ * Holder class for GameStage,<br>
+ * can register new GameStages,<br>
  * init and preload data for them,<br>
  */
 class System {
     /**
-     * @type {Map<string, ScreenPage>}
+     * @type {Map<string, GameStage>}
      */
-    #registeredPages;
+    #registeredStages;
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     #system;
     /**
@@ -3464,40 +3464,40 @@ class System {
         if (!systemSettings) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
         }
-        this.#registeredPages = new Map();
+        this.#registeredStages = new Map();
 
         if (!canvasContainer) {
             canvasContainer = document.createElement("div");
             document.body.appendChild(canvasContainer);
         }
 
-        this.#system = new _SystemInterface_js__WEBPACK_IMPORTED_MODULE_3__.SystemInterface(systemSettings, this.#registeredPages, canvasContainer);
+        this.#system = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(systemSettings, this.#registeredStages, canvasContainer);
 
-        this.registerPage(loadingPageName, _design_LoadingScreen_js__WEBPACK_IMPORTED_MODULE_5__.LoadingScreen);
+        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__.LoadingStage);
 
-        this.#system.loader.addEventListener("loadstart", this.#loadStart);
-        this.#system.loader.addEventListener("progress", this.#loadProgress);
-        this.#system.loader.addEventListener("load", this.#loadComplete);
+        this.#system.iLoader.addEventListener("loadstart", this.#loadStart);
+        this.#system.iLoader.addEventListener("progress", this.#loadProgress);
+        this.#system.iLoader.addEventListener("load", this.#loadComplete);
     }
 
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     get system() {
         return this.#system;
     }
 
     /**
-     * A main factory method for create ScreenPage instances, <br>
-     * register them in a System and call ScreenPage.register() stage
+     * A main factory method for create GameStage instances, <br>
+     * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {ScreenPage} screen 
+     * @param {GameStage} screen 
      */
-    registerPage(screenPageName, screen) {
+    registerStage(screenPageName, screen) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
-            const page = new screen();
-            page._register(screenPageName, this.system);
-            this.#registeredPages.set(screenPageName, page);
+            const stage = new screen();
+            stage._register(screenPageName, this.system);
+            this.#registeredStages.set(screenPageName, stage);
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
         }
@@ -3508,37 +3508,37 @@ class System {
      * @return {Promise<void>}
      */
     preloadAllData() {
-        return this.#system.loader.preload();
+        return this.#system.iLoader.preload();
     }
 
     #loadStart = (event) => {
-        this.#system.startScreenPage(loadingPageName, {total: event.total});
+        this.#system.startGameStage(loadingPageName, {total: event.total});
     };
 
     #loadProgress = (event) => {
         const uploaded = event.loaded,
             left = event.total,
-            loadingPage = this.#registeredPages.get(loadingPageName);
+            loadingPage = this.#registeredStages.get(loadingPageName);
             
         loadingPage._progress(uploaded, left);
     };
 
     #loadComplete = () => {
-        this.#system.stopScreenPage(loadingPageName);
+        this.#system.stopGameStage(loadingPageName);
     };
 }
 
 /***/ }),
 
-/***/ "./src/base/SystemAudioInterface.js":
+/***/ "./src/base/ISystemAudio.js":
 /*!******************************************!*\
-  !*** ./src/base/SystemAudioInterface.js ***!
+  !*** ./src/base/ISystemAudio.js ***!
   \******************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "SystemAudioInterface": () => (/* binding */ SystemAudioInterface)
+/* harmony export */   "ISystemAudio": () => (/* binding */ ISystemAudio)
 /* harmony export */ });
 /* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
@@ -3551,11 +3551,11 @@ __webpack_require__.r(__webpack_exports__);
  * An audio interface, <br>
  * controls all application audio,<br>
  * holds and retrieves audio, changes volume<br> 
- * accessible via ScreenPage.audio
- * @see {@link ScreenPage} a part of ScreenPage
+ * accessible via GameStage.audio
+ * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
-class SystemAudioInterface {
+class ISystemAudio {
     #volume = 0.5;
     #audio = new Map();
     /**
@@ -3563,8 +3563,8 @@ class SystemAudioInterface {
      */
     #loaderReference;
 
-    constructor(loader) {
-        this.#loaderReference = loader;
+    constructor(iLoader) {
+        this.#loaderReference = iLoader;
     }
 
     /**
@@ -3640,26 +3640,26 @@ class SystemAudioInterface {
 
 /***/ }),
 
-/***/ "./src/base/SystemInterface.js":
+/***/ "./src/base/ISystem.js":
 /*!*************************************!*\
-  !*** ./src/base/SystemInterface.js ***!
+  !*** ./src/base/ISystem.js ***!
   \*************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "SystemInterface": () => (/* binding */ SystemInterface)
+/* harmony export */   "ISystem": () => (/* binding */ ISystem)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _SystemSocketConnection_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./SystemSocketConnection.js */ "./src/base/SystemSocketConnection.js");
-/* harmony import */ var _SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./SystemAudioInterface.js */ "./src/base/SystemAudioInterface.js");
+/* harmony import */ var _SystemSocketConnection_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./INetwork.js */ "./src/base/INetwork.js");
+/* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
 /* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
 /* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
-/* harmony import */ var _ScreenPage_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ScreenPage.js */ "./src/base/ScreenPage.js");
-/* harmony import */ var _RenderInterface_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./RenderInterface.js */ "./src/base/RenderInterface.js");
-/* harmony import */ var _ExtensionInterface_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./ExtensionInterface.js */ "./src/base/ExtensionInterface.js");
+/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
+/* harmony import */ var _RenderEngine_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./IRender.js */ "./src/base/IRender.js");
+/* harmony import */ var _IExtension_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./IExtension.js */ "./src/base/IExtension.js");
 
 
 
@@ -3673,48 +3673,48 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * Public interface for a System<br>
- * Can be used to start/stop ScreenPage render, <br>
- * And provides access to SystemSettings, SystemSocketConnection and SystemAudioInterface <br>
- * RenderInterface, DrawObjectFactory, AssetsManager and external modules
- * accessible via ScreenPage.system and System.system
+ * Can be used to start/stop GameStage render, <br>
+ * And provides access to SystemSettings, INetwork and ISystemAudio <br>
+ * IRender, DrawObjectFactory, AssetsManager and external modules
+ * accessible via GameStage.system and System.system
  * @see {@link System} a part of System class instance
- * @see {@link ScreenPage} a part of ScreenPage class instance
+ * @see {@link GameStage} a part of GameStage class instance
  */
-class SystemInterface {
+class ISystem {
     /**
      * @type {Object}
      */
     #systemSettings;
     /**
-     * @type {ExtensionInterface}
+     * @type {IExtension}
      */
-    #extensionInterface;
+    #iExtension;
     /**
-     * @type {SystemSocketConnection}
+     * @type {INetwork}
      */
     #systemServerConnection;
     /**
-     * @type {SystemAudioInterface}
+     * @type {ISystemAudio}
      */
     #systemAudioInterface;
     /**
      * @type {AssetsManager}
      */
-    #loader = new _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__["default"]();
+    #iLoader = new _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__["default"]();
     /**
-     * @type {RenderInterface}
+     * @type {IRender}
      */
-    #renderInterface;
+    #iRender;
     /**
      * @type {DrawObjectFactory}
      */
-    #drawObjectFactory = new _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__.DrawObjectFactory(this.#loader);
+    #drawObjectFactory = new _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__.DrawObjectFactory(this.#iLoader);
     
     #modules = new Map();
     /**
-     * @type {Map<string, ScreenPage>}
+     * @type {Map<string, GameStage>}
      */
-    #registeredPagesReference;
+    #registeredStagesReference;
     /**
      * @type {EventTarget}
      */
@@ -3722,19 +3722,19 @@ class SystemInterface {
     /**
      * @hideconstructor
      */
-    constructor(systemSettings, registeredPages, canvasContainer) {
+    constructor(systemSettings, registeredStages, canvasContainer) {
         if (!systemSettings) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
         }
         this.#systemSettings = systemSettings;
-        this.#extensionInterface = new _ExtensionInterface_js__WEBPACK_IMPORTED_MODULE_9__.ExtensionInterface(this);
-        this.#systemAudioInterface = new _SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_3__.SystemAudioInterface(this.loader);
-        this.#systemServerConnection = new _SystemSocketConnection_js__WEBPACK_IMPORTED_MODULE_2__.SystemSocketConnection(systemSettings);
-        this.#renderInterface = new _RenderInterface_js__WEBPACK_IMPORTED_MODULE_8__.RenderInterface(this.systemSettings, this.loader, canvasContainer);
-        this.#registeredPagesReference = registeredPages;
+        this.#iExtension = new _IExtension_js__WEBPACK_IMPORTED_MODULE_9__.IExtension(this);
+        this.#systemAudioInterface = new _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio(this.iLoader);
+        this.#systemServerConnection = new _SystemSocketConnection_js__WEBPACK_IMPORTED_MODULE_2__.INetwork(systemSettings);
+        this.#iRender = new _RenderEngine_js__WEBPACK_IMPORTED_MODULE_8__.IRender(this.systemSettings, this.iLoader, canvasContainer);
+        this.#registeredStagesReference = registeredStages;
         // broadcast render events
-        this.#renderInterface.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START));
-        this.#renderInterface.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END));
+        this.#iRender.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START));
+        this.#iRender.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END));
     }
 
     /**
@@ -3769,7 +3769,7 @@ class SystemInterface {
     };
     
     /**
-     * @type { SystemSocketConnection }
+     * @type { INetwork }
      */
     get network () {
         return this.#systemServerConnection;
@@ -3783,7 +3783,7 @@ class SystemInterface {
     }
 
     /**
-     * @type { SystemAudioInterface }
+     * @type { ISystemAudio }
      */
     get audio() {
         return this.#systemAudioInterface;
@@ -3792,8 +3792,8 @@ class SystemInterface {
     /**
      * @type {AssetsManager}
      */
-    get loader() {
-        return this.#loader;
+    get iLoader() {
+        return this.#iLoader;
     }
 
     /**
@@ -3803,12 +3803,12 @@ class SystemInterface {
         return this.#drawObjectFactory;
     }
 
-    get renderInterface() {
-        return this.#renderInterface;
+    get iRender() {
+        return this.#iRender;
     }
 
-    get extensionInterface() {
-        return this.#extensionInterface;
+    get iExtension() {
+        return this.#iExtension;
     }
     /**
      * @type {Map<string, Object>}
@@ -3840,18 +3840,18 @@ class SystemInterface {
      * @param {string} screenPageName
      * @param {Object} [options] - options
      */
-    startScreenPage = (screenPageName, options) => {
-        if (this.#registeredPagesReference.has(screenPageName)) {
-            const page = this.#registeredPagesReference.get(screenPageName),
-                pageData = page.screenPageData;
+    startGameStage = (screenPageName, options) => {
+        if (this.#registeredStagesReference.has(screenPageName)) {
+            const stage = this.#registeredStagesReference.get(screenPageName),
+                pageData = stage.stageData;
             this.#drawObjectFactory._attachPageData(pageData);
-            if (page.isInitiated === false) {
-                page._init();
+            if (stage.isInitiated === false) {
+                stage._init();
             }
-            //page._attachCanvasToContainer(this.#canvasContainer);
-            page._start(options);
+            //stage._attachCanvasToContainer(this.#canvasContainer);
+            stage._start(options);
             this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.START_PAGE);
-            this.#renderInterface._startRender(pageData);
+            this.#iRender._startRender(pageData);
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
         }
@@ -3861,12 +3861,12 @@ class SystemInterface {
      * @method
      * @param {string} screenPageName
      */
-    stopScreenPage = (screenPageName) => {
-        if (this.#registeredPagesReference.has(screenPageName)) {
+    stopGameStage = (screenPageName) => {
+        if (this.#registeredStagesReference.has(screenPageName)) {
             this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.STOP_PAGE);
             this.drawObjectFactory._detachPageData();
-            this.#renderInterface._stopRender();
-            this.#registeredPagesReference.get(screenPageName)._stop();
+            this.#iRender._stopRender();
+            this.#registeredStagesReference.get(screenPageName)._stop();
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
         }
@@ -3875,15 +3875,15 @@ class SystemInterface {
 
 /***/ }),
 
-/***/ "./src/base/SystemSocketConnection.js":
+/***/ "./src/base/INetwork.js":
 /*!********************************************!*\
-  !*** ./src/base/SystemSocketConnection.js ***!
+  !*** ./src/base/INetwork.js ***!
   \********************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "SystemSocketConnection": () => (/* binding */ SystemSocketConnection)
+/* harmony export */   "INetwork": () => (/* binding */ INetwork)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
@@ -3897,7 +3897,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Represents Socket connection
  */
-class SystemSocketConnection extends EventTarget {
+class INetwork extends EventTarget {
     #systemSettings;
     #socket;
 
@@ -4026,15 +4026,15 @@ class SystemSocketConnection extends EventTarget {
 
 /***/ }),
 
-/***/ "./src/base/TiledRenderLayer.js":
+/***/ "./src/base/DrawTiledLayer.js":
 /*!**************************************!*\
-  !*** ./src/base/TiledRenderLayer.js ***!
+  !*** ./src/base/DrawTiledLayer.js ***!
   \**************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "TiledRenderLayer": () => (/* binding */ TiledRenderLayer)
+/* harmony export */   "DrawTiledLayer": () => (/* binding */ DrawTiledLayer)
 /* harmony export */ });
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
 /* harmony import */ var _WebGl_TextureStorage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./WebGl/TextureStorage.js */ "./src/base/WebGl/TextureStorage.js");
@@ -4044,7 +4044,7 @@ __webpack_require__.r(__webpack_exports__);
  * A render object represents a layer from tiled editor
  * @see {@link DrawObjectFactory} should be created with factory method
  */
-class TiledRenderLayer {
+class DrawTiledLayer {
     #layerKey;
     #tileMapKey;
     #tilemap;
@@ -4115,7 +4115,7 @@ class TiledRenderLayer {
     }
     /**
      * Should the layer borders used as boundaries, or not
-     * Can be set in ScreenPage.addRenderLayer() method.
+     * Can be set in GameStage.addRenderLayer() method.
      * @type {boolean}
      */
     get setBoundaries() {
@@ -4426,7 +4426,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../constants.js */ "./src/constants.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../utils.js */ "./src/utils.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _ScreenPageData_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../ScreenPageData.js */ "./src/base/ScreenPageData.js");
+/* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../GameStageData.js */ "./src/base/GameStageData.js");
 /* harmony import */ var _TextureStorage_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./TextureStorage.js */ "./src/base/WebGl/TextureStorage.js");
 
 
@@ -5227,8 +5227,8 @@ class WebGlEngine {
 
     /**
      * 
-     * @param {TiledRenderLayer} renderLayer 
-     * @param {ScreenPageData} pageData
+     * @param {DrawTiledLayer} renderLayer 
+     * @param {GameStageData} pageData
      * @returns {Promise<Array<Array>>}
      */
     #prepareRenderLayer(renderLayer, pageData) {
@@ -5526,7 +5526,7 @@ class WebGlEngine {
             }
             for (let i = 0; i <= tilesets.length - 1; i++) {
                 const tileset = tilesets[i].data,
-                    //tilesetImages = this.loader.getTilesetImageArray(tileset.name),
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
                     
                     tilewidth = tileset.tilewidth,
                     tileheight = tileset.tileheight,
@@ -5599,8 +5599,8 @@ class WebGlEngine {
 
     /**
      * 
-     * @param {TiledRenderLayer} renderLayer 
-     * @param {ScreenPageData} pageData
+     * @param {DrawTiledLayer} renderLayer 
+     * @param {GameStageData} pageData
      * @returns {Promise<void>}
      */
     #prepareRenderLayerWM = (renderLayer, pageData) => {
@@ -5614,8 +5614,8 @@ class WebGlEngine {
                 offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
                 setBoundaries = false, //renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions;
-                //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
-                //[ xOffset, yOffset ] = this.screenPageData.worldOffset;
+                //[ canvasW, canvasH ] = this.stageData.drawDimensions,
+                //[ xOffset, yOffset ] = this.stageData.worldOffset;
             const tileImagesData = [];
             //clear data
             //this.layerDataFloat32.fill(0);
@@ -5627,7 +5627,7 @@ class WebGlEngine {
             
             for (let i = 0; i < tilesets.length; i++) {
                 const tileset = tilesets[i].data,
-                    //tilesetImages = this.loader.getTilesetImageArray(tileset.name),
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
                     tilewidth = tileset.tilewidth,
                     tileheight = tileset.tileheight,
                     //atlasRows = tileset.imageheight / tileheight,
@@ -6016,29 +6016,29 @@ const WARNING_CODES =  {
 
 /***/ }),
 
-/***/ "./src/design/LoadingScreen.js":
+/***/ "./src/design/LoadingStage.js":
 /*!*************************************!*\
-  !*** ./src/design/LoadingScreen.js ***!
+  !*** ./src/design/LoadingStage.js ***!
   \*************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "LoadingScreen": () => (/* binding */ LoadingScreen)
+/* harmony export */   "LoadingStage": () => (/* binding */ LoadingStage)
 /* harmony export */ });
-/* harmony import */ var _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../base/ScreenPage.js */ "./src/base/ScreenPage.js");
+/* harmony import */ var _base_GameStage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../base/GameStage.js */ "./src/base/GameStage.js");
 
 
-class LoadingScreen extends _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__.ScreenPage {
+class LoadingStage extends _base_GameStage_js__WEBPACK_IMPORTED_MODULE_0__.GameStage {
     #total = 0;
     #loaded = 0;
     #barWidth = 0;
     register() {
-        //this.loader.addImage(logoKey, "./images/icon.png");
+        //this.iLoader.addImage(logoKey, "./images/icon.png");
     }
 
     init() {
-        const [w, h] = this.screenPageData.canvasDimensions,
+        const [w, h] = this.stageData.canvasDimensions,
             barWidth = w/3,
             barHeight = 20;
         //this.logo = this.draw.image(w/2, h/2, 300, 200, logoKey);
@@ -6062,7 +6062,7 @@ class LoadingScreen extends _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_0__.Scr
     }
 
     // a workaround for checking upload progress before render
-    get loader() {
+    get iLoader() {
         return ({filesWaitingForUpload:0});
     }
 } 
@@ -6080,16 +6080,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "CONST": () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_6__.CONST),
 /* harmony export */   "DrawImageObject": () => (/* reexport safe */ _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawImageObject),
 /* harmony export */   "Primitives": () => (/* reexport module object */ _base_Primitives_js__WEBPACK_IMPORTED_MODULE_4__),
-/* harmony export */   "ScreenPage": () => (/* reexport safe */ _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__.ScreenPage),
+/* harmony export */   "GameStage": () => (/* reexport safe */ _base_GameStage_js__WEBPACK_IMPORTED_MODULE_1__.GameStage),
 /* harmony export */   "System": () => (/* reexport safe */ _base_System_js__WEBPACK_IMPORTED_MODULE_0__.System),
-/* harmony export */   "SystemAudioInterface": () => (/* reexport safe */ _base_SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_3__.SystemAudioInterface),
+/* harmony export */   "ISystemAudio": () => (/* reexport safe */ _base_ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio),
 /* harmony export */   "SystemSettings": () => (/* reexport safe */ _configs_js__WEBPACK_IMPORTED_MODULE_5__.SystemSettings),
 /* harmony export */   "utils": () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_7__)
 /* harmony export */ });
 /* harmony import */ var _base_System_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/System.js */ "./src/base/System.js");
-/* harmony import */ var _base_ScreenPage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./base/ScreenPage.js */ "./src/base/ScreenPage.js");
+/* harmony import */ var _base_GameStage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./base/GameStage.js */ "./src/base/GameStage.js");
 /* harmony import */ var _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./base/DrawImageObject.js */ "./src/base/DrawImageObject.js");
-/* harmony import */ var _base_SystemAudioInterface_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./base/SystemAudioInterface.js */ "./src/base/SystemAudioInterface.js");
+/* harmony import */ var _base_ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./base/ISystemAudio.js */ "./src/base/ISystemAudio.js");
 /* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./configs.js */ "./src/configs.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
@@ -6631,12 +6631,12 @@ function verticesArrayToArrayNumbers(array) {
 /******/ var __webpack_exports__CONST = __webpack_exports__.CONST;
 /******/ var __webpack_exports__DrawImageObject = __webpack_exports__.DrawImageObject;
 /******/ var __webpack_exports__Primitives = __webpack_exports__.Primitives;
-/******/ var __webpack_exports__ScreenPage = __webpack_exports__.ScreenPage;
+/******/ var __webpack_exports__GameStage = __webpack_exports__.GameStage;
 /******/ var __webpack_exports__System = __webpack_exports__.System;
-/******/ var __webpack_exports__SystemAudioInterface = __webpack_exports__.SystemAudioInterface;
+/******/ var __webpack_exports__ISystemAudio = __webpack_exports__.ISystemAudio;
 /******/ var __webpack_exports__SystemSettings = __webpack_exports__.SystemSettings;
 /******/ var __webpack_exports__utils = __webpack_exports__.utils;
-/******/ export { __webpack_exports__CONST as CONST, __webpack_exports__DrawImageObject as DrawImageObject, __webpack_exports__Primitives as Primitives, __webpack_exports__ScreenPage as ScreenPage, __webpack_exports__System as System, __webpack_exports__SystemAudioInterface as SystemAudioInterface, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
+/******/ export { __webpack_exports__CONST as CONST, __webpack_exports__DrawImageObject as DrawImageObject, __webpack_exports__Primitives as Primitives, __webpack_exports__GameStage as GameStage, __webpack_exports__System as System, __webpack_exports__ISystemAudio as ISystemAudio, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
 /******/ 
 
 //# sourceMappingURL=index.es6.js.map

@@ -43,22 +43,22 @@ npm start
 import { System, SystemSettings } from "/node_modules/jsge/src/index.js";
 const app = new System(SystemSettings, document.getElementById("game_map"));
 ```
-4. Create you game pages using classes extended from {@link ScreenPage}:
+4. Create you game pages using classes extended from {@link GameStage}:
 ```
-import { ..., ScreenPage } from "/node_modules/jsge/src/index.js";
+import { ..., GameStage } from "/node_modules/jsge/src/index.js";
 
-class CustomPage extends ScreenPage {
+class CustomPage extends GameStage {
 }
 ```
-5. Add image passing image key and path to [CustomPage.loader]{@tutorial assets_manager}.addImage() in the page [register() stage]{@tutorial screen_pages_stages}:
+5. Add image passing image key and path to [CustomPage.iLoader]{@tutorial assets_manager}.addImage() in the stage [register() stage]{@tutorial stages_lifecycle}:
 ```
-class CustomPage extends ScreenPage {
+class CustomPage extends GameStage {
     register() {
-        this.loader.addImage("image_key", "/images.jpg");
+        this.iLoader.addImage("image_key", "/images.jpg");
     }
 }
 ```
-6. Create an DrawImageObject and add it to the page, use image key, added on step 5:
+6. Create an DrawImageObject and add it to the stage, use image key, added on step 5:
 ```
         ...
         this.player = this.draw.image(100, 200, 16, 28, "image_key", 0);
@@ -67,16 +67,16 @@ class CustomPage extends ScreenPage {
 ```
 7. Register pages in the application:
 ```
-app.registerPage("CustomPageKey", CustomPage);
+app.registerStage("CustomPageKey", CustomPage);
 ```
 8. Run [preloadAllData()]{@link System#preloadAllData} to load all data you added on step 5:
 ```
 app.preloadAllData().then(() => {
 ```
-9. After preloadAllData() resolves, start the page rendering with app.system.startScreenPage(pageKey):
+9. After preloadAllData() resolves, start the stage rendering with app.iSystem.startGameStage(pageKey):
 ```
 app.preloadAllData().then(() => {
-    app.system.startScreenPage("CustomPageKey");
+    app.iSystem.startGameStage("CustomPageKey");
 });
 ```
 10. Now visit http://127.0.0.1:9000

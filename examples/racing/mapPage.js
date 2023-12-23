@@ -1,4 +1,4 @@
-import { ScreenPage, CONST } from "../../src/index.js";
+import { GameStage, CONST } from "../../src/index.js";
 import { utils } from "../../src/index.js";
 
 const BLACK_CAR_KEY = "bkc",
@@ -9,23 +9,23 @@ const AUDIO_GEAR_UP = "gear_up",
     AUDIO_GEAR_DOWN = "gear_down",
     AUDIO_CAR_CRUSH = "car_crush";
 
-export class MapPage extends ScreenPage {
+export class MapPage extends GameStage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
 
     register() {
         this.tilemapKey = "racingGameMapTileset";
-        this.loader.addTileMap(this.tilemapKey, "./racing/map.tmj");
-        this.loader.addImage(BLACK_CAR_KEY, "./racing/car_black_small_12.png");
-        this.loader.addAudio(AUDIO_GEAR_UP, "./racing/audio/engine_up.mp3");
-        this.loader.addAudio(AUDIO_CAR_CRUSH, "./racing/audio/car_crash.mp3");
-        this.loader.addAudio(AUDIO_GEAR_DOWN, "./racing/audio/car_rearmove.mp3");
+        this.iLoader.addTileMap(this.tilemapKey, "./racing/map.tmj");
+        this.iLoader.addImage(BLACK_CAR_KEY, "./racing/car_black_small_12.png");
+        this.iLoader.addAudio(AUDIO_GEAR_UP, "./racing/audio/engine_up.mp3");
+        this.iLoader.addAudio(AUDIO_CAR_CRUSH, "./racing/audio/car_crash.mp3");
+        this.iLoader.addAudio(AUDIO_GEAR_DOWN, "./racing/audio/car_rearmove.mp3");
 
         this.speed = 0;
         this.movingInterval = null;
     }
 
     init() {
-        const [w, h] = this.screenPageData.canvasDimensions;
+        const [w, h] = this.stageData.canvasDimensions;
         
         this.draw.tiledLayer("ground", this.tilemapKey, true);
         this.draw.tiledLayer("ground_b", this.tilemapKey);
@@ -36,9 +36,9 @@ export class MapPage extends ScreenPage {
 
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
 
-        this.audioGearUp = this.loader.getAudio(AUDIO_GEAR_UP);
-        this.audioCarCrush = this.loader.getAudio(AUDIO_CAR_CRUSH);
-        this.audioCarMoveBackward = this.loader.getAudio(AUDIO_GEAR_DOWN);
+        this.audioGearUp = this.iLoader.getAudio(AUDIO_GEAR_UP);
+        this.audioCarCrush = this.iLoader.getAudio(AUDIO_CAR_CRUSH);
+        this.audioCarMoveBackward = this.iLoader.getAudio(AUDIO_GEAR_DOWN);
     }
 
     start() {
@@ -179,8 +179,8 @@ export class MapPage extends ScreenPage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.system.stopScreenPage("racing");
-            this.system.startScreenPage("start");
+            this.system.stopGameStage("racing");
+            this.system.startGameStage("start");
         }
     }
 }

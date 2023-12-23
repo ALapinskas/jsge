@@ -1,7 +1,7 @@
 Tilemaps(.tmg files) is a good way to draw and organize the system levels, they could be created by Tiled editor. 
 Loading them is now the same as the other objects:
 1. [Add and load a tilemap]{@tutorial assets_manager}
-2. Create a draw object in the init() or start() [stage]{@tutorial screen_pages_stages}:
+2. Create a draw object in the init() or start() [stage]{@tutorial stages_lifecycle}:
 ```
 init() {
     this.tiledLayer = this.draw.tiledLayer("tilemap_layer_key", "tilemap_key", setBoundaries, shapeMask);
@@ -29,11 +29,11 @@ And you want that tiles to be unreachable by the player, or to detect the collis
 ```
 * This boundaries could be then retrieved:
 ```
-this.screenPageData.getBoundaries()
+this.stageData.getBoundaries()
 ```
-* Also, [page.isBoundariesCollision()]{@link ScreenPage#isBoundariesCollision} method will use this boundaries for collisions calculations. For example the code below will move fireball only if no collision will happen:
+* Also, [stage.isBoundariesCollision()]{@link GameStage#isBoundariesCollision} method will use this boundaries for collisions calculations. For example the code below will move fireball only if no collision will happen:
 ```
-if (!page.isBoundariesCollision(newCoordX, newCoordY, fireball)) {
+if (!stage.isBoundariesCollision(newCoordX, newCoordY, fireball)) {
     fireball.x = newCoordX;
     fireball.y = newCoordY;
 }

@@ -23,7 +23,7 @@ export const SystemSettings = {
         },
         render: {
             minCircleTime: 16, //ms which is ~60 FPS
-            circleTimeCalc: {
+            cyclesTimeCalc: {
                 check: CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES,
                 averageFPStime: 10000
             },

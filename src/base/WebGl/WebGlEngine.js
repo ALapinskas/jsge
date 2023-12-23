@@ -1,7 +1,7 @@
 import { ERROR_CODES, CONST, WARNING_CODES } from "../../constants.js";
 import { crossProduct } from "../../utils.js";
 import { Exception, Warning } from "../Exception.js";
-import { ScreenPageData } from "../ScreenPageData.js";
+import { GameStageData } from "../GameStageData.js";
 import { TextureStorage } from "./TextureStorage.js";
 
 export class WebGlEngine {
@@ -797,8 +797,8 @@ export class WebGlEngine {
 
     /**
      * 
-     * @param {TiledRenderLayer} renderLayer 
-     * @param {ScreenPageData} pageData
+     * @param {DrawTiledLayer} renderLayer 
+     * @param {GameStageData} pageData
      * @returns {Promise<Array<Array>>}
      */
     #prepareRenderLayer(renderLayer, pageData) {
@@ -871,7 +871,7 @@ export class WebGlEngine {
                         Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                         pageData._setWorldDimensions(worldW, worldH);
                     }
-                    // boundaries cleanups every draw circle, we need to set world boundaries again
+                    // boundaries cleanups every draw cycles, we need to set world boundaries again
                     if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                         pageData._setMapBoundaries();
                     }
@@ -1096,7 +1096,7 @@ export class WebGlEngine {
             }
             for (let i = 0; i <= tilesets.length - 1; i++) {
                 const tileset = tilesets[i].data,
-                    //tilesetImages = this.loader.getTilesetImageArray(tileset.name),
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
                     
                     tilewidth = tileset.tilewidth,
                     tileheight = tileset.tileheight,
@@ -1169,8 +1169,8 @@ export class WebGlEngine {
 
     /**
      * 
-     * @param {TiledRenderLayer} renderLayer 
-     * @param {ScreenPageData} pageData
+     * @param {DrawTiledLayer} renderLayer 
+     * @param {GameStageData} pageData
      * @returns {Promise<void>}
      */
     #prepareRenderLayerWM = (renderLayer, pageData) => {
@@ -1184,8 +1184,8 @@ export class WebGlEngine {
                 offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
                 setBoundaries = false, //renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions;
-                //[ canvasW, canvasH ] = this.screenPageData.drawDimensions,
-                //[ xOffset, yOffset ] = this.screenPageData.worldOffset;
+                //[ canvasW, canvasH ] = this.stageData.drawDimensions,
+                //[ xOffset, yOffset ] = this.stageData.worldOffset;
             const tileImagesData = [];
             //clear data
             //this.layerDataFloat32.fill(0);
@@ -1197,7 +1197,7 @@ export class WebGlEngine {
             
             for (let i = 0; i < tilesets.length; i++) {
                 const tileset = tilesets[i].data,
-                    //tilesetImages = this.loader.getTilesetImageArray(tileset.name),
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
                     tilewidth = tileset.tilewidth,
                     tileheight = tileset.tileheight,
                     //atlasRows = tileset.imageheight / tileheight,
@@ -1229,7 +1229,7 @@ export class WebGlEngine {
                 //    this._setCanvasSize(worldW, worldH);
                 //}
 
-                // boundaries cleanups every draw circle, we need to set world boundaries again
+                // boundaries cleanups every draw cycles, we need to set world boundaries again
                 if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                     pageData._setMapBoundaries();
                 }

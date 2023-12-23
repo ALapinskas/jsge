@@ -1,10 +1,7 @@
 import { CONST, ERROR_CODES, WARNING_CODES } from "../constants.js";
-import { ScreenPageData } from "./ScreenPageData.js";
+import { GameStageData } from "./GameStageData.js";
 import { Exception, Warning } from "./Exception.js";
-import { Logger } from "./Logger.js";
 import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
-import { TiledRenderLayer } from "./TiledRenderLayer.js";
-import { RenderInterface } from "./RenderInterface.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { DrawCircleObject } from "./DrawCircleObject.js";
 import { DrawConusObject } from "./DrawConusObject.js";
@@ -13,23 +10,21 @@ import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
 import { DrawRectObject } from "./DrawRectObject.js";
 import { DrawTextObject } from "./DrawTextObject.js";
-import { SystemInterface } from "./SystemInterface.js";
-import { SystemAudioInterface } from "./SystemAudioInterface.js";
+import { ISystem } from "./ISystem.js";
+import { ISystemAudio } from "./ISystemAudio.js";
 import { SystemSettings } from "../configs.js";
 import { isPointLineIntersect, isPolygonLineIntersect, angle_2points, isCircleLineIntersect } from "../utils.js";
 import { Vector } from "./Primitives.js";
-import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
- * Represents the page of the game,<br>
- * Register and holds CanvasInterface.<br>
+ * Represents the stage of the game,<br>
  * Contains pages logic.<br>
- * Instances should be created and registered with System.registerPage() factory method
+ * Instances should be created and registered with System.registerStage() factory method
  * 
  * @see {@link System} instances of this class holds by the System class
  * @hideconstructor
  */
-export class ScreenPage {
+export class GameStage {
     /**
      * @type {string}
      */
@@ -43,23 +38,23 @@ export class ScreenPage {
      */
     #isActive;
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     #systemReference;
     /**
-     * @type {ScreenPageData}
+     * @type {GameStageData}
      */
-    #screenPageData;
+    #stageData;
 
     constructor() {
         this.#isActive = false;
-        this.#screenPageData = new ScreenPageData();
+        this.#stageData = new GameStageData();
     }
 
     /**
      * Register stage
      * @param {string} name
-     * @param {SystemInterface} system 
+     * @param {ISystem} system 
      * @ignore
      */
     _register(name, system) {
@@ -80,12 +75,12 @@ export class ScreenPage {
     }
 
     /**
-     * @tutorial screen_pages_stages
+     * @tutorial stages_lifecycle
      * Custom logic for register stage
      */
     register() {}
     /**
-     * @tutorial screen_pages_stages
+     * @tutorial stages_lifecycle
      * Custom logic for init stage
      */
     init() {}
@@ -95,7 +90,7 @@ export class ScreenPage {
      */
     start(options) {}
     /**
-     * @tutorial screen_pages_stages
+     * @tutorial stages_lifecycle
      * Custom logic for stop stage
      */
     stop() {}
@@ -108,8 +103,8 @@ export class ScreenPage {
      * @tutorial assets_manager
      * @type {AssetsManager}
      */
-    get loader() {
-        return this.#systemReference.loader;
+    get iLoader() {
+        return this.#systemReference.iLoader;
     }
 
     /**
@@ -120,53 +115,26 @@ export class ScreenPage {
     }
 
     /**
-     * Creates new canvas layer
-     * and set it to the #views
-     * @param {string} name
-     * @param {boolean} [isOffsetTurnedOff = false] - determines if offset is affected on this layer or not
-     * @returns {CanvasView}
-     */
-    createCanvasView = (name, isOffsetTurnedOff = false) => {
-        if (name && name.trim().length > 0) {
-            console.warn("createCanvasView is deprecated. For layer masks use .setMask(drawObject).");
-            //const newView = new CanvasView(name, this.#system.systemSettings, this.#screenPageData, this.loader, this.system.webGlInterface, isOffsetTurnedOff);
-            //this.#views.set(name, newView);
-            return {};//newView;
-        } else
-            Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
-    };
-
-    /**
      * Attach all canvas elements from the #views to container
      * @param {HTMLElement} container
      * @ignore
      */
     _attachCanvasToContainer(container) {
         this.#attachElementToContainer(this.canvasHtmlElement, container);
-        //for (const view of this.#views.values()) {
-        //    this.#attachElementToContainer(view.canvas, container);
-        //}
     }
 
     /**
-     * Add render object to the view
-     * @param {string} canvasKey - deprecated parameter
+     * Add render object to the stageData
      * @param { DrawConusObject | DrawImageObject | 
      *          DrawLineObject | DrawPolygonObject | 
      *          DrawRectObject | DrawCircleObject | 
      *          DrawTextObject } renderObject 
      */
-    addRenderObject = (canvasKey, renderObject) => {
-        //a small workaround for 
-        if (!renderObject) {
-            renderObject = canvasKey;
-        } else {
-            Warning(WARNING_CODES.DEPRECATED_PARAMETER, "canvasKey parameter is deprecated and no longer needed");
-        }
-        const data = this.screenPageData,
+    addRenderObject = (renderObject) => {
+        const data = this.stageData,
             isDataAlreadyAdded = data.renderObjects.indexOf(renderObject) !== -1;
         if (isDataAlreadyAdded) {
-            Warning(WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "page.draw methods add objects to pageData, no need to call addRenderObject");
+            Warning(WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "stage.draw methods add objects to pageData, no need to call addRenderObject");
         } else {
             data._renderObject = renderObject;
             data._sortRenderObjectsBySortIndex(); 
@@ -174,33 +142,7 @@ export class ScreenPage {
     };
 
     /**
-     * Add render layer to the view
-     * @deprecated
-     * @param {string} canvasKey 
-     * @param {string} layerKey 
-     * @param {string} tileMapKey 
-     * @param {boolean=} setBoundaries 
-     * @param {DrawShapeObject=} shapeMask
-     */
-    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries, shapeMask) => {
-        if (!canvasKey) {
-            Exception(ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
-        //} else if (!this.#views.has(canvasKey)) {
-        //    Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
-        } else {
-            Warning(WARNING_CODES.DEPRECATED_PARAMETER, "page.addRenderLayer is deprecated and will be removed, use page.draw.tiledLayer instead");
-            //const view = this.#views.get(canvasKey);
-            const data = this.screenPageData;
-            data._renderObject = this.draw.tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
-            if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
-                data._enableMapBoundaries();
-            }
-            data._sortRenderObjectsBySortIndex();
-        }
-    };
-
-    /**
-     * Determines if this page render is Active or not
+     * Determines if this stage render is Active or not
      * @type {boolean}
      */
     get isActive() {
@@ -208,7 +150,7 @@ export class ScreenPage {
     }
 
     /**
-     * Determines if this page is initialized or not
+     * Determines if this stage is initialized or not
      * @type {boolean}
      */
     get isInitiated() {
@@ -216,7 +158,7 @@ export class ScreenPage {
     }
 
     /**
-     * Current page name
+     * Current stage name
      * @type {string}
      */
     get name () {
@@ -224,18 +166,10 @@ export class ScreenPage {
     }
 
     /**
-     * Determines if all added files was loaded or not
-     * @returns {boolean}
+     * @type {GameStageData}
      */
-    //isAllFilesLoaded = () => {
-    //   return this.loader.filesWaitingForUpload === 0;
-    //};
-
-    /**
-     * @type {ScreenPageData}
-     */
-    get screenPageData() {
-        return this.#screenPageData;
+    get stageData() {
+        return this.#stageData;
     }
 
     /**
@@ -246,14 +180,14 @@ export class ScreenPage {
     }
 
     /**
-     * @type {SystemAudioInterface}
+     * @type {ISystemAudio}
      */
     get audio() {
         return this.#systemReference.audio;
     }
 
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     get system() {
         return this.#systemReference;
@@ -284,55 +218,24 @@ export class ScreenPage {
     };
 
     /**
-     * 
-     */
-    //get renderInterface() {
-    //    return this.#renderInterface;
-    //}
-    
-    /**
-     * @deprecated
-     * @method
-     * @param {string} key 
-     * @returns {CanvasView | undefined}
-     */
-    getView = (key) => {
-        console.warn("ScreenPage.getView() is deprecated. Use ScreenPage.system.renderInterface for render, and ScreenPage.screenPageData for data instead");
-        return;
-        /*
-        const ctx = this.#views.get(key);
-        if (ctx) {
-            return this.#views.get(key);
-        } else {
-            Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", cannot find canvas with key " + key);
-        }*/
-    };
-
-    /**
-     * Start page render
+     * Start stage render
      * @param {Object=} options 
      * @ignore
      */
     _start(options) {
         this.start(options);
-        //this.#renderInterfaceReference = renderInterface;
         this.#isActive = true;
         window.addEventListener("resize", this._resize);
         this._resize();
-        //if (this.#views.size > 0) {
-        //requestAnimationFrame(this.#render);
-        //}
     }
 
     /**
-     * Stop page render
+     * Stop stage render
      * @ignore
      */
     _stop() {
         this.#isActive = false;
         window.removeEventListener("resize", this._resize);
-        //this.#removeCanvasFromDom();
-        //clearInterval(this.#fpsAverageCountTimer);
         this.stop();
     }
 
@@ -354,20 +257,11 @@ export class ScreenPage {
         container.appendChild(htmlElement);
     }
 
-    #removeCanvasFromDom() {
-        for (const canvas of document.getElementsByTagName("canvas")) {
-            canvas.remove();
-        }
-        //for (const view of this.#views.values()) {
-        //        document.getElementById(view.canvas.id).remove();
-        //    }
-    }
-
     #setWorldDimensions() {
         const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
             height = this.systemSettings.worldSize ? this.systemSettings.worldSize.height : 0;
             
-        this.screenPageData._setWorldDimensions(width, height);
+        this.stageData._setWorldDimensions(width, height);
     }
 
     //////////////////////////////////////////////////////
@@ -528,7 +422,7 @@ export class ScreenPage {
     }
 
     #isCircleToPolygonCollision(x, y, radius, mapObject) {
-        const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             mapObjXWithOffset = mapObject.x - mapOffsetX,
@@ -576,7 +470,7 @@ export class ScreenPage {
     }
 
     #isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject) {
-        const [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             mapObjXWithOffset = mapObject.x - mapOffsetX,
@@ -615,57 +509,14 @@ export class ScreenPage {
         const vector = new Vector(0, 0, vertex[0], vertex[1]),
             vertexAngle = angle_2points(0, 0, vertex[0], vertex[1]),
             len = vector.length;
-        //console.log("coords without rotation: ");
-        //console.log(x + vertex.x);
-        //console.log(y + vertex.y);
-        //console.log("len: ", len);
-        //console.log("angle: ", rotation);
+            
         const newX = centerX + (len * Math.cos(rotation + vertexAngle)),
             newY = centerY + (len * Math.sin(rotation + vertexAngle));
         return [newX, newY];
     }
-
-    #checkCollisions(renderObjects) {
-        const boundaries = this.screenPageData.getBoundaries(),
-            boundariesLen = boundaries.length,
-            objectsLen = renderObjects.length;
-        //console.log(this.screenPageData.worldOffset);
-        for (let i = 0; i < objectsLen; i++) {
-            const renderObject = renderObjects[i];
-            for (let j = 0; j < objectsLen; j++) {
-                if (i === j) {
-                    continue;
-                }
-                // const renderObjectCheck = renderObjects[j];
-                // check object - object collisions
-            }
-
-            for (let k = 0; k < boundariesLen; k+=1) {
-                const item = boundaries[k],
-                    object = {
-                        x1: item[0],
-                        y1: item[1],
-                        x2: item[2],
-                        y2: item[3]
-                    };
-                const objectBoundaries = object.boundaries;
-                if (objectBoundaries) {
-                    if (isPolygonLineIntersect(objectBoundaries, object)) {
-                        this.emit(CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
-                    }
-                } else {
-                    if (isPointLineIntersect({ x: renderObject.x, y: renderObject.y }, object)) {
-                        this.emit(CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
-                        //console.log("boundaries collision detected");
-                    }
-                }
-            }
-        }
-    }
-
     #isCircleToBoundariesCollision(x, y, r) {
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const mapObjects = this.stageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             len = mapObjects.length;
@@ -697,11 +548,8 @@ export class ScreenPage {
      * @returns {{x:number, y:number, p:number} | boolean}
      */
     #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
-        //console.log("angle: ", rotation);
-        //console.log("boundaries before calculations: ");
-        //console.log(polygon);
-        const mapObjects = this.screenPageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.screenPageData.worldOffset,
+        const mapObjects = this.stageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
@@ -730,10 +578,6 @@ export class ScreenPage {
     #setCanvasSize() {
         const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
             canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
-        this.screenPageData._setCanvasDimensions(canvasWidth, canvasHeight);
-        //this.#renderInterface.setCanvasSize(canvasWidth, canvasHeight)
-        //for (const view of this.#views.values()) {
-        //    view._setCanvasSize(canvasWidth, canvasHeight);
-        //}
+        this.stageData._setCanvasDimensions(canvasWidth, canvasHeight);
     }
 }

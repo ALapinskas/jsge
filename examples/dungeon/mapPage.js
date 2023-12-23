@@ -1,4 +1,4 @@
-import { ScreenPage, CONST, DrawImageObject, SystemAudioInterface } from "../../src/index.js";
+import { GameStage, CONST, DrawImageObject, ISystemAudio } from "../../src/index.js";
 import { utils } from "../../src/index.js";
 
 const angle_2points = utils.angle_2points;
@@ -9,7 +9,7 @@ const ANIMATION_FIREMOVE = "firemove",
     ANIMATION_REACHWALL = "reachwall";
 
 const ENEMY_DETECT_DISTANCE = 150;
-export class MapPage extends ScreenPage {
+export class MapPage extends GameStage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
     #enemies = [];
     #skippedRender = 0;
@@ -24,21 +24,21 @@ export class MapPage extends ScreenPage {
     #detectedByGhostAudioKey = "ghost_audio";
 
     register() {
-        this.loader.addTileMap(this.tilemapKey, "./dungeon/map.tmj");
-        this.loader.addImage(this.fireImagesKey, "./dungeon/images/All_Fire_Bullet_Pixel_16x16_00.png");
-        this.loader.addAudio(this.fireballCastKey, "./dungeon/audio/zvuk-poleta-ognennogo-shara.mp3");
-        this.loader.addAudio(this.#fireballDestroyAudioKey, "./dungeon/audio/ognennyiy-shar-vspyihnul.mp3");
-        this.loader.addAudio(this.#detectedByGhostAudioKey, "./dungeon/audio/zvuk-prizraka-prividenie-24332.mp3");
-        this.loader.addAudio(this.defaultAudioKey, "./dungeon/audio/ustrashayuschiy-nagnetayuschiy-zvuk-kapaniya-kapel-v-pustom-zabroshennom-pomeschenii.mp3");
-        this.loader.addAudio(this.#gameOverAudioKey, "./dungeon/audio/nehvatka-vozduha-i-skoraya-konchina.mp3");
-        this.backgroundSounds = new SystemAudioInterface(this.loader);
+        this.iLoader.addTileMap(this.tilemapKey, "./dungeon/map.tmj");
+        this.iLoader.addImage(this.fireImagesKey, "./dungeon/images/All_Fire_Bullet_Pixel_16x16_00.png");
+        this.iLoader.addAudio(this.fireballCastKey, "./dungeon/audio/zvuk-poleta-ognennogo-shara.mp3");
+        this.iLoader.addAudio(this.#fireballDestroyAudioKey, "./dungeon/audio/ognennyiy-shar-vspyihnul.mp3");
+        this.iLoader.addAudio(this.#detectedByGhostAudioKey, "./dungeon/audio/zvuk-prizraka-prividenie-24332.mp3");
+        this.iLoader.addAudio(this.defaultAudioKey, "./dungeon/audio/ustrashayuschiy-nagnetayuschiy-zvuk-kapaniya-kapel-v-pustom-zabroshennom-pomeschenii.mp3");
+        this.iLoader.addAudio(this.#gameOverAudioKey, "./dungeon/audio/nehvatka-vozduha-i-skoraya-konchina.mp3");
+        this.backgroundSounds = new ISystemAudio(this.iLoader);
         this.speed = 0;
         this.movingInterval = null;
         this.fireballs = [];
     }
 
     init() {
-        const [w, h] = this.screenPageData.canvasDimensions;
+        const [w, h] = this.stageData.canvasDimensions;
 
         this.draw.tiledLayer("background", this.tilemapKey);
         this.draw.tiledLayer("walls", this.tilemapKey);
@@ -98,7 +98,7 @@ export class MapPage extends ScreenPage {
         this.defaultAudio.play();
         //setTimeout(() => {
             // fix width height after render started, and sizes corrected
-            //const [w, h] = this.screenPageData.worldDimensions;
+            //const [w, h] = this.stageData.worldDimensions;
             //this.shadowRect.width = w;
             //this.shadowRect.height = h;
         //},1000);
@@ -212,7 +212,7 @@ export class MapPage extends ScreenPage {
             this.sightView.y = newCoordY;
             this.fireRange.x = newCoordX;
             this.fireRange.y = newCoordY;
-            this.screenPageData.centerCameraPosition(newCoordX, newCoordY);
+            this.stageData.centerCameraPosition(newCoordX, newCoordY);
         }
     }
 
@@ -222,7 +222,7 @@ export class MapPage extends ScreenPage {
     };
 
     #mouseMoveAction = (e) => {
-        const [xOffset, yOffset] = this.screenPageData.worldOffset,
+        const [xOffset, yOffset] = this.stageData.worldOffset,
             x = e.offsetX,
             y = e.offsetY,
             cursorPosX = x + xOffset,
@@ -249,8 +249,8 @@ export class MapPage extends ScreenPage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.system.stopScreenPage("dungeon");
-            this.system.startScreenPage("start");
+            this.system.stopGameStage("dungeon");
+            this.system.startGameStage("start");
         } else {
             const fireball = this.#createFireball();
             this.fireballs.push(fireball);

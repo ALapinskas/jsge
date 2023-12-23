@@ -379,7 +379,7 @@ function buildNav(members) {
         });
 
         if (!globalNav) {
-            // turn the heading into a link so you can actually get to the global page
+            // turn the heading into a link so you can actually get to the global stage
             nav += `<h3>${linkto('global', 'Global')}</h3>`;
         }
         else {
@@ -609,7 +609,7 @@ exports.publish = (taffyData, opts, tutorials) => {
 
     if (members.globals.length) { generate('Global', [{kind: 'globalobj'}], globalUrl); }
 
-    // index page displays information from package.json and lists files
+    // index stage displays information from package.json and lists files
     files = find({kind: 'file'});
     packages = find({kind: 'package'});
 

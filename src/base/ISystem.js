@@ -1,58 +1,58 @@
 import { CONST, ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { Exception, Warning } from "./Exception.js";
-import { SystemSocketConnection } from "./SystemSocketConnection.js";
-import { SystemAudioInterface } from "./SystemAudioInterface.js";
+import { INetwork } from "./INetwork.js";
+import { ISystemAudio } from "./ISystemAudio.js";
 import { SystemSettings } from "../configs.js";
 import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
-import { ScreenPage } from "./ScreenPage.js";
-import { RenderInterface } from "./RenderInterface.js";
-import { ExtensionInterface } from "./ExtensionInterface.js";
+import { GameStage } from "./GameStage.js";
+import { IRender } from "./IRender.js";
+import { IExtension } from "./IExtension.js";
 
 /**
  * Public interface for a System<br>
- * Can be used to start/stop ScreenPage render, <br>
- * And provides access to SystemSettings, SystemSocketConnection and SystemAudioInterface <br>
- * RenderInterface, DrawObjectFactory, AssetsManager and external modules
- * accessible via ScreenPage.system and System.system
+ * Can be used to start/stop GameStage render, <br>
+ * And provides access to SystemSettings, INetwork and ISystemAudio <br>
+ * IRender, DrawObjectFactory, AssetsManager and external modules
+ * accessible via GameStage.system and System.system
  * @see {@link System} a part of System class instance
- * @see {@link ScreenPage} a part of ScreenPage class instance
+ * @see {@link GameStage} a part of GameStage class instance
  */
-export class SystemInterface {
+export class ISystem {
     /**
      * @type {Object}
      */
     #systemSettings;
     /**
-     * @type {ExtensionInterface}
+     * @type {IExtension}
      */
-    #extensionInterface;
+    #iExtension;
     /**
-     * @type {SystemSocketConnection}
+     * @type {INetwork}
      */
     #systemServerConnection;
     /**
-     * @type {SystemAudioInterface}
+     * @type {ISystemAudio}
      */
     #systemAudioInterface;
     /**
      * @type {AssetsManager}
      */
-    #loader = new AssetsManager();
+    #iLoader = new AssetsManager();
     /**
-     * @type {RenderInterface}
+     * @type {IRender}
      */
-    #renderInterface;
+    #iRender;
     /**
      * @type {DrawObjectFactory}
      */
-    #drawObjectFactory = new DrawObjectFactory(this.#loader);
+    #drawObjectFactory = new DrawObjectFactory(this.#iLoader);
     
     #modules = new Map();
     /**
-     * @type {Map<string, ScreenPage>}
+     * @type {Map<string, GameStage>}
      */
-    #registeredPagesReference;
+    #registeredStagesReference;
     /**
      * @type {EventTarget}
      */
@@ -60,19 +60,20 @@ export class SystemInterface {
     /**
      * @hideconstructor
      */
-    constructor(systemSettings, registeredPages, canvasContainer) {
+    constructor(systemSettings, registeredStages, canvasContainer) {
         if (!systemSettings) {
             Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
         }
         this.#systemSettings = systemSettings;
-        this.#extensionInterface = new ExtensionInterface(this);
-        this.#systemAudioInterface = new SystemAudioInterface(this.loader);
-        this.#systemServerConnection = new SystemSocketConnection(systemSettings);
-        this.#renderInterface = new RenderInterface(this.systemSettings, this.loader, canvasContainer);
-        this.#registeredPagesReference = registeredPages;
+        
+        this.#systemAudioInterface = new ISystemAudio(this.iLoader);
+        this.#systemServerConnection = new INetwork(systemSettings);
+        this.#iRender = new IRender(this.systemSettings, this.iLoader, canvasContainer);
+        this.#iExtension = new IExtension(this, this.#iRender);
+        this.#registeredStagesReference = registeredStages;
         // broadcast render events
-        this.#renderInterface.addEventListener(CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.START));
-        this.#renderInterface.addEventListener(CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.END));
+        this.#iRender.addEventListener(CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.START));
+        this.#iRender.addEventListener(CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.END));
     }
 
     /**
@@ -107,9 +108,9 @@ export class SystemInterface {
     };
     
     /**
-     * @type { SystemSocketConnection }
+     * @type { INetwork }
      */
-    get network () {
+    get iNetwork () {
         return this.#systemServerConnection;
     }
 
@@ -121,7 +122,7 @@ export class SystemInterface {
     }
 
     /**
-     * @type { SystemAudioInterface }
+     * @type { ISystemAudio }
      */
     get audio() {
         return this.#systemAudioInterface;
@@ -130,8 +131,15 @@ export class SystemInterface {
     /**
      * @type {AssetsManager}
      */
-    get loader() {
-        return this.#loader;
+    get iLoader() {
+        return this.#iLoader;
+    }
+
+    /**
+     * @type {IRender}
+     */
+    get iRender() {
+        return this.#iRender;
     }
 
     /**
@@ -141,12 +149,8 @@ export class SystemInterface {
         return this.#drawObjectFactory;
     }
 
-    get renderInterface() {
-        return this.#renderInterface;
-    }
-
-    get extensionInterface() {
-        return this.#extensionInterface;
+    get iExtension() {
+        return this.#iExtension;
     }
     /**
      * @type {Map<string, Object>}
@@ -178,18 +182,18 @@ export class SystemInterface {
      * @param {string} screenPageName
      * @param {Object} [options] - options
      */
-    startScreenPage = (screenPageName, options) => {
-        if (this.#registeredPagesReference.has(screenPageName)) {
-            const page = this.#registeredPagesReference.get(screenPageName),
-                pageData = page.screenPageData;
+    startGameStage = (screenPageName, options) => {
+        if (this.#registeredStagesReference.has(screenPageName)) {
+            const stage = this.#registeredStagesReference.get(screenPageName),
+                pageData = stage.stageData;
             this.#drawObjectFactory._attachPageData(pageData);
-            if (page.isInitiated === false) {
-                page._init();
+            if (stage.isInitiated === false) {
+                stage._init();
             }
-            //page._attachCanvasToContainer(this.#canvasContainer);
-            page._start(options);
+            //stage._attachCanvasToContainer(this.#canvasContainer);
+            stage._start(options);
             this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
-            this.#renderInterface._startRender(pageData);
+            this.#iRender._startRender(pageData);
         } else {
             Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
         }
@@ -199,12 +203,12 @@ export class SystemInterface {
      * @method
      * @param {string} screenPageName
      */
-    stopScreenPage = (screenPageName) => {
-        if (this.#registeredPagesReference.has(screenPageName)) {
+    stopGameStage = (screenPageName) => {
+        if (this.#registeredStagesReference.has(screenPageName)) {
             this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
             this.drawObjectFactory._detachPageData();
-            this.#renderInterface._stopRender();
-            this.#registeredPagesReference.get(screenPageName)._stop();
+            this.#iRender._stopRender();
+            this.#registeredStagesReference.get(screenPageName)._stop();
         } else {
             Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
         }

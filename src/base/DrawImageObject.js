@@ -222,13 +222,13 @@ export class DrawImageObject extends DrawShapeObject {
      * @param { string } eventName -animation name
      * @param { Array<number> } animationSpriteIndexes - animation image indexes
      * @param { boolean } [isRepeated = false] - animation is circled or not, circled animation could be stopped only with stopRepeatedAnimation();
-     * @param { number } [circlesPerFrame = 1] - determines on how many circles should one frame be shown, the actual speed depends on gameOptions.render.minCircleTime
+     * @param { number } [cyclesPerFrame = 1] - determines on how many cycles should one frame be shown, the actual speed depends on gameOptions.render.minCircleTime
      */
-    addAnimation (eventName, animationSpriteIndexes, isRepeated, circlesPerFrame = 1) {
-        if (circlesPerFrame < 1) {
-            Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " circlesPerFrame should be >= 1");
+    addAnimation (eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame = 1) {
+        if (cyclesPerFrame < 1) {
+            Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " cyclesPerFrame should be >= 1");
         }
-        const animationEvent = new AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated, circlesPerFrame);
+        const animationEvent = new AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame);
         this.#animations.set(eventName, animationEvent);
         this.addEventListener(eventName, this.#activateAnimation);
     }

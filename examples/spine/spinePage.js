@@ -1,4 +1,4 @@
-import { ScreenPage, CONST } from "../../dist/index.es6.min.js";
+import { GameStage, CONST } from "../../dist/index.es6.min.js";
 import SpineModuleInitialization from "../../modules/spine/dist/bundle.js";
 import { utils } from "../../src/index.js";
 
@@ -13,14 +13,14 @@ const SPINE = {
     SpineGoblinsBinary: "GoblinsBinary"
 };
 
-export class SpinePage extends ScreenPage {
+export class SpinePage extends GameStage {
 
     register() {
         //spine module already installed
     }
 
     init() {
-        const [w, h] = this.screenPageData.canvasDimensions;
+        const [w, h] = this.stageData.canvasDimensions;
 
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)"); 
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
@@ -78,9 +78,9 @@ export class SpinePage extends ScreenPage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.system.stopScreenPage("spine");
+            this.system.stopGameStage("spine");
             this.canvasHtmlElement.style.cursor = "default";
-            this.system.startScreenPage("start");
+            this.system.startGameStage("start");
         }
     };
 

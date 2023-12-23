@@ -1,13 +1,12 @@
 import { WARNING_CODES } from "../constants.js";
 import { Warning } from "./Exception.js";
 /**
- * An interface for common views data such as
- * boundaries, world dimensions, options
- * accessible via ScreenPage.screenPageData 
- * @see {@link ScreenPage} a part of ScreenPage
+ * A storage for stage data, such as gameObjects,
+ * boundaries, worldDimensions and offset
+ * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
-export class ScreenPageData {
+export class GameStageData {
     #worldWidth;
     #worldHeight;
     #viewWidth;
@@ -18,7 +17,7 @@ export class ScreenPageData {
     #centerY = 0;
     #rotate = 0;
     /**
-     * current screen boundaries, recalculated every render circle
+     * current screen boundaries, recalculated every render cycles
      * @type {Array<Array<number>>}
      */
     #boundaries = [];
@@ -29,7 +28,7 @@ export class ScreenPageData {
      */
     #wholeWorldBoundaries = [];
     /**
-     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | TiledRenderLayer>}
+     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
      */
     #renderObjects = [];
     

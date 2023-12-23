@@ -11,33 +11,33 @@
         centering map
         sprites animations
         canvas overlapping effects
-    Does system required a new canvas for every ScreenPage? Probably it can use only one for all of them,
-    and the RenderInterface will be the same for every page. Then, ScreenPageData will have to be divided for two parts,
-    ScreenPageData for each page, and common data, probably it is a GameSettings.
+    Does system required a new canvas for every GameStage? Probably it can use only one for all of them,
+    and the IRender will be the same for every stage. Then, GameStageData will have to be divided for two parts,
+    GameStageData for each stage, and common data, probably it is a GameSettings.
     3. Modules requirements:
         1. Modules are external installable parts of application that should extend the application functionality.
         2. Application functionality by that could be extended by modules should have an endpoint to do that.
         
         Modules types:
         1. System modules. Which will have access to systemInterface and its child functionality.
-        2. ScreenPage modules. Which will have same access as system modules and additionally
-         screenPage child functionality, such as ScreenPage.start, stop, render, context and screenPageData.
-        ScreenPage modules should be installed for every screenPage separately, or installed for one page 
+        2. GameStage modules. Which will have same access as system modules and additionally
+         screenPage child functionality, such as GameStage.start, stop, render, context and stageData.
+        GameStage modules should be installed for every screenPage separately, or installed for one stage 
         and activated for the others.
-        3. Render modules, is ScreenPage modules, focused on render objects:
+        3. Render modules, is GameStage modules, focused on render objects:
             1. Modules could extend current render system by doing:
                 * Extend drawObjectFactory to have new drawObjects
-                * Provide information to the RenderInterface on how this objects should be drawn, 
+                * Provide information to the IRender on how this objects should be drawn, 
                     the webgl programs they should use,
                     this webgl programs itself,
                     init render phase if needed,
                     render method for this objects
             2. Render modules will need to access next part of application:
-                * a loader, which could be accessed via SystemInterface.
-                * SystemSettings, which could be accessed via SystemInterface.
-                * draw context, which is a part of RenderInterface and could be accessed via ScreenPage.
-                * ScreenPageData, which is a part of RenderInterface and could be accessed via ScreenPage.
-                * ScreenPage.start, .stop methods
+                * a iLoader, which could be accessed via ISystem.
+                * SystemSettings, which could be accessed via ISystem.
+                * draw context, which is a part of IRender and could be accessed via GameStage.
+                * GameStageData, which is a part of IRender and could be accessed via GameStage.
+                * GameStage.start, .stop methods
         
 
 Todo: https://github.com/users/ALapinskas/projects/2
@@ -50,6 +50,9 @@ f: fixed defects
 
 
 # History
+1.0.0:
+    r: Classes names and properties renamed and refactored, interface -> i, ScreenPage -> GameStage, screenPageData -> stageData
+
 0.3.8:
     f: eslint issues
     f: mask._isMask = true doesn't set tiledLayer objects
@@ -62,7 +65,7 @@ f: fixed defects
     +: images spaces property
 
 0.3.7:
-    +: addAnimation() circlesPerFrame parameter
+    +: addAnimation() cyclesPerFrame parameter
     f: spineModule registerObjectRender() parameters fixed
     r: tutorials updated, live examples added
 
@@ -89,7 +92,7 @@ f: fixed defects
     r: change enableBoundariesCalculations option check
     r: moved text texture calculations inside text object
     r: refactored text texture calculations
-    +: added current circle time calculations
+    +: added current cycles time calculations
     
 0.3.2:
     f: circle-polygon collision
@@ -98,32 +101,32 @@ f: fixed defects
     +: introduced DrawShapeObject.#isMask property
     +: setting isMask property if object used as a mask
     +: setting stensil id only for mask and filtered by mask objects
-    +: sortIndex added to TiledRenderLayer
-    +: drawObjectFactory will now add items to the screenPageData
+    +: sortIndex added to DrawTiledLayer
+    +: drawObjectFactory will now add items to the stageData
     +: draw circle boundaries
 
 0.3.1:
-    +: introduced ExtensionInterface
+    +: introduced IExtension
     r: removed spine module 3 parameter
     r: fixed jsdocs according last changes
     r: fixed jsdocs schemes
     r: added jsdoc switcher for prev versions
 
 0.3.0:
-    r: CanvasView -> RenderInterface
+    r: CanvasView -> IRender
     r: removed multiple layers and layers create
-    r: RenderInterface is now part of the SystemInterface
-    r: render() itself moved to the RenderInterface
-    r: removed RenderInterface.#renderLayers, any draw object will be added to #renderObjects array now
-    r: RenderInterface.#renderObjects moved to ScreenPage.ScreenPageData.#renderObjects
-    r: RenderLayer -> TiledRenderLayer
+    r: IRender is now part of the ISystem
+    r: render() itself moved to the IRender
+    r: removed IRender.#renderLayers, any draw object will be added to #renderObjects array now
+    r: IRender.#renderObjects moved to GameStage.GameStageData.#renderObjects
+    r: RenderLayer -> DrawTiledLayer
     +: drawMasks introduced
     +: DrawShapeObject.setMask(), DrawShapeObject.removeMask()
-    +: TiledRenderLayer.setMask(), TiledRenderLayer.removeMask()
-    +: SystemInterface.registerDrawObject() for add new drawObjects
-    +: new methods introduced: RenderInterface.registerRenderInit() for register init drawing methods
-    +: SystemInterface.registerDrawObject() for register new types of drawing objects
-    +: RenderInterface.registerObjectRender() for register object drawing methods
+    +: DrawTiledLayer.setMask(), DrawTiledLayer.removeMask()
+    +: ISystem.registerDrawObject() for add new drawObjects
+    +: new methods introduced: IRender.registerRenderInit() for register init drawing methods
+    +: ISystem.registerDrawObject() for register new types of drawing objects
+    +: IRender.registerObjectRender() for register object drawing methods
     
 0.2.3
     +: circle boundaries
@@ -152,7 +155,7 @@ f: fixed defects
     +: modules installing with system.installModule(key, moduleClass, ...params)
     +: spine module, integration spine runtimes
     r: rendering pipeline now use public, overwritable methods view.initiateContext() and view.render()
-    r: ScreenPage.createCanvasView is now returns a CanvasView instance
+    r: GameStage.createCanvasView is now returns a CanvasView instance
 
 0.1.24:
     f: updated tutorials
@@ -161,7 +164,7 @@ f: fixed defects
     f: updated readme
     f: updated tutorials
     +: added config.modules.spineAnimations
-    +: page stages scheme
+    +: stage stages scheme
 
 0.1.22:
     f: updated readme and tutorials
@@ -190,14 +193,14 @@ f: fixed defects
     +: DrawConusObject.fade_min
     +: DrawConusObject ability to draw fade effect, using fade_min property
     +: WebGL fade count, depends on fade_min and radius properties
-    r: loader moved to the system class level
+    r: iLoader moved to the system class level
     r: updated scheme
 
 0.0.9:
     f: draw object boundaries
     f: jsdoc: subtractProgram string -> cut boolean
     +: wholeWorldPrecalculations boundaries option and calculations
-    +: screenPageData.getWholeWorldBoundaries()
+    +: stageData.getWholeWorldBoundaries()
 
 0.0.8:
     r: changed main file to src/index.js
@@ -216,10 +219,10 @@ f: fixed defects
     r: DrawImageObject.boundaries -> vertices, boundaries marked as deprecated
     r: vertices is now used to check collisions
     r: vertices are now Array<Array<number>> (Array of x,y coords )
-    +: ScreenPage.isObjectsCollision()
+    +: GameStage.isObjectsCollision()
     +: DrawCircleObject, DRAW_TYPE.CIRCLE
     +: Examples: dungeon, added casting fireballs, added enemies
-    f: fixed animations circles
+    f: fixed animations cycles
     +: addAnimation() isRepeated and isReturnToBeginning parameters
     +: stopRepeatedAnimation()
 
@@ -229,7 +232,7 @@ f: fixed defects
     r: _bindRenderLayer() cut right/bottom offscreen tiles
 
 0.0.52:
-    f: CanvasView and ScreenPage issues
+    f: CanvasView and GameStage issues
     f: examples/dungeon overlay size
 
 0.0.51:
@@ -242,7 +245,7 @@ f: fixed defects
 0.0.5:
     r: changed mapBoundariesEnabled option behavior
     f: fixed setMapBoundaries() call
-    +: fixed ScreenPage.createCanvasView() and CanvasView.#isStatic parameter
+    +: fixed GameStage.createCanvasView() and CanvasView.#isStatic parameter
     f: removed centerCameraPosition() debug output
     
 0.0.46:
@@ -255,7 +258,7 @@ f: fixed defects
 0.0.42-0.0.44:
     f: fixed text and images transparency
     f: isPolygonLineIntersect() fixed polygon boundaries collision corner cases calculations
-    f: ScreenPage public functions changed to arrow functions
+    f: GameStage public functions changed to arrow functions
     f: #triangulate() fix
     +: "prepare-to-push" npm task
     +: examples/racing car boundaries added
@@ -270,7 +273,7 @@ f: fixed defects
     r: DrawShapeObject width, height, boundaries properties and methods moved to DrawImageObject
     +: DrawObjectFactory.circle()
     +: drawConusObject.#calculateConusVertices()
-    +: ScreenPage.isBoundariesCollision() to detect object(xy/mapBoundaries) and object(boundaries/mapBoundaries) collisions
+    +: GameStage.isBoundariesCollision() to detect object(xy/mapBoundaries) and object(boundaries/mapBoundaries) collisions
     +: webGl.blendFunc parameters are added to the DrawShapeObject
     +: examples: pirates - added wind direction icon, added wind direction change
     f: fixed utils.isPointOnTheLine() and utils.countClosestTraversal2() issues

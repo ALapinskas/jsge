@@ -1,15 +1,15 @@
-import { ScreenPage } from "../base/ScreenPage.js";
+import { GameStage } from "../base/GameStage.js";
 
-export class LoadingScreen extends ScreenPage {
+export class LoadingStage extends GameStage {
     #total = 0;
     #loaded = 0;
     #barWidth = 0;
     register() {
-        //this.loader.addImage(logoKey, "./images/icon.png");
+        //this.iLoader.addImage(logoKey, "./images/icon.png");
     }
 
     init() {
-        const [w, h] = this.screenPageData.canvasDimensions,
+        const [w, h] = this.stageData.canvasDimensions,
             barWidth = w/3,
             barHeight = 20;
         //this.logo = this.draw.image(w/2, h/2, 300, 200, logoKey);
@@ -33,7 +33,7 @@ export class LoadingScreen extends ScreenPage {
     }
 
     // a workaround for checking upload progress before render
-    get loader() {
+    get iLoader() {
         return ({filesWaitingForUpload:0});
     }
 } 

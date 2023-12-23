@@ -350,10 +350,10 @@ export default class AssetsManager {
     }
 
     addFile(fileType, fileKey, url, ...args) {
-        const loader = this.#registeredLoaders.get(fileType);
-        if (loader) {
+        const iLoader = this.#registeredLoaders.get(fileType);
+        if (iLoader) {
             this.#checkInputParams(fileKey, url);
-            loader._addFile(fileKey, [url, ...args]);
+            iLoader._addFile(fileKey, [url, ...args]);
         } else {
             Exception("Loader for " + fileType + " is not registered!");
         }
@@ -361,18 +361,18 @@ export default class AssetsManager {
     }
 
     isFileInQueue(fileType, fileKey) {
-        const loader = this.#registeredLoaders.get(fileType);
-        if (loader) {
-            return loader._isFileInQueue(fileKey);
+        const iLoader = this.#registeredLoaders.get(fileType);
+        if (iLoader) {
+            return iLoader._isFileInQueue(fileKey);
         } else {
             Exception("Loader for " + fileType + " is not registered!");
         }
     }
 
     getFile(fileType, fileKey) {
-        const loader = this.#registeredLoaders.get(fileType);
-        if (loader) {
-            return loader._getFile(fileKey);
+        const iLoader = this.#registeredLoaders.get(fileType);
+        if (iLoader) {
+            return iLoader._getFile(fileKey);
         } else {
             Exception("Loader for " + fileType + " is not registered!");
         }

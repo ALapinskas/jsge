@@ -1,12 +1,12 @@
-import { SystemInterface } from "./SystemInterface.js";
+import { ISystem } from "./ISystem.js";
 
 /**
  * Class for creating modules
- * Accessed via SystemInterface.extensionInterface
+ * Accessed via ISystem.extensionInterface
  */
-export class ExtensionInterface {
+export class IExtension {
     /**
-     * @type {SystemInterface}
+     * @type {ISystem}
      */
     #systemReference;
     /**
@@ -26,7 +26,7 @@ export class ExtensionInterface {
     }
 
     /**
-     * 
+     * Used to register a new draw program
      * @param {string} programName
      * @param {string} vertexShader - raw vertex shader program
      * @param {string} fragmentShader - raw fragment shader program 
@@ -35,7 +35,7 @@ export class ExtensionInterface {
      * @returns {Promise<void>}
      */
     registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars) {
-        return this.#systemReference.renderInterface._registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars);
+        return this.#systemReference.iRender._registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars);
     }
 
     /**
@@ -44,16 +44,16 @@ export class ExtensionInterface {
      * @returns {void}
      */
     registerRenderInit(method) {
-        this.#systemReference.renderInterface._registerRenderInit(method);
+        this.#systemReference.iRender._registerRenderInit(method);
     }
 
     /**
      * Register render method for class.
      * @param {string} objectClassName - object name registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
-     * @param {string=} objectWebGlDrawProgram 
+     * @param {string=} objectWebGlDrawProgram - a webgl program name previously registered with iExtension.registerAndCompileWebGlProgram()
      */
     registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
-        this.#systemReference.renderInterface._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);
+        this.#systemReference.iRender._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);
     }
 }

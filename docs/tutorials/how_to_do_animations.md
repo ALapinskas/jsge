@@ -6,7 +6,7 @@ How to do animations with sprite indexes:
 
 2. [Add and load it to the project]{@tutorial assets_manager}:
 ```
-this.loader.addImage("image_key", "./fireball32x16.png");
+this.iLoader.addImage("image_key", "./fireball32x16.png");
 ```
 3. Then create an 16x16 DrawImageObject with the same key:
 ```
@@ -19,13 +19,13 @@ this.fireball = this.draw.image(posX, posY, imageW, imageH, "image_key");
 ```
 4. Then add an animation event: 
 ```
-this.fireball.addAnimation("startAnimation", [0,1,2,3], isLoop = false, circlesPerFrame = 1);
+this.fireball.addAnimation("startAnimation", [0,1,2,3], isLoop = false, cyclesPerFrame = 1);
 ```
 5. And start it, emitting the event:
 ```
 this.fireball.emit("startAnimation");
 ```
-This will run through the image indexes 0,1,2,3 on next render circles.
+This will run through the image indexes 0,1,2,3 on next render cycles.
 
 6. Adding 3d parameter as true will loop animation indexes:
 ```
@@ -35,7 +35,7 @@ until stopRepeatedAnimation() will be called, or object will be destroyed.
 ```
 this.fireball.stopRepeatedAnimation("startAnimation");
 ```
-7. 4th parameter determines how many circles will each frame shown <br />
+7. 4th parameter determines how many cycles will each frame shown <br />
   The default value is 1, if you want to make animation slower increase the value:
 ```
 this.fireball.addAnimation("startAnimation", [0,1,2,3], true, 5);

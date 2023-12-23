@@ -2,7 +2,7 @@ import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
- * Conus object to draw.
+ * Circle object to draw.
  * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
