@@ -4,13 +4,13 @@ Allows to use spine animations in jsge pages
 
 # How to use:
 
-1. import default module and it to the ScreenPage: 
+1. import default module and it to the GameStage: 
 ```
 import SpineModuleInitialization from "../modules/spine/dist/bundle.js";
 ```
 2. Create new view for spine rendering, turn off view offset:
 ```
-ScreenPage {
+GameStage {
     ...
     register() {
         const spineView = this.createCanvasView(SPINE_VIEW_KEY, true);
@@ -24,11 +24,11 @@ providing moduleKey, module initialization class, spine images folder and view f
     this.system.installModule("spineModule", SpineModuleInitialization, "./spine-assets", spineView);
     ...
 ```
-4. Add spine json, or binary and atlas key to the loader:
+4. Add spine json, or binary and atlas key to the iLoader:
 ```
-    this.loader.addSpineJson("spineTextKey", "./spine-assets/spineboy-pro.json");
-    this.loader.addSpineBinary("spineBinaryKey", "./spine-assets/spineboy-pro.skel");
-    this.loader.addSpineAtlas("spineAtlasKey", "./spine-assets/spineboy-pma.atlas");
+    this.iLoader.addSpineJson("spineTextKey", "./spine-assets/spineboy-pro.json");
+    this.iLoader.addSpineBinary("spineBinaryKey", "./spine-assets/spineboy-pro.skel");
+    this.iLoader.addSpineAtlas("spineAtlasKey", "./spine-assets/spineboy-pma.atlas");
 ```
 5. Create spine draw object, passing spineJson key, or spineBinary key and spineAtlas key, added on step 2. Add it to the the view:
 ```

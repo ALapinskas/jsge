@@ -177,71 +177,71 @@ class GLTextureExtended extends GLTexture {
 }
 export default class SpineModuleInitialization {
     constructor(systemInterface, spineFolder) {
-        this.#registerSpineLoaders(systemInterface.loader, spineFolder);
+        this.#registerSpineLoaders(systemInterface.iLoader, spineFolder);
         this.#registerDrawObjects(systemInterface);
-        this.#extendRenderInterface(systemInterface);
+        this.#extendRenderEngine(systemInterface);
     }
 
-    #registerSpineLoaders(loader, spineFolder = "") {
+    #registerSpineLoaders(iLoader, spineFolder = "") {
         const spineJsonLoader = (key, url) => fetch(url).then(result => result.text()),
             spineBinaryLoader = (key, url) => fetch(url).then(result => result.arrayBuffer()),
             spineAtlasLoader = (key, url) => fetch(url).then(result => result.text()).then(atlasText => {
                 return new Promise((resolve, reject) => {
                     const textureAtlas = new TextureAtlas(atlasText);
 
-                    for (let page of textureAtlas.pages) {
-                        const url = spineFolder + "/" + page.name;
-                        loader.addImage(page.name, url);
+                    for (let stage of textureAtlas.pages) {
+                        const url = spineFolder + "/" + stage.name;
+                        iLoader.addImage(stage.name, url);
                     }
                     resolve(textureAtlas);
                 });
                 
             });
     
-        loader.registerLoader("SpineJson", spineJsonLoader);
-        loader.registerLoader("SpineBinary", spineBinaryLoader);
-        loader.registerLoader("SpineAtlas", spineAtlasLoader);
+        iLoader.registerLoader("SpineJson", spineJsonLoader);
+        iLoader.registerLoader("SpineBinary", spineBinaryLoader);
+        iLoader.registerLoader("SpineAtlas", spineAtlasLoader);
     }
 
     #registerDrawObjects(systemInterface) {
-        const loader = systemInterface.loader,
-            context = systemInterface.renderInterface.drawContext;
+        const iLoader = systemInterface.iLoader,
+            context = systemInterface.iExtension.drawContext;
         const spine = (x, y, dataKey, atlasKey, imageIndex, boundaries) => {
-            const skeleton = this.#createSkeleton(dataKey, atlasKey, loader, context);
+            const skeleton = this.#createSkeleton(dataKey, atlasKey, iLoader, context);
             if (!skeleton || !(skeleton instanceof Skeleton)) {
                 throw new Error(SPINE_ERROR + ERROR_MESSAGES.SKELETON_ERROR);
             } else {
                 const renderObject = new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
-                systemInterface.drawObjectFactory.screenPageData._renderObject = renderObject;
-                systemInterface.drawObjectFactory.screenPageData._sortRenderObjectsBySortIndex(); 
+                systemInterface.drawObjectFactory.stageData._renderObject = renderObject;
+                systemInterface.drawObjectFactory.stageData._sortRenderObjectsBySortIndex(); 
                 return renderObject;
             }
         },
         spineTexture = (x, y, width, height, imageKey) => {
-            const image = systemInterface.loader.getImage(imageKey);
+            const image = systemInterface.iLoader.getImage(imageKey);
             if (image) {
                 const renderObject = new DrawSpineTexture(x, y, width, height, new GLTextureExtended(context, image));
-                systemInterface.drawObjectFactory.screenPageData._renderObject = renderObject;
-                systemInterface.drawObjectFactory.screenPageData._sortRenderObjectsBySortIndex(); 
+                systemInterface.drawObjectFactory.stageData._renderObject = renderObject;
+                systemInterface.drawObjectFactory.stageData._sortRenderObjectsBySortIndex(); 
                 return renderObject;
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");
                 return;
             }
         };
-        systemInterface.extensionInterface.registerDrawObject("spine", spine);
-        systemInterface.extensionInterface.registerDrawObject("spineTexture", spineTexture);
+        systemInterface.iExtension.registerDrawObject("spine", spine);
+        systemInterface.iExtension.registerDrawObject("spineTexture", spineTexture);
     }
 
-    #createSkeleton(dataKey, atlasKey, loader, context) {
-        const atlas = loader.getSpineAtlas(atlasKey), 
-            spineBinaryFile = loader.getSpineBinary(dataKey),
-            spineJsonFile = loader.getSpineJson(dataKey);
+    #createSkeleton(dataKey, atlasKey, iLoader, context) {
+        const atlas = iLoader.getSpineAtlas(atlasKey), 
+            spineBinaryFile = iLoader.getSpineBinary(dataKey),
+            spineJsonFile = iLoader.getSpineJson(dataKey);
 
         if (!atlas || !(atlas instanceof TextureAtlas)) {
             throw new Error(SPINE_ERROR + ERROR_MESSAGES.NO_ATLAS);
         }
-        this.#attachAtlasGraphicsData(atlas, loader, context);
+        this.#attachAtlasGraphicsData(atlas, iLoader, context);
         
         let skeletonData;
         if (spineBinaryFile) {
@@ -256,10 +256,10 @@ export default class SpineModuleInitialization {
 
         return new Skeleton(skeletonData);
     }
-    #attachAtlasGraphicsData(textureAtlas, loader, context) {
-        for (let page of textureAtlas.pages) {
-            const img = loader.getImage(page.name);
-            for (let region of page.regions) {
+    #attachAtlasGraphicsData(textureAtlas, iLoader, context) {
+        for (let stage of textureAtlas.pages) {
+            const img = iLoader.getImage(stage.name);
+            for (let region of stage.regions) {
                 region.texture = new GLTextureExtended(context, img);
             }
         }
@@ -267,13 +267,12 @@ export default class SpineModuleInitialization {
 
     /**
      * 
-     * @param {SystemInterface} systemInterface
+     * @param {ISystem} systemInterface
      */
-    #extendRenderInterface(systemInterface) {
-        const renderInterface = systemInterface.renderInterface;
+    #extendRenderEngine(systemInterface) {
         const renderInitMethod = () => {
             this.time = new TimeKeeper();
-            this.sceneRenderer = new SceneRenderer(renderInterface.canvas, renderInterface.drawContext, true);
+            this.sceneRenderer = new SceneRenderer(systemInterface.iExtension.canvas, systemInterface.iExtension.drawContext, true);
             return Promise.resolve();
         };
         const drawSpineObjectMethod = (object) => {
@@ -299,8 +298,8 @@ export default class SpineModuleInitialization {
             return Promise.resolve();
         };
 
-        systemInterface.extensionInterface.registerRenderInit(renderInitMethod);
-        systemInterface.extensionInterface.registerObjectRender(DrawSpineObject.name, drawSpineObjectMethod);
-        systemInterface.extensionInterface.registerObjectRender(DrawSpineTexture.name, drawSpineTextureMethod);
+        systemInterface.iExtension.registerRenderInit(renderInitMethod);
+        systemInterface.iExtension.registerObjectRender(DrawSpineObject.name, drawSpineObjectMethod);
+        systemInterface.iExtension.registerObjectRender(DrawSpineTexture.name, drawSpineTextureMethod);
     }
 }
