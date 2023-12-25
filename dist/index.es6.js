@@ -81,7 +81,7 @@ class AnimationEventImageObj {
                     this.#currentSpriteIndex = 0;
                 }
             }
-            // if animation is in progress, we reset it to the first item, because the first circle already skipped
+            // if animation is in progress, we reset it to the first item, because the first cycles already skipped
             this.#cyclesSkipped = 1;
         } else {
             this.#cyclesSkipped += 1;
@@ -118,7 +118,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * Conus object to draw.
+ * Circle object to draw.
  * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
@@ -1417,6 +1417,164 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
 
 /***/ }),
 
+/***/ "./src/base/DrawTiledLayer.js":
+/*!************************************!*\
+  !*** ./src/base/DrawTiledLayer.js ***!
+  \************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "DrawTiledLayer": () => (/* binding */ DrawTiledLayer)
+/* harmony export */ });
+/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
+/* harmony import */ var _WebGl_TextureStorage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./WebGl/TextureStorage.js */ "./src/base/WebGl/TextureStorage.js");
+
+
+/**
+ * A render object represents a layer from tiled editor
+ * @see {@link DrawObjectFactory} should be created with factory method
+ */
+class DrawTiledLayer {
+    #layerKey;
+    #tileMapKey;
+    #tilemap;
+    #tilesets;
+    #tilesetImages;
+    /**
+     * @type {Array<TextureStorage>}
+     */
+    #textureStorages;
+    #layerData;
+    #setBoundaries;
+    #drawBoundaries;
+    #attachedMaskId;
+    /**
+     * @type {number}
+     */
+    #sortIndex = 0;
+    #isOffsetTurnedOff;
+
+    /**
+     * @hideconstructor
+     */
+    constructor(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries = false, shapeMask) {
+        this.#layerKey = layerKey;
+        this.#tileMapKey = tileMapKey;
+        this.#tilemap = tilemap;
+        this.#tilesets = tilesets;
+        this.#textureStorages = [];
+        this.#tilesetImages = tilesetImages;
+        this.#layerData = layerData;
+        this.#setBoundaries = setBoundaries;
+        this.#drawBoundaries = setBoundaries ? setBoundaries : false;
+        if (shapeMask) {
+            this.setMask(shapeMask);
+        }
+    }
+
+    /**
+     * A layer name.
+     * @type {string}
+     */
+    get layerKey() {
+        return this.#layerKey;
+    }
+
+    /**
+     * A tilemap layer key, should match key from the tilemap.
+     * @type {string}
+     */
+    get tileMapKey() {
+        return this.#tileMapKey;
+    }
+
+    get tilemap() {
+        return this.#tilemap;
+    }
+    
+    get tilesets() {
+        return this.#tilesets;
+    }
+
+    get tilesetImages() {
+        return this.#tilesetImages;
+    }
+
+    get layerData() {
+        return this.#layerData;
+    }
+    /**
+     * Should the layer borders used as boundaries, or not
+     * Can be set in GameStage.addRenderLayer() method.
+     * @type {boolean}
+     */
+    get setBoundaries() {
+        return this.#setBoundaries;
+    }
+
+    /**
+     * Should draw a boundaries helper, or not
+     * Can be set in SystemSettings.
+     * @type {boolean}
+     */
+    get drawBoundaries() {
+        return this.#drawBoundaries;
+    }
+
+    set drawBoundaries(value) {
+        this.#drawBoundaries = value;
+    }
+
+    /**
+     * @ignore
+     */
+    get _maskId() {
+        return this.#attachedMaskId;
+    }
+    /**
+     * 
+     * @param {DrawShapeObject} mask 
+     */
+    setMask(mask) {
+        mask._isMask = true;
+        this.#attachedMaskId = mask.id;
+    }
+
+    removeMask() {
+        this.#attachedMaskId = null;
+    }
+
+    /**
+     * @type {number}
+     */
+    get sortIndex () {
+        return this.#sortIndex;
+    }
+
+    set sortIndex(value) {
+        this.#sortIndex = value;
+    }
+
+    get isOffsetTurnedOff() {
+        return this.#isOffsetTurnedOff;
+    }
+    turnOffOffset() {
+        this.#isOffsetTurnedOff = true;
+    }
+
+    get _textureStorages() {
+        return this.#textureStorages;
+    }
+
+    _setTextureStorage(index, value) {
+        this.#textureStorages[index] = value;
+    }
+}
+
+
+/***/ }),
+
 /***/ "./src/base/Events/SystemEvent.js":
 /*!****************************************!*\
   !*** ./src/base/Events/SystemEvent.js ***!
@@ -1474,10 +1632,996 @@ function Warning (code, message) {
 
 /***/ }),
 
+/***/ "./src/base/GameStage.js":
+/*!*******************************!*\
+  !*** ./src/base/GameStage.js ***!
+  \*******************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "GameStage": () => (/* binding */ GameStage)
+/* harmony export */ });
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+/* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
+/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
+/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
+/* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
+/* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
+/* harmony import */ var _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./DrawConusObject.js */ "./src/base/DrawConusObject.js");
+/* harmony import */ var _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawImageObject.js */ "./src/base/DrawImageObject.js");
+/* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
+/* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
+/* harmony import */ var _DrawRectObject_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./DrawRectObject.js */ "./src/base/DrawRectObject.js");
+/* harmony import */ var _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./DrawTextObject.js */ "./src/base/DrawTextObject.js");
+/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
+/* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Represents the stage of the game,<br>
+ * Contains pages logic.<br>
+ * Instances should be created and registered with System.registerStage() factory method
+ * 
+ * @see {@link System} instances of this class holds by the System class
+ * @hideconstructor
+ */
+class GameStage {
+    /**
+     * @type {string}
+     */
+    #name;
+    /**
+     * @type {boolean}
+     */
+    #isInitiated = false;
+    /**
+     * @type {boolean}
+     */
+    #isActive;
+    /**
+     * @type {ISystem}
+     */
+    #systemReference;
+    /**
+     * @type {GameStageData}
+     */
+    #stageData;
+
+    constructor() {
+        this.#isActive = false;
+        this.#stageData = new _GameStageData_js__WEBPACK_IMPORTED_MODULE_1__.GameStageData();
+    }
+
+    /**
+     * Register stage
+     * @param {string} name
+     * @param {ISystem} system 
+     * @ignore
+     */
+    _register(name, system) {
+        this.#name = name;
+        this.#systemReference = system;
+        this.#setWorldDimensions();
+        this.#setCanvasSize();
+        this.register();
+    }
+
+    /**
+     * Initialization stage
+     * @ignore
+     */
+    _init() {
+        this.init();
+        this.#isInitiated = true;
+    }
+
+    /**
+     * @tutorial stages_lifecycle
+     * Custom logic for register stage
+     */
+    register() {}
+    /**
+     * @tutorial stages_lifecycle
+     * Custom logic for init stage
+     */
+    init() {}
+    /**
+     * Custom logic for start stage
+     * @param {Object=} options
+     */
+    start(options) {}
+    /**
+     * @tutorial stages_lifecycle
+     * Custom logic for stop stage
+     */
+    stop() {}
+    /**
+     * Custom logic for resize stage
+     */
+    resize() {}
+
+    /**
+     * @tutorial assets_manager
+     * @type {AssetsManager}
+     */
+    get iLoader() {
+        return this.#systemReference.iLoader;
+    }
+
+    /**
+     * @type {DrawObjectFactory}
+     */
+    get draw() {
+        return this.#systemReference.drawObjectFactory;
+    }
+
+    /**
+     * Attach all canvas elements from the #views to container
+     * @param {HTMLElement} container
+     * @ignore
+     */
+    _attachCanvasToContainer(container) {
+        this.#attachElementToContainer(this.canvasHtmlElement, container);
+    }
+
+    /**
+     * Add render object to the stageData
+     * @param { DrawConusObject | DrawImageObject | 
+     *          DrawLineObject | DrawPolygonObject | 
+     *          DrawRectObject | DrawCircleObject | 
+     *          DrawTextObject } renderObject 
+     */
+    addRenderObject = (renderObject) => {
+        const data = this.stageData,
+            isDataAlreadyAdded = data.renderObjects.indexOf(renderObject) !== -1;
+        if (isDataAlreadyAdded) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "stage.draw methods add objects to pageData, no need to call addRenderObject");
+        } else {
+            data._renderObject = renderObject;
+            data._sortRenderObjectsBySortIndex(); 
+        }
+    };
+
+    /**
+     * Determines if this stage render is Active or not
+     * @type {boolean}
+     */
+    get isActive() {
+        return this.#isActive;
+    }
+
+    /**
+     * Determines if this stage is initialized or not
+     * @type {boolean}
+     */
+    get isInitiated() {
+        return this.#isInitiated;
+    }
+
+    /**
+     * Current stage name
+     * @type {string}
+     */
+    get name () {
+        return this.#name;
+    }
+
+    /**
+     * @type {GameStageData}
+     */
+    get stageData() {
+        return this.#stageData;
+    }
+
+    /**
+     * @type {SystemSettings}
+     */
+    get systemSettings() {
+        return this.#systemReference.systemSettings;
+    }
+
+    /**
+     * @type {ISystemAudio}
+     */
+    get audio() {
+        return this.#systemReference.audio;
+    }
+
+    /**
+     * @type {ISystem}
+     */
+    get system() {
+        return this.#systemReference;
+    }
+
+    get canvasHtmlElement() {
+        return document.getElementsByTagName("canvas")[0];
+    }
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
+     */
+    addEventListener = (eventName, listener, options) => {
+        this.system.addEventListener(eventName, listener, options);
+    };
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {*} listener 
+     * @param {*=} options 
+     */
+    removeEventListener = (eventName, listener, options) => {
+        this.system.removeEventListener(eventName, listener, options);
+    };
+
+    /**
+     * Start stage render
+     * @param {Object=} options 
+     * @ignore
+     */
+    _start(options) {
+        this.start(options);
+        this.#isActive = true;
+        window.addEventListener("resize", this._resize);
+        this._resize();
+    }
+
+    /**
+     * Stop stage render
+     * @ignore
+     */
+    _stop() {
+        this.#isActive = false;
+        window.removeEventListener("resize", this._resize);
+        this.stop();
+    }
+
+    /**
+     * Resize event
+     * @ignore
+     */
+    _resize = () => {
+        this.#setCanvasSize();
+        this.resize();
+    };
+
+    /**
+     * 
+     * @param {HTMLCanvasElement} htmlElement 
+     * @param {HTMLElement} container 
+     */
+    #attachElementToContainer(htmlElement, container) {
+        container.appendChild(htmlElement);
+    }
+
+    #setWorldDimensions() {
+        const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
+            height = this.systemSettings.worldSize ? this.systemSettings.worldSize.height : 0;
+            
+        this.stageData._setWorldDimensions(width, height);
+    }
+
+    //////////////////////////////////////////////////////
+    //***************************************************/
+    //****************** Collisions ********************//
+    //**************************************************//
+    //////////////////////////////////////////////////////
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawImageObject} drawObject 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
+    isBoundariesCollision = (x, y, drawObject) => {
+        const drawObjectType = drawObject.type,
+            vertices = drawObject.vertices,
+            circleBoundaries = drawObject.circleBoundaries;
+        switch(drawObjectType) {
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+            if (!circleBoundaries) {
+                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
+            } else {
+                return this.#isCircleToBoundariesCollision(x, y, drawObject.circleBoundaries.r);
+            }
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            break;
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            break;
+        default:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        }
+        return false;
+    };
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawImageObject} drawObject
+     * @param {Array<DrawImageObject>} objects - objects array to check
+     * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
+     */
+    isObjectsCollision = (x, y, drawObject, objects) => {
+        const drawObjectType = drawObject.type,
+            drawObjectBoundaries = drawObject.vertices,
+            circleBoundaries = drawObject.circleBoundaries;
+        switch(drawObjectType) {
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+            if (!circleBoundaries) {
+                return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+            } else {
+                return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
+            }
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+            break;
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+            break;
+        default:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+        }
+        return false;
+    };
+    #isPolygonToObjectsCollision(x, y, polygonVertices, polygonRotation, objects) {
+        const len = objects.length;
+
+        let collisions = [];
+        for (let i = 0; i < len; i++) {
+            const mapObject = objects[i],
+                drawMapObjectType = mapObject.type;
+
+            let coll;
+            
+            switch(drawMapObjectType) {
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+                coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+                console.warn("isObjectCollision.circle check is not implemented yet!");
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                break;
+            default:
+                console.warn("unknown object type!");
+            }
+            if (coll) {
+                collisions.push(coll);
+            }
+        }
+        if (collisions.length > 0) {
+            return this.#takeTheClosestCollision(collisions);
+        } else {
+            return null;
+        }
+    }
+
+    #isCircleToObjectsCollision(x, y, drawObjectBoundaries, objects) {
+        const radius = drawObjectBoundaries.r;
+
+        const len = objects.length;
+
+        let collisions = [];
+        for (let i = 0; i < len; i++) {
+            const mapObject = objects[i],
+                drawMapObjectType = mapObject.type,
+                circleBoundaries = mapObject.circleBoundaries;
+
+            let coll;
+            
+            switch(drawMapObjectType) {
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+                if (!circleBoundaries) {
+                    coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
+                } else {
+                    coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
+                }
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+                console.warn("isObjectCollision.circle check is not implemented yet!");
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                break;
+            default:
+                console.warn("unknown object type!");
+            }
+            if (coll) {
+                collisions.push(coll);
+            }
+        }
+        if (collisions.length > 0) {
+            return this.#takeTheClosestCollision(collisions);
+        } else {
+            return null;
+        }
+    }
+ 
+    #takeTheClosestCollision(collisions) {
+        return collisions.sort((a,b) => a.p < b.p)[0];
+    }
+
+    #isCircleToPolygonCollision(x, y, radius, mapObject) {
+        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            mapObjXWithOffset = mapObject.x - mapOffsetX,
+            mapObjYWithOffset = mapObject.y - mapOffsetY,
+            mapObjVertices = mapObject.vertices, 
+            mapObjRotation = mapObject.rotation,
+            len = mapObjVertices.length;
+        //console.log("map object check:");
+        //console.log(mapObject);
+        for (let i = 0; i < len; i+=1) {
+            const mapObjFirstVertex = mapObjVertices[i];
+            let mapObjNextVertex = mapObjVertices[i + 1];
+            if (!mapObjNextVertex) {
+                mapObjNextVertex = mapObjVertices[0];
+            }
+            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                edge = {
+                    x1: vertex[0],
+                    y1: vertex[1],
+                    x2: nextVertex[0],
+                    y2: nextVertex[1]
+                },
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isCircleLineIntersect)(xWithOffset, yWithOffset, radius, edge);
+            if (intersect) {
+            //console.log("polygon: ", polygonWithOffsetAndRotation);
+            //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
+    #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
+        const len = new _Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(circle1X, circle1Y, circle2X, circle2Y).length;
+        console.log(len);
+        console.log(circle1R);
+        console.log(circle2R);
+        if ((len - (circle1R + circle2R)) > 0) {
+            return false;
+        } else {
+            //@todo calculate point of intersect
+            return true;
+        }
+    }
+
+    #isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject) {
+        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            mapObjXWithOffset = mapObject.x - mapOffsetX,
+            mapObjYWithOffset = mapObject.y - mapOffsetY,
+            mapObjVertices = mapObject.vertices, 
+            mapObjRotation = mapObject.rotation,
+            polygonWithOffsetAndRotation = polygonVertices.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, polygonRotation))),
+            len = mapObjVertices.length;
+        //console.log("map object check:");
+        //console.log(mapObject);
+        for (let i = 0; i < len; i+=1) {
+            const mapObjFirstVertex = mapObjVertices[i];
+            let mapObjNextVertex = mapObjVertices[i + 1];
+            if (!mapObjNextVertex) {
+                mapObjNextVertex = mapObjVertices[0];
+            }
+            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
+                edge = {
+                    x1: vertex[0],
+                    y1: vertex[1],
+                    x2: nextVertex[0],
+                    y2: nextVertex[1]
+                },
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, edge);
+            if (intersect) {
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
+    #calculateShiftedVertexPos(vertex, centerX, centerY, rotation) {
+        const vector = new _Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(0, 0, vertex[0], vertex[1]),
+            vertexAngle = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.angle_2points)(0, 0, vertex[0], vertex[1]),
+            len = vector.length;
+            
+        const newX = centerX + (len * Math.cos(rotation + vertexAngle)),
+            newY = centerY + (len * Math.sin(rotation + vertexAngle));
+        return [newX, newY];
+    }
+    #isCircleToBoundariesCollision(x, y, r) {
+        const mapObjects = this.stageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            len = mapObjects.length;
+
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i];
+            const object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                },
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isCircleLineIntersect)(xWithOffset, yWithOffset, r, object);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {Array<Array<number>>} polygon
+     * @param {number} rotation 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
+    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
+        const mapObjects = this.stageData.getBoundaries(),
+            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
+            xWithOffset = x - mapOffsetX,
+            yWithOffset = y - mapOffsetY,
+            polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
+            len = mapObjects.length;
+
+        for (let i = 0; i < len; i+=1) {
+            const item = mapObjects[i];
+            const object = {
+                    x1: item[0],
+                    y1: item[1],
+                    x2: item[2],
+                    y2: item[3]
+                },
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, object);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
+        }
+        return false;
+    }
+    //****************** End Collisions ****************//
+
+    #setCanvasSize() {
+        const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
+            canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
+        this.stageData._setCanvasDimensions(canvasWidth, canvasHeight);
+    }
+}
+
+/***/ }),
+
+/***/ "./src/base/GameStageData.js":
+/*!***********************************!*\
+  !*** ./src/base/GameStageData.js ***!
+  \***********************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "GameStageData": () => (/* binding */ GameStageData)
+/* harmony export */ });
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
+
+
+/**
+ * A storage for stage data, such as gameObjects,
+ * boundaries, worldDimensions and offset
+ * @see {@link GameStage} a part of GameStage
+ * @hideconstructor
+ */
+class GameStageData {
+    #worldWidth;
+    #worldHeight;
+    #viewWidth;
+    #viewHeight;
+    #xOffset = 0;
+    #yOffset = 0;
+    #centerX = 0;
+    #centerY = 0;
+    #rotate = 0;
+    /**
+     * current screen boundaries, recalculated every render cycles
+     * @type {Array<Array<number>>}
+     */
+    #boundaries = [];
+
+    /**
+     * whole world boundaries, calculated once on prepare stage
+     * @type {Array<Array<number>>}
+     */
+    #wholeWorldBoundaries = [];
+    /**
+     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
+     */
+    #renderObjects = [];
+    
+    /**
+     * @type {boolean}
+     */
+    #isOffsetTurnedOff;
+    /**
+     * @deprecated
+     * @type {boolean}
+     */
+    #isWorldBoundariesEnabled = false;
+
+    /**
+     * 
+     * @returns {boolean}
+     */
+    isOffsetTurnedOff() {
+        return this.#isOffsetTurnedOff;
+    }
+    set mapRotate(value) {
+        this.#rotate = value;
+    }
+
+    /**
+     * Add a Boundaries line
+     * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
+     */
+    #addBoundaries(boundaries) {
+        this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
+    }
+
+    /**
+     * Add array of boundaries lines
+     * @param {Array<Array<number>>} boundaries 
+     * @ignore
+     */
+    _addBoundariesArray(boundaries) {
+        this.#boundaries.push(...boundaries);
+    }
+
+    /**
+     * Clear map boundaries
+     * @ignore
+     */
+    _clearBoundaries() {
+        this.#boundaries = [];
+    }
+
+    /**
+     * 
+     * @param {number} width 
+     * @param {number} height 
+     * @ignore
+     */
+    _setWorldDimensions(width, height) {
+        this.#worldWidth = width;
+        this.#worldHeight = height;
+    }
+
+    /**
+     * 
+     * @param {number} width 
+     * @param {number} height 
+     * @ignore
+     */
+    _setCanvasDimensions(width, height) {
+        this.#viewWidth = width;
+        this.#viewHeight = height;
+    }
+
+    /**
+     * Set map borders
+     * @ignore
+     */
+    _setMapBoundaries() {
+        const [w, h] = [this.#worldWidth, this.#worldHeight],
+            [offsetX, offsetY] = [this.#xOffset, this.#yOffset],
+            wOffset = w - offsetX,
+            hOffset = h -offsetY;
+        if (!w || !h) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
+        }
+        this.#addBoundaries({x1: 0, y1: 0, x2: wOffset, y2: 0});
+        this.#addBoundaries({x1: wOffset, y1: 0, x2: wOffset, y2: hOffset});
+        this.#addBoundaries({x1: wOffset, y1: hOffset, x2: 0, y2: hOffset});
+        this.#addBoundaries({x1: 0, y1: hOffset, x2: 0, y2: 0});
+    }
+
+    /**
+     * @ignore
+     */
+    _setWholeWorldMapBoundaries() {
+        const [w, h] = [this.#worldWidth, this.#worldHeight];
+        if (!w || !h) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
+        }
+        this.#wholeWorldBoundaries.push([0, 0, w, 0]);
+        this.#wholeWorldBoundaries.push([w, 0, w, h]);
+        this.#wholeWorldBoundaries.push([w, h, 0, h]);
+        this.#wholeWorldBoundaries.push([0, h, 0, 0]);
+    }
+
+    /**
+     * Merge same boundaries
+     * @ignore
+     */
+    _mergeBoundaries(isWholeMapBoundaries = false) {
+        const boundaries = isWholeMapBoundaries ? this.getWholeWorldBoundaries() : this.getBoundaries(),
+            boundariesSet = new Set(boundaries);
+        for (const line of boundariesSet.values()) {
+            const lineX1 = line[0],
+                lineY1 = line[1],
+                lineX2 = line[2],
+                lineY2 = line[3];
+            for (const line2 of boundariesSet.values()) {
+                const line2X1 = line2[0],
+                    line2Y1 = line2[1],
+                    line2X2 = line2[2],
+                    line2Y2 = line2[3];
+                if (lineX1 === line2X2 && lineY1 === line2Y2 &&
+                    lineX2 === line2X1 && lineY2 === line2Y1) {
+                    //remove double lines
+                    boundariesSet.delete(line);
+                    boundariesSet.delete(line2);
+                }
+                if (lineX2 === line2X1 && lineY2 === line2Y1 && (lineX1 === line2X2 || lineY1 === line2Y2)) {
+                    //merge lines
+                    line2[0] = lineX1;
+                    line2[1] = lineY1;
+                    boundariesSet.delete(line);
+                }
+            }
+        }
+
+        if (isWholeMapBoundaries) {
+            this.#boundaries = Array.from(boundariesSet);
+        } else {
+            this.#wholeWorldBoundaries = Array.from(boundariesSet);
+        }
+        boundariesSet.clear();
+    }
+
+    /**
+     * @ignore
+     * @param {Array<Array<number>>} boundaries 
+     */
+    _setWholeMapBoundaries(boundaries) {
+        this.#wholeWorldBoundaries.push(...boundaries);
+    }
+
+    /**
+     * @deprecated
+     * @ignore
+     */
+    _enableMapBoundaries() {
+        this.#isWorldBoundariesEnabled = true;
+    }
+
+    /**
+     * 
+     * @returns {Array<Array<number>>}
+     */
+    getBoundaries() {
+        return this.#boundaries;
+    }
+
+    getWholeWorldBoundaries() {
+        return this.#wholeWorldBoundaries;
+    }
+
+    /**
+     * @deprecated
+     */
+    get isWorldBoundariesEnabled() {
+        return this.#isWorldBoundariesEnabled;
+    }
+    /**
+     * @type {Array<number>}
+     */
+    get canvasDimensions() {
+        return [this.#viewWidth, this.#viewHeight];
+    }
+
+    /**
+     * @type {Array<number>}
+     */
+    get worldDimensions() {
+        return [this.#worldWidth, this.#worldHeight];
+    }
+    
+    /**
+     * @type {Array<number>}
+     */
+    get worldOffset() {
+        return [this.#xOffset, this.#yOffset];
+    }
+
+    /**
+     * @type {Array<number>}
+     */
+    get mapCenter() {
+        return [this.#centerX, this.#centerY];
+    }
+
+    /**
+     * @type {number}
+     */
+    get mapRotate() {
+        return this.#rotate;
+    }
+
+    /**
+     * @method
+     * @param {number} x 
+     * @param {number} y 
+     */
+    centerCameraPosition = (x, y) => {
+        let [mapOffsetX, mapOffsetY] = this.worldOffset;
+        const [canvasWidth, canvasHeight] = this.canvasDimensions,
+            [mapWidth, mapHeight] = this.worldDimensions,
+            halfScreenWidth = canvasWidth/2,
+            halfScreenHeight = canvasHeight/2,
+            currentCenterX = halfScreenWidth - mapOffsetX,
+            currentCenterY = halfScreenHeight - mapOffsetY;
+        if (currentCenterX < x) {
+            if (x < mapWidth - halfScreenWidth) {
+                const newXOffset = x - halfScreenWidth;
+                if (newXOffset >= 0)
+                    this.#xOffset = Math.round(newXOffset);
+            } else if (mapWidth > canvasWidth) {
+                const newXOffset = mapWidth - canvasWidth;
+                this.#xOffset = Math.round(newXOffset);
+            }
+        }
+        if (currentCenterY < y) {
+            if (y < mapHeight - halfScreenHeight) {
+                const newYOffset = y - halfScreenHeight;
+                if (newYOffset >= 0)
+                    this.#yOffset = Math.round(newYOffset);
+            } else if (mapHeight > canvasHeight) {
+                const newYOffset = mapHeight - canvasHeight;
+                this.#yOffset = Math.round(newYOffset);
+            }
+        }
+
+        this.#centerX = x;
+        this.#centerY = y;
+        //Logger.debug("center camera position, offset: ", this.worldOffset);
+        //Logger.debug("center: ", this.mapCenter);   
+    };
+
+    personRotatedCenterCamera = (x, y, rotationAngle) => {
+        console.log("new centering algorithm");
+        /*
+        let [mapOffsetX, mapOffsetY] = this.worldOffset;
+        const [canvasWidth, canvasHeight] = this.canvasDimensions,
+            [mapWidth, mapHeight] = this.worldDimensions,
+            halfScreenWidth = canvasWidth/2,
+            halfScreenHeight = canvasHeight/2,
+            currentCenterX = halfScreenWidth - mapOffsetX,
+            currentCenterY = halfScreenHeight - mapOffsetY;
+        if (currentCenterX < x) {
+            if (x < mapWidth - halfScreenWidth) {
+                const newXOffset = x - halfScreenWidth;
+                if (newXOffset >= 0)
+                    this.#xOffset = Math.round(newXOffset);
+            } else if (mapWidth > canvasWidth) {
+                const newXOffset = mapWidth - canvasWidth;
+                this.#xOffset = Math.round(newXOffset);
+            }
+        }
+        if (currentCenterY < y) {
+            if (y < mapHeight - halfScreenHeight) {
+                const newYOffset = y - halfScreenHeight;
+                if (newYOffset >= 0)
+                    this.#yOffset = Math.round(newYOffset);
+            } else if (mapHeight > canvasHeight) {
+                const newYOffset = mapHeight - canvasHeight;
+                this.#yOffset = Math.round(newYOffset);
+            }
+        }
+
+        this.#centerX = x;
+        this.#centerY = y;
+        Logger.debug("center camera position, offset: ", this.worldOffset);
+        Logger.debug("center: ", this.mapCenter);   
+        */
+    };
+
+    /**
+     * a getter to retrieve all attached renderObjects
+     */
+    get renderObjects() {
+        return this.#renderObjects;
+    }
+
+    /**
+     * Retrieve specific objects instances
+     * @param {Object} instance - drawObjectInstance to retrieve 
+     * @returns {Array<Object>}
+     */
+    getObjectsByInstance(instance) {
+        return this.#renderObjects.filter((object) => object instanceof instance);
+    }
+
+    /**
+     * @ignore
+     */
+    _sortRenderObjectsBySortIndex() {
+        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
+    }
+
+    /**
+     * @ignore
+     */
+    set _renderObject(object) {
+        this.#renderObjects.push(object);
+    } 
+
+    /**
+     * @ignore
+     */
+    set _renderObjects(objects) {
+        this.#renderObjects = objects;
+    } 
+}
+
+/***/ }),
+
 /***/ "./src/base/IExtension.js":
-/*!****************************************!*\
+/*!********************************!*\
   !*** ./src/base/IExtension.js ***!
-  \****************************************/
+  \********************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -1489,7 +2633,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * Class for creating modules
- * Accessed via ISystem.iExtension
+ * Accessed via ISystem.extensionInterface
  */
 class IExtension {
     /**
@@ -1513,7 +2657,7 @@ class IExtension {
     }
 
     /**
-     * 
+     * Used to register a new draw program
      * @param {string} programName
      * @param {string} vertexShader - raw vertex shader program
      * @param {string} fragmentShader - raw fragment shader program 
@@ -1538,7 +2682,7 @@ class IExtension {
      * Register render method for class.
      * @param {string} objectClassName - object name registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
-     * @param {string=} objectWebGlDrawProgram 
+     * @param {string=} objectWebGlDrawProgram - a webgl program name previously registered with iExtension.registerAndCompileWebGlProgram()
      */
     registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
         this.#systemReference.iRender._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);
@@ -1547,129 +2691,161 @@ class IExtension {
 
 /***/ }),
 
-/***/ "./src/base/Logger.js":
-/*!****************************!*\
-  !*** ./src/base/Logger.js ***!
-  \****************************/
+/***/ "./src/base/INetwork.js":
+/*!******************************!*\
+  !*** ./src/base/INetwork.js ***!
+  \******************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Logger": () => (/* binding */ Logger)
+/* harmony export */   "INetwork": () => (/* binding */ INetwork)
 /* harmony export */ });
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
+/* harmony import */ var _Logger_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Logger.js */ "./src/base/Logger.js");
+/* harmony import */ var _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Events/SystemEvent.js */ "./src/base/Events/SystemEvent.js");
 
 
 
-class Logger {
-    static debug(...args) {
-        if (_configs_js__WEBPACK_IMPORTED_MODULE_0__.SystemSettings.mode === _constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.MODE.DEBUG)
-            args.forEach(message => console.log(message));
-    }
-}
 
-/***/ }),
 
-/***/ "./src/base/Primitives.js":
-/*!********************************!*\
-  !*** ./src/base/Primitives.js ***!
-  \********************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+/**
+ * Represents Socket connection
+ */
+class INetwork extends EventTarget {
+    #systemSettings;
+    #socket;
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Rectangle": () => (/* binding */ Rectangle),
-/* harmony export */   "Vector": () => (/* binding */ Vector),
-/* harmony export */   "Vertex": () => (/* binding */ Vertex)
-/* harmony export */ });
-class Vertex {
-    #x;
-    #y;
-    constructor(x, y) {
-        this.#x = x;
-        this.#y = y;
-    }
-
-    get x() {
-        return this.#x;
-    }
-
-    get y() {
-        return this.#y;
-    }
-}
-
-class Rectangle {
-    #x;
-    #y;
-    #w;
-    #h;
-    constructor(x, y, w, h) {
-        this.#x = x;
-        this.#y = y;
-        this.#w = w;
-        this.#h = h; 
-    }
     /**
-     * @type {number}
+     * @hideconstructor
      */
-    get x() {
-        return this.#x;
+    constructor(systemSettings) {
+        super();
+        if (!systemSettings) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
+        }
+        this.#systemSettings = systemSettings;
     }
+
+    init() {
+        __webpack_require__.e(/*! import() */ "vendors-node_modules_socket_io-client_build_esm_index_js").then(__webpack_require__.bind(__webpack_require__, /*! socket.io-client */ "./node_modules/socket.io-client/build/esm/index.js")).then((module) => {
+            this.#socket = module.io(this.#systemSettings.network.address, {withCredentials: true});
+            
+            this.#registerSocketListeners();
+        });
+    }
+
     /**
-     * @type {number}
+     * @returns {boolean}
      */
-    get y() {
-        return this.#y;
+    get isServerConnected () {
+        if (this.#socket && this.#socket.connected) {
+            return true;
+        } else {
+            return false;
+        }
     }
-    /**
-     * @type {number}
-     */
-    get width() {
-        return this.#w;
+    
+    get playerId() {
+        return this.#socket.id;
     }
-    /**
-     * @type {number}
-     */
-    get height() {
-        return this.#h;
+
+    sendGatherRoomsInfo() {
+        this.#socket.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.CLIENT_SERVER.ROOMS_INFO_REQUEST);
     }
+
+    sendCreateOrJoinRoom(roomName, map) {
+        this.#socket.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.CLIENT_SERVER.CREATE_OR_JOIN, roomName , map);
+    }
+
+    sendMessage(message) {
+        this.#socket.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.CLIENT_SERVER.CLIENT_MESSAGE, message);
+    }
+
+    #onConnect = () => {
+        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("connected, socket id: " + this.#socket.id);
+        this.dispatchEvent(new Event(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
+    };
+
+    #onDisconnect = (reason) => {
+        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("server disconnected, reason: " + reason);
+        this.dispatchEvent(new Event(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
+    };
+
+    #onData = (event) => {
+        console.warn("server data: ", event);
+    };
+
+    #onMessage = (message) => {
+        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("received new message from server: " + message);
+        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.SERVER_MESSAGE, message));
+    };
+
+    #onRoomsInfo = (rooms) => {
+        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("received roomsInfo " + rooms);
+        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.ROOMS_INFO, rooms));
+    };
+
+    #onCreateNewRoom = (room, map) => {
+        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Created room  " + room);
+        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CREATED, {room, map}));
+    };
+
+    #onRoomIsFull = (room) => {
+        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Room is full, can't join: " + room);
+        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.FULL, {room}));
+    };
+
+    #onJoinedToRoom = (room, map) => {
+        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Joined to room: " + room, ", map: ", map);
+        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.JOINED, {room, map}));
+    };
+
+    #onUnjoinedFromRoom = (playerId) => {
+        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.DISCONNECTED, {playerId}));
+    };
+
+    #registerSocketListeners() {
+        this.#socket.on("connect", this.#onConnect);
+        this.#socket.on("disconnect", this.#onDisconnect);
+        this.#socket.on("data", this.#onData);
+
+        this.#socket.on("roomsInfo", this.#onRoomsInfo);
+    
+        this.#socket.on("created", this.#onCreateNewRoom);
+    
+        this.#socket.on("full", this.#onRoomIsFull);
+    
+        this.#socket.on("joined", this.#onJoinedToRoom);
+    
+        this.#socket.on("log", function(array) {
+            console.log.apply(console, array);
+        });
+    
+        this.#socket.on("message", this.#onMessage);
+    
+        this.#socket.on("removed", function(message) {
+            console.log("removed message");
+            console.log(message);
+        });
+
+        this.#socket.on("disconnected", this.#onUnjoinedFromRoom);
+
+        addEventListener("beforeunload", this.#disconnect);
+    }
+
+    #disconnect = () => {
+        this.#socket.disconnect();
+    };
 }
-
-class Vector {
-    #x;
-    #y;
-    constructor(x1, y1, x2, y2) {
-        this.#x = x2 - x1;
-        this.#y = y2 - y1;
-    }
-
-    get x() {
-        return this.#x;
-    }
-
-    get y() {
-        return this.#y;
-    }
-
-    get length() {
-        return Math.sqrt(Math.pow(this.#x, 2) + Math.pow(this.#y, 2));
-    }
-
-    get tetaAngle() {
-        return Math.atan2(this.#y, this.#x);
-    }
-}
-
-
 
 /***/ }),
 
 /***/ "./src/base/IRender.js":
-/*!*************************************!*\
+/*!*****************************!*\
   !*** ./src/base/IRender.js ***!
-  \*************************************/
+  \*****************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -1712,8 +2888,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * IRender class represents on how the drawObjects
- * should be drawn and the render itself
+ * IRender class controls the render(start/stop/speed) 
+ * And drawObjects(animations, removing, and rendering)
  * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
@@ -2165,7 +3341,7 @@ class IRender {
     }
 
     #countFPSaverage() {
-        const timeLeft = this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime,
+        const timeLeft = this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime,
             steps = this.#tempFPStime.length;
         let fullTime = 0;
 
@@ -2194,8 +3370,8 @@ class IRender {
             setTimeout(() => requestAnimationFrame(this.#drawViews));
             break;
         }
-        if (this.systemSettings.gameOptions.render.circleTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
-            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.circleTimeCalc.averageFPStime);
+        if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
+            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime);
         }
     };
 
@@ -2248,9 +3424,9 @@ class IRender {
                 r_time_less = minCircleTime - timeEnd,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
                 fps = 1000 / (timeEnd + wait_time);
-            if (this.systemSettings.gameOptions.render.circleTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CIRCLE_TIME_CALC.CURRENT &&
+            if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CIRCLE_TIME_CALC.CURRENT &&
                 timeEnd > minCircleTime) {
-                console.log("draw circle done, take: ", (timeEnd), " ms");
+                console.log("draw cycles done, take: ", (timeEnd), " ms");
             }
             this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.EVENTS.SYSTEM.RENDER.END);
             if(fps === Infinity) {
@@ -2269,48 +3445,26 @@ class IRender {
 
 /***/ }),
 
-/***/ "./src/base/GameStage.js":
-/*!********************************!*\
-  !*** ./src/base/GameStage.js ***!
-  \********************************/
+/***/ "./src/base/ISystem.js":
+/*!*****************************!*\
+  !*** ./src/base/ISystem.js ***!
+  \*****************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "GameStage": () => (/* binding */ GameStage)
+/* harmony export */   "ISystem": () => (/* binding */ ISystem)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
-/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _Logger_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Logger.js */ "./src/base/Logger.js");
-/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
-/* harmony import */ var _DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./DrawTiledLayer.js */ "./src/base/DrawTiledLayer.js");
-/* harmony import */ var _RenderEngine_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./IRender.js */ "./src/base/IRender.js");
-/* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
-/* harmony import */ var _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./DrawCircleObject.js */ "./src/base/DrawCircleObject.js");
-/* harmony import */ var _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./DrawConusObject.js */ "./src/base/DrawConusObject.js");
-/* harmony import */ var _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./DrawImageObject.js */ "./src/base/DrawImageObject.js");
-/* harmony import */ var _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./DrawLineObject.js */ "./src/base/DrawLineObject.js");
-/* harmony import */ var _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./DrawPolygonObject.js */ "./src/base/DrawPolygonObject.js");
-/* harmony import */ var _DrawRectObject_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./DrawRectObject.js */ "./src/base/DrawRectObject.js");
-/* harmony import */ var _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./DrawTextObject.js */ "./src/base/DrawTextObject.js");
-/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
-/* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
-/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
-/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-
-
-
-
-
-
-
-
-
-
-
+/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
+/* harmony import */ var _INetwork_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./INetwork.js */ "./src/base/INetwork.js");
+/* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
+/* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
+/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
+/* harmony import */ var _IRender_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./IRender.js */ "./src/base/IRender.js");
+/* harmony import */ var _IExtension_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./IExtension.js */ "./src/base/IExtension.js");
 
 
 
@@ -2323,247 +3477,82 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
- * Represents the stage of the game,<br>
- * Register and holds CanvasInterface.<br>
- * Contains pages logic.<br>
- * Instances should be created and registered with System.registerStage() factory method
- * 
- * @see {@link System} instances of this class holds by the System class
- * @hideconstructor
+ * Public interface for a System<br>
+ * Can be used to start/stop GameStage render, <br>
+ * And provides access to SystemSettings, INetwork and ISystemAudio <br>
+ * IRender, DrawObjectFactory, AssetsManager and external modules
+ * accessible via GameStage.system and System.system
+ * @see {@link System} a part of System class instance
+ * @see {@link GameStage} a part of GameStage class instance
  */
-class GameStage {
+class ISystem {
     /**
-     * @type {string}
+     * @type {Object}
      */
-    #name;
+    #systemSettings;
     /**
-     * @type {boolean}
+     * @type {IExtension}
      */
-    #isInitiated = false;
+    #iExtension;
     /**
-     * @type {boolean}
+     * @type {INetwork}
      */
-    #isActive;
-    /**
-     * @type {ISystem}
-     */
-    #systemReference;
-    /**
-     * @type {GameStageData}
-     */
-    #stageData;
-
-    constructor() {
-        this.#isActive = false;
-        this.#stageData = new _GameStageData_js__WEBPACK_IMPORTED_MODULE_1__.GameStageData();
-    }
-
-    /**
-     * Register stage
-     * @param {string} name
-     * @param {ISystem} system 
-     * @ignore
-     */
-    _register(name, system) {
-        this.#name = name;
-        this.#systemReference = system;
-        this.#setWorldDimensions();
-        this.#setCanvasSize();
-        this.register();
-    }
-
-    /**
-     * Initialization stage
-     * @ignore
-     */
-    _init() {
-        this.init();
-        this.#isInitiated = true;
-    }
-
-    /**
-     * @tutorial stages_lifecycle
-     * Custom logic for register stage
-     */
-    register() {}
-    /**
-     * @tutorial stages_lifecycle
-     * Custom logic for init stage
-     */
-    init() {}
-    /**
-     * Custom logic for start stage
-     * @param {Object=} options
-     */
-    start(options) {}
-    /**
-     * @tutorial stages_lifecycle
-     * Custom logic for stop stage
-     */
-    stop() {}
-    /**
-     * Custom logic for resize stage
-     */
-    resize() {}
-
-    /**
-     * @tutorial assets_manager
-     * @type {AssetsManager}
-     */
-    get iLoader() {
-        return this.#systemReference.iLoader;
-    }
-
-    /**
-     * @type {DrawObjectFactory}
-     */
-    get draw() {
-        return this.#systemReference.drawObjectFactory;
-    }
-
-    /**
-     * Creates new canvas layer
-     * and set it to the #views
-     * @param {string} name
-     * @param {boolean} [isOffsetTurnedOff = false] - determines if offset is affected on this layer or not
-     * @returns {CanvasView}
-     */
-    createCanvasView = (name, isOffsetTurnedOff = false) => {
-        if (name && name.trim().length > 0) {
-            console.warn("createCanvasView is deprecated. For layer masks use .setMask(drawObject).");
-            //const newView = new CanvasView(name, this.#system.systemSettings, this.#stageData, this.iLoader, this.system.webGlInterface, isOffsetTurnedOff);
-            //this.#views.set(name, newView);
-            return {};//newView;
-        } else
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS);
-    };
-
-    /**
-     * Attach all canvas elements from the #views to container
-     * @param {HTMLElement} container
-     * @ignore
-     */
-    _attachCanvasToContainer(container) {
-        this.#attachElementToContainer(this.canvasHtmlElement, container);
-        //for (const view of this.#views.values()) {
-        //    this.#attachElementToContainer(view.canvas, container);
-        //}
-    }
-
-    /**
-     * Add render object to the view
-     * @param {string} canvasKey - deprecated parameter
-     * @param { DrawConusObject | DrawImageObject | 
-     *          DrawLineObject | DrawPolygonObject | 
-     *          DrawRectObject | DrawCircleObject | 
-     *          DrawTextObject } renderObject 
-     */
-    addRenderObject = (canvasKey, renderObject) => {
-        //a small workaround for 
-        if (!renderObject) {
-            renderObject = canvasKey;
-        } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.DEPRECATED_PARAMETER, "canvasKey parameter is deprecated and no longer needed");
-        }
-        const data = this.stageData,
-            isDataAlreadyAdded = data.renderObjects.indexOf(renderObject) !== -1;
-        if (isDataAlreadyAdded) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "stage.draw methods add objects to pageData, no need to call addRenderObject");
-        } else {
-            data._renderObject = renderObject;
-            data._sortRenderObjectsBySortIndex(); 
-        }
-    };
-
-    /**
-     * Add render layer to the view
-     * @deprecated
-     * @param {string} canvasKey 
-     * @param {string} layerKey 
-     * @param {string} tileMapKey 
-     * @param {boolean=} setBoundaries 
-     * @param {DrawShapeObject=} shapeMask
-     */
-    addRenderLayer = (canvasKey, layerKey, tileMapKey, setBoundaries, shapeMask) => {
-        if (!canvasKey) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CANVAS_KEY_NOT_SPECIFIED, ", should pass canvasKey as 3rd parameter");
-        //} else if (!this.#views.has(canvasKey)) {
-        //    Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", should create canvas view, with " + canvasKey + " key first");
-        } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.DEPRECATED_PARAMETER, "stage.addRenderLayer is deprecated and will be removed, use stage.draw.tiledLayer instead");
-            //const view = this.#views.get(canvasKey);
-            const data = this.stageData;
-            data._renderObject = this.draw.tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask);
-            if (setBoundaries && this.systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
-                data._enableMapBoundaries();
-            }
-            data._sortRenderObjectsBySortIndex();
-        }
-    };
-
-    /**
-     * Determines if this stage render is Active or not
-     * @type {boolean}
-     */
-    get isActive() {
-        return this.#isActive;
-    }
-
-    /**
-     * Determines if this stage is initialized or not
-     * @type {boolean}
-     */
-    get isInitiated() {
-        return this.#isInitiated;
-    }
-
-    /**
-     * Current stage name
-     * @type {string}
-     */
-    get name () {
-        return this.#name;
-    }
-
-    /**
-     * Determines if all added files was loaded or not
-     * @returns {boolean}
-     */
-    //isAllFilesLoaded = () => {
-    //   return this.iLoader.filesWaitingForUpload === 0;
-    //};
-
-    /**
-     * @type {GameStageData}
-     */
-    get stageData() {
-        return this.#stageData;
-    }
-
-    /**
-     * @type {SystemSettings}
-     */
-    get systemSettings() {
-        return this.#systemReference.systemSettings;
-    }
-
+    #systemServerConnection;
     /**
      * @type {ISystemAudio}
      */
-    get audio() {
-        return this.#systemReference.audio;
+    #systemAudioInterface;
+    /**
+     * @type {AssetsManager}
+     */
+    #iLoader = new _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__["default"]();
+    /**
+     * @type {IRender}
+     */
+    #iRender;
+    /**
+     * @type {DrawObjectFactory}
+     */
+    #drawObjectFactory = new _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__.DrawObjectFactory(this.#iLoader);
+    
+    #modules = new Map();
+    /**
+     * @type {Map<string, GameStage>}
+     */
+    #registeredStagesReference;
+    /**
+     * @type {EventTarget}
+     */
+    #emitter = new EventTarget();
+    /**
+     * @hideconstructor
+     */
+    constructor(systemSettings, registeredStages, canvasContainer) {
+        if (!systemSettings) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
+        }
+        this.#systemSettings = systemSettings;
+        
+        this.#systemAudioInterface = new _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio(this.iLoader);
+        this.#systemServerConnection = new _INetwork_js__WEBPACK_IMPORTED_MODULE_2__.INetwork(systemSettings);
+        this.#iRender = new _IRender_js__WEBPACK_IMPORTED_MODULE_8__.IRender(this.systemSettings, this.iLoader, canvasContainer);
+        this.#iExtension = new _IExtension_js__WEBPACK_IMPORTED_MODULE_9__.IExtension(this, this.#iRender);
+        this.#registeredStagesReference = registeredStages;
+        // broadcast render events
+        this.#iRender.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START));
+        this.#iRender.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END));
     }
 
     /**
-     * @type {ISystem}
+     * 
+     * @param {string} eventName
+     * @param  {...any} eventParams
      */
-    get system() {
-        return this.#systemReference;
-    }
-
-    get canvasHtmlElement() {
-        return document.getElementsByTagName("canvas")[0];
-    }
+    emit = (eventName, ...eventParams) => {
+        const event = new Event(eventName);
+        event.data = [...eventParams];
+        this.#emitter.dispatchEvent(event);
+    };
 
     /**
      * 
@@ -2572,7 +3561,7 @@ class GameStage {
      * @param {*=} options 
      */
     addEventListener = (eventName, listener, options) => {
-        this.system.addEventListener(eventName, listener, options);
+        this.#emitter.addEventListener(eventName, listener, options);
     };
 
     /**
@@ -2582,958 +3571,123 @@ class GameStage {
      * @param {*=} options 
      */
     removeEventListener = (eventName, listener, options) => {
-        this.system.removeEventListener(eventName, listener, options);
+        this.#emitter.removeEventListener(eventName, listener, options);
     };
-
-    /**
-     * 
-     */
-    //get iRender() {
-    //    return this.#iRender;
-    //}
     
     /**
-     * @deprecated
-     * @method
-     * @param {string} key 
-     * @returns {CanvasView | undefined}
+     * @type { INetwork }
      */
-    getView = (key) => {
-        console.warn("GameStage.getView() is deprecated. Use GameStage.system.iRender for render, and GameStage.stageData for data instead");
-        return;
-        /*
-        const ctx = this.#views.get(key);
-        if (ctx) {
-            return this.#views.get(key);
+    get iNetwork () {
+        return this.#systemServerConnection;
+    }
+
+    /**
+     * @type { SystemSettings }
+     */
+    get systemSettings() {
+        return this.#systemSettings;
+    }
+
+    /**
+     * @type { ISystemAudio }
+     */
+    get audio() {
+        return this.#systemAudioInterface;
+    }
+
+    /**
+     * @type {AssetsManager}
+     */
+    get iLoader() {
+        return this.#iLoader;
+    }
+
+    /**
+     * @type {IRender}
+     */
+    get iRender() {
+        return this.#iRender;
+    }
+
+    /**
+     * @type {DrawObjectFactory}
+     */
+    get drawObjectFactory() {
+        return this.#drawObjectFactory;
+    }
+
+    get iExtension() {
+        return this.#iExtension;
+    }
+    /**
+     * @type {Map<string, Object>}
+     */
+    get modules() {
+        return this.#modules;
+    }
+
+    /**
+     * 
+     * @param {string} moduleKey 
+     * @param {Object} moduleClass 
+     * @param  {...any} args 
+     * @returns {Object}
+     */
+    installModule = (moduleKey, moduleClass, ...args) => {
+        const moduleInstance = new moduleClass(this, ...args);
+        if (this.#modules.has(moduleKey)) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.MODULE_ALREADY_INSTALLED, "module " + moduleKey + " is already installed");
+            return this.#modules.get(moduleKey);
         } else {
-            Exception(ERROR_CODES.CANVAS_WITH_KEY_NOT_EXIST, ", cannot find canvas with key " + key);
-        }*/
+            this.#modules.set(moduleKey, moduleInstance);
+        }
+        return moduleInstance;
     };
-
-    /**
-     * Start stage render
-     * @param {Object=} options 
-     * @ignore
-     */
-    _start(options) {
-        this.start(options);
-        //this.#renderEngineReference = iRender;
-        this.#isActive = true;
-        window.addEventListener("resize", this._resize);
-        this._resize();
-        //if (this.#views.size > 0) {
-        //requestAnimationFrame(this.#render);
-        //}
-    }
-
-    /**
-     * Stop stage render
-     * @ignore
-     */
-    _stop() {
-        this.#isActive = false;
-        window.removeEventListener("resize", this._resize);
-        //this.#removeCanvasFromDom();
-        //clearInterval(this.#fpsAverageCountTimer);
-        this.stop();
-    }
-
-    /**
-     * Resize event
-     * @ignore
-     */
-    _resize = () => {
-        this.#setCanvasSize();
-        this.resize();
-    };
-
-    /**
-     * 
-     * @param {HTMLCanvasElement} htmlElement 
-     * @param {HTMLElement} container 
-     */
-    #attachElementToContainer(htmlElement, container) {
-        container.appendChild(htmlElement);
-    }
-
-    #removeCanvasFromDom() {
-        for (const canvas of document.getElementsByTagName("canvas")) {
-            canvas.remove();
-        }
-        //for (const view of this.#views.values()) {
-        //        document.getElementById(view.canvas.id).remove();
-        //    }
-    }
-
-    #setWorldDimensions() {
-        const width = this.systemSettings.worldSize ? this.systemSettings.worldSize.width : 0,
-            height = this.systemSettings.worldSize ? this.systemSettings.worldSize.height : 0;
-            
-        this.stageData._setWorldDimensions(width, height);
-    }
-
-    //////////////////////////////////////////////////////
-    //***************************************************/
-    //****************** Collisions ********************//
-    //**************************************************//
-    //////////////////////////////////////////////////////
-
-    /**
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @param {DrawImageObject} drawObject 
-     * @returns {{x:number, y:number, p:number} | boolean}
-     */
-    isBoundariesCollision = (x, y, drawObject) => {
-        const drawObjectType = drawObject.type,
-            vertices = drawObject.vertices,
-            circleBoundaries = drawObject.circleBoundaries;
-        switch(drawObjectType) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
-            if (!circleBoundaries) {
-                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
-            } else {
-                return this.#isCircleToBoundariesCollision(x, y, drawObject.circleBoundaries.r);
-            }
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            break;
-        default:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
-        }
-        return false;
-    };
-
-    /**
-     * 
-     * @param {number} x 
-     * @param {number} y 
-     * @param {DrawImageObject} drawObject
-     * @param {Array<DrawImageObject>} objects - objects array to check
-     * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
-     */
-    isObjectsCollision = (x, y, drawObject, objects) => {
-        const drawObjectType = drawObject.type,
-            drawObjectBoundaries = drawObject.vertices,
-            circleBoundaries = drawObject.circleBoundaries;
-        switch(drawObjectType) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
-            if (!circleBoundaries) {
-                return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
-            } else {
-                return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
-            }
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            break;
-        default:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
-        }
-        return false;
-    };
-    #isPolygonToObjectsCollision(x, y, polygonVertices, polygonRotation, objects) {
-        const len = objects.length;
-
-        let collisions = [];
-        for (let i = 0; i < len; i++) {
-            const mapObject = objects[i],
-                drawMapObjectType = mapObject.type;
-
-            let coll;
-            
-            switch(drawMapObjectType) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
-                coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
-                break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-                console.warn("isObjectCollision.circle check is not implemented yet!");
-                break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                break;
-            default:
-                console.warn("unknown object type!");
-            }
-            if (coll) {
-                collisions.push(coll);
-            }
-        }
-        if (collisions.length > 0) {
-            return this.#takeTheClosestCollision(collisions);
-        } else {
-            return null;
-        }
-    }
-
-    #isCircleToObjectsCollision(x, y, drawObjectBoundaries, objects) {
-        const radius = drawObjectBoundaries.r;
-
-        const len = objects.length;
-
-        let collisions = [];
-        for (let i = 0; i < len; i++) {
-            const mapObject = objects[i],
-                drawMapObjectType = mapObject.type,
-                circleBoundaries = mapObject.circleBoundaries;
-
-            let coll;
-            
-            switch(drawMapObjectType) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
-                if (!circleBoundaries) {
-                    coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
-                } else {
-                    coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
-                }
-                break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-                console.warn("isObjectCollision.circle check is not implemented yet!");
-                break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                break;
-            default:
-                console.warn("unknown object type!");
-            }
-            if (coll) {
-                collisions.push(coll);
-            }
-        }
-        if (collisions.length > 0) {
-            return this.#takeTheClosestCollision(collisions);
-        } else {
-            return null;
-        }
-    }
- 
-    #takeTheClosestCollision(collisions) {
-        return collisions.sort((a,b) => a.p < b.p)[0];
-    }
-
-    #isCircleToPolygonCollision(x, y, radius, mapObject) {
-        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
-            xWithOffset = x - mapOffsetX,
-            yWithOffset = y - mapOffsetY,
-            mapObjXWithOffset = mapObject.x - mapOffsetX,
-            mapObjYWithOffset = mapObject.y - mapOffsetY,
-            mapObjVertices = mapObject.vertices, 
-            mapObjRotation = mapObject.rotation,
-            len = mapObjVertices.length;
-        //console.log("map object check:");
-        //console.log(mapObject);
-        for (let i = 0; i < len; i+=1) {
-            const mapObjFirstVertex = mapObjVertices[i];
-            let mapObjNextVertex = mapObjVertices[i + 1];
-            if (!mapObjNextVertex) {
-                mapObjNextVertex = mapObjVertices[0];
-            }
-            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-                edge = {
-                    x1: vertex[0],
-                    y1: vertex[1],
-                    x2: nextVertex[0],
-                    y2: nextVertex[1]
-                },
-                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isCircleLineIntersect)(xWithOffset, yWithOffset, radius, edge);
-            if (intersect) {
-            //console.log("polygon: ", polygonWithOffsetAndRotation);
-            //console.log("intersect: ", intersect);
-                return intersect;
-            }
-        }
-        return false;
-    }
-
-    #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
-        const len = new _Primitives_js__WEBPACK_IMPORTED_MODULE_19__.Vector(circle1X, circle1Y, circle2X, circle2Y).length;
-        console.log(len);
-        console.log(circle1R);
-        console.log(circle2R);
-        if ((len - (circle1R + circle2R)) > 0) {
-            return false;
-        } else {
-            //@todo calculate point of intersect
-            return true;
-        }
-    }
-
-    #isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject) {
-        const [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
-            xWithOffset = x - mapOffsetX,
-            yWithOffset = y - mapOffsetY,
-            mapObjXWithOffset = mapObject.x - mapOffsetX,
-            mapObjYWithOffset = mapObject.y - mapOffsetY,
-            mapObjVertices = mapObject.vertices, 
-            mapObjRotation = mapObject.rotation,
-            polygonWithOffsetAndRotation = polygonVertices.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, polygonRotation))),
-            len = mapObjVertices.length;
-        //console.log("map object check:");
-        //console.log(mapObject);
-        for (let i = 0; i < len; i+=1) {
-            const mapObjFirstVertex = mapObjVertices[i];
-            let mapObjNextVertex = mapObjVertices[i + 1];
-            if (!mapObjNextVertex) {
-                mapObjNextVertex = mapObjVertices[0];
-            }
-            const vertex = this.#calculateShiftedVertexPos(mapObjFirstVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-                nextVertex = this.#calculateShiftedVertexPos(mapObjNextVertex, mapObjXWithOffset, mapObjYWithOffset, mapObjRotation),
-                edge = {
-                    x1: vertex[0],
-                    y1: vertex[1],
-                    x2: nextVertex[0],
-                    y2: nextVertex[1]
-                },
-                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, edge);
-            if (intersect) {
-                //console.log("polygon: ", polygonWithOffsetAndRotation);
-                //console.log("intersect: ", intersect);
-                return intersect;
-            }
-        }
-        return false;
-    }
-
-    #calculateShiftedVertexPos(vertex, centerX, centerY, rotation) {
-        const vector = new _Primitives_js__WEBPACK_IMPORTED_MODULE_19__.Vector(0, 0, vertex[0], vertex[1]),
-            vertexAngle = (0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.angle_2points)(0, 0, vertex[0], vertex[1]),
-            len = vector.length;
-        //console.log("coords without rotation: ");
-        //console.log(x + vertex.x);
-        //console.log(y + vertex.y);
-        //console.log("len: ", len);
-        //console.log("angle: ", rotation);
-        const newX = centerX + (len * Math.cos(rotation + vertexAngle)),
-            newY = centerY + (len * Math.sin(rotation + vertexAngle));
-        return [newX, newY];
-    }
-
-    #checkCollisions(renderObjects) {
-        const boundaries = this.stageData.getBoundaries(),
-            boundariesLen = boundaries.length,
-            objectsLen = renderObjects.length;
-        //console.log(this.stageData.worldOffset);
-        for (let i = 0; i < objectsLen; i++) {
-            const renderObject = renderObjects[i];
-            for (let j = 0; j < objectsLen; j++) {
-                if (i === j) {
-                    continue;
-                }
-                // const renderObjectCheck = renderObjects[j];
-                // check object - object collisions
-            }
-
-            for (let k = 0; k < boundariesLen; k+=1) {
-                const item = boundaries[k],
-                    object = {
-                        x1: item[0],
-                        y1: item[1],
-                        x2: item[2],
-                        y2: item[3]
-                    };
-                const objectBoundaries = object.boundaries;
-                if (objectBoundaries) {
-                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isPolygonLineIntersect)(objectBoundaries, object)) {
-                        this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
-                    }
-                } else {
-                    if ((0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isPointLineIntersect)({ x: renderObject.x, y: renderObject.y }, object)) {
-                        this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.GAME.BOUNDARIES_COLLISION, renderObject);
-                        //console.log("boundaries collision detected");
-                    }
-                }
-            }
-        }
-    }
-
-    #isCircleToBoundariesCollision(x, y, r) {
-        const mapObjects = this.stageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
-            xWithOffset = x - mapOffsetX,
-            yWithOffset = y - mapOffsetY,
-            len = mapObjects.length;
-
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i];
-            const object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                },
-                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isCircleLineIntersect)(xWithOffset, yWithOffset, r, object);
-            if (intersect) {
-                //console.log("rotation: ", rotation);
-                //console.log("polygon: ", polygonWithOffsetAndRotation);
-                //console.log("intersect: ", intersect);
-                return intersect;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @param {number} x
-     * @param {number} y
-     * @param {Array<Array<number>>} polygon
-     * @param {number} rotation 
-     * @returns {{x:number, y:number, p:number} | boolean}
-     */
-    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
-        //console.log("angle: ", rotation);
-        //console.log("boundaries before calculations: ");
-        //console.log(polygon);
-        const mapObjects = this.stageData.getBoundaries(),
-            [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
-            xWithOffset = x - mapOffsetX,
-            yWithOffset = y - mapOffsetY,
-            polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
-            len = mapObjects.length;
-
-        for (let i = 0; i < len; i+=1) {
-            const item = mapObjects[i];
-            const object = {
-                    x1: item[0],
-                    y1: item[1],
-                    x2: item[2],
-                    y2: item[3]
-                },
-                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_18__.isPolygonLineIntersect)(polygonWithOffsetAndRotation, object);
-            if (intersect) {
-                //console.log("rotation: ", rotation);
-                //console.log("polygon: ", polygonWithOffsetAndRotation);
-                //console.log("intersect: ", intersect);
-                return intersect;
-            }
-        }
-        return false;
-    }
-    //****************** End Collisions ****************//
-
-    #setCanvasSize() {
-        const canvasWidth = this.systemSettings.canvasMaxSize.width && (this.systemSettings.canvasMaxSize.width < window.innerWidth) ? this.systemSettings.canvasMaxSize.width : window.innerWidth,
-            canvasHeight = this.systemSettings.canvasMaxSize.height && (this.systemSettings.canvasMaxSize.height < window.innerHeight) ? this.systemSettings.canvasMaxSize.height : window.innerHeight;
-        this.stageData._setCanvasDimensions(canvasWidth, canvasHeight);
-        //this.#iRender.setCanvasSize(canvasWidth, canvasHeight)
-        //for (const view of this.#views.values()) {
-        //    view._setCanvasSize(canvasWidth, canvasHeight);
-        //}
-    }
-}
-
-/***/ }),
-
-/***/ "./src/base/GameStageData.js":
-/*!************************************!*\
-  !*** ./src/base/GameStageData.js ***!
-  \************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "GameStageData": () => (/* binding */ GameStageData)
-/* harmony export */ });
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-
-
-/**
- * An interface for common views data such as
- * boundaries, world dimensions, options
- * accessible via GameStage.stageData 
- * @see {@link GameStage} a part of GameStage
- * @hideconstructor
- */
-class GameStageData {
-    #worldWidth;
-    #worldHeight;
-    #viewWidth;
-    #viewHeight;
-    #xOffset = 0;
-    #yOffset = 0;
-    #centerX = 0;
-    #centerY = 0;
-    #rotate = 0;
-    /**
-     * current screen boundaries, recalculated every render circle
-     * @type {Array<Array<number>>}
-     */
-    #boundaries = [];
-
-    /**
-     * whole world boundaries, calculated once on prepare stage
-     * @type {Array<Array<number>>}
-     */
-    #wholeWorldBoundaries = [];
-    /**
-     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
-     */
-    #renderObjects = [];
-    
-    /**
-     * @type {boolean}
-     */
-    #isOffsetTurnedOff;
-    /**
-     * @deprecated
-     * @type {boolean}
-     */
-    #isWorldBoundariesEnabled = false;
-
-    /**
-     * 
-     * @returns {boolean}
-     */
-    isOffsetTurnedOff() {
-        return this.#isOffsetTurnedOff;
-    }
-    set mapRotate(value) {
-        this.#rotate = value;
-    }
-
-    /**
-     * Add a Boundaries line
-     * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
-     */
-    #addBoundaries(boundaries) {
-        this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
-    }
-
-    /**
-     * Add array of boundaries lines
-     * @param {Array<Array<number>>} boundaries 
-     * @ignore
-     */
-    _addBoundariesArray(boundaries) {
-        this.#boundaries.push(...boundaries);
-    }
-
-    /**
-     * Clear map boundaries
-     * @ignore
-     */
-    _clearBoundaries() {
-        this.#boundaries = [];
-    }
-
-    /**
-     * 
-     * @param {number} width 
-     * @param {number} height 
-     * @ignore
-     */
-    _setWorldDimensions(width, height) {
-        this.#worldWidth = width;
-        this.#worldHeight = height;
-    }
-
-    /**
-     * 
-     * @param {number} width 
-     * @param {number} height 
-     * @ignore
-     */
-    _setCanvasDimensions(width, height) {
-        this.#viewWidth = width;
-        this.#viewHeight = height;
-    }
-
-    /**
-     * Set map borders
-     * @ignore
-     */
-    _setMapBoundaries() {
-        const [w, h] = [this.#worldWidth, this.#worldHeight],
-            [offsetX, offsetY] = [this.#xOffset, this.#yOffset],
-            wOffset = w - offsetX,
-            hOffset = h -offsetY;
-        if (!w || !h) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
-        }
-        this.#addBoundaries({x1: 0, y1: 0, x2: wOffset, y2: 0});
-        this.#addBoundaries({x1: wOffset, y1: 0, x2: wOffset, y2: hOffset});
-        this.#addBoundaries({x1: wOffset, y1: hOffset, x2: 0, y2: hOffset});
-        this.#addBoundaries({x1: 0, y1: hOffset, x2: 0, y2: 0});
-    }
-
-    /**
-     * @ignore
-     */
-    _setWholeWorldMapBoundaries() {
-        const [w, h] = [this.#worldWidth, this.#worldHeight];
-        if (!w || !h) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
-        }
-        this.#wholeWorldBoundaries.push([0, 0, w, 0]);
-        this.#wholeWorldBoundaries.push([w, 0, w, h]);
-        this.#wholeWorldBoundaries.push([w, h, 0, h]);
-        this.#wholeWorldBoundaries.push([0, h, 0, 0]);
-    }
-
-    /**
-     * Merge same boundaries
-     * @ignore
-     */
-    _mergeBoundaries(isWholeMapBoundaries = false) {
-        const boundaries = isWholeMapBoundaries ? this.getWholeWorldBoundaries() : this.getBoundaries(),
-            boundariesSet = new Set(boundaries);
-        for (const line of boundariesSet.values()) {
-            const lineX1 = line[0],
-                lineY1 = line[1],
-                lineX2 = line[2],
-                lineY2 = line[3];
-            for (const line2 of boundariesSet.values()) {
-                const line2X1 = line2[0],
-                    line2Y1 = line2[1],
-                    line2X2 = line2[2],
-                    line2Y2 = line2[3];
-                if (lineX1 === line2X2 && lineY1 === line2Y2 &&
-                    lineX2 === line2X1 && lineY2 === line2Y1) {
-                    //remove double lines
-                    boundariesSet.delete(line);
-                    boundariesSet.delete(line2);
-                }
-                if (lineX2 === line2X1 && lineY2 === line2Y1 && (lineX1 === line2X2 || lineY1 === line2Y2)) {
-                    //merge lines
-                    line2[0] = lineX1;
-                    line2[1] = lineY1;
-                    boundariesSet.delete(line);
-                }
-            }
-        }
-
-        if (isWholeMapBoundaries) {
-            this.#boundaries = Array.from(boundariesSet);
-        } else {
-            this.#wholeWorldBoundaries = Array.from(boundariesSet);
-        }
-        boundariesSet.clear();
-    }
-
-    /**
-     * @ignore
-     * @param {Array<Array<number>>} boundaries 
-     */
-    _setWholeMapBoundaries(boundaries) {
-        this.#wholeWorldBoundaries.push(...boundaries);
-    }
-
-    /**
-     * @deprecated
-     * @ignore
-     */
-    _enableMapBoundaries() {
-        this.#isWorldBoundariesEnabled = true;
-    }
-
-    /**
-     * 
-     * @returns {Array<Array<number>>}
-     */
-    getBoundaries() {
-        return this.#boundaries;
-    }
-
-    getWholeWorldBoundaries() {
-        return this.#wholeWorldBoundaries;
-    }
-
-    /**
-     * @deprecated
-     */
-    get isWorldBoundariesEnabled() {
-        return this.#isWorldBoundariesEnabled;
-    }
-    /**
-     * @type {Array<number>}
-     */
-    get canvasDimensions() {
-        return [this.#viewWidth, this.#viewHeight];
-    }
-
-    /**
-     * @type {Array<number>}
-     */
-    get worldDimensions() {
-        return [this.#worldWidth, this.#worldHeight];
-    }
-    
-    /**
-     * @type {Array<number>}
-     */
-    get worldOffset() {
-        return [this.#xOffset, this.#yOffset];
-    }
-
-    /**
-     * @type {Array<number>}
-     */
-    get mapCenter() {
-        return [this.#centerX, this.#centerY];
-    }
-
-    /**
-     * @type {number}
-     */
-    get mapRotate() {
-        return this.#rotate;
-    }
 
     /**
      * @method
-     * @param {number} x 
-     * @param {number} y 
-     */
-    centerCameraPosition = (x, y) => {
-        let [mapOffsetX, mapOffsetY] = this.worldOffset;
-        const [canvasWidth, canvasHeight] = this.canvasDimensions,
-            [mapWidth, mapHeight] = this.worldDimensions,
-            halfScreenWidth = canvasWidth/2,
-            halfScreenHeight = canvasHeight/2,
-            currentCenterX = halfScreenWidth - mapOffsetX,
-            currentCenterY = halfScreenHeight - mapOffsetY;
-        if (currentCenterX < x) {
-            if (x < mapWidth - halfScreenWidth) {
-                const newXOffset = x - halfScreenWidth;
-                if (newXOffset >= 0)
-                    this.#xOffset = Math.round(newXOffset);
-            } else if (mapWidth > canvasWidth) {
-                const newXOffset = mapWidth - canvasWidth;
-                this.#xOffset = Math.round(newXOffset);
-            }
-        }
-        if (currentCenterY < y) {
-            if (y < mapHeight - halfScreenHeight) {
-                const newYOffset = y - halfScreenHeight;
-                if (newYOffset >= 0)
-                    this.#yOffset = Math.round(newYOffset);
-            } else if (mapHeight > canvasHeight) {
-                const newYOffset = mapHeight - canvasHeight;
-                this.#yOffset = Math.round(newYOffset);
-            }
-        }
-
-        this.#centerX = x;
-        this.#centerY = y;
-        //Logger.debug("center camera position, offset: ", this.worldOffset);
-        //Logger.debug("center: ", this.mapCenter);   
-    };
-
-    personRotatedCenterCamera = (x, y, rotationAngle) => {
-        console.log("new centering algorithm");
-        /*
-        let [mapOffsetX, mapOffsetY] = this.worldOffset;
-        const [canvasWidth, canvasHeight] = this.canvasDimensions,
-            [mapWidth, mapHeight] = this.worldDimensions,
-            halfScreenWidth = canvasWidth/2,
-            halfScreenHeight = canvasHeight/2,
-            currentCenterX = halfScreenWidth - mapOffsetX,
-            currentCenterY = halfScreenHeight - mapOffsetY;
-        if (currentCenterX < x) {
-            if (x < mapWidth - halfScreenWidth) {
-                const newXOffset = x - halfScreenWidth;
-                if (newXOffset >= 0)
-                    this.#xOffset = Math.round(newXOffset);
-            } else if (mapWidth > canvasWidth) {
-                const newXOffset = mapWidth - canvasWidth;
-                this.#xOffset = Math.round(newXOffset);
-            }
-        }
-        if (currentCenterY < y) {
-            if (y < mapHeight - halfScreenHeight) {
-                const newYOffset = y - halfScreenHeight;
-                if (newYOffset >= 0)
-                    this.#yOffset = Math.round(newYOffset);
-            } else if (mapHeight > canvasHeight) {
-                const newYOffset = mapHeight - canvasHeight;
-                this.#yOffset = Math.round(newYOffset);
-            }
-        }
-
-        this.#centerX = x;
-        this.#centerY = y;
-        Logger.debug("center camera position, offset: ", this.worldOffset);
-        Logger.debug("center: ", this.mapCenter);   
-        */
-    };
-
-    /**
-     * a getter to retrieve all attached renderObjects
-     */
-    get renderObjects() {
-        return this.#renderObjects;
-    }
-
-    /**
-     * Retrieve specific objects instances
-     * @param {Object} instance - drawObjectInstance to retrieve 
-     * @returns {Array<Object>}
-     */
-    getObjectsByInstance(instance) {
-        return this.#renderObjects.filter((object) => object instanceof instance);
-    }
-
-    /**
-     * @ignore
-     */
-    _sortRenderObjectsBySortIndex() {
-        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
-    }
-
-    /**
-     * @ignore
-     */
-    set _renderObject(object) {
-        this.#renderObjects.push(object);
-    } 
-
-    /**
-     * @ignore
-     */
-    set _renderObjects(objects) {
-        this.#renderObjects = objects;
-    } 
-}
-
-/***/ }),
-
-/***/ "./src/base/System.js":
-/*!****************************!*\
-  !*** ./src/base/System.js ***!
-  \****************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "System": () => (/* binding */ System)
-/* harmony export */ });
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
-/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../design/LoadingStage.js */ "./src/design/LoadingStage.js");
-
-
-
-
-
-
-
-
-const loadingPageName = "loadingPage";
-/**
- * A main app class, <br>
- * Holder class for GameStage,<br>
- * can register new GameStages,<br>
- * init and preload data for them,<br>
- */
-class System {
-    /**
-     * @type {Map<string, GameStage>}
-     */
-    #registeredStages;
-    /**
-     * @type {ISystem}
-     */
-    #system;
-    /**
-     * @param {SystemSettings} systemSettings - holds system settings
-     * @param {HTMLElement} [canvasContainer] - If it is not passed, system will create div element and attach it to body
-     */
-    constructor(systemSettings, canvasContainer) {
-        if (!systemSettings) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
-        }
-        this.#registeredStages = new Map();
-
-        if (!canvasContainer) {
-            canvasContainer = document.createElement("div");
-            document.body.appendChild(canvasContainer);
-        }
-
-        this.#system = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(systemSettings, this.#registeredStages, canvasContainer);
-
-        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__.LoadingStage);
-
-        this.#system.iLoader.addEventListener("loadstart", this.#loadStart);
-        this.#system.iLoader.addEventListener("progress", this.#loadProgress);
-        this.#system.iLoader.addEventListener("load", this.#loadComplete);
-    }
-
-    /**
-     * @type {ISystem}
-     */
-    get system() {
-        return this.#system;
-    }
-
-    /**
-     * A main factory method for create GameStage instances, <br>
-     * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {GameStage} screen 
+     * @param {Object} [options] - options
      */
-    registerStage(screenPageName, screen) {
-        if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
-            const stage = new screen();
-            stage._register(screenPageName, this.system);
-            this.#registeredStages.set(screenPageName, stage);
+    startGameStage = (screenPageName, options) => {
+        if (this.#registeredStagesReference.has(screenPageName)) {
+            const stage = this.#registeredStagesReference.get(screenPageName),
+                pageData = stage.stageData;
+            this.#drawObjectFactory._attachPageData(pageData);
+            if (stage.isInitiated === false) {
+                stage._init();
+            }
+            //stage._attachCanvasToContainer(this.#canvasContainer);
+            stage._start(options);
+            this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.START_PAGE);
+            this.#iRender._startRender(pageData);
         } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
         }
-    }
+    };
 
     /**
-     * Preloads assets for all registered pages
-     * @return {Promise<void>}
+     * @method
+     * @param {string} screenPageName
      */
-    preloadAllData() {
-        return this.#system.iLoader.preload();
-    }
-
-    #loadStart = (event) => {
-        this.#system.startGameStage(loadingPageName, {total: event.total});
-    };
-
-    #loadProgress = (event) => {
-        const uploaded = event.loaded,
-            left = event.total,
-            loadingPage = this.#registeredStages.get(loadingPageName);
-            
-        loadingPage._progress(uploaded, left);
-    };
-
-    #loadComplete = () => {
-        this.#system.stopGameStage(loadingPageName);
+    stopGameStage = (screenPageName) => {
+        if (this.#registeredStagesReference.has(screenPageName)) {
+            this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.STOP_PAGE);
+            this.drawObjectFactory._detachPageData();
+            this.#iRender._stopRender();
+            this.#registeredStagesReference.get(screenPageName)._stop();
+        } else {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+        }
     };
 }
 
 /***/ }),
 
 /***/ "./src/base/ISystemAudio.js":
-/*!******************************************!*\
+/*!**********************************!*\
   !*** ./src/base/ISystemAudio.js ***!
-  \******************************************/
+  \**********************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3640,26 +3794,141 @@ class ISystemAudio {
 
 /***/ }),
 
-/***/ "./src/base/ISystem.js":
-/*!*************************************!*\
-  !*** ./src/base/ISystem.js ***!
-  \*************************************/
+/***/ "./src/base/Logger.js":
+/*!****************************!*\
+  !*** ./src/base/Logger.js ***!
+  \****************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "ISystem": () => (/* binding */ ISystem)
+/* harmony export */   "Logger": () => (/* binding */ Logger)
+/* harmony export */ });
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+
+
+
+class Logger {
+    static debug(...args) {
+        if (_configs_js__WEBPACK_IMPORTED_MODULE_0__.SystemSettings.mode === _constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.MODE.DEBUG)
+            args.forEach(message => console.log(message));
+    }
+}
+
+/***/ }),
+
+/***/ "./src/base/Primitives.js":
+/*!********************************!*\
+  !*** ./src/base/Primitives.js ***!
+  \********************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Rectangle": () => (/* binding */ Rectangle),
+/* harmony export */   "Vector": () => (/* binding */ Vector),
+/* harmony export */   "Vertex": () => (/* binding */ Vertex)
+/* harmony export */ });
+class Vertex {
+    #x;
+    #y;
+    constructor(x, y) {
+        this.#x = x;
+        this.#y = y;
+    }
+
+    get x() {
+        return this.#x;
+    }
+
+    get y() {
+        return this.#y;
+    }
+}
+
+class Rectangle {
+    #x;
+    #y;
+    #w;
+    #h;
+    constructor(x, y, w, h) {
+        this.#x = x;
+        this.#y = y;
+        this.#w = w;
+        this.#h = h; 
+    }
+    /**
+     * @type {number}
+     */
+    get x() {
+        return this.#x;
+    }
+    /**
+     * @type {number}
+     */
+    get y() {
+        return this.#y;
+    }
+    /**
+     * @type {number}
+     */
+    get width() {
+        return this.#w;
+    }
+    /**
+     * @type {number}
+     */
+    get height() {
+        return this.#h;
+    }
+}
+
+class Vector {
+    #x;
+    #y;
+    constructor(x1, y1, x2, y2) {
+        this.#x = x2 - x1;
+        this.#y = y2 - y1;
+    }
+
+    get x() {
+        return this.#x;
+    }
+
+    get y() {
+        return this.#y;
+    }
+
+    get length() {
+        return Math.sqrt(Math.pow(this.#x, 2) + Math.pow(this.#y, 2));
+    }
+
+    get tetaAngle() {
+        return Math.atan2(this.#y, this.#x);
+    }
+}
+
+
+
+/***/ }),
+
+/***/ "./src/base/System.js":
+/*!****************************!*\
+  !*** ./src/base/System.js ***!
+  \****************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "System": () => (/* binding */ System)
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _SystemSocketConnection_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./INetwork.js */ "./src/base/INetwork.js");
-/* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
+/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
+/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
-/* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
-/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
-/* harmony import */ var _RenderEngine_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./IRender.js */ "./src/base/IRender.js");
-/* harmony import */ var _IExtension_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./IExtension.js */ "./src/base/IExtension.js");
+/* harmony import */ var _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../design/LoadingStage.js */ "./src/design/LoadingStage.js");
 
 
 
@@ -3668,519 +3937,93 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-
-
-
+const loadingPageName = "loadingPage";
 /**
- * Public interface for a System<br>
- * Can be used to start/stop GameStage render, <br>
- * And provides access to SystemSettings, INetwork and ISystemAudio <br>
- * IRender, DrawObjectFactory, AssetsManager and external modules
- * accessible via GameStage.system and System.system
- * @see {@link System} a part of System class instance
- * @see {@link GameStage} a part of GameStage class instance
+ * A main app class, <br>
+ * Holder class for GameStage,<br>
+ * can register new GameStages,<br>
+ * init and preload data for them,<br>
  */
-class ISystem {
-    /**
-     * @type {Object}
-     */
-    #systemSettings;
-    /**
-     * @type {IExtension}
-     */
-    #iExtension;
-    /**
-     * @type {INetwork}
-     */
-    #systemServerConnection;
-    /**
-     * @type {ISystemAudio}
-     */
-    #systemAudioInterface;
-    /**
-     * @type {AssetsManager}
-     */
-    #iLoader = new _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__["default"]();
-    /**
-     * @type {IRender}
-     */
-    #iRender;
-    /**
-     * @type {DrawObjectFactory}
-     */
-    #drawObjectFactory = new _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__.DrawObjectFactory(this.#iLoader);
-    
-    #modules = new Map();
+class System {
     /**
      * @type {Map<string, GameStage>}
      */
-    #registeredStagesReference;
+    #registeredStages;
     /**
-     * @type {EventTarget}
+     * @type {ISystem}
      */
-    #emitter = new EventTarget();
+    #iSystem;
     /**
-     * @hideconstructor
+     * @param {SystemSettings} iSystemSettings - holds iSystem settings
+     * @param {HTMLElement} [canvasContainer] - If it is not passed, iSystem will create div element and attach it to body
      */
-    constructor(systemSettings, registeredStages, canvasContainer) {
-        if (!systemSettings) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
+    constructor(iSystemSettings, canvasContainer) {
+        if (!iSystemSettings) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "iSystemSettings should be passed to class instance");
         }
-        this.#systemSettings = systemSettings;
-        this.#iExtension = new _IExtension_js__WEBPACK_IMPORTED_MODULE_9__.IExtension(this);
-        this.#systemAudioInterface = new _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio(this.iLoader);
-        this.#systemServerConnection = new _SystemSocketConnection_js__WEBPACK_IMPORTED_MODULE_2__.INetwork(systemSettings);
-        this.#iRender = new _RenderEngine_js__WEBPACK_IMPORTED_MODULE_8__.IRender(this.systemSettings, this.iLoader, canvasContainer);
-        this.#registeredStagesReference = registeredStages;
-        // broadcast render events
-        this.#iRender.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.START));
-        this.#iRender.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.RENDER.END));
-    }
+        this.#registeredStages = new Map();
 
-    /**
-     * 
-     * @param {string} eventName
-     * @param  {...any} eventParams
-     */
-    emit = (eventName, ...eventParams) => {
-        const event = new Event(eventName);
-        event.data = [...eventParams];
-        this.#emitter.dispatchEvent(event);
-    };
-
-    /**
-     * 
-     * @param {string} eventName 
-     * @param {*} listener 
-     * @param {*=} options 
-     */
-    addEventListener = (eventName, listener, options) => {
-        this.#emitter.addEventListener(eventName, listener, options);
-    };
-
-    /**
-     * 
-     * @param {string} eventName 
-     * @param {*} listener 
-     * @param {*=} options 
-     */
-    removeEventListener = (eventName, listener, options) => {
-        this.#emitter.removeEventListener(eventName, listener, options);
-    };
-    
-    /**
-     * @type { INetwork }
-     */
-    get network () {
-        return this.#systemServerConnection;
-    }
-
-    /**
-     * @type { SystemSettings }
-     */
-    get systemSettings() {
-        return this.#systemSettings;
-    }
-
-    /**
-     * @type { ISystemAudio }
-     */
-    get audio() {
-        return this.#systemAudioInterface;
-    }
-
-    /**
-     * @type {AssetsManager}
-     */
-    get iLoader() {
-        return this.#iLoader;
-    }
-
-    /**
-     * @type {DrawObjectFactory}
-     */
-    get drawObjectFactory() {
-        return this.#drawObjectFactory;
-    }
-
-    get iRender() {
-        return this.#iRender;
-    }
-
-    get iExtension() {
-        return this.#iExtension;
-    }
-    /**
-     * @type {Map<string, Object>}
-     */
-    get modules() {
-        return this.#modules;
-    }
-
-    /**
-     * 
-     * @param {string} moduleKey 
-     * @param {Object} moduleClass 
-     * @param  {...any} args 
-     * @returns {Object}
-     */
-    installModule = (moduleKey, moduleClass, ...args) => {
-        const moduleInstance = new moduleClass(this, ...args);
-        if (this.#modules.has(moduleKey)) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.MODULE_ALREADY_INSTALLED, "module " + moduleKey + " is already installed");
-            return this.#modules.get(moduleKey);
-        } else {
-            this.#modules.set(moduleKey, moduleInstance);
+        if (!canvasContainer) {
+            canvasContainer = document.createElement("div");
+            document.body.appendChild(canvasContainer);
         }
-        return moduleInstance;
-    };
+
+        this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
+
+        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__.LoadingStage);
+
+        this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
+        this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
+        this.#iSystem.iLoader.addEventListener("load", this.#loadComplete);
+    }
 
     /**
-     * @method
+     * @type {ISystem}
+     */
+    get iSystem() {
+        return this.#iSystem;
+    }
+
+    /**
+     * A main factory method for create GameStage instances, <br>
+     * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {Object} [options] - options
+     * @param {GameStage} stage
      */
-    startGameStage = (screenPageName, options) => {
-        if (this.#registeredStagesReference.has(screenPageName)) {
-            const stage = this.#registeredStagesReference.get(screenPageName),
-                pageData = stage.stageData;
-            this.#drawObjectFactory._attachPageData(pageData);
-            if (stage.isInitiated === false) {
-                stage._init();
-            }
-            //stage._attachCanvasToContainer(this.#canvasContainer);
-            stage._start(options);
-            this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.START_PAGE);
-            this.#iRender._startRender(pageData);
+    registerStage(screenPageName, stage) {
+        if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
+            const stageInstance = new stage();
+            stageInstance._register(screenPageName, this.iSystem);
+            this.#registeredStages.set(screenPageName, stageInstance);
         } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
         }
-    };
-
-    /**
-     * @method
-     * @param {string} screenPageName
-     */
-    stopGameStage = (screenPageName) => {
-        if (this.#registeredStagesReference.has(screenPageName)) {
-            this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.STOP_PAGE);
-            this.drawObjectFactory._detachPageData();
-            this.#iRender._stopRender();
-            this.#registeredStagesReference.get(screenPageName)._stop();
-        } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
-        }
-    };
-}
-
-/***/ }),
-
-/***/ "./src/base/INetwork.js":
-/*!********************************************!*\
-  !*** ./src/base/INetwork.js ***!
-  \********************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "INetwork": () => (/* binding */ INetwork)
-/* harmony export */ });
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _Logger_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Logger.js */ "./src/base/Logger.js");
-/* harmony import */ var _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Events/SystemEvent.js */ "./src/base/Events/SystemEvent.js");
-
-
-
-
-
-/**
- * Represents Socket connection
- */
-class INetwork extends EventTarget {
-    #systemSettings;
-    #socket;
-
-    /**
-     * @hideconstructor
-     */
-    constructor(systemSettings) {
-        super();
-        if (!systemSettings) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
-        }
-        this.#systemSettings = systemSettings;
     }
 
-    init() {
-        __webpack_require__.e(/*! import() */ "vendors-node_modules_socket_io-client_build_esm_index_js").then(__webpack_require__.bind(__webpack_require__, /*! socket.io-client */ "./node_modules/socket.io-client/build/esm/index.js")).then((module) => {
-            this.#socket = module.io(this.#systemSettings.network.address, {withCredentials: true});
+    /**
+     * Preloads assets for all registered pages
+     * @return {Promise<void>}
+     */
+    preloadAllData() {
+        return this.#iSystem.iLoader.preload();
+    }
+
+    #loadStart = (event) => {
+        this.#iSystem.startGameStage(loadingPageName, {total: event.total});
+    };
+
+    #loadProgress = (event) => {
+        const uploaded = event.loaded,
+            left = event.total,
+            loadingPage = this.#registeredStages.get(loadingPageName);
             
-            this.#registerSocketListeners();
-        });
-    }
-
-    /**
-     * @returns {boolean}
-     */
-    get isServerConnected () {
-        if (this.#socket && this.#socket.connected) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
-    get playerId() {
-        return this.#socket.id;
-    }
-
-    sendGatherRoomsInfo() {
-        this.#socket.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.CLIENT_SERVER.ROOMS_INFO_REQUEST);
-    }
-
-    sendCreateOrJoinRoom(roomName, map) {
-        this.#socket.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.CLIENT_SERVER.CREATE_OR_JOIN, roomName , map);
-    }
-
-    sendMessage(message) {
-        this.#socket.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.CLIENT_SERVER.CLIENT_MESSAGE, message);
-    }
-
-    #onConnect = () => {
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("connected, socket id: " + this.#socket.id);
-        this.dispatchEvent(new Event(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
+        loadingPage._progress(uploaded, left);
     };
 
-    #onDisconnect = (reason) => {
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("server disconnected, reason: " + reason);
-        this.dispatchEvent(new Event(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CONNECTION_STATUS_CHANGED));
-    };
-
-    #onData = (event) => {
-        console.warn("server data: ", event);
-    };
-
-    #onMessage = (message) => {
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("received new message from server: " + message);
-        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.SERVER_MESSAGE, message));
-    };
-
-    #onRoomsInfo = (rooms) => {
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("received roomsInfo " + rooms);
-        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.ROOMS_INFO, rooms));
-    };
-
-    #onCreateNewRoom = (room, map) => {
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Created room  " + room);
-        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.CREATED, {room, map}));
-    };
-
-    #onRoomIsFull = (room) => {
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Room is full, can't join: " + room);
-        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.FULL, {room}));
-    };
-
-    #onJoinedToRoom = (room, map) => {
-        _Logger_js__WEBPACK_IMPORTED_MODULE_2__.Logger.debug("CLIENT SOCKET: Joined to room: " + room, ", map: ", map);
-        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.JOINED, {room, map}));
-    };
-
-    #onUnjoinedFromRoom = (playerId) => {
-        this.dispatchEvent(new _Events_SystemEvent_js__WEBPACK_IMPORTED_MODULE_3__.SystemEvent(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.WEBSOCKET.SERVER_CLIENT.DISCONNECTED, {playerId}));
-    };
-
-    #registerSocketListeners() {
-        this.#socket.on("connect", this.#onConnect);
-        this.#socket.on("disconnect", this.#onDisconnect);
-        this.#socket.on("data", this.#onData);
-
-        this.#socket.on("roomsInfo", this.#onRoomsInfo);
-    
-        this.#socket.on("created", this.#onCreateNewRoom);
-    
-        this.#socket.on("full", this.#onRoomIsFull);
-    
-        this.#socket.on("joined", this.#onJoinedToRoom);
-    
-        this.#socket.on("log", function(array) {
-            console.log.apply(console, array);
-        });
-    
-        this.#socket.on("message", this.#onMessage);
-    
-        this.#socket.on("removed", function(message) {
-            console.log("removed message");
-            console.log(message);
-        });
-
-        this.#socket.on("disconnected", this.#onUnjoinedFromRoom);
-
-        addEventListener("beforeunload", this.#disconnect);
-    }
-
-    #disconnect = () => {
-        this.#socket.disconnect();
+    #loadComplete = () => {
+        this.#iSystem.stopGameStage(loadingPageName);
     };
 }
-
-/***/ }),
-
-/***/ "./src/base/DrawTiledLayer.js":
-/*!**************************************!*\
-  !*** ./src/base/DrawTiledLayer.js ***!
-  \**************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "DrawTiledLayer": () => (/* binding */ DrawTiledLayer)
-/* harmony export */ });
-/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _WebGl_TextureStorage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./WebGl/TextureStorage.js */ "./src/base/WebGl/TextureStorage.js");
-
-
-/**
- * A render object represents a layer from tiled editor
- * @see {@link DrawObjectFactory} should be created with factory method
- */
-class DrawTiledLayer {
-    #layerKey;
-    #tileMapKey;
-    #tilemap;
-    #tilesets;
-    #tilesetImages;
-    /**
-     * @type {Array<TextureStorage>}
-     */
-    #textureStorages;
-    #layerData;
-    #setBoundaries;
-    #drawBoundaries;
-    #attachedMaskId;
-    /**
-     * @type {number}
-     */
-    #sortIndex = 0;
-    #isOffsetTurnedOff;
-
-    /**
-     * @hideconstructor
-     */
-    constructor(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries = false, shapeMask) {
-        this.#layerKey = layerKey;
-        this.#tileMapKey = tileMapKey;
-        this.#tilemap = tilemap;
-        this.#tilesets = tilesets;
-        this.#textureStorages = [];
-        this.#tilesetImages = tilesetImages;
-        this.#layerData = layerData;
-        this.#setBoundaries = setBoundaries;
-        this.#drawBoundaries = setBoundaries ? setBoundaries : false;
-        if (shapeMask) {
-            this.setMask(shapeMask);
-        }
-    }
-
-    /**
-     * A layer name.
-     * @type {string}
-     */
-    get layerKey() {
-        return this.#layerKey;
-    }
-
-    /**
-     * A tilemap layer key, should match key from the tilemap.
-     * @type {string}
-     */
-    get tileMapKey() {
-        return this.#tileMapKey;
-    }
-
-    get tilemap() {
-        return this.#tilemap;
-    }
-    
-    get tilesets() {
-        return this.#tilesets;
-    }
-
-    get tilesetImages() {
-        return this.#tilesetImages;
-    }
-
-    get layerData() {
-        return this.#layerData;
-    }
-    /**
-     * Should the layer borders used as boundaries, or not
-     * Can be set in GameStage.addRenderLayer() method.
-     * @type {boolean}
-     */
-    get setBoundaries() {
-        return this.#setBoundaries;
-    }
-
-    /**
-     * Should draw a boundaries helper, or not
-     * Can be set in SystemSettings.
-     * @type {boolean}
-     */
-    get drawBoundaries() {
-        return this.#drawBoundaries;
-    }
-
-    set drawBoundaries(value) {
-        this.#drawBoundaries = value;
-    }
-
-    /**
-     * @ignore
-     */
-    get _maskId() {
-        return this.#attachedMaskId;
-    }
-    /**
-     * 
-     * @param {DrawShapeObject} mask 
-     */
-    setMask(mask) {
-        mask._isMask = true;
-        this.#attachedMaskId = mask.id;
-    }
-
-    removeMask() {
-        this.#attachedMaskId = null;
-    }
-
-    /**
-     * @type {number}
-     */
-    get sortIndex () {
-        return this.#sortIndex;
-    }
-
-    set sortIndex(value) {
-        this.#sortIndex = value;
-    }
-
-    get isOffsetTurnedOff() {
-        return this.#isOffsetTurnedOff;
-    }
-    turnOffOffset() {
-        this.#isOffsetTurnedOff = true;
-    }
-
-    get _textureStorages() {
-        return this.#textureStorages;
-    }
-
-    _setTextureStorage(index, value) {
-        this.#textureStorages[index] = value;
-    }
-}
-
 
 /***/ }),
 
@@ -5301,7 +5144,7 @@ class WebGlEngine {
                         (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                         pageData._setWorldDimensions(worldW, worldH);
                     }
-                    // boundaries cleanups every draw circle, we need to set world boundaries again
+                    // boundaries cleanups every draw cycles, we need to set world boundaries again
                     if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                         pageData._setMapBoundaries();
                     }
@@ -5659,7 +5502,7 @@ class WebGlEngine {
                 //    this._setCanvasSize(worldW, worldH);
                 //}
 
-                // boundaries cleanups every draw circle, we need to set world boundaries again
+                // boundaries cleanups every draw cycles, we need to set world boundaries again
                 if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                     pageData._setMapBoundaries();
                 }
@@ -5845,7 +5688,7 @@ const SystemSettings = {
         },
         render: {
             minCircleTime: 16, //ms which is ~60 FPS
-            circleTimeCalc: {
+            cyclesTimeCalc: {
                 check: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES,
                 averageFPStime: 10000
             },
@@ -6017,9 +5860,9 @@ const WARNING_CODES =  {
 /***/ }),
 
 /***/ "./src/design/LoadingStage.js":
-/*!*************************************!*\
+/*!************************************!*\
   !*** ./src/design/LoadingStage.js ***!
-  \*************************************/
+  \************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
@@ -6079,10 +5922,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "CONST": () => (/* reexport safe */ _constants_js__WEBPACK_IMPORTED_MODULE_6__.CONST),
 /* harmony export */   "DrawImageObject": () => (/* reexport safe */ _base_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawImageObject),
-/* harmony export */   "Primitives": () => (/* reexport module object */ _base_Primitives_js__WEBPACK_IMPORTED_MODULE_4__),
 /* harmony export */   "GameStage": () => (/* reexport safe */ _base_GameStage_js__WEBPACK_IMPORTED_MODULE_1__.GameStage),
-/* harmony export */   "System": () => (/* reexport safe */ _base_System_js__WEBPACK_IMPORTED_MODULE_0__.System),
 /* harmony export */   "ISystemAudio": () => (/* reexport safe */ _base_ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio),
+/* harmony export */   "Primitives": () => (/* reexport module object */ _base_Primitives_js__WEBPACK_IMPORTED_MODULE_4__),
+/* harmony export */   "System": () => (/* reexport safe */ _base_System_js__WEBPACK_IMPORTED_MODULE_0__.System),
 /* harmony export */   "SystemSettings": () => (/* reexport safe */ _configs_js__WEBPACK_IMPORTED_MODULE_5__.SystemSettings),
 /* harmony export */   "utils": () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_7__)
 /* harmony export */ });
@@ -6630,13 +6473,13 @@ function verticesArrayToArrayNumbers(array) {
 /******/ var __webpack_exports__ = __webpack_require__("./src/index.js");
 /******/ var __webpack_exports__CONST = __webpack_exports__.CONST;
 /******/ var __webpack_exports__DrawImageObject = __webpack_exports__.DrawImageObject;
-/******/ var __webpack_exports__Primitives = __webpack_exports__.Primitives;
 /******/ var __webpack_exports__GameStage = __webpack_exports__.GameStage;
-/******/ var __webpack_exports__System = __webpack_exports__.System;
 /******/ var __webpack_exports__ISystemAudio = __webpack_exports__.ISystemAudio;
+/******/ var __webpack_exports__Primitives = __webpack_exports__.Primitives;
+/******/ var __webpack_exports__System = __webpack_exports__.System;
 /******/ var __webpack_exports__SystemSettings = __webpack_exports__.SystemSettings;
 /******/ var __webpack_exports__utils = __webpack_exports__.utils;
-/******/ export { __webpack_exports__CONST as CONST, __webpack_exports__DrawImageObject as DrawImageObject, __webpack_exports__Primitives as Primitives, __webpack_exports__GameStage as GameStage, __webpack_exports__System as System, __webpack_exports__ISystemAudio as ISystemAudio, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
+/******/ export { __webpack_exports__CONST as CONST, __webpack_exports__DrawImageObject as DrawImageObject, __webpack_exports__GameStage as GameStage, __webpack_exports__ISystemAudio as ISystemAudio, __webpack_exports__Primitives as Primitives, __webpack_exports__System as System, __webpack_exports__SystemSettings as SystemSettings, __webpack_exports__utils as utils };
 /******/ 
 
 //# sourceMappingURL=index.es6.js.map
