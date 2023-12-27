@@ -32,10 +32,9 @@ export class SpinePage extends GameStage {
         
         spineDrawObject.animationState.setAnimation(0, "run", true);
         this.spineGoblinObject.setSkin("goblin");
-
-        this.draw.spineTexture(100, 100, 200, 100, SPINE.SpineTexture);
-
         
+        // ugly texture
+        //this.draw.spineTexture(100, 100, 200, 100, SPINE.SpineTexture);
     }
 
     start() {
@@ -78,9 +77,9 @@ export class SpinePage extends GameStage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.system.stopGameStage("spine");
+            this.iSystem.stopGameStage("spine");
             this.canvasHtmlElement.style.cursor = "default";
-            this.system.startGameStage("start");
+            this.iSystem.startGameStage("start");
         }
     };
 

@@ -17,11 +17,11 @@ GameStage {
         ...
     }
 ```
-3. install module to the system with installModule() method, 
+3. install module to the iSystem with installModule() method, 
 providing moduleKey, module initialization class, spine images folder and view from step 2:
 ```        
     ...
-    this.system.installModule("spineModule", SpineModuleInitialization, "./spine-assets", spineView);
+    this.iSystem.installModule("spineModule", SpineModuleInitialization, "./spine-assets", spineView);
     ...
 ```
 4. Add spine json, or binary and atlas key to the iLoader:

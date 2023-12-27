@@ -1,11 +1,11 @@
 To use spine animations you will have to enable spine module.
 1. To do that first import it:
 ```
-    import SpineModuleInitialization from "../modules/spine/dist/bundle.js";
+    import SpineModuleInitialization from "../node_modules/jsge/modules/spine/dist/bundle.js";
 ```
 2. Than install, passing module key, spineModule and spine assets folder:
 ```
-    this.spineModule = this.system.installModule(
+    this.spineModule = this.iSystem.installModule(
         "spineModule",
         SpineModuleInitialization,
         "./spine/spine-assets");

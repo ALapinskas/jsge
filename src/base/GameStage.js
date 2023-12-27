@@ -40,7 +40,7 @@ export class GameStage {
     /**
      * @type {ISystem}
      */
-    #systemReference;
+    #iSystemReference;
     /**
      * @type {GameStageData}
      */
@@ -59,7 +59,7 @@ export class GameStage {
      */
     _register(name, system) {
         this.#name = name;
-        this.#systemReference = system;
+        this.#iSystemReference = system;
         this.#setWorldDimensions();
         this.#setCanvasSize();
         this.register();
@@ -104,14 +104,14 @@ export class GameStage {
      * @type {AssetsManager}
      */
     get iLoader() {
-        return this.#systemReference.iLoader;
+        return this.#iSystemReference.iLoader;
     }
 
     /**
      * @type {DrawObjectFactory}
      */
     get draw() {
-        return this.#systemReference.drawObjectFactory;
+        return this.#iSystemReference.drawObjectFactory;
     }
 
     /**
@@ -176,21 +176,21 @@ export class GameStage {
      * @type {SystemSettings}
      */
     get systemSettings() {
-        return this.#systemReference.systemSettings;
+        return this.#iSystemReference.systemSettings;
     }
 
     /**
      * @type {ISystemAudio}
      */
     get audio() {
-        return this.#systemReference.audio;
+        return this.#iSystemReference.audio;
     }
 
     /**
      * @type {ISystem}
      */
-    get system() {
-        return this.#systemReference;
+    get iSystem() {
+        return this.#iSystemReference;
     }
 
     get canvasHtmlElement() {
@@ -204,7 +204,7 @@ export class GameStage {
      * @param {*=} options 
      */
     addEventListener = (eventName, listener, options) => {
-        this.system.addEventListener(eventName, listener, options);
+        this.iSystem.addEventListener(eventName, listener, options);
     };
 
     /**
@@ -214,7 +214,7 @@ export class GameStage {
      * @param {*=} options 
      */
     removeEventListener = (eventName, listener, options) => {
-        this.system.removeEventListener(eventName, listener, options);
+        this.iSystem.removeEventListener(eventName, listener, options);
     };
 
     /**

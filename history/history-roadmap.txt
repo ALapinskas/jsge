@@ -50,6 +50,11 @@ f: fixed defects
 
 
 # History
+1.1.0:
+    f: fixed npm registry issue
+    r: GameStage.system -> GameStage.ISystem
+    r: SystemSettings is now a class
+    
 1.0.0:
     r: Classes names and properties renamed and refactored, interface -> i, ScreenPage -> GameStage, screenPageData -> stageData
 

@@ -12,8 +12,8 @@ export class IExtension {
     /**
      * @hideconstructor
      */
-    constructor(system) {
-        this.#systemReference = system;
+    constructor(iSystem) {
+        this.#systemReference = iSystem;
     }
     /**
      * Is used for registering new Object in DrawObjectFactory, \

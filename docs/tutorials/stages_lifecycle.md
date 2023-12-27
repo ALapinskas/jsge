@@ -12,4 +12,4 @@ This is a place where assets should be added: {@tutorial assets_manager}, {@tuto
 
 All methods above can be overwritten.
 
- <img src="loading_stages.png">
+ <img src="lifecycle.png">

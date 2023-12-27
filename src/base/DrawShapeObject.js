@@ -191,6 +191,11 @@ export class DrawShapeObject {
         return this.#isOffsetTurnedOff;
     }
 
+    /**
+     * turn off offset for specific draw object
+     * gameStageData.centerCameraPosition() will take no effect on such object
+     * Can be used for something that should be always on screen: control buttons, overlay masks etc.
+     */
     turnOffOffset() {
         this.#isOffsetTurnedOff = true;
     }

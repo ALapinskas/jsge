@@ -221,8 +221,8 @@ export class MapPage extends GameStage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.system.stopGameStage("pirates");
-            this.system.startGameStage("start");
+            this.iSystem.stopGameStage("pirates");
+            this.iSystem.startGameStage("start");
         }
     }
 

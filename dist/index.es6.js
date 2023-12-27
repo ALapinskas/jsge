@@ -1701,7 +1701,7 @@ class GameStage {
     /**
      * @type {ISystem}
      */
-    #systemReference;
+    #iSystemReference;
     /**
      * @type {GameStageData}
      */
@@ -1720,7 +1720,7 @@ class GameStage {
      */
     _register(name, system) {
         this.#name = name;
-        this.#systemReference = system;
+        this.#iSystemReference = system;
         this.#setWorldDimensions();
         this.#setCanvasSize();
         this.register();
@@ -1765,14 +1765,14 @@ class GameStage {
      * @type {AssetsManager}
      */
     get iLoader() {
-        return this.#systemReference.iLoader;
+        return this.#iSystemReference.iLoader;
     }
 
     /**
      * @type {DrawObjectFactory}
      */
     get draw() {
-        return this.#systemReference.drawObjectFactory;
+        return this.#iSystemReference.drawObjectFactory;
     }
 
     /**
@@ -1837,21 +1837,21 @@ class GameStage {
      * @type {SystemSettings}
      */
     get systemSettings() {
-        return this.#systemReference.systemSettings;
+        return this.#iSystemReference.systemSettings;
     }
 
     /**
      * @type {ISystemAudio}
      */
     get audio() {
-        return this.#systemReference.audio;
+        return this.#iSystemReference.audio;
     }
 
     /**
      * @type {ISystem}
      */
-    get system() {
-        return this.#systemReference;
+    get iSystem() {
+        return this.#iSystemReference;
     }
 
     get canvasHtmlElement() {
@@ -1865,7 +1865,7 @@ class GameStage {
      * @param {*=} options 
      */
     addEventListener = (eventName, listener, options) => {
-        this.system.addEventListener(eventName, listener, options);
+        this.iSystem.addEventListener(eventName, listener, options);
     };
 
     /**
@@ -1875,7 +1875,7 @@ class GameStage {
      * @param {*=} options 
      */
     removeEventListener = (eventName, listener, options) => {
-        this.system.removeEventListener(eventName, listener, options);
+        this.iSystem.removeEventListener(eventName, listener, options);
     };
 
     /**
@@ -2643,8 +2643,8 @@ class IExtension {
     /**
      * @hideconstructor
      */
-    constructor(system) {
-        this.#systemReference = system;
+    constructor(iSystem) {
+        this.#systemReference = iSystem;
     }
     /**
      * Is used for registering new Object in DrawObjectFactory, \
@@ -3481,7 +3481,7 @@ __webpack_require__.r(__webpack_exports__);
  * Can be used to start/stop GameStage render, <br>
  * And provides access to SystemSettings, INetwork and ISystemAudio <br>
  * IRender, DrawObjectFactory, AssetsManager and external modules
- * accessible via GameStage.system and System.system
+ * accessible via GameStage.iSystem and System.system
  * @see {@link System} a part of System class instance
  * @see {@link GameStage} a part of GameStage class instance
  */
@@ -3783,7 +3783,7 @@ class ISystemAudio {
     }
 
     /**
-     * Register audio in the system
+     * Register audio in the iSystem
      * @param {string} name
      */
     registerAudio(name) {
@@ -5667,10 +5667,18 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Settings object, should be passed as a parameter to System.constructor().
  */
-const SystemSettings = {
-    mode: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.MODE.DEBUG,
-    
-    gameOptions: {
+class SystemSettings {
+    /**
+     * @hideconstructor
+     */
+    constructor(){}
+    /**
+     * DEBUG/PRODUCTION, for debug mode system Logger will show debug information in the console
+     */
+    static mode = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.MODE.DEBUG;
+
+    static gameOptions = {
+        // no other variants only WEBGL for now
         library: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.LIBRARY.WEBGL,
         checkWebGlErrors: false,
         debugMobileTouch: false,
@@ -5698,25 +5706,25 @@ const SystemSettings = {
                 wholeWorldPrecalculations: false
             }
         }
-    },
+    };
     
 
-    network: {
+    static network = {
         address: "https://gameserver.reslc.ru:9009",
         gatherRoomsInfoInterval: 5000
-    },
+    };
 
-    canvasMaxSize: {
+    static canvasMaxSize = {
         width: 1800,
         height: 1800
-    },
+    };
 
-    worldSize: {
+    static worldSize = {
         width: 960,
         height: 960
-    },
+    };
 
-    defaultCanvasKey: "default"
+    static defaultCanvasKey = "default";
 };
 
 /***/ }),

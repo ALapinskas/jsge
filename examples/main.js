@@ -10,7 +10,7 @@ const START_PAGE_NAME = "start",
     PIRATES_GAME = "pirates",
     RACING_GAME = "racing",
     SPINE_GAME = "spine";
-
+    
 const app = new System(SystemSettings, document.getElementById("game_map"));
 app.registerStage(START_PAGE_NAME, StartPage);
 app.registerStage(DUNGEON_GAME, Dungeon);

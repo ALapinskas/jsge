@@ -1,30 +1,31 @@
 Assume you want to render an image ![image](../tutorials/images.jpg)
 ## Prepare:
-1. jsge is nodejs application, first you will need to install nodejs and npm.
-2. Then create a folder which will contain game files, put there an image with name "images.jpg".
-3. Create a package.json file which will store information about the game and its main dependencies. It can be done with from command line(terminal):
+1. jsge is a web application. To run it, you will need a webserver. 
+2. In this tutorial we will use nodejs webserver. So first you will need to install nodejs and npm.
+3. Then create a folder which will contain game files, put there an image with name "images.jpg".
+4. Create a package.json file which will store information about the game and its main dependencies. It can be done with from command line(terminal):
 ```
 npm init
 ```
-4. After that install jsge:
+5. After that install jsge:
 ```
 npm i jsge
 ```
-5. jsge is designed to work from browser so you will need a server to run it locally:
+6. install a webserver:
 ```
 npm i http-server
 ```
-6. Put a command to run that server in the package.json:
+7. Put a command to run that server in the package.json:
 ```
 "scripts": {
     "start": "http-server -c-1 -p 9000 -o /"
 },
 ```
-7. Now you can start the server from command line(terminal):
+8. Now you can start the server from command line(terminal):
 ```
 npm start
 ```
-8. Check http://127.0.0.1:9000 in the browser, it will show your folder structure.
+9. Check http://127.0.0.1:9000 in the browser, it will show your folder structure.
 
 ## App logic:
 1. By default server runs index.html file, so lets create it:

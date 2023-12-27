@@ -249,8 +249,8 @@ export class MapPage extends GameStage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.system.stopGameStage("dungeon");
-            this.system.startGameStage("start");
+            this.iSystem.stopGameStage("dungeon");
+            this.iSystem.startGameStage("start");
         } else {
             const fireball = this.#createFireball();
             this.fireballs.push(fireball);

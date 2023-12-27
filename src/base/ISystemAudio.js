@@ -84,7 +84,7 @@ export class ISystemAudio {
     }
 
     /**
-     * Register audio in the system
+     * Register audio in the iSystem
      * @param {string} name
      */
     registerAudio(name) {

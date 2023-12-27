@@ -26,7 +26,7 @@ export class StartPage extends GameStage {
 
     register() {
         this.iLoader.addAudio(MENU_CLICK_AUDIO_NAME, "./select_001.ogg");
-        this.spineModule = this.system.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets");
+        this.spineModule = this.iSystem.installModule("spineModule", SpineModuleInitialization, "./spine/spine-assets");
         // spine methods will be available after spine module installation
         this.iLoader.addSpineJson(SPINE.SpineText, "./spine/spine-assets/spineboy-pro.json");
         this.iLoader.addSpineBinary(SPINE.SpineBinary, "./spine/spine-assets/spineboy-pro.skel");
@@ -110,26 +110,26 @@ export class StartPage extends GameStage {
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopGameStage(START_PAGE_NAME);
-            this.system.startGameStage(DUNGEON_GAME);
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(DUNGEON_GAME);
         }
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopGameStage(START_PAGE_NAME);
-            this.system.startGameStage(PIRATES_GAME);
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(PIRATES_GAME);
         }
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopGameStage(START_PAGE_NAME);
-            this.system.startGameStage(RACING_GAME);
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(RACING_GAME);
         }
 
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox)) {
             this.#menuClickMediaElement.play();
-            this.system.stopGameStage(START_PAGE_NAME);
-            this.system.startGameStage(SPINE_PAGE);
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(SPINE_PAGE);
         }
     };
 

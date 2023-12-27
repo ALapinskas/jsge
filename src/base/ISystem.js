@@ -14,7 +14,7 @@ import { IExtension } from "./IExtension.js";
  * Can be used to start/stop GameStage render, <br>
  * And provides access to SystemSettings, INetwork and ISystemAudio <br>
  * IRender, DrawObjectFactory, AssetsManager and external modules
- * accessible via GameStage.system and System.system
+ * accessible via GameStage.iSystem and System.system
  * @see {@link System} a part of System class instance
  * @see {@link GameStage} a part of GameStage class instance
  */
