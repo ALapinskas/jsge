@@ -22,7 +22,7 @@
     "eslint": "eslint src/** --fix",
     "build-dev": "webpack --mode=development",
     "build-prod": "webpack --mode=production",
-    "jsdoc": "jsdoc -R ./README.md -c ./jsdoc.conf.json",
+    "jsdoc": "jsdoc -R ./README.md -t ./docs/templates/custom -c ./jsdoc.conf.json",
     "prepare-push": "npm run build-dev | npm run build-prod | npm run jsdoc"
   },
   "author": "Arturas-Alfredas Lapinskas",
