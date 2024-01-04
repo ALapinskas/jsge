@@ -76,7 +76,7 @@ export const CONST = {
         },
         WEB_ASSEMBLY: {
             ASSEMBLY_SCRIPT: "ASSEMBLY_SCRIPT",
-            WASM: "WASM"
+            NATIVE_WAT: "WASM"
         }
     }
 };

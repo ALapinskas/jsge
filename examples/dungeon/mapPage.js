@@ -76,7 +76,7 @@ export class MapPage extends GameStage {
         this.greenLight.setMask(this.sightView);
 
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black"),
-        
+        this.navItemBack.turnOffOffset();
         this.#enemies.push(monster1);
         this.#enemies.push(monster2);
         this.#enemies.push(monster3);

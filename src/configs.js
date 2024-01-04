@@ -18,6 +18,8 @@ export class SystemSettings {
         checkWebGlErrors: false,
         debugMobileTouch: false,
         optimization: CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
+        optimizationWASMUrl: "/src/wa/calculateBufferDataWat.wasm",
+        optimizationAssemblyUrl: "/src/wa/calculateBufferDataAssembly.wasm",
         loadingScreen: {
             backgroundColor:  "rgba(128, 128, 128, 0.6)",
             loadingBarBg: "rgba(128, 128, 128, 1)",

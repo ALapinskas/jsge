@@ -47,10 +47,15 @@ r: code refactoring
 +  added new functionality/classes
 f: fixed defects
 
-
-
 # History
-1.1.0:
+1.1.1
+    +: added tileset.spacing > 0 support for NOT_OPTIMIZED and WEB_ASSEMBLY versions
+    r: renamed WASM -> NATIVE_WAT
+    f: fixed centerCameraPosition() for NOT_OPTIMIZED and WEB_ASSEMBLY versions
+    f: fixed multiple tilesets in tilemap for NOT_OPTIMIZED and WEB_ASSEMBLY versions
+    f: fixed ASSEMBLY_SCRIPT version
+    
+1.1.0
     f: fixed npm registry issue
     r: GameStage.system -> GameStage.ISystem
     r: SystemSettings is now a class
