@@ -1401,7 +1401,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;
             ctx.font = this.font;
-            ctx.textBaseline = "bottom";// bottom\
+            ctx.textBaseline = "bottom";// bottom
             if (this.fillStyle) {
                 ctx.fillStyle = this.fillStyle;
                 ctx.fillText(this.text, 0, boxHeight);
@@ -4717,11 +4717,6 @@ class WebGlEngine {
         } else {
             this.#bindTexture(gl, textureStorage._texture);
         }
-        //if (currentTexture)
-        //{
-        //    gl.bindTexture(gl.TEXTURE_2D, currentTexture);
-        //}
-        
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
@@ -5531,8 +5526,6 @@ class WebGlEngine {
                 //if (this.canvas.width !== worldW || this.canvas.height !== worldH) {
                 //    this._setCanvasSize(worldW, worldH);
                 //}
-                //console.log(xOffset);
-                //console.log(yOffset);
                 // boundaries cleanups every draw cycles, we need to set world boundaries again
                 if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                     pageData._setMapBoundaries();
