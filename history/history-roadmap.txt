@@ -48,6 +48,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.1.2
+    r: increased Memory for WebAssembly methods from 10 to 500
+    +: added BigMap example for test big maps processing
+
 1.1.1
     +: added tileset.spacing > 0 support for NOT_OPTIMIZED and WEB_ASSEMBLY versions
     r: renamed WASM -> NATIVE_WAT

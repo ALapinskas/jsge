@@ -4,12 +4,14 @@ import { MapPage as Dungeon } from "./dungeon/mapPage.js";
 import { MapPage as Pirates } from "./pirates/mapPage.js";
 import { MapPage as Racing } from "./racing/mapPage.js";
 import { SpinePage } from "./spine/spinePage.js";
+import { BigMap } from "./big_map/bigMap.js";
 
 const START_PAGE_NAME = "start",
     DUNGEON_GAME = "dungeon",
     PIRATES_GAME = "pirates",
     RACING_GAME = "racing",
-    SPINE_GAME = "spine";
+    SPINE_GAME = "spine",
+    BIG_MAP = "big_map";
     
 const app = new System(SystemSettings, document.getElementById("game_map"));
 app.registerStage(START_PAGE_NAME, StartPage);
@@ -17,6 +19,7 @@ app.registerStage(DUNGEON_GAME, Dungeon);
 app.registerStage(PIRATES_GAME, Pirates);
 app.registerStage(RACING_GAME, Racing);
 app.registerStage(SPINE_GAME, SpinePage);
+app.registerStage(BIG_MAP, BigMap);
 app.preloadAllData().then(() => {
     app.iSystem.startGameStage(START_PAGE_NAME);
 });

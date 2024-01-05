@@ -4354,7 +4354,9 @@ class WebGlEngine {
     _initiateWasm = () => {
         const url = this.#gameOptions.optimization === _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.NATIVE_WAT ? this.#gameOptions.optimizationWASMUrl : this.#gameOptions.optimizationAssemblyUrl;
         return new Promise((resolve, reject) => {
-            this.layerData = new WebAssembly.Memory({initial:50});
+            this.layerData = new WebAssembly.Memory({
+                initial:1000 // 6.4MiB x 10 = 64MiB(~67,1Mb)
+            });
             this.layerDataFloat32 = new Float32Array(this.layerData.buffer);
             const importObject = {
                 env: {
