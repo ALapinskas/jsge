@@ -221,8 +221,8 @@ export class DrawImageObject extends DrawShapeObject {
      * Adds image animations
      * @param { string } eventName -animation name
      * @param { Array<number> } animationSpriteIndexes - animation image indexes
-     * @param { boolean } [isRepeated = false] - animation is circled or not, circled animation could be stopped only with stopRepeatedAnimation();
-     * @param { number } [cyclesPerFrame = 1] - determines on how many cycles should one frame be shown, the actual speed depends on gameOptions.render.minCircleTime
+     * @param { boolean } [isRepeated = false] - animation is cycled or not, cycled animation could be stopped only with stopRepeatedAnimation();
+     * @param { number } [cyclesPerFrame = 1] - determines on how many cycles should one frame be shown, the actual speed depends on gameOptions.render.minCycleTime
      */
     addAnimation (eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame = 1) {
         if (cyclesPerFrame < 1) {

@@ -20,7 +20,7 @@ export class AnimationEventImageObj {
      * @type {number}
      */
     #cyclesPerFrame;
-    // first circle should be always skipped, eg showing the current frame
+    // first cycle should be always skipped, eg showing the current frame
     #cyclesSkipped = 0;
     
     constructor(eventName, animationSpriteIndexes, isRepeated = false, cyclesPerFrame, currentSpriteIndex, isActive = false) {

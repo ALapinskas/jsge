@@ -66,7 +66,7 @@ export const CONST = {
         WEBGL: "webgl"
     },
     OPTIMIZATION: {
-        CIRCLE_TIME_CALC: {
+        CYCLE_TIME_CALC: {
             AVERAGES: "AVERAGES",
             CURRENT: "CURRENT"
         },

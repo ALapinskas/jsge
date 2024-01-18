@@ -32,9 +32,9 @@ export class SystemSettings {
             boundariesWidth: 2
         },
         render: {
-            minCircleTime: 16, //ms which is ~60 FPS
+            minCycleTime: 16, //ms which is ~60 FPS
             cyclesTimeCalc: {
-                check: CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES,
+                check: CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES,
                 averageFPStime: 10000
             },
             boundaries: {
@@ -62,4 +62,4 @@ export class SystemSettings {
     };
 
     static defaultCanvasKey = "default";
-};
+}

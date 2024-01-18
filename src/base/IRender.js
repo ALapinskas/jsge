@@ -71,7 +71,7 @@ export class IRender {
      * @type {boolean}
      */
     #isBoundariesPrecalculations = false;
-    #minCircleTime;
+    #minCycleTime;
     /**
      * @type {EventTarget}
      */
@@ -93,7 +93,7 @@ export class IRender {
         this.#loaderReference = iLoader;
 
         this.#tempFPStime = [];
-        this.#minCircleTime = this.systemSettings.gameOptions.render.minCircleTime;
+        this.#minCycleTime = this.systemSettings.gameOptions.render.minCycleTime;
 
         this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
 
@@ -251,54 +251,58 @@ export class IRender {
      * @returns {Promise<void>}
      */
     async render() {
-        return new Promise(async(resolve, reject) => {
-            let renderObjectsPromises = [];
-            const renderObjects = this.stageData.renderObjects;
-            if (renderObjects.length !== 0) {
-                //this.#checkCollisions(view.renderObjects);
-                for (let i = 0; i < renderObjects.length; i++) {
-                    const object = renderObjects[i];
-                    if (object.isRemoved) {
-                        renderObjects.splice(i, 1);
-                        i--;
-                        continue;
-                    }
-                    if (object.isAnimations) {
-                        object._processActiveAnimations();
-                    }
-                    const promise = await this._bindRenderObject(object).catch((err) => {
-                        reject(err);
-                    });
-                    renderObjectsPromises.push(promise);
+        let renderObjectsPromises = [],
+            errors = [],
+            isErrors = false;
+        const renderObjects = this.stageData.renderObjects;
+        if (renderObjects.length !== 0) {
+            //this.#checkCollisions(view.renderObjects);
+            for (let i = 0; i < renderObjects.length; i++) {
+                const object = renderObjects[i];
+                if (object.isRemoved) {
+                    renderObjects.splice(i, 1);
+                    i--;
+                    continue;
                 }
-                if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
-                    renderObjectsPromises.push(this.#drawBoundariesWebGl().catch((err) => {
-                        reject(err);
-                    })); 
+                if (object.isAnimations) {
+                    object._processActiveAnimations();
                 }
-                //const bindResults = await Promise.allSettled(renderObjectsPromises);
-                //bindResults.forEach((result) => {
-                //    if (result.status === "rejected") {
-                //        reject(result.reason);
-                //    }
-                //});
-
-                //await this.#webGlEngine._executeImagesDraw();
-
-                //this.#postRenderActions();
+                const promise = await this._bindRenderObject(object)
+                    .catch((err) => Promise.reject(err));
+                renderObjectsPromises.push(promise);
             }
-            const bindResults = await Promise.allSettled(renderObjectsPromises);
-            bindResults.forEach((result) => {
-                if (result.status === "rejected") {
-                    reject(result.reason);
-                }
-            });
+            if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
+                renderObjectsPromises.push(this.#drawBoundariesWebGl()
+                    .catch((err) => Promise.reject(err))); 
+            }
+            //const bindResults = await Promise.allSettled(renderObjectsPromises);
+            //bindResults.forEach((result) => {
+            //    if (result.status === "rejected") {
+            //        reject(result.reason);
+            //    }
+            //});
 
-            this.#postRenderActions();
-                
-            this._isCleared = false;
-            resolve();
+            //await this.#webGlEngine._executeImagesDraw();
+
+            //this.#postRenderActions();
+        }
+        const bindResults = await Promise.allSettled(renderObjectsPromises);
+        bindResults.forEach((result) => {
+            if (result.status === "rejected") {
+                reject(result.reason);
+                isErrors = true;
+                errors.push(result.reason);
+            }
         });
+
+        this.#postRenderActions();
+            
+        this._isCleared = false;
+        if (isErrors === false) {
+            return Promise.resolve();
+        } else {
+            return Promise.reject(errors);
+        }
     }
 
     /**
@@ -501,7 +505,7 @@ export class IRender {
             setTimeout(() => requestAnimationFrame(this.#drawViews));
             break;
         }
-        if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.AVERAGES) {
+        if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES) {
             this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime);
         }
     };
@@ -544,7 +548,7 @@ export class IRender {
 
     #drawViews = async (/*drawTime*/) => {
         const timeStart = performance.now(),
-            minCircleTime = this.#minCircleTime;
+            minCycleTime = this.#minCycleTime;
             
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
         this.stageData._clearBoundaries();
@@ -552,11 +556,11 @@ export class IRender {
         
         this.render().then(() => {
             const timeEnd = performance.now() - timeStart,
-                r_time_less = minCircleTime - timeEnd,
+                r_time_less = minCycleTime - timeEnd,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
                 fps = 1000 / (timeEnd + wait_time);
-            if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CIRCLE_TIME_CALC.CURRENT &&
-                timeEnd > minCircleTime) {
+            if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT &&
+                timeEnd > minCycleTime) {
                 console.log("draw cycles done, take: ", (timeEnd), " ms");
             }
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
@@ -567,8 +571,10 @@ export class IRender {
             if (this.#isActive) {
                 setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
             }
-        }).catch((err) => {
-            Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
+        }).catch((errors) => {
+            errors.forEach((err) => {
+                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
+            });
             this._stopRender();
         });
     };
