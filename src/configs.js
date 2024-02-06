@@ -15,7 +15,7 @@ export class SystemSettings {
     static gameOptions = {
         // no other variants only WEBGL for now
         library: CONST.LIBRARY.WEBGL,
-        optimization: CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT,
+        optimization: CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
         optimizationWASMUrl: "/src/wa/calculateBufferDataWat.wasm",
         optimizationAssemblyUrl: "/src/wa/calculateBufferDataAssembly.wasm",
         loadingScreen: {

@@ -48,6 +48,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.2.1:
+    f: fix default draw config
+    
 1.2.0:
     f: first fps calculation
     r: refactored DrawObjectFactory registering new objects and adding them to stageData
