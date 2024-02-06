@@ -45,7 +45,7 @@ export class IRender {
      */
     #webGlEngine;
     /**
-     * @type {GameStageData}
+     * @type {GameStageData | null}
      */
     #currentGameStageData;
 
@@ -64,7 +64,7 @@ export class IRender {
      */
     #tempFPStime;
     /**
-     * @type {NodeJS.Timer}
+     * @type {NodeJS.Timer | null}
      */
     #fpsAverageCountTimer;
     /**
@@ -271,7 +271,7 @@ export class IRender {
                     .catch((err) => Promise.reject(err));
                 renderObjectsPromises.push(promise);
             }
-            if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
+            if (this.systemSettings.gameOptions.debug.boundaries.drawLayerBoundaries) {
                 renderObjectsPromises.push(this.#drawBoundariesWebGl()
                     .catch((err) => Promise.reject(err))); 
             }
@@ -442,7 +442,7 @@ export class IRender {
                 return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]))
                     .then(() => {
-                        if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
+                        if (renderObject.vertices && this.systemSettings.gameOptions.debug.boundaries.drawObjectBoundaries) {
                             return this.#webGlEngine._drawPolygon(renderObject, this.stageData);
                         } else {
                             return Promise.resolve();
@@ -470,7 +470,7 @@ export class IRender {
                 linesArray.push(item[0], item[1]);
                 linesArray.push(item[2], item[3]);
             }
-            this.#webGlEngine._drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth);
+            this.#webGlEngine._drawLines(linesArray, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
             resolve();
         });
     }
@@ -479,7 +479,6 @@ export class IRender {
         const timeLeft = this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime,
             steps = this.#tempFPStime.length;
         let fullTime = 0;
-
         for(let i = 0; i < steps; i++) {
             const timeStep = this.#tempFPStime[i];
             fullTime += timeStep;
@@ -495,18 +494,19 @@ export class IRender {
      * @param {GameStageData} stageData 
      */
     _startRender = async (/*time*/stageData) => {
+        const gameOptions = this.systemSettings.gameOptions;
         //Logger.debug("_render " + this.name + " class");
         this.#isActive = true;
         this.#currentGameStageData = stageData;
         this.fixCanvasSize();
-        switch (this.systemSettings.gameOptions.library) {
-        case CONST.LIBRARY.WEBGL:
-            await this.#prepareViews();
-            setTimeout(() => requestAnimationFrame(this.#drawViews));
-            break;
+        switch (gameOptions.library) {
+            case CONST.LIBRARY.WEBGL:
+                await this.#prepareViews();
+                setTimeout(() => requestAnimationFrame(this.#drawViews));
+                break;
         }
-        if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES) {
-            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime);
+        if (gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES) {
+            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), gameOptions.render.cyclesTimeCalc.averageFPStime);
         }
     };
 
@@ -516,7 +516,9 @@ export class IRender {
     _stopRender = () => {
         this.#isActive = false;
         this.#currentGameStageData = null;
+        this.#tempFPStime = [];
         clearInterval(this.#fpsAverageCountTimer);
+        this.#fpsAverageCountTimer = null;
     };
     /**
      * 
@@ -548,7 +550,8 @@ export class IRender {
 
     #drawViews = async (/*drawTime*/) => {
         const timeStart = performance.now(),
-            minCycleTime = this.#minCycleTime;
+            minCycleTime = this.#minCycleTime,
+            isCyclesTimeCalcCheckCurrent = this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT;
             
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
         this.stageData._clearBoundaries();
@@ -559,8 +562,7 @@ export class IRender {
                 r_time_less = minCycleTime - timeEnd,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
                 fps = 1000 / (timeEnd + wait_time);
-            if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT &&
-                timeEnd > minCycleTime) {
+            if (isCyclesTimeCalcCheckCurrent && timeEnd > minCycleTime) {
                 console.log("draw cycles done, take: ", (timeEnd), " ms");
             }
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);

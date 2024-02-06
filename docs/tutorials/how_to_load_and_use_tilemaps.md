@@ -40,8 +40,8 @@ if (!stage.isBoundariesCollision(newCoordX, newCoordY, fireball)) {
 ```
 * To debug boundaries you can enable an option:
 ```
-SystemSettings.gameOptions.boundaries.drawLayerBoundaries = true;
-SystemSettings.gameOptions.boundaries.drawObjectBoundaries = true;
+SystemSettings.gameOptions.debug.boundaries.drawLayerBoundaries = true;
+SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
 ```
 ### Live Example
 <p class="codepen" data-height="500" data-default-tab="js,result" data-slug-hash="mdvYrWP" data-user="yaalfred" style="height: 500px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid; margin: 1em 0; padding: 1em;">

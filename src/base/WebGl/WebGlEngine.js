@@ -42,7 +42,7 @@ export class WebGlEngine {
         
         this.#gl = context;
         this.#gameOptions = gameOptions;
-        this.#debug = gameOptions.checkWebGlErrors;
+        this.#debug = gameOptions.debug.checkWebGlErrors;
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
     }
@@ -115,7 +115,15 @@ export class WebGlEngine {
             // set blend to default
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         }
-        return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            if (this.#gameOptions.debug.delayBetweenObjectRender) {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            } else {
+                resolve();
+            }
+        });
     }
 
     /*************************************
@@ -647,7 +655,7 @@ export class WebGlEngine {
             y = renderObject.y - yOffset,
             rotation = renderObject.rotation || 0,
             vertices = renderObject.vertices,
-            color =  this.#gameOptions.boundaries.boundariesColor;
+            color =  this.#gameOptions.debug.boundaries.boundariesColor;
         const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
@@ -717,7 +725,7 @@ export class WebGlEngine {
             fillStyle = renderObject.bgColor,
             fade_min = renderObject.fade_min,
             fadeLen = renderObject.radius,
-            lineWidth = this.#gameOptions.boundariesWidth;
+            lineWidth = this.#gameOptions.debug.boundaries.boundariesWidth;
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -800,7 +808,7 @@ export class WebGlEngine {
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
         gl.lineWidth(lineWidth);
-
+        
         this._render(verticesNumber, gl.LINES);
     }
 

@@ -38,6 +38,17 @@ export class DrawObjectFactory {
     get stageData() {
         return this.#currentPageData;
     }
+
+    /**
+     * 
+     * @param {*} renderObject 
+     * @returns {Object}
+     */
+    #addObjectToPageData(renderObject) {
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex();
+        return renderObject;
+    }
     /**
      * @param {number} x 
      * @param {number} y 
@@ -48,8 +59,7 @@ export class DrawObjectFactory {
      */
     rect(x, y, width, height, backgroundColor) {
         const renderObject = new DrawRectObject(x, y, width, height, backgroundColor);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject; 
     }
 
@@ -63,8 +73,7 @@ export class DrawObjectFactory {
      */
     text(x, y, text, font, color) {
         const renderObject = new DrawTextObject(x, y, text, font, color);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -78,8 +87,7 @@ export class DrawObjectFactory {
      */
     conus(x, y, radius, bgColor, angle, fade = 0) {
         const renderObject = new DrawConusObject(x, y, radius, bgColor, angle, fade);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -91,8 +99,7 @@ export class DrawObjectFactory {
      */
     circle(x, y, radius, bgColor) {
         const renderObject = new DrawCircleObject(x, y, radius, bgColor);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -110,8 +117,8 @@ export class DrawObjectFactory {
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
         const image = this.#iLoader.getImage(key),
             renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+            
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -122,8 +129,7 @@ export class DrawObjectFactory {
      */
     line(vertices, color) {
         const renderObject = new DrawLineObject(vertices, color);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -134,8 +140,7 @@ export class DrawObjectFactory {
      */
     polygon(vertices, bgColor) {
         const renderObject = new DrawPolygonObject(vertices, bgColor);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -154,19 +159,30 @@ export class DrawObjectFactory {
             layerData = tilemap.layers.find((layer) => layer.name === layerKey),
             renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
 
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
     /**
      * @ignore
      * @param {string} methodKey 
-     * @param {Function} methodFn 
+     * @param {Function} createObjectInstance
      */
-    _addNewObject = (methodKey, methodFn) => {
-        this[methodKey] = methodFn;
+    _registerNewObjectMethod = (methodKey, createObjectInstance) => {
+        this[methodKey] = (...args) => this.#createObjectMonad(createObjectInstance, ...args);
     };
+
+    /**
+     * @ignore
+     * @param {Function} createInstance
+     * @param {Array<any>} args
+     */
+    #createObjectMonad = (createInstance, ...args) => {
+        const instance = createInstance(...args);
+        this.#addObjectToPageData(instance);
+        return instance;
+    }
+
     /**
      * @ignore
      * @param {GameStageData} pageData;

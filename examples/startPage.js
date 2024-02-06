@@ -10,7 +10,9 @@ const START_PAGE_NAME = "start",
     DUNGEON_GAME = "dungeon",
     PIRATES_GAME = "pirates",
     RACING_GAME = "racing",
-    SPINE_PAGE = "spine";
+    SPINE_PAGE = "spine",
+    BIG_MAP = "big_map",
+    CUSTOM_WEBGL_PAGE = "custom_webgl";
 
 const SPINE = {
     SpineTexture: "spineTexture",
@@ -42,10 +44,12 @@ export class StartPage extends GameStage {
         
         this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");
         
-        this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 60, "Dungeon game", "24px sans-serif", "black"),
-        this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Pirates game", "24px sans-serif", "black");
-        this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 20, "Racing game", "24px sans-serif", "black");
-        this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 60, "Spine module", "24px sans-serif", "black");
+        this.navItemDun = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 80, "Dungeon game", "20px sans-serif", "black"),
+        this.navItemPir = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 50, "Pirates game", "20px sans-serif", "black");
+        this.navItemRac = this.draw.text(w/2 + LEFT_SHIFT, h/2 - 20, "Racing game", "20px sans-serif", "black");
+        this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 10, "Spine module", "20px sans-serif", "black");
+        this.navItemBigMap = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 40, "Big map", "20px sans-serif", "black");
+        this.navItemTestCustomWebGl = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 70, "Custom WebGl program", "20px sans-serif", "black");
         
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
@@ -71,7 +75,9 @@ export class StartPage extends GameStage {
             isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox),
             isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox),
             isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox),
-            isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox);
+            isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox),
+            isNav5T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemBigMap.boundariesBox),
+            isNav6T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.boundariesBox);
 
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -97,7 +103,19 @@ export class StartPage extends GameStage {
             this.navItemSpine.strokeStyle = undefined;
         }
 
-        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed) {
+        if (isNav5T) {
+            this.navItemBigMap.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        } else if (this.navItemBigMap.strokeStyle) {
+            this.navItemBigMap.strokeStyle = undefined;
+        }
+
+        if (isNav6T) {
+            this.navItemTestCustomWebGl.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        } else if (this.navItemTestCustomWebGl.strokeStyle) {
+            this.navItemTestCustomWebGl.strokeStyle = undefined;
+        }
+
+        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed || isNav5T || isNav6T) {
             canvas.style.cursor = "pointer";
         } else {
             canvas.style.cursor = "default";
@@ -130,6 +148,18 @@ export class StartPage extends GameStage {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(SPINE_PAGE);
+        }
+
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemBigMap.boundariesBox)) {
+            this.#menuClickMediaElement.play();
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(BIG_MAP);
+        }
+
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.boundariesBox)) {
+            this.#menuClickMediaElement.play();
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(CUSTOM_WEBGL_PAGE);
         }
     };
 

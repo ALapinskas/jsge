@@ -22,7 +22,7 @@ export class IExtension {
      * @param {function} createInstanceMethod - method 
      */
     registerDrawObject(createInstanceKey, createInstanceMethod) {
-        this.#systemReference.drawObjectFactory._addNewObject(createInstanceKey, createInstanceMethod);
+        this.#systemReference.drawObjectFactory._registerNewObjectMethod(createInstanceKey, createInstanceMethod);
     }
 
     /**

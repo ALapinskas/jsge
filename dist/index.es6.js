@@ -648,6 +648,17 @@ class DrawObjectFactory {
     get stageData() {
         return this.#currentPageData;
     }
+
+    /**
+     * 
+     * @param {*} renderObject 
+     * @returns {Object}
+     */
+    #addObjectToPageData(renderObject) {
+        this.#currentPageData._renderObject = renderObject;
+        this.#currentPageData._sortRenderObjectsBySortIndex();
+        return renderObject;
+    }
     /**
      * @param {number} x 
      * @param {number} y 
@@ -658,8 +669,7 @@ class DrawObjectFactory {
      */
     rect(x, y, width, height, backgroundColor) {
         const renderObject = new _DrawRectObject_js__WEBPACK_IMPORTED_MODULE_0__.DrawRectObject(x, y, width, height, backgroundColor);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject; 
     }
 
@@ -673,8 +683,7 @@ class DrawObjectFactory {
      */
     text(x, y, text, font, color) {
         const renderObject = new _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawTextObject(x, y, text, font, color);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -688,8 +697,7 @@ class DrawObjectFactory {
      */
     conus(x, y, radius, bgColor, angle, fade = 0) {
         const renderObject = new _DrawConusObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawConusObject(x, y, radius, bgColor, angle, fade);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -701,8 +709,7 @@ class DrawObjectFactory {
      */
     circle(x, y, radius, bgColor) {
         const renderObject = new _DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_6__.DrawCircleObject(x, y, radius, bgColor);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -720,8 +727,8 @@ class DrawObjectFactory {
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
         const image = this.#iLoader.getImage(key),
             renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+            
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -732,8 +739,7 @@ class DrawObjectFactory {
      */
     line(vertices, color) {
         const renderObject = new _DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__.DrawLineObject(vertices, color);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -744,8 +750,7 @@ class DrawObjectFactory {
      */
     polygon(vertices, bgColor) {
         const renderObject = new _DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__.DrawPolygonObject(vertices, bgColor);
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
@@ -764,19 +769,30 @@ class DrawObjectFactory {
             layerData = tilemap.layers.find((layer) => layer.name === layerKey),
             renderObject = new _DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__.DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
 
-        this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex(); 
+        this.#addObjectToPageData(renderObject);
         return renderObject;
     }
 
     /**
      * @ignore
      * @param {string} methodKey 
-     * @param {Function} methodFn 
+     * @param {Function} createObjectInstance
      */
-    _addNewObject = (methodKey, methodFn) => {
-        this[methodKey] = methodFn;
+    _registerNewObjectMethod = (methodKey, createObjectInstance) => {
+        this[methodKey] = (...args) => this.#createObjectMonad(createObjectInstance, ...args);
     };
+
+    /**
+     * @ignore
+     * @param {Function} createInstance
+     * @param {Array<any>} args
+     */
+    #createObjectMonad = (createInstance, ...args) => {
+        const instance = createInstance(...args);
+        this.#addObjectToPageData(instance);
+        return instance;
+    }
+
     /**
      * @ignore
      * @param {GameStageData} pageData;
@@ -2658,7 +2674,7 @@ class IExtension {
      * @param {function} createInstanceMethod - method 
      */
     registerDrawObject(createInstanceKey, createInstanceMethod) {
-        this.#systemReference.drawObjectFactory._addNewObject(createInstanceKey, createInstanceMethod);
+        this.#systemReference.drawObjectFactory._registerNewObjectMethod(createInstanceKey, createInstanceMethod);
     }
 
     /**
@@ -2920,7 +2936,7 @@ class IRender {
      */
     #webGlEngine;
     /**
-     * @type {GameStageData}
+     * @type {GameStageData | null}
      */
     #currentGameStageData;
 
@@ -2939,7 +2955,7 @@ class IRender {
      */
     #tempFPStime;
     /**
-     * @type {NodeJS.Timer}
+     * @type {NodeJS.Timer | null}
      */
     #fpsAverageCountTimer;
     /**
@@ -3146,7 +3162,7 @@ class IRender {
                     .catch((err) => Promise.reject(err));
                 renderObjectsPromises.push(promise);
             }
-            if (this.systemSettings.gameOptions.boundaries.drawLayerBoundaries) {
+            if (this.systemSettings.gameOptions.debug.boundaries.drawLayerBoundaries) {
                 renderObjectsPromises.push(this.#drawBoundariesWebGl()
                     .catch((err) => Promise.reject(err))); 
             }
@@ -3317,7 +3333,7 @@ class IRender {
                 return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]))
                     .then(() => {
-                        if (renderObject.vertices && this.systemSettings.gameOptions.boundaries.drawObjectBoundaries) {
+                        if (renderObject.vertices && this.systemSettings.gameOptions.debug.boundaries.drawObjectBoundaries) {
                             return this.#webGlEngine._drawPolygon(renderObject, this.stageData);
                         } else {
                             return Promise.resolve();
@@ -3345,7 +3361,7 @@ class IRender {
                 linesArray.push(item[0], item[1]);
                 linesArray.push(item[2], item[3]);
             }
-            this.#webGlEngine._drawLines(linesArray, this.systemSettings.gameOptions.boundaries.boundariesColor, this.systemSettings.gameOptions.boundaries.boundariesWidth);
+            this.#webGlEngine._drawLines(linesArray, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
             resolve();
         });
     }
@@ -3354,7 +3370,6 @@ class IRender {
         const timeLeft = this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime,
             steps = this.#tempFPStime.length;
         let fullTime = 0;
-
         for(let i = 0; i < steps; i++) {
             const timeStep = this.#tempFPStime[i];
             fullTime += timeStep;
@@ -3370,18 +3385,19 @@ class IRender {
      * @param {GameStageData} stageData 
      */
     _startRender = async (/*time*/stageData) => {
+        const gameOptions = this.systemSettings.gameOptions;
         //Logger.debug("_render " + this.name + " class");
         this.#isActive = true;
         this.#currentGameStageData = stageData;
         this.fixCanvasSize();
-        switch (this.systemSettings.gameOptions.library) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.LIBRARY.WEBGL:
-            await this.#prepareViews();
-            setTimeout(() => requestAnimationFrame(this.#drawViews));
-            break;
+        switch (gameOptions.library) {
+            case _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.LIBRARY.WEBGL:
+                await this.#prepareViews();
+                setTimeout(() => requestAnimationFrame(this.#drawViews));
+                break;
         }
-        if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES) {
-            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime);
+        if (gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES) {
+            this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), gameOptions.render.cyclesTimeCalc.averageFPStime);
         }
     };
 
@@ -3391,7 +3407,9 @@ class IRender {
     _stopRender = () => {
         this.#isActive = false;
         this.#currentGameStageData = null;
+        this.#tempFPStime = [];
         clearInterval(this.#fpsAverageCountTimer);
+        this.#fpsAverageCountTimer = null;
     };
     /**
      * 
@@ -3423,7 +3441,8 @@ class IRender {
 
     #drawViews = async (/*drawTime*/) => {
         const timeStart = performance.now(),
-            minCycleTime = this.#minCycleTime;
+            minCycleTime = this.#minCycleTime,
+            isCyclesTimeCalcCheckCurrent = this.systemSettings.gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT;
             
         this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.EVENTS.SYSTEM.RENDER.START);
         this.stageData._clearBoundaries();
@@ -3434,8 +3453,7 @@ class IRender {
                 r_time_less = minCycleTime - timeEnd,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
                 fps = 1000 / (timeEnd + wait_time);
-            if (this.systemSettings.gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT &&
-                timeEnd > minCycleTime) {
+            if (isCyclesTimeCalcCheckCurrent && timeEnd > minCycleTime) {
                 console.log("draw cycles done, take: ", (timeEnd), " ms");
             }
             this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.EVENTS.SYSTEM.RENDER.END);
@@ -4327,7 +4345,7 @@ class WebGlEngine {
         
         this.#gl = context;
         this.#gameOptions = gameOptions;
-        this.#debug = gameOptions.checkWebGlErrors;
+        this.#debug = gameOptions.debug.checkWebGlErrors;
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
     }
@@ -4400,7 +4418,15 @@ class WebGlEngine {
             // set blend to default
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         }
-        return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            if (this.#gameOptions.debug.delayBetweenObjectRender) {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            } else {
+                resolve();
+            }
+        });
     }
 
     /*************************************
@@ -4932,7 +4958,7 @@ class WebGlEngine {
             y = renderObject.y - yOffset,
             rotation = renderObject.rotation || 0,
             vertices = renderObject.vertices,
-            color =  this.#gameOptions.boundaries.boundariesColor;
+            color =  this.#gameOptions.debug.boundaries.boundariesColor;
         const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
@@ -5002,7 +5028,7 @@ class WebGlEngine {
             fillStyle = renderObject.bgColor,
             fade_min = renderObject.fade_min,
             fadeLen = renderObject.radius,
-            lineWidth = this.#gameOptions.boundariesWidth;
+            lineWidth = this.#gameOptions.debug.boundaries.boundariesWidth;
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -5085,7 +5111,7 @@ class WebGlEngine {
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
         gl.lineWidth(lineWidth);
-
+        
         this._render(verticesNumber, gl.LINES);
     }
 
@@ -5710,21 +5736,13 @@ class SystemSettings {
     static gameOptions = {
         // no other variants only WEBGL for now
         library: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.LIBRARY.WEBGL,
-        checkWebGlErrors: false,
-        debugMobileTouch: false,
-        optimization: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
+        optimization: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT,
         optimizationWASMUrl: "/src/wa/calculateBufferDataWat.wasm",
         optimizationAssemblyUrl: "/src/wa/calculateBufferDataAssembly.wasm",
         loadingScreen: {
             backgroundColor:  "rgba(128, 128, 128, 0.6)",
             loadingBarBg: "rgba(128, 128, 128, 1)",
             loadingBarProgress: "rgba(128, 128, 128, 0.2)",
-        },
-        boundaries: {
-            drawLayerBoundaries: false,
-            drawObjectBoundaries: false,
-            boundariesColor: "rgba(224, 12, 21, 0.6)",
-            boundariesWidth: 2
         },
         render: {
             minCycleTime: 16, //ms which is ~60 FPS
@@ -5736,7 +5754,19 @@ class SystemSettings {
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,
                 wholeWorldPrecalculations: false
-            }
+            },
+            
+        },
+        debug: {
+            checkWebGlErrors: false,
+            debugMobileTouch: false,
+            boundaries: {
+                drawLayerBoundaries: false,
+                drawObjectBoundaries: false,
+                boundariesColor: "rgba(224, 12, 21, 0.6)",
+                boundariesWidth: 2
+            },
+            delayBetweenObjectRender: false, // 1 sec delay for debug proposes
         }
     };
     

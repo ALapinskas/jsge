@@ -212,8 +212,6 @@ export default class SpineModuleInitialization {
                 throw new Error(SPINE_ERROR + ERROR_MESSAGES.SKELETON_ERROR);
             } else {
                 const renderObject = new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
-                systemInterface.drawObjectFactory.stageData._renderObject = renderObject;
-                systemInterface.drawObjectFactory.stageData._sortRenderObjectsBySortIndex(); 
                 return renderObject;
             }
         },
@@ -221,8 +219,6 @@ export default class SpineModuleInitialization {
             const image = systemInterface.iLoader.getImage(imageKey);
             if (image) {
                 const renderObject = new DrawSpineTexture(x, y, width, height, new GLTextureExtended(context, image));
-                systemInterface.drawObjectFactory.stageData._renderObject = renderObject;
-                systemInterface.drawObjectFactory.stageData._sortRenderObjectsBySortIndex(); 
                 return renderObject;
             } else {
                 console.warn("can't draw an spine image, " + imageKey + ", probably it was not loaded");

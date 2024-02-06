@@ -15,21 +15,13 @@ export class SystemSettings {
     static gameOptions = {
         // no other variants only WEBGL for now
         library: CONST.LIBRARY.WEBGL,
-        checkWebGlErrors: false,
-        debugMobileTouch: false,
-        optimization: CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
+        optimization: CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT,
         optimizationWASMUrl: "/src/wa/calculateBufferDataWat.wasm",
         optimizationAssemblyUrl: "/src/wa/calculateBufferDataAssembly.wasm",
         loadingScreen: {
             backgroundColor:  "rgba(128, 128, 128, 0.6)",
             loadingBarBg: "rgba(128, 128, 128, 1)",
             loadingBarProgress: "rgba(128, 128, 128, 0.2)",
-        },
-        boundaries: {
-            drawLayerBoundaries: false,
-            drawObjectBoundaries: false,
-            boundariesColor: "rgba(224, 12, 21, 0.6)",
-            boundariesWidth: 2
         },
         render: {
             minCycleTime: 16, //ms which is ~60 FPS
@@ -41,7 +33,19 @@ export class SystemSettings {
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,
                 wholeWorldPrecalculations: false
-            }
+            },
+            
+        },
+        debug: {
+            checkWebGlErrors: false,
+            debugMobileTouch: false,
+            boundaries: {
+                drawLayerBoundaries: false,
+                drawObjectBoundaries: false,
+                boundariesColor: "rgba(224, 12, 21, 0.6)",
+                boundariesWidth: 2
+            },
+            delayBetweenObjectRender: false, // 1 sec delay for debug proposes
         }
     };
     

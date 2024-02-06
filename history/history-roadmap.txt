@@ -48,6 +48,13 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.2.0:
+    f: first fps calculation
+    r: refactored DrawObjectFactory registering new objects and adding them to stageData
+    r: refactored spine module for apply new objects adding to stageData
+    r: all debug options moved to gameOptions.debug section
+    +: added custom webgl program example 
+
 1.1.3:
     f: typos
     f: render errors catch
