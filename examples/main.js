@@ -1,4 +1,4 @@
-import { System, SystemSettings } from "../src/index.js";
+import { System, SystemSettings, CONST } from "../src/index.js";
 import { StartPage } from "./startPage.js";
 import { MapPage as Dungeon } from "./dungeon/mapPage.js";
 import { MapPage as Pirates } from "./pirates/mapPage.js";
@@ -20,6 +20,11 @@ const START_PAGE_NAME = "start",
     
 const TEST_WEBGL_PROGRAM_KEY = "test",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
+
+// Test different optimizations
+//SystemSettings.gameOptions.render.minCycleTime = 0;
+//SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT;
+//SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED;
 
 const app = new System(SystemSettings, document.getElementById("game_map"));
 app.registerStage(START_PAGE_NAME, StartPage);

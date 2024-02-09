@@ -62,7 +62,7 @@ export class IRender {
     /**
      * @type {Array<number>}
      */
-    #tempFPStime;
+    #tempRCircleT;
     /**
      * @type {NodeJS.Timer | null}
      */
@@ -92,7 +92,7 @@ export class IRender {
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = iLoader;
 
-        this.#tempFPStime = [];
+        this.#tempRCircleT = [];
         this.#minCycleTime = this.systemSettings.gameOptions.render.minCycleTime;
 
         this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
@@ -477,16 +477,16 @@ export class IRender {
 
     #countFPSaverage() {
         const timeLeft = this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime,
-            steps = this.#tempFPStime.length;
+            steps = this.#tempRCircleT.length;
         let fullTime = 0;
-        for(let i = 0; i < steps; i++) {
-            const timeStep = this.#tempFPStime[i];
+        for (let i = 0; i < steps; i++) {
+            const timeStep = this.#tempRCircleT[i];
             fullTime += timeStep;
         }
-        console.log("FPS average for ", timeLeft/1000, "sec, is ", fullTime / steps);
+        console.log("FPS average for", timeLeft/1000, "sec, is ", (1000 / (fullTime / steps)).toFixed(2));
 
         // cleanup
-        this.#tempFPStime = [];
+        this.#tempRCircleT = [];
     }
 
     /**
@@ -502,6 +502,7 @@ export class IRender {
         switch (gameOptions.library) {
             case CONST.LIBRARY.WEBGL:
                 await this.#prepareViews();
+                this.timeStart = Date.now();
                 setTimeout(() => requestAnimationFrame(this.#drawViews));
                 break;
         }
@@ -516,7 +517,7 @@ export class IRender {
     _stopRender = () => {
         this.#isActive = false;
         this.#currentGameStageData = null;
-        this.#tempFPStime = [];
+        this.#tempRCircleT = [];
         clearInterval(this.#fpsAverageCountTimer);
         this.#fpsAverageCountTimer = null;
     };
@@ -558,18 +559,21 @@ export class IRender {
         this.clearContext();
         
         this.render().then(() => {
-            const timeEnd = performance.now() - timeStart,
-                r_time_less = minCycleTime - timeEnd,
+            const currentRenderTime = performance.now() - timeStart,
+                r_time_less = minCycleTime - currentRenderTime,
                 wait_time = r_time_less > 0 ? r_time_less : 0,
-                fps = 1000 / (timeEnd + wait_time);
-            if (isCyclesTimeCalcCheckCurrent && timeEnd > minCycleTime) {
-                console.log("draw cycles done, take: ", (timeEnd), " ms");
+                cycleTime = currentRenderTime + wait_time;
+                
+            if (isCyclesTimeCalcCheckCurrent && currentRenderTime > minCycleTime) {
+                console.log("current draw take: ", (currentRenderTime), " ms");
             }
+
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
-            if(fps === Infinity) {
-                console.log("infinity time");
+
+            if (cycleTime > 0) {
+                this.#tempRCircleT.push(cycleTime);
             }
-            this.#tempFPStime.push(fps);
+
             if (this.#isActive) {
                 setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
             }

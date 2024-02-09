@@ -169,7 +169,7 @@ export class DrawObjectFactory {
      * @param {Function} createObjectInstance
      */
     _registerNewObjectMethod = (methodKey, createObjectInstance) => {
-        this[methodKey] = (...args) => this.#createObjectMonad(createObjectInstance, ...args);
+        this[methodKey] = (...args) => this.#createObjectAndAddToPageData(createObjectInstance, ...args);
     };
 
     /**
@@ -177,7 +177,7 @@ export class DrawObjectFactory {
      * @param {Function} createInstance
      * @param {Array<any>} args
      */
-    #createObjectMonad = (createInstance, ...args) => {
+    #createObjectAndAddToPageData = (createInstance, ...args) => {
         const instance = createInstance(...args);
         this.#addObjectToPageData(instance);
         return instance;

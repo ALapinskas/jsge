@@ -48,6 +48,11 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.2.2:
+    f: Infinity message for 0 milliseconds render cycles
+    r: fps averages calculations
+    r: fps output count
+    
 1.2.1:
     f: fix default draw config
     

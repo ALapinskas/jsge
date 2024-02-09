@@ -24,7 +24,7 @@ export class SystemSettings {
             loadingBarProgress: "rgba(128, 128, 128, 0.2)",
         },
         render: {
-            minCycleTime: 16, //ms which is ~60 FPS
+            minCycleTime: 16.666, //ms which is ~60 FPS
             cyclesTimeCalc: {
                 check: CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES,
                 averageFPStime: 10000
