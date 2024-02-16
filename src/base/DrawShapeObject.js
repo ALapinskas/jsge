@@ -226,9 +226,19 @@ export class DrawShapeObject {
                 y2 = Math.sin(r) * radius;
 
             conusPolygonCoords.push(x2, y2);
+
+            // fix for the triangles drawing instead triangle fan
+            const len = conusPolygonCoords.length;
+            
+            if (len % 6 === 0) { // 3 coords x,y
+                conusPolygonCoords.push(0, 0, x2, y2);
+            }
         }
 
-        return conusPolygonCoords;
+        const overflow = conusPolygonCoords.length % 6,
+            arrFixed = conusPolygonCoords.slice(0, conusPolygonCoords.length - overflow);
+        
+        return arrFixed;
     }
 
     /**

@@ -14,8 +14,9 @@ import { DrawLineObject } from "./DrawLineObject.js";
 import { DrawPolygonObject } from "./DrawPolygonObject.js";
 import { DrawRectObject } from "./DrawRectObject.js";
 import { DrawTextObject } from "./DrawTextObject.js";
-import { imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes } from "./WebGl/ImagesDrawProgram.js";
-import { primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes } from "./WebGl/PrimitivesDrawProgram.js";
+//import { imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes } from "./WebGl/ImagesDrawProgram.js";
+//import { primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes } from "./WebGl/PrimitivesDrawProgram.js";
+import { vertexShader, fragmentShader, uniforms, attributes } from "./WebGl/ImagesAndPrimitivesDrawPrograms.js";
 
 /**
  * IRender class controls the render(start/stop/speed) 
@@ -83,6 +84,12 @@ export class IRender {
      * @type {Array<function():Promise<void>>}
      */
     #initPromises = [];
+
+    /**
+     * @type {string}
+     */
+    #currentProgram = "";
+    
     constructor(systemSettings, iLoader, canvasContainer) {
         this.#isCleared = false;
         this.#canvas = document.createElement("canvas");
@@ -104,21 +111,25 @@ export class IRender {
         }
 
         this._registerRenderInit(this.fixCanvasSize);
+        //this._registerRenderInit(
+        //    () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES, imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes)
+        //);
+        //this._registerRenderInit(
+        //    () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes)
+        //);
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES, imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes)
-        );
-        this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes)
+            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES, vertexShader, fragmentShader, uniforms, attributes)
         );
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
 
-        this._registerObjectRender(DrawTextObject.name, this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this._registerObjectRender(DrawRectObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawPolygonObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawCircleObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawConusObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawTiledLayer.name, this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this._registerObjectRender(DrawLineObject.name, this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawTextObject.name, this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
+        this._registerObjectRender(DrawRectObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
+        this._registerObjectRender(DrawPolygonObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
+        this._registerObjectRender(DrawCircleObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
+        this._registerObjectRender(DrawConusObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
+        this._registerObjectRender(DrawTiledLayer.name, this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
+        this._registerObjectRender(DrawLineObject.name, this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
+        this._registerObjectRender(DrawImageObject.name, this.#webGlEngine._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
     }
 
     /**
@@ -161,6 +172,13 @@ export class IRender {
         return this.#drawContext;
     }
 
+    set currentProgram(value) {
+        this.#currentProgram = value; 
+    }
+
+    get currentProgram() {
+        return this.#currentProgram;
+    }
     /**
      * 
      * @param {string} eventName
@@ -255,6 +273,10 @@ export class IRender {
             errors = [],
             isErrors = false;
         const renderObjects = this.stageData.renderObjects;
+
+        this.verticesSize = 0;
+        this.texturesSize = 0;
+
         if (renderObjects.length !== 0) {
             //this.#checkCollisions(view.renderObjects);
             for (let i = 0; i < renderObjects.length; i++) {
@@ -294,6 +316,12 @@ export class IRender {
                 errors.push(result.reason);
             }
         });
+
+        if (this.verticesSize > 0) {
+            await this.#webGlEngine._executeDraw(this.verticesSize);
+            this.verticesSize = 0;
+            this.texturesSize = 0;
+        }
 
         this.#postRenderActions();
             
@@ -425,16 +453,26 @@ export class IRender {
             if (name) {
                 const program = this.#webGlEngine.getProgram(name),
                     vars = this.#webGlEngine.getProgramVarLocations(name);
-                return registeredRenderObject.method(renderObject, this.drawContext, this.stageData, program, vars)
-                    .then((results) => this.#webGlEngine._render(results[0], results[1]));  
+                
+                return registeredRenderObject.method(renderObject, this.drawContext, this.stageData, program, vars, this.verticesSize, this.texturesSize)
+                    .then((results) => {
+                        // a small hack to check to program
+                        if (results.length === 3) {
+                            this.verticesSize = results[0];
+                            this.texturesSize = results[1];
+                            return Promise.resolve();
+                        } else {
+                            return this.#webGlEngine._render(results[0], results[1])
+                        }
+                    });  
             } else {
                 return registeredRenderObject.method(renderObject, this.drawContext, this.stageData);
             }
         } else {
             // a workaround for images and its extend classes drawing
             if (renderObject.type === CONST.DRAW_TYPE.IMAGE) {
-                const program = this.#webGlEngine.getProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES),
-                    vars = this.#webGlEngine.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+                const program = this.#webGlEngine.getProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES),
+                    vars = this.#webGlEngine.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
 
                 if (!renderObject.image) {
                     renderObject.image = this.iLoader.getImage(renderObject.key);
@@ -578,9 +616,13 @@ export class IRender {
                 setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
             }
         }).catch((errors) => {
-            errors.forEach((err) => {
-                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
-            });
+            if (errors.forEach) {
+                errors.forEach((err) => {
+                    Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
+                });
+            } else {
+                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, errors.message);
+            }
             this._stopRender();
         });
     };

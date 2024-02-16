@@ -56,7 +56,7 @@ export class MapPage extends GameStage {
         
         this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.4)", Math.PI/8, 60);
         this.fireRange.setMask(this.sightView);
-        
+
         const monster1 = new Ghost(455, 450, 16, 16, "tilemap", 108, 1);
         const monster2 = new Ghost(570, 410, 16, 16, "tilemap", 108, 1);
         const monster3 = new Ghost(455, 390, 16, 16, "tilemap", 108, 1);
@@ -72,7 +72,7 @@ export class MapPage extends GameStage {
         this.player.setMask(this.sightView);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         
-        this.greenLight = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5", Math.PI, 20);
+        this.greenLight = this.draw.conus(315, 369, 100, "rgba(0, 128, 0, 0.5)", Math.PI, 20);
         this.greenLight.setMask(this.sightView);
 
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black"),

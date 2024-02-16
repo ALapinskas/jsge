@@ -104,6 +104,27 @@ export class BigMap extends GameStage {
 		this.bRotateAnticlockwise.addEventListener("touchend", this.stopAction);
 		this.bFire.addEventListener("mouseup", this.fireAction);
 		this.bFire.addEventListener("touchend", this.fireAction);
+
+		document.addEventListener("mousedown", this.mouseDownAction);
+		document.addEventListener("mouseup", this.mouseUpAction);
+		document.addEventListener('mousemove', this.mouseMoveAction)
+	}
+
+	mouseDownAction() {
+		console.log("mouse down");
+		this.mouseMoveEventActive = true;
+	}
+
+	mouseUpAction() {
+		console.log("mouse up");
+		this.mouseMoveEventActive = false;
+	}
+
+	mouseMoveAction(e) {
+		console.log("mouse move");
+		if (this.mouseMoveEventActive) {
+			console.log("active event: ", e);
+		}
 	}
 	
 	buttonMoveClick(dir) {

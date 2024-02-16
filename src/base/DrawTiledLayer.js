@@ -1,3 +1,4 @@
+import { CONST } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
 /**
@@ -5,6 +6,7 @@ import { TextureStorage } from "./WebGl/TextureStorage.js";
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawTiledLayer {
+    #type;
     #layerKey;
     #tileMapKey;
     #tilemap;
@@ -37,11 +39,15 @@ export class DrawTiledLayer {
         this.#layerData = layerData;
         this.#setBoundaries = setBoundaries;
         this.#drawBoundaries = setBoundaries ? setBoundaries : false;
+        this.#type = CONST.DRAW_TYPE.TILED_LAYER;
         if (shapeMask) {
             this.setMask(shapeMask);
         }
     }
 
+    get type() {
+        return this.#type;
+    }
     /**
      * A layer name.
      * @type {string}

@@ -45,7 +45,8 @@ export const CONST = {
     WEBGL: {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
-            IMAGES: "drawImages"
+            IMAGES: "drawImages",
+            IMAGES_AND_PRIMITIVES: "drawImagesAndPrimitives"
         }
     },
     DRAW_TYPE: {
@@ -55,7 +56,8 @@ export const CONST = {
         POLYGON: "polygon",
         LINE: "line",
         TEXT: "text",
-        IMAGE: "image"
+        IMAGE: "image",
+        TILED_LAYER: "tiled_layer"
     },
     LAYERS: {
         DEFAULT: "default-view-layer",

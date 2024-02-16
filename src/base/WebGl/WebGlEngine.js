@@ -99,6 +99,9 @@ export class WebGlEngine {
 
     _clearView() {
         const gl = this.#gl;
+        // buffer cleanup
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
         gl.clearColor(0, 0, 0, 0);// shouldn't be gl.clearColor(0, 0, 0, 1); ?
         // Clear the color buffer with specified clear color
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
@@ -112,6 +115,28 @@ export class WebGlEngine {
             throw new Error("Error num: " + err);
         } else {
             gl.drawArrays(primitiveType, offset, verticesNumber);
+            // set blend to default
+            gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
+        }
+        return new Promise((resolve, reject) => {
+            if (this.#gameOptions.debug.delayBetweenObjectRender) {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    _executeDraw(verticesNum) {
+        const gl = this.#gl,
+            err = this.#debug ? gl.getError() : 0;
+        if (err !== 0) {
+            console.error(err);
+            throw new Error("Error num: " + err);
+        } else {
+            gl.drawArrays(gl.TRIANGLES, 0, verticesNum);
             // set blend to default
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         }
@@ -236,7 +261,9 @@ export class WebGlEngine {
                 u_resolution: resolutionUniformLocation,
                 u_color: colorUniformLocation,
                 a_position: positionAttributeLocation,
-                u_fade_min: fadeMinLocation
+                a_texCoord: texCoordLocation,
+                u_fade_min: fadeMinLocation,
+                u_is_image: u_isImageLocation
             } = vars;
             
         let verticesNumber = 0;
@@ -247,6 +274,7 @@ export class WebGlEngine {
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
+        gl.uniform1i(u_isImageLocation, 0);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -286,6 +314,9 @@ export class WebGlEngine {
             offset = 0; // start of beginning of the buffer
         gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 
+        //textures buffer
+        gl.disableVertexAttribArray(texCoordLocation);
+
         const colorArray = this.#rgbaToArray(renderObject.bgColor);
         gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
@@ -300,6 +331,7 @@ export class WebGlEngine {
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
     };
+    
     _bindConus = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -313,8 +345,10 @@ export class WebGlEngine {
                 u_resolution: resolutionUniformLocation,
                 u_color: colorUniformLocation,
                 a_position: positionAttributeLocation,
+                a_texCoord: texCoordLocation,
                 u_fade_max: fadeMaxLocation,
-                u_fade_min: fadeMinLocation
+                u_fade_min: fadeMinLocation,
+                u_is_image: u_isImageLocation
             } = vars,
             coords = renderObject.vertices,
             fillStyle = renderObject.bgColor,
@@ -332,8 +366,9 @@ export class WebGlEngine {
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, fade_min);
         gl.uniform1f(fadeMaxLocation, fadeLen);
+        gl.uniform1i(u_isImageLocation, 0);
+        
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-
         gl.bufferData(this.#gl.ARRAY_BUFFER, 
             new Float32Array(coords), this.#gl.STATIC_DRAW);
 
@@ -345,6 +380,9 @@ export class WebGlEngine {
             stride = 0, // move forward size * sizeof(type) each iteration to get next position
             offset = 0; // start of beginning of the buffer
         gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+        
+        //textures buffer
+        gl.disableVertexAttribArray(texCoordLocation);
 
         verticesNumber += coords.length / 2;
 
@@ -361,18 +399,18 @@ export class WebGlEngine {
         } else if (renderObject._isMask) {
             gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
         }
-        
-        return Promise.resolve([verticesNumber, gl.TRIANGLE_FAN]);
+        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
     };
 
-    _bindText = (renderObject, gl, pageData, program, vars) => {
+    _bindText = (renderObject, gl, pageData, program, vars, verticesInBuffer = 0, texturesInBuffer = 0) => {
         const { u_translation: translationLocation,
             u_rotation: rotationRotation,
             u_scale: scaleLocation,
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
-            u_image: u_imageLocation } = vars;
+            u_image: u_imageLocation,
+            u_is_image: u_isImageLocation } = vars;
 
         const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
             image_name = renderObject.text,
@@ -383,8 +421,8 @@ export class WebGlEngine {
 
         const rotation = 0,
             scale = [1, 1];
-        const vecX1 = x,
-            vecY1 = y,
+        const vecX1 = 0,
+            vecY1 = 0,
             vecX2 = vecX1 + boxWidth,
             vecY2 = vecY1 + boxHeight;
         const verticesBufferData = [
@@ -403,7 +441,6 @@ export class WebGlEngine {
                 1, 0,
                 1, 1
             ];
-        let verticesNumber = 0;
 
         gl.useProgram(program);
         // set the resolution
@@ -411,26 +448,39 @@ export class WebGlEngine {
         gl.uniform2f(translationLocation, x, y);
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
+        gl.uniform1i(u_isImageLocation, 1);
         
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticesBufferData), gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-        //textures buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texturesBufferData), gl.STATIC_DRAW);
-
-        gl.enableVertexAttribArray(texCoordLocation);
-        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+        if (verticesInBuffer === 0) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, 408, gl.STATIC_DRAW);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(verticesBufferData));
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            //Tell the attribute how to get data out of positionBuffer
+            const size = 2,
+                type = gl.FLOAT, // data is 32bit floats
+                normalize = false,
+                stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                offset = 0; // start of beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+    
+            //textures buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, 408, gl.STATIC_DRAW);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(texturesBufferData));
+    
+            gl.enableVertexAttribArray(texCoordLocation);
+            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+        } else {
+            const currentBufferLen = verticesInBuffer * Float32Array.BYTES_PER_ELEMENT,
+                currentTexturesLen = texturesInBuffer * Float32Array.BYTES_PER_ELEMENT;
+            gl.bufferSubData(gl.ARRAY_BUFFER, currentBufferLen, new Float32Array(verticesBufferData));
+    
+            //textures buffer
+            gl.bufferSubData(gl.ARRAY_BUFFER, currentTexturesLen, new Float32Array(texturesBufferData));
+        }
         
-        verticesNumber += 6;
+        verticesInBuffer += 6;
+        texturesInBuffer += 6;
         // remove box
         // fix text edges
         gl.blendFunc(blend[0], blend[1]);
@@ -450,7 +500,7 @@ export class WebGlEngine {
         }
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         
-        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
+        return Promise.resolve([verticesInBuffer, texturesInBuffer, gl.TRIANGLES]);
     };
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
@@ -461,7 +511,8 @@ export class WebGlEngine {
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
-            u_image: u_imageLocation } = vars;
+            u_image: u_imageLocation,
+            u_is_image: u_isImageLocation } = vars;
 
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -474,6 +525,7 @@ export class WebGlEngine {
             spacing = renderObject.spacing,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             scale = [1, 1];
+
         let imageX = 0,
             imageY = 0,
             colNum = 0,
@@ -486,8 +538,8 @@ export class WebGlEngine {
             imageX = colNum * renderObject.width + (colNum * spacing),
             imageY = rowNum * renderObject.height + (rowNum * spacing);
         }
-        const posX = x - renderObject.width / 2,
-            posY = y - renderObject.height / 2;
+        const posX = - renderObject.width / 2,
+            posY = - renderObject.height / 2;
         const vecX1 = posX,
             vecY1 = posY,
             vecX2 = vecX1 + renderObject.width,
@@ -518,6 +570,7 @@ export class WebGlEngine {
         gl.uniform2f(translationLocation, x, y);
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, renderObject.rotation);
+        gl.uniform1i(u_isImageLocation, 1);
         
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
@@ -569,7 +622,8 @@ export class WebGlEngine {
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
-            u_image: u_imageLocation } = vars;
+            u_image: u_imageLocation,
+            u_is_image: u_isImageLocation } = vars;
 
         gl.useProgram(program);
         let renderLayerData;
@@ -607,6 +661,7 @@ export class WebGlEngine {
                 gl.uniform2f(translationLocation,translation[0], translation[1]);
                 gl.uniform2f(scaleLocation, scale[0], scale[1]);
                 gl.uniform1f(rotationRotation, rotation);
+                gl.uniform1i(u_isImageLocation, 1);
                 
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER, vectors, gl.STATIC_DRAW);
@@ -656,7 +711,7 @@ export class WebGlEngine {
             rotation = renderObject.rotation || 0,
             vertices = renderObject.vertices,
             color =  this.#gameOptions.debug.boundaries.boundariesColor;
-        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
                 u_scale: scaleLocation,
@@ -664,8 +719,9 @@ export class WebGlEngine {
                 u_color: colorUniformLocation,
                 a_position: positionAttributeLocation,
                 u_fade_max: fadeMaxLocation,
-                u_fade_min: fadeMinLocation
-            } = this.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES),
+                u_fade_min: fadeMinLocation,
+                u_is_image: u_isImageLocation
+            } = this.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES),
             gl = this.#gl;
 
         let verticesNumber = 0;
@@ -677,6 +733,7 @@ export class WebGlEngine {
         gl.uniform2f(scaleLocation, 1, 1);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
+        gl.uniform1i(u_isImageLocation, 0);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -719,7 +776,8 @@ export class WebGlEngine {
                 u_color: colorUniformLocation,
                 a_position: positionAttributeLocation,
                 u_fade_max: fadeMaxLocation,
-                u_fade_min: fadeMinLocation
+                u_fade_min: fadeMinLocation,
+                u_is_image: u_isImageLocation
             } = vars,
             coords = renderObject.vertices,
             fillStyle = renderObject.bgColor,
@@ -736,6 +794,7 @@ export class WebGlEngine {
         gl.uniform2f(scaleLocation, 1, 1);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
+        gl.uniform1i(u_isImageLocation, 0);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 
@@ -764,7 +823,7 @@ export class WebGlEngine {
     };
     
     _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
-        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
                 u_scale: scaleLocation,
@@ -773,7 +832,7 @@ export class WebGlEngine {
                 a_position: positionAttributeLocation,
                 u_fade_max: fadeMaxLocation,
                 u_fade_min: fadeMinLocation
-            } = this.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES),
+            } = this.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_AND_PRIMITIVES),
             gl = this.#gl;
 
         let verticesNumber = 0;
@@ -785,6 +844,7 @@ export class WebGlEngine {
         gl.uniform2f(scaleLocation, 1, 1);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
+        gl.uniform1i(u_isImageLocation, 0);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
 

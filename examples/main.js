@@ -22,7 +22,7 @@ const TEST_WEBGL_PROGRAM_KEY = "test",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
 
 // Test different optimizations
-//SystemSettings.gameOptions.render.minCycleTime = 0;
+SystemSettings.gameOptions.render.minCycleTime = 0;
 //SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT;
 //SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED;
 
