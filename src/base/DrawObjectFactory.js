@@ -116,8 +116,9 @@ export class DrawObjectFactory {
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
         const image = this.#iLoader.getImage(key),
-            renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
             
+            renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
+        
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }

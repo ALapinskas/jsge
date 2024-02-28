@@ -48,6 +48,11 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.3.0:
+    f: iRender error handling
+    f: iRender "reject is not defined"
+    +: Tiled collision support: custom rects, polygons, ellipses, dots
+
 1.2.2:
     f: Infinity message for 0 milliseconds render cycles
     r: fps averages calculations

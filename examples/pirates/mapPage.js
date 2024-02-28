@@ -61,8 +61,9 @@ export class MapPage extends GameStage {
         this.#windDirectionPointer.turnOffOffset();
         this.audio.registerAudio(SAILS_UP_AUDIO);
 
-        this.player = this.draw.image(100, 300, 35, 57, SHIPS_KEY, 0, [{x:0,y:-30}, {x:15,y:-10}, {x:0,y:30}, {x:-15,y:-10}]);
+        this.player = this.draw.image(100, 300, 35, 60, SHIPS_KEY, 0, [{x:2.2,y:-30}, {x:15,y:-15}, {x:2.2,y:30}, {x:-11,y:-15}]);
 
+        //this.circle = this.draw.circle(75 + 30, 5 + 30, 30, "rgba(255,255,255,0.5)");
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
         this.navItemBack.turnOffOffset();
     }

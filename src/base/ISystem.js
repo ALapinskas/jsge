@@ -3,7 +3,7 @@ import { Exception, Warning } from "./Exception.js";
 import { INetwork } from "./INetwork.js";
 import { ISystemAudio } from "./ISystemAudio.js";
 import { SystemSettings } from "../configs.js";
-import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
+import AssetsManager from "../../modules/assetsm/src/AssetsManager.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { GameStage } from "./GameStage.js";
 import { IRender } from "./IRender.js";

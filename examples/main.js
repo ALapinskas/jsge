@@ -5,6 +5,7 @@ import { MapPage as Pirates } from "./pirates/mapPage.js";
 import { MapPage as Racing } from "./racing/mapPage.js";
 import { SpinePage } from "./spine/spinePage.js";
 import { BigMap } from "./big_map/bigMap.js";
+import { Tanks } from "./tanks/tanks.js";
 
 import { CustomWebGlTestPage } from "./testCustomWebGl/index.js";
 import { CustomDrawObject, createCustomDrawObjectInstance, drawCustomObject } from "./testCustomWebGl/TestDrawObject.js";
@@ -16,7 +17,8 @@ const START_PAGE_NAME = "start",
     RACING_GAME = "racing",
     SPINE_GAME = "spine",
     BIG_MAP = "big_map",
-    CUSTOM_WEBGL_PAGE = "custom_webgl";
+    CUSTOM_WEBGL_PAGE = "custom_webgl",
+    TANKS_PAGE = "tanks";
     
 const TEST_WEBGL_PROGRAM_KEY = "test",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
@@ -25,6 +27,8 @@ const TEST_WEBGL_PROGRAM_KEY = "test",
 //SystemSettings.gameOptions.render.minCycleTime = 0;
 //SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT;
 //SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED;
+//SystemSettings.gameOptions.debug.boundaries.drawLayerBoundaries = true;
+//SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
 
 const app = new System(SystemSettings, document.getElementById("game_map"));
 app.registerStage(START_PAGE_NAME, StartPage);
@@ -34,6 +38,7 @@ app.registerStage(RACING_GAME, Racing);
 app.registerStage(SPINE_GAME, SpinePage);
 app.registerStage(BIG_MAP, BigMap);
 app.registerStage(CUSTOM_WEBGL_PAGE, CustomWebGlTestPage);
+app.registerStage(TANKS_PAGE, Tanks);
 
 // пробуем пользовательскую webgl программу
 app.iSystem.iExtension.registerAndCompileWebGlProgram(TEST_WEBGL_PROGRAM_KEY, testVertexShader, testFragmentShader, testUniforms, testAttributes);

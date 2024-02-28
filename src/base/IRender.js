@@ -16,6 +16,7 @@ import { DrawRectObject } from "./DrawRectObject.js";
 import { DrawTextObject } from "./DrawTextObject.js";
 import { imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes } from "./WebGl/ImagesDrawProgram.js";
 import { primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes } from "./WebGl/PrimitivesDrawProgram.js";
+import { utils } from "../index.js";
 
 /**
  * IRender class controls the render(start/stop/speed) 
@@ -289,7 +290,7 @@ export class IRender {
         const bindResults = await Promise.allSettled(renderObjectsPromises);
         bindResults.forEach((result) => {
             if (result.status === "rejected") {
-                reject(result.reason);
+                Promise.reject(result.reason);
                 isErrors = true;
                 errors.push(result.reason);
             }
@@ -462,15 +463,41 @@ export class IRender {
     #drawBoundariesWebGl() {
         return new Promise((resolve) => {
             const b = this.stageData.getBoundaries(),
+                eB = this.stageData.getEllipseBoundaries(),
+                pB = this.stageData.getPointBoundaries(),
                 len = b.length,
+                eLen = eB.length,
+                pLen = pB.length,
                 linesArray = [];
         
-            for (let i = 0; i < len; i++) {
-                const item = b[i];
-                linesArray.push(item[0], item[1]);
-                linesArray.push(item[2], item[3]);
+            //for (let i = 0; i < len; i++) {
+            //    const item = b[i];
+            //    linesArray.push(item[0], item[1]);
+            //    linesArray.push(item[2], item[3]);
+            //}
+            this.#webGlEngine._drawLines(b.flat(), this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+            if (eLen) {
+                //draw ellipse boundaries
+                eB.forEach(element => {
+                    const x = element[0],
+                        y = element[1],
+                        radX = element[2]/2,
+                        radY = element[3]/2,
+                        vertices = utils.calculateEllipseVertices(x, y, radX, radY);
+                        this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
+                        //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                });
             }
-            this.#webGlEngine._drawLines(linesArray, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+            if (pLen) {
+                //draw point boundaries
+                pB.forEach(element => {
+                    const x = element[0],
+                        y = element[1],
+                        vertices = [x,y, x+1,y+1];
+
+                        this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                });
+            }
             resolve();
         });
     }
@@ -578,9 +605,13 @@ export class IRender {
                 setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
             }
         }).catch((errors) => {
-            errors.forEach((err) => {
-                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
-            });
+            if (errors.forEach) {
+                errors.forEach((err) => {
+                    Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
+                });
+            } else {
+                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, errors.message);
+            }
             this._stopRender();
         });
     };

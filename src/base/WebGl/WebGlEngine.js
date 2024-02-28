@@ -99,6 +99,8 @@ export class WebGlEngine {
 
     _clearView() {
         const gl = this.#gl;
+        //cleanup buffer, is it required?
+        //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.clearColor(0, 0, 0, 0);// shouldn't be gl.clearColor(0, 0, 0, 1); ?
         // Clear the color buffer with specified clear color
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
@@ -844,6 +846,8 @@ export class WebGlEngine {
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [],
+                ellipseBoundaries = [],
+                pointBoundaries = [],
                 tileImagesData = [];
 
             if (!layerData) {
@@ -881,7 +885,11 @@ export class WebGlEngine {
                     cellMargin = tileset.margin,
 
                     verticesBufferData = [],
-                    texturesBufferData = [];
+                    texturesBufferData = [],
+                    
+                    // if tileset contains boundaries
+                    tilesetBoundaries = tileset.tiles;
+
                 //@toDo: move this check upper level
                 if (setBoundaries) {
                     if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
@@ -934,140 +942,193 @@ export class WebGlEngine {
                                 texX2, texY2
                             );
                             if (setBoundaries) {
-                                let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
-                                    bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
-                                    topLine = [ mapPosX, mapPosY, mapPosX + tilesetwidth, mapPosY],
-                                    leftLine = [ mapPosX, mapPosY + tilesetheight, mapPosX, mapPosY ],
-                                    currentAddedCellIndexes = [null, null, null, null];
-                                
-                                const topRow = row !== 0 ? boundariesRowsIndexes.get(row - 1) : undefined;
-                                if (topRow ) {
-                                    const topCellIndexes = topRow.get(col);
-                                    if (topCellIndexes) {
-                                        //remove double lines from top
-                                        const bottomTopCellIndex = topCellIndexes[INDEX_BOTTOM_LINE],
-                                            bottomTopCell = boundaries[bottomTopCellIndex];
-                                        if (bottomTopCell) {
-                                            const bottomTopCellX1 = bottomTopCell[INDEX_X1],
-                                                bottomTopCellY1 = bottomTopCell[INDEX_Y1],
-                                                bottomTopCellX2 = bottomTopCell[INDEX_X2],
-                                                bottomTopCellY2 = bottomTopCell[INDEX_Y2],
-                                                topX1 = topLine[INDEX_X1],
-                                                topY1 = topLine[INDEX_Y1],
-                                                topX2 = topLine[INDEX_X2],
-                                                topY2 = topLine[INDEX_Y2];
+                                // if boundary is set in tileset
+                                let isBoundaryPreset = false;
+                                if (tilesetBoundaries && tilesetBoundaries.length > 0) {
+                                    const tilesetBoundary = tilesetBoundaries.find((boundary) => boundary.id === tile);
+                                    if (tilesetBoundary) {
+                                        isBoundaryPreset = true;
+                                        const objectGroup = tilesetBoundary.objectgroup,
+                                            objects = objectGroup.objects;
                                             
-                                            if (topX1 === bottomTopCellX2 && topY1 === bottomTopCellY2 &&
-                                                topX2 === bottomTopCellX1 && topY2 === bottomTopCellY1) {
-                                                boundaries[bottomTopCellIndex] = undefined;
-                                                topLine = undefined;
+                                        objects.forEach((object) => {
+                                            const baseX = mapPosX + object.x, 
+                                                baseY = mapPosY + object.y,
+                                                rotation = object.rotation;
+                                            if (rotation !== 0) {
+                                                Warning("tileset.tiles.rotation property is not supported yet");
+                                            }
+                                            if (object.polygon) {
+                                                object.polygon.forEach(
+                                                    (point, idx) => {
+                                                        const next = object.polygon[idx + 1];
+                                                        if (next) {
+                                                            boundaries.push([point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY]);
+                                                        } else {
+                                                            // last point -> link to the first
+                                                            const first = object.polygon[0];
+                                                            boundaries.push([point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY]);
+                                                        }
+                                                    });
+                                            } else if (object.point) {
+                                                // x/y coordinate
+                                                pointBoundaries.push([baseX, baseY]);
+                                            } else if (object.ellipse) {
+                                                const diameterX = object.width,
+                                                    diameterY = object.height;
+                                                ellipseBoundaries.push([baseX + diameterX / 2, baseY + diameterY / 2, diameterX, diameterY]);
+                                            } else {
+                                                // object is rect
+                                                const width = object.width,
+                                                    height = object.height,
+                                                    x2 = width + baseX,
+                                                    y2 = height + baseY;
+                                                boundaries.push([baseX, baseY, x2, baseY]);
+                                                boundaries.push([x2, baseY, x2, y2]);
+                                                boundaries.push([x2, y2, baseX, y2]);
+                                                boundaries.push([baseX, y2, baseX, baseY]);
+                                            }
+                                        });
+                                    }
+
+                                // extract rect boundary for the whole tile
+                                }
+                                if (isBoundaryPreset === false) {
+
+                                    let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
+                                        bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
+                                        topLine = [ mapPosX, mapPosY, mapPosX + tilesetwidth, mapPosY],
+                                        leftLine = [ mapPosX, mapPosY + tilesetheight, mapPosX, mapPosY ],
+                                        currentAddedCellIndexes = [null, null, null, null];
+                                    
+                                    const topRow = row !== 0 ? boundariesRowsIndexes.get(row - 1) : undefined;
+                                    if (topRow ) {
+                                        const topCellIndexes = topRow.get(col);
+                                        if (topCellIndexes) {
+                                            //remove double lines from top
+                                            const bottomTopCellIndex = topCellIndexes[INDEX_BOTTOM_LINE],
+                                                bottomTopCell = boundaries[bottomTopCellIndex];
+                                            if (bottomTopCell) {
+                                                const bottomTopCellX1 = bottomTopCell[INDEX_X1],
+                                                    bottomTopCellY1 = bottomTopCell[INDEX_Y1],
+                                                    bottomTopCellX2 = bottomTopCell[INDEX_X2],
+                                                    bottomTopCellY2 = bottomTopCell[INDEX_Y2],
+                                                    topX1 = topLine[INDEX_X1],
+                                                    topY1 = topLine[INDEX_Y1],
+                                                    topX2 = topLine[INDEX_X2],
+                                                    topY2 = topLine[INDEX_Y2];
+                                                
+                                                if (topX1 === bottomTopCellX2 && topY1 === bottomTopCellY2 &&
+                                                    topX2 === bottomTopCellX1 && topY2 === bottomTopCellY1) {
+                                                    boundaries[bottomTopCellIndex] = undefined;
+                                                    topLine = undefined;
+                                                }
+                                            }
+
+                                            // merge line from top right
+                                            const rightTopCellIndex = topCellIndexes[INDEX_RIGHT_LINE],
+                                                rightTopCell = boundaries[rightTopCellIndex];
+                                            if (rightTopCell) {
+                                                const rightTopCellX1 = rightTopCell[INDEX_X1],
+                                                    rightTopCellY1 = rightTopCell[INDEX_Y1],
+                                                    rightTopCellX2 = rightTopCell[INDEX_X2],
+                                                    rightX1 = rightLine[INDEX_X1],
+                                                    rightX2 = rightLine[INDEX_X2];
+                                                if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
+                                                    boundaries[rightTopCellIndex] = undefined;
+                                                    rightLine[INDEX_X1] = rightTopCellX1;
+                                                    rightLine[INDEX_Y1] = rightTopCellY1;
+                                                }
+                                            }
+                                            // merge line from top left
+                                            const leftTopCellIndex = topCellIndexes[INDEX_LEFT_LINE],
+                                                leftTopCell = boundaries[leftTopCellIndex];
+                                            if (leftTopCell) {
+                                                const leftTopCellX1 = leftTopCell[INDEX_X1],
+                                                    leftTopCellX2 = leftTopCell[INDEX_X2],
+                                                    leftTopCellY2 = leftTopCell[INDEX_Y2],
+                                                    leftX1 = leftLine[INDEX_X1],
+                                                    leftX2 = leftLine[INDEX_X2];
+                                                if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
+                                                    boundaries[leftTopCellIndex] = undefined;
+                                                    leftLine[INDEX_X2] = leftTopCellX2;
+                                                    leftLine[INDEX_Y2] = leftTopCellY2;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    const leftCellIndexes = col !== 0 ? currentRowIndexes.get(col - 1) : undefined;
+                                    if (leftCellIndexes) {
+
+                                        //remove double lines from left
+                                        const rightLeftCellIndex = leftCellIndexes[INDEX_RIGHT_LINE],
+                                            rightLeftCell = boundaries[rightLeftCellIndex],
+                                            rightLeftCellX1 = rightLeftCell[INDEX_X1],
+                                            rightLeftCellY1 = rightLeftCell[INDEX_Y1],
+                                            rightLeftCellX2 = rightLeftCell[INDEX_X2],
+                                            rightLeftCellY2 = rightLeftCell[INDEX_Y2],
+                                            leftX1 = leftLine[INDEX_X1],
+                                            leftY1 = leftLine[INDEX_Y1],
+                                            leftX2 = leftLine[INDEX_X2],
+                                            leftY2 = leftLine[INDEX_Y2];
+
+                                        if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
+                                            leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
+                                            boundaries[rightLeftCellIndex] = undefined;
+                                            leftLine = undefined;
+                                        }
+
+                                        //merge long lines from left top
+                                        const topLeftCellIndex = leftCellIndexes[INDEX_TOP_LINE],
+                                            topLeftCell = boundaries[topLeftCellIndex];
+                                        if (topLeftCell && topLine) {
+                                            const topLeftCellX1 = topLeftCell[INDEX_X1],
+                                                topLeftCellY1 = topLeftCell[INDEX_Y1],
+                                                topLeftCellY2 = topLeftCell[INDEX_Y2],
+                                                topY1 = topLine[INDEX_Y1],
+                                                topY2 = topLine[INDEX_Y2];
+                                            if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
+                                                boundaries[topLeftCellIndex] = undefined;
+                                                topLine[INDEX_X1] = topLeftCellX1;
+                                                topLine[INDEX_Y1] = topLeftCellY1;
                                             }
                                         }
 
-                                        // merge line from top right
-                                        const rightTopCellIndex = topCellIndexes[INDEX_RIGHT_LINE],
-                                            rightTopCell = boundaries[rightTopCellIndex];
-                                        if (rightTopCell) {
-                                            const rightTopCellX1 = rightTopCell[INDEX_X1],
-                                                rightTopCellY1 = rightTopCell[INDEX_Y1],
-                                                rightTopCellX2 = rightTopCell[INDEX_X2],
-                                                rightX1 = rightLine[INDEX_X1],
-                                                rightX2 = rightLine[INDEX_X2];
-                                            if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
-                                                boundaries[rightTopCellIndex] = undefined;
-                                                rightLine[INDEX_X1] = rightTopCellX1;
-                                                rightLine[INDEX_Y1] = rightTopCellY1;
+                                        // merge long lines from left bottom
+                                        const bottomLeftCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
+                                            bottomLeftCell = boundaries[bottomLeftCellIndex];
+                                        if (bottomLeftCell) {
+                                            const bottomLeftCellY1 = bottomLeftCell[INDEX_Y1],
+                                                bottomLeftCellX2 = bottomLeftCell[INDEX_X2],
+                                                bottomLeftCellY2 = bottomLeftCell[INDEX_Y2],
+                                                bottomY1 = bottomLine[INDEX_Y1],
+                                                bottomY2 = bottomLine[INDEX_Y2];
+                                            if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
+                                                boundaries[bottomLeftCellIndex] = undefined;
+                                                //opposite direction
+                                                bottomLine[INDEX_X2] = bottomLeftCellX2;
+                                                bottomLine[INDEX_Y2] = bottomLeftCellY2;
                                             }
                                         }
-                                        // merge line from top left
-                                        const leftTopCellIndex = topCellIndexes[INDEX_LEFT_LINE],
-                                            leftTopCell = boundaries[leftTopCellIndex];
-                                        if (leftTopCell) {
-                                            const leftTopCellX1 = leftTopCell[INDEX_X1],
-                                                leftTopCellX2 = leftTopCell[INDEX_X2],
-                                                leftTopCellY2 = leftTopCell[INDEX_Y2],
-                                                leftX1 = leftLine[INDEX_X1],
-                                                leftX2 = leftLine[INDEX_X2];
-                                            if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
-                                                boundaries[leftTopCellIndex] = undefined;
-                                                leftLine[INDEX_X2] = leftTopCellX2;
-                                                leftLine[INDEX_Y2] = leftTopCellY2;
-                                            }
-                                        }
-                                    }
-                                }
-                                const leftCellIndexes = col !== 0 ? currentRowIndexes.get(col - 1) : undefined;
-                                if (leftCellIndexes) {
 
-                                    //remove double lines from left
-                                    const rightLeftCellIndex = leftCellIndexes[INDEX_RIGHT_LINE],
-                                        rightLeftCell = boundaries[rightLeftCellIndex],
-                                        rightLeftCellX1 = rightLeftCell[INDEX_X1],
-                                        rightLeftCellY1 = rightLeftCell[INDEX_Y1],
-                                        rightLeftCellX2 = rightLeftCell[INDEX_X2],
-                                        rightLeftCellY2 = rightLeftCell[INDEX_Y2],
-                                        leftX1 = leftLine[INDEX_X1],
-                                        leftY1 = leftLine[INDEX_Y1],
-                                        leftX2 = leftLine[INDEX_X2],
-                                        leftY2 = leftLine[INDEX_Y2];
-
-                                    if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
-                                        leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
-                                        boundaries[rightLeftCellIndex] = undefined;
-                                        leftLine = undefined;
                                     }
 
-                                    //merge long lines from left top
-                                    const topLeftCellIndex = leftCellIndexes[INDEX_TOP_LINE],
-                                        topLeftCell = boundaries[topLeftCellIndex];
-                                    if (topLeftCell && topLine) {
-                                        const topLeftCellX1 = topLeftCell[INDEX_X1],
-                                            topLeftCellY1 = topLeftCell[INDEX_Y1],
-                                            topLeftCellY2 = topLeftCell[INDEX_Y2],
-                                            topY1 = topLine[INDEX_Y1],
-                                            topY2 = topLine[INDEX_Y2];
-                                        if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
-                                            boundaries[topLeftCellIndex] = undefined;
-                                            topLine[INDEX_X1] = topLeftCellX1;
-                                            topLine[INDEX_Y1] = topLeftCellY1;
-                                        }
+                                    if (topLine) {
+                                        boundaries.push(topLine);
+                                        currentAddedCellIndexes[INDEX_TOP_LINE] = boundaries.length - 1;
                                     }
-
-                                    // merge long lines from left bottom
-                                    const bottomLeftCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
-                                        bottomLeftCell = boundaries[bottomLeftCellIndex];
-                                    if (bottomLeftCell) {
-                                        const bottomLeftCellY1 = bottomLeftCell[INDEX_Y1],
-                                            bottomLeftCellX2 = bottomLeftCell[INDEX_X2],
-                                            bottomLeftCellY2 = bottomLeftCell[INDEX_Y2],
-                                            bottomY1 = bottomLine[INDEX_Y1],
-                                            bottomY2 = bottomLine[INDEX_Y2];
-                                        if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
-                                            boundaries[bottomLeftCellIndex] = undefined;
-                                            //opposite direction
-                                            bottomLine[INDEX_X2] = bottomLeftCellX2;
-                                            bottomLine[INDEX_Y2] = bottomLeftCellY2;
-                                        }
+                                    boundaries.push(rightLine);
+                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = boundaries.length - 1;
+                                    boundaries.push(bottomLine);
+                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = boundaries.length - 1;
+                                    if (leftLine) {
+                                        boundaries.push(leftLine);
+                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = boundaries.length - 1;
                                     }
-
+                                    //save values indexes cols info
+                                    currentRowIndexes.set(col, currentAddedCellIndexes);
                                 }
-
-                                if (topLine) {
-                                    boundaries.push(topLine);
-                                    currentAddedCellIndexes[INDEX_TOP_LINE] = boundaries.length - 1;
-                                }
-                                boundaries.push(rightLine);
-                                currentAddedCellIndexes[INDEX_RIGHT_LINE] = boundaries.length - 1;
-                                boundaries.push(bottomLine);
-                                currentAddedCellIndexes[INDEX_BOTTOM_LINE] = boundaries.length - 1;
-                                if (leftLine) {
-                                    boundaries.push(leftLine);
-                                    currentAddedCellIndexes[INDEX_LEFT_LINE] = boundaries.length - 1;
-                                }
-                                //save values indexes cols info
-                                currentRowIndexes.set(col, currentAddedCellIndexes);
                             }
-
                         }
                         mapIndex++;
                     }
@@ -1085,6 +1146,12 @@ export class WebGlEngine {
                 // filter undefined value
                 const filtered = boundaries.filter(array => array);
                 pageData._addBoundariesArray(filtered);
+                if (ellipseBoundaries.length > 0) {
+                    pageData._addEllipseBoundaries(ellipseBoundaries);
+                }
+                if (pointBoundaries.length > 0) {
+                    pageData._addPointBoundaries(pointBoundaries);
+                }
             }
             resolve(tileImagesData);
         });
@@ -1340,10 +1407,14 @@ export class WebGlEngine {
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
-                    Exception(ERROR_CODES.DRAW_PREPARE_ERROR, "Can't extract triangles. Probably vertices input is not correct, or the order is wrong");
+                    // sometimes fails
+                    Warning(WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices. Probably vertices input is not correct, or the order is wrong");
+                    return triangulatedPolygon;
                 }
+                i++;
             }
-            i++;
+            // if (cs < 0): it's jumping over next vertex, maybe not a good solution? Moving up
+            // i++;
         }
         
         return triangulatedPolygon;
@@ -1401,4 +1472,16 @@ export class WebGlEngine {
     /*------------------------------------
      * End Textures
     --------------------------------------*/
+
+    isPowerOfTwo(value) {
+        return (value & (value - 1)) === 0;
+    }
+
+    nextHighestPowerOfTwo(x) {
+        --x;
+        for (var i = 1; i < 32; i <<= 1) {
+            x = x | x >> i;
+        }
+        return x + 1;
+    }
 }

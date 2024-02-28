@@ -12,7 +12,8 @@ const START_PAGE_NAME = "start",
     RACING_GAME = "racing",
     SPINE_PAGE = "spine",
     BIG_MAP = "big_map",
-    CUSTOM_WEBGL_PAGE = "custom_webgl";
+    CUSTOM_WEBGL_PAGE = "custom_webgl",
+    TANKS_PAGE = "tanks";
 
 const SPINE = {
     SpineTexture: "spineTexture",
@@ -50,6 +51,7 @@ export class StartPage extends GameStage {
         this.navItemSpine = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 10, "Spine module", "20px sans-serif", "black");
         this.navItemBigMap = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 40, "Big map", "20px sans-serif", "black");
         this.navItemTestCustomWebGl = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 70, "Custom WebGl program", "20px sans-serif", "black");
+        this.navTanksGame = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 100, "Tanks game", "20px sans-serif", "black");
         
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
@@ -77,7 +79,8 @@ export class StartPage extends GameStage {
             isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox),
             isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox),
             isNav5T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemBigMap.boundariesBox),
-            isNav6T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.boundariesBox);
+            isNav6T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.boundariesBox),
+            isNav7T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.boundariesBox);
 
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -115,7 +118,13 @@ export class StartPage extends GameStage {
             this.navItemTestCustomWebGl.strokeStyle = undefined;
         }
 
-        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed || isNav5T || isNav6T) {
+        if (isNav7T) {
+            this.navTanksGame.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        } else if (this.navTanksGame.strokeStyle) {
+            this.navTanksGame.strokeStyle = undefined;
+        }
+
+        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed || isNav5T || isNav6T || isNav7T) {
             canvas.style.cursor = "pointer";
         } else {
             canvas.style.cursor = "default";
@@ -160,6 +169,12 @@ export class StartPage extends GameStage {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(CUSTOM_WEBGL_PAGE);
+        }
+
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.boundariesBox)) {
+            this.#menuClickMediaElement.play();
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(TANKS_PAGE);
         }
     };
 

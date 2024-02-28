@@ -13,7 +13,7 @@ import { DrawTextObject } from "./DrawTextObject.js";
 import { ISystem } from "./ISystem.js";
 import { ISystemAudio } from "./ISystemAudio.js";
 import { SystemSettings } from "../configs.js";
-import { isPointLineIntersect, isPolygonLineIntersect, angle_2points, isCircleLineIntersect } from "../utils.js";
+import { isPointLineIntersect, isEllipsePolygonIntersect, isPolygonLineIntersect, isPointPolygonIntersect, angle_2points, isCircleLineIntersect } from "../utils.js";
 import { Vector } from "./Primitives.js";
 
 /**
@@ -549,11 +549,15 @@ export class GameStage {
      */
     #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
         const mapObjects = this.stageData.getBoundaries(),
+            ellipseB = this.stageData.getEllipseBoundaries(),
+            pointB = this.stageData.getPointBoundaries(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
-            len = mapObjects.length;
+            len = mapObjects.length,
+            eLen = ellipseB.length,
+            pLen = pointB.length;
 
         for (let i = 0; i < len; i+=1) {
             const item = mapObjects[i];
@@ -569,6 +573,33 @@ export class GameStage {
                 //console.log("polygon: ", polygonWithOffsetAndRotation);
                 //console.log("intersect: ", intersect);
                 return intersect;
+            }
+        }
+        if (eLen > 0) {
+            for (let i = 0; i < eLen; i+=1) {
+                const ellipse = ellipseB[i],
+                intersect = isEllipsePolygonIntersect(ellipse, polygonWithOffsetAndRotation);
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
+            }
+        }
+        
+        if (pLen > 0) {
+            for (let i = 0; i < pLen; i+=1) {
+                const point = pointB[i],
+                    x = point[0],
+                    y = point[1],
+                    intersect = isPointPolygonIntersect(x, y, polygonWithOffsetAndRotation);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
             }
         }
         return false;

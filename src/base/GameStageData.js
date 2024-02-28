@@ -21,7 +21,16 @@ export class GameStageData {
      * @type {Array<Array<number>>}
      */
     #boundaries = [];
-
+    /**
+     * ellipse boundaries
+     * @type {Array<Array<number>>}
+     */
+    #ellipseBoundaries = [];
+    /**
+     * point boundaries
+     * @type {Array<Array<number>>}
+     */
+    #pointBoundaries = [];
     /**
      * whole world boundaries, calculated once on prepare stage
      * @type {Array<Array<number>>}
@@ -70,12 +79,22 @@ export class GameStageData {
         this.#boundaries.push(...boundaries);
     }
 
+    _addEllipseBoundaries(boundaries) {
+        this.#ellipseBoundaries.push(...boundaries);
+    }
+
+    _addPointBoundaries(boundaries) {
+        this.#pointBoundaries.push(...boundaries);
+    }
+
     /**
      * Clear map boundaries
      * @ignore
      */
     _clearBoundaries() {
         this.#boundaries = [];
+        this.#ellipseBoundaries = [];
+        this.#pointBoundaries = [];
     }
 
     /**
@@ -194,6 +213,22 @@ export class GameStageData {
      */
     getBoundaries() {
         return this.#boundaries;
+    }
+
+    /**
+     * 
+     * @returns {Array<Array<number>>}
+     */
+    getEllipseBoundaries() {
+        return this.#ellipseBoundaries;
+    }
+
+    /**
+     * 
+     * @returns {Array<Array<number>>}
+     */
+    getPointBoundaries() {
+        return this.#pointBoundaries;
     }
 
     getWholeWorldBoundaries() {

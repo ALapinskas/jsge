@@ -182,8 +182,9 @@ export class DrawTextObject extends DrawShapeObject {
         if (ctx) { 
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
-            const boxWidth = this.boundariesBox.width, 
+            let boxWidth = this.boundariesBox.width, 
                 boxHeight = this.boundariesBox.height;
+            
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;
             ctx.font = this.font;
@@ -196,10 +197,12 @@ export class DrawTextObject extends DrawShapeObject {
                 ctx.strokeStyle = this.strokeStyle;
                 ctx.strokeText(this.text, 0, boxHeight);
             }
+            
             this.#textureCanvas = canvas;
             if (this.#textureStorage) {
                 this.#textureStorage._isTextureRecalculated = true;
             }
+            
         } else {
             Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }
