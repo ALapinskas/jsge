@@ -64,11 +64,35 @@ npm start
 
 # Version 0.1.0 functionality:
 # adding new loaders
-1. Register a iLoader and uploadMethod using registerLoader(loaderType, loaderMethod)
+1. Register a loader and uploadMethod using registerLoader(loaderType, loaderMethod)
 2. Add upload item to the queue using add[loaderName](fileKey, url), or addFile(loaderName, fileKey, url).
 3. Executing preload(), will upload all items where added in step2 with loaderMethod provided in step1 and save them temporary.
 4. After that uploadingResults will be available with get[loaderName](fileKey), or getFile(loaderName, fileKey, url)
 
+# Version 0.1.4
+# load tilesets separately
+If you want to load tilesets separately, pass false as 3d parameter to addTileMap and then use addTileSet to add tileset to queue:
+```
+assets.addTileMap(key, url, false);
+assets.addTileSet(key, url);
+assets.preload().then(() => {
+    assets.getTileMap(key);
+    assets.getTileSet(key); 
+    ...
+```
+
+# Version 0.1.6
+# added xml atlas loader
+Two new loaders added: AtlasXML, AtlasImageMap.
+After uploading atlas xml, atlasImageMap will be loaded, and individual images could be accessed with getImage():
+```
+assets.addAtlasXML(key, url);
+assets.preload().then(() => {
+    const atlasImageMap = assets.getAtlasImageMap(key),
+        someImageFromAtlas = assets.getImage(imageKey),
+        ;
+    ...
+```
 # Notes
 * loaderMethod should return Promise with uploading result value
 * loaderMethod is optional, by default it will return fetch result

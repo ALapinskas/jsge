@@ -306,7 +306,7 @@ export default class AssetsManager {
                     // https://bugzilla.mozilla.org/show_bug.cgi?id=1797567
                     // getImageData() crop them manually before 
                     // creating imageBitmap from atlas
-                    imageBitmapPromises.push(createImageBitmap(tempCtx.getImageData(x, y, width, height)));
+                    imageBitmapPromises.push(createImageBitmap(tempCtx.getImageData(x, y, width, height), {premultiplyAlpha:"premultiply"}));
                     imageAtlasKeys.push(name);
                 }
                 this.#dispatchCurrentLoadingProgress();
@@ -319,10 +319,6 @@ export default class AssetsManager {
                     tempCanvas.remove();
                     resolve(imageAtlas);
                 });
-                //createImageBitmap(img).then((imageBitmap) => {
-                //    this.#dispatchCurrentLoadingProgress();
-                //    resolve(imageBitmap);
-                //});
             };
             img.onerror = () => {
                 const err = new Error(ERROR_MESSAGES.ATLAS_IMAGE_LOADING_FAILED + url);
@@ -447,12 +443,13 @@ export default class AssetsManager {
                 const img = new Image();
                 img.crossOrigin = cors;
                 img.onload = () => {
-                    // do we need a bitmap?
-                    // createImageBitmap(img).then((imageBitmap) => {
-                    //    this.#dispatchCurrentLoadingProgress();
-                    //    resolve(imageBitmap);
-                    // });
-                    resolve(img);
+                    // do we need a bitmap? Without creating bitmap images has not premultiplied
+                    // transparent pixels, and in some cases it creates white ages,
+                    // in other - multiply pixels with the background
+                    createImageBitmap(img, {premultiplyAlpha:"premultiply"}).then((imageBitmap) => {
+                        this.#dispatchCurrentLoadingProgress();
+                        resolve(imageBitmap);
+                    });
                 };
                 img.onerror = () => {
                     const err = new Error(ERROR_MESSAGES.IMAGE_LOADING_FAILED + url);

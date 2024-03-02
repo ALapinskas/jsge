@@ -13,7 +13,7 @@ import { DrawTextObject } from "./DrawTextObject.js";
 import { ISystem } from "./ISystem.js";
 import { ISystemAudio } from "./ISystemAudio.js";
 import { SystemSettings } from "../configs.js";
-import { isPointLineIntersect, isEllipsePolygonIntersect, isPolygonLineIntersect, isPointPolygonIntersect, angle_2points, isCircleLineIntersect } from "../utils.js";
+import { isPointLineIntersect, isEllipseCircleIntersect, isPointCircleIntersect, isEllipsePolygonIntersect, isPolygonLineIntersect, isPointPolygonIntersect, angle_2points, isCircleLineIntersect } from "../utils.js";
 import { Vector } from "./Primitives.js";
 
 /**
@@ -516,10 +516,14 @@ export class GameStage {
     }
     #isCircleToBoundariesCollision(x, y, r) {
         const mapObjects = this.stageData.getBoundaries(),
+            ellipseB = this.stageData.getEllipseBoundaries(),
+            pointB = this.stageData.getPointBoundaries(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
-            len = mapObjects.length;
+            len = mapObjects.length,
+            eLen = ellipseB.length,
+            pLen = pointB.length;
 
         for (let i = 0; i < len; i+=1) {
             const item = mapObjects[i];
@@ -535,6 +539,33 @@ export class GameStage {
                 //console.log("polygon: ", polygonWithOffsetAndRotation);
                 //console.log("intersect: ", intersect);
                 return intersect;
+            }
+        }
+        if (eLen > 0) {
+            for (let i = 0; i < eLen; i+=1) {
+                const ellipse = ellipseB[i],
+                intersect = isEllipseCircleIntersect(ellipse, {x:xWithOffset, y:yWithOffset, r});
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
+            }
+        }
+        
+        if (pLen > 0) {
+            for (let i = 0; i < pLen; i+=1) {
+                const point = pointB[i],
+                    xP = point[0],
+                    yP = point[1],
+                    intersect = isPointCircleIntersect(xP, yP, {x:xWithOffset, y:yWithOffset, r});
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
             }
         }
         return false;

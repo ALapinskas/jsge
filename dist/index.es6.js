@@ -10,7 +10,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ AssetsManager)
 /* harmony export */ });
-const PROGRESS_EVENT_TYPE={loadstart:"loadstart",progress:"progress",abort:"abort",error:"error",load:"load",timeout:"timeout"};class Loader{#e;#t;#s=new Map;#i=new Map;constructor(e,t){this.#e=e,this.#t=(e,s,...i)=>{const r=t(e,s,...i);if(r instanceof Promise)return r.then((t=>this.#r(t,e)));Exception("uploadMethod should be instance of Promise and return upload result value")}}#r=(e,t)=>new Promise(((s,i)=>{e&&0!==e.length||Warning("uploadMethod for "+this.#e+" should return Promise with upload value"),this.#o(t,e),this.#a(t),s()}));#o(e,t){this.#i.set(e,t)}#a(e){this.#s.delete(e)}get filesWaitingForUpload(){return this.#s.size}get loadingQueue(){return this.#s}get uploadMethod(){return this.#t}_addFile=(e,t)=>{this.#s.has(e)&&Warning("File "+this.#e+" with key "+e+" is already added"),this.#s.set(e,t)};_isFileInQueue=e=>this.#s.has(e);_getFile=e=>this.#i.get(e)}class AssetsManager{#n=new EventTarget;#d=new Map;#l=0;constructor(){this.registerLoader("Audio",this._loadAudio),this.registerLoader("Image",this._loadImage),this.registerLoader("TileMap",this._loadTileMap),this.registerLoader("TileSet",this._loadTileSet)}get filesWaitingForUpload(){let e=0;return Array.from(this.#d.values()).map((t=>e+=t.filesWaitingForUpload)),e}registerLoader=(e,t=this._defaultUploadMethod)=>{this["add"+e]=(t,s,...i)=>{this.addFile(e,t,s,...i)},this["get"+e]=t=>this.getFile(e,t),this["is"+e+["InQueue"]]=t=>this.isFileInQueue(e,t);const s=this.#d.get(e)||new Loader(e,t);this.#d.set(e,s)};preload(){return this.#h(),new Promise(((e,t)=>{this.#u().then((()=>{this.filesWaitingForUpload?this.#u().then((()=>{this.#c(),e()})):(this.#c(),e())}))}))}#u(){let e=[];return Array.from(this.#d.values()).forEach((t=>{Array.from(t.loadingQueue.entries()).forEach((s=>{e.push(t.uploadMethod(s[0],...s[1]))}))})),Promise.allSettled(e).then((e=>{e.forEach((e=>{if("rejected"===e.status){const t=e.reason;Warning(t),this.#g(t)}}))}))}addEventListener(e,t,...s){PROGRESS_EVENT_TYPE[e]?this.#n.addEventListener(e,t,...s):Warning("Event type should be one of the ProgressEvent.type")}removeEventListener(e,t,...s){this.#n.removeEventListener(e,t,...s)}_loadTileSet=(e,t,s=1,i)=>(this.#p(t),fetch(i?i+t:t).then((e=>e.json())).then((e=>{const{name:t,image:r}=e;return t&&r&&!this.isFileInQueue("Image",t)&&this.addImage(t,i?i+r:r),e.gid=s,Promise.resolve(e)})).catch((()=>{const e=new Error("Can't load related tileset "+t);return Promise.reject(e)})));_defaultUploadMethod=(e,t)=>fetch(t);_loadTileMap=(e,t,s=!0)=>(this.#E(t),fetch(t).then((e=>e.json())).then((e=>{let i,r=t.split("/"),o=r.length;if(r[o-1].includes(".tmj")||r[o-1].includes(".json")?(r.pop(),i=r.join("/")+"/"):(r[o-2].includes(".tmj")||r[o-2].includes(".json"))&&(r.splice(o-2,2),i=r.join("/")+"/"),!0===s&&e.tilesets&&e.tilesets.length>0){const t=[];return e.tilesets.forEach(((e,s)=>{const{firstgid:r,source:o}=e,a=this._loadTileSet("default-"+r,o,r,i).then((e=>(this.#m(),Promise.resolve(e))));t.push(a)})),Promise.all(t).then((t=>{for(let s=0;s<t.length;s++){const i=t[s];e.tilesets[s].data=i}return Promise.resolve(e)}))}return Promise.resolve(e)})).catch((e=>(e.message.includes("JSON.parse:")&&(e=new Error("Can't load tilemap "+t)),this.#g(e),Promise.reject(e)))));_loadAudio=(e,t)=>new Promise(((e,s)=>{const i=new Audio(t);i.addEventListener("loadeddata",(()=>{this.#m(),e(i)})),i.addEventListener("error",(()=>{const e=new Error("Can't load audio "+t);this.#g(e),s(e)}))}));_loadImage=(e,t,s="anonymous")=>new Promise(((e,i)=>{const r=new Image;r.crossOrigin=s,r.onload=()=>{createImageBitmap(r).then((t=>{this.#m(),e(t)}))},r.onerror=()=>{const e=new Error("Can't load image "+t);this.#g(e),i(e)},r.src=t}));#p(e){e.includes(".tsj")||e.includes(".json")||Exception("Related Tileset file type is not correct, only .tsj or .json files are supported")}#E(e){e.includes(".tmj")||e.includes(".json")||Exception("Tilemap file type is not correct, only .tmj or .json files are supported")}addFile(e,t,s,...i){const r=this.#d.get(e);r?(this.#f(t,s),r._addFile(t,[s,...i])):Exception("Loader for "+e+" is not registered!")}isFileInQueue(e,t){const s=this.#d.get(e);if(s)return s._isFileInQueue(t);Exception("Loader for "+e+" is not registered!")}getFile(e,t){const s=this.#d.get(e);if(s)return s._getFile(t);Exception("Loader for "+e+" is not registered!")}#f(e,t){const s="fileKey and url should be provided";e&&0!==e.trim().length||Exception(s),t&&0!==t.trim().length||Exception(s)}#h(){let e=this.filesWaitingForUpload;this.#n.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.loadstart,{total:e}))}#c(){this.#n.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.load))}#m(){const e=this.filesWaitingForUpload;this.#l+=1,this.#n.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.progress,{lengthComputable:!0,loaded:this.#l,total:e}))}#g(e){this.#n.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.error,{error:e}))}}function Exception(e){throw new Error(e)}function Warning(e){console.warn(e)}
+const PROGRESS_EVENT_TYPE={loadstart:"loadstart",progress:"progress",abort:"abort",error:"error",load:"load",timeout:"timeout"},ERROR_MESSAGES={RECURSION_ERROR:"Too much recursion. Stop iteration.",ATLAS_IMAGE_LOADING_FAILED:"Can't load atlas image ",TILESET_LOADING_FAILED:"Can't load related tileset ",TILEMAP_LOADING_FAILED:"Can't load tilemap ",AUDIO_LOADING_FAILED:"Can't load audio ",NOT_CORRECT_METHOD_TYPE:"uploadMethod should be instance of Promise and return upload result value",XML_FORMAT_INCORRECT:" XML format is not correct.",XML_FILE_EXTENSION_INCORRECT:"Only xml files are supported",TILESET_FILE_EXTENSION_INCORRECT:"Related Tileset file extension is not correct, only .tsj or .json files are supported",TILEMAP_FILE_EXTENSION_INCORRECT:"Tilemap file extension is not correct, only .tmj or .json files are supported",INPUT_PARAMS_ARE_INCORRECT:"fileKey and url should be provided"};class Loader{#e;#t;#r=new Map;#s=new Map;constructor(e,t){this.#e=e,this.#t=(e,r,...s)=>{const i=t(e,r,...s);if(i instanceof Promise)return i.then((t=>this.#i(t,e)));throw new TypeError(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE)}}#i=(e,t)=>new Promise(((r,s)=>{e&&0!==e.length||Warning("uploadMethod for "+this.#e+" should return Promise with upload value"),this.#o(t,e),this.#a(t),r()}));#o(e,t){this.#s.set(e,t)}#a(e){this.#r.delete(e)}get filesWaitingForUpload(){return this.#r.size}get loadingQueue(){return this.#r}get uploadMethod(){return this.#t}_addFile=(e,t)=>{this.#r.has(e)&&Warning("File "+this.#e+" with key "+e+" is already added"),this.#r.set(e,t)};_isFileInQueue=e=>this.#r.has(e);_getFile=e=>this.#s.get(e)}class AssetsManager{#n=5;#l=new EventTarget;#d=new Map;#h=0;constructor(){this.registerLoader("Audio",this._loadAudio),this.registerLoader("Image",this._loadImage),this.registerLoader("TileMap",this._loadTileMap),this.registerLoader("TileSet",this._loadTileSet),this.registerLoader("AtlasImageMap",this._loadAtlasImage),this.registerLoader("AtlasXML",this._loadAtlasXml)}get filesWaitingForUpload(){let e=0;return Array.from(this.#d.values()).map((t=>e+=t.filesWaitingForUpload)),e}registerLoader=(e,t=this._defaultUploadMethod)=>{this["add"+e]=(t,r,...s)=>{this.addFile(e,t,r,...s)},this["get"+e]=t=>this.getFile(e,t),this["is"+e+["InQueue"]]=t=>this.isFileInQueue(e,t);const r=this.#d.get(e)||new Loader(e,t);this.#d.set(e,r)};preload(){return this.#E(),new Promise((async(e,t)=>{this.#c().then((()=>{this.#u(),e()})).catch((e=>{t(e)}))}))}#c(e=0){return this.#g().then((t=>0===this.filesWaitingForUpload?Promise.resolve(t):++e>this.#n?Promise.reject(new Error(ERROR_MESSAGES.RECURSION_ERROR)):this.#c(e))).catch((e=>Promise.reject(e)))}#g(){return new Promise(((e,t)=>{let r=[];Array.from(this.#d.values()).forEach((e=>{Array.from(e.loadingQueue.entries()).forEach((t=>{const s=new Promise(((r,s)=>e.uploadMethod(t[0],...t[1]).then((e=>r(e)))));r.push(s)}))})),Promise.allSettled(r).then((r=>{for(const s of r){if("rejected"===s.status){const e=s.reason;this.#m(e)?t(e):(Warning(e),this.#p(e))}e(r)}}))}))}addEventListener(e,t,...r){PROGRESS_EVENT_TYPE[e]?this.#l.addEventListener(e,t,...r):Warning("Event type should be one of the ProgressEvent.type")}removeEventListener(e,t,...r){this.#l.removeEventListener(e,t,...r)}_loadAtlasXml=(e,t)=>(this.#_(t),fetch(t).then((e=>e.text())).then((e=>(new window.DOMParser).parseFromString(e,"text/xml"))).then((r=>{const s=r.documentElement||r.activeElement,i=s.attributes.getNamedItem("imagePath"),o=s.children;if(i){const r=this.#R(t);return this.addAtlasImageMap(e,r+i.value,o,r),Promise.resolve(s)}{const t=new Error(e+ERROR_MESSAGES.XML_FORMAT_INCORRECT);return Promise.reject(t)}})));_loadAtlasImage=(e,t,r,s="anonymous")=>new Promise(((e,i)=>{const o=new Image,a=new Map,n=document.createElement("canvas"),l=n.getContext("2d");o.crossOrigin=s,o.onload=()=>{const t=[];let s=[];n.width=o.width,n.height=o.height,l.drawImage(o,0,0);for(let e of r){const r=e.attributes,i=r.getNamedItem("name").value,o=i.includes(".")?i.split(".")[0]:i,a=r.getNamedItem("x").value,n=r.getNamedItem("y").value,d=r.getNamedItem("width").value,h=r.getNamedItem("height").value;t.push(createImageBitmap(l.getImageData(a,n,d,h),{premultiplyAlpha:"premultiply"})),s.push(o)}this.#I(),Promise.all(t).then((t=>{t.forEach(((e,t)=>{const r=s[t];a.set(r,e),this.addImage(r,"empty url",e)})),n.remove(),e(a)}))},o.onerror=()=>{const e=new Error(ERROR_MESSAGES.ATLAS_IMAGE_LOADING_FAILED+t);this.#p(e),i(e)},o.src=t}));_loadTileSet=(e,t,r=1,s)=>(this.#L(t),fetch(s?s+t:t).then((e=>e.json())).then((e=>{const{name:t,image:i,spacing:o,margin:a,tilewidth:n,tileheight:l}=e;return t&&i&&!this.isFileInQueue("Image",t)&&this.addImage(t,s?s+i:i),e.gid=r,Promise.resolve(e)})).catch((()=>{const e=new Error(ERROR_MESSAGES.TILESET_LOADING_FAILED+t);return Promise.reject(e)})));_defaultUploadMethod=(e,t)=>fetch(t);_loadTileMap=(e,t,r=!0)=>(this.#S(t),fetch(t).then((e=>e.json())).then((e=>{const s=this.#R(t);if(!0===r&&e.tilesets&&e.tilesets.length>0){const t=[];return e.tilesets.forEach(((e,r)=>{const{firstgid:i,source:o}=e,a=this._loadTileSet("default-"+i,o,i,s).then((e=>(this.#I(),Promise.resolve(e))));t.push(a)})),Promise.all(t).then((t=>{for(let r=0;r<t.length;r++){const s=t[r];e.tilesets[r].data=s}return Promise.resolve(e)}))}return Promise.resolve(e)})).catch((e=>(e.message.includes("JSON.parse:")&&(e=new Error(ERROR_MESSAGES.TILEMAP_LOADING_FAILED+t)),this.#p(e),Promise.reject(e)))));_loadAudio=(e,t)=>new Promise(((e,r)=>{const s=new Audio(t);s.addEventListener("loadeddata",(()=>{this.#I(),e(s)})),s.addEventListener("error",(()=>{const e=new Error(ERROR_MESSAGES.AUDIO_LOADING_FAILED+t);this.#p(e),r(e)}))}));_loadImage=(e,t,r,s="anonymous")=>new Promise(((e,i)=>{if(r)e(r);else{const r=new Image;r.crossOrigin=s,r.onload=()=>{createImageBitmap(r,{premultiplyAlpha:"premultiply"}).then((t=>{this.#I(),e(t)}))},r.onerror=()=>{const e=new Error(ERROR_MESSAGES.IMAGE_LOADING_FAILED+t);this.#p(e),i(e)},r.src=t}}));#_(e){e.includes(".xml")||Exception(ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT)}#L(e){e.includes(".tsj")||e.includes(".json")||Exception(ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT)}#S(e){e.includes(".tmj")||e.includes(".json")||Exception(ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT)}#m(e){return e.message.includes(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE)}#R(e){let t=e.split("/"),r=t.length,s="/";return t[r-1].includes(".tmj")||t[r-1].includes(".xml")||t[r-1].includes(".json")?(t.pop(),s=t.join("/")+"/"):(t[r-2].includes(".tmj")||t[r-2].includes(".xml")||t[r-2].includes(".json"))&&(t.splice(r-2,2),s=t.join("/")+"/"),s}addFile(e,t,r,...s){const i=this.#d.get(e);i?(this.#T(t,r),i._addFile(t,[r,...s])):Exception("Loader for "+e+" is not registered!")}isFileInQueue(e,t){const r=this.#d.get(e);if(r)return r._isFileInQueue(t);Exception("Loader for "+e+" is not registered!")}getFile(e,t){const r=this.#d.get(e);if(r)return r._getFile(t);Exception("Loader for "+e+" is not registered!")}#T(e,t){const r=ERROR_MESSAGES.INPUT_PARAMS_ARE_INCORRECT;e&&0!==e.trim().length||Exception(r),t&&0!==t.trim().length||Exception(r)}#E(){let e=this.filesWaitingForUpload;this.#l.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.loadstart,{total:e}))}#u(){this.#l.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.load))}#I(){const e=this.filesWaitingForUpload;this.#h+=1,this.#l.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.progress,{lengthComputable:!0,loaded:this.#h,total:e}))}#p(e){this.#l.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.error,{error:e}))}}function Exception(e){throw new Error(e)}function Warning(e){console.warn(e)}
 
 /***/ }),
 
@@ -726,8 +726,9 @@ class DrawObjectFactory {
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
         const image = this.#iLoader.getImage(key),
-            renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
             
+            renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
+        
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }
@@ -1410,12 +1411,20 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         const canvas = document.createElement("canvas"),
             ctx = canvas.getContext("2d");
         if (ctx) { 
+            if (this.#textureCanvas) {
+                // remove old one
+                this.#textureCanvas.remove();
+            }
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
             const boxWidth = this.boundariesBox.width, 
                 boxHeight = this.boundariesBox.height;
+            
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;
+            // writing texture unit without cleanup the canvas, 
+            // case text artifacts in chrome
+            ctx.clearRect(0, 0, boxWidth, boxHeight);
             ctx.font = this.font;
             ctx.textBaseline = "bottom";// bottom
             if (this.fillStyle) {
@@ -1426,10 +1435,12 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
                 ctx.strokeStyle = this.strokeStyle;
                 ctx.strokeText(this.text, 0, boxHeight);
             }
+            
             this.#textureCanvas = canvas;
             if (this.#textureStorage) {
                 this.#textureStorage._isTextureRecalculated = true;
             }
+            
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_3__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }
@@ -2198,10 +2209,14 @@ class GameStage {
     }
     #isCircleToBoundariesCollision(x, y, r) {
         const mapObjects = this.stageData.getBoundaries(),
+            ellipseB = this.stageData.getEllipseBoundaries(),
+            pointB = this.stageData.getPointBoundaries(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
-            len = mapObjects.length;
+            len = mapObjects.length,
+            eLen = ellipseB.length,
+            pLen = pointB.length;
 
         for (let i = 0; i < len; i+=1) {
             const item = mapObjects[i];
@@ -2219,6 +2234,33 @@ class GameStage {
                 return intersect;
             }
         }
+        if (eLen > 0) {
+            for (let i = 0; i < eLen; i+=1) {
+                const ellipse = ellipseB[i],
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isEllipseCircleIntersect)(ellipse, {x:xWithOffset, y:yWithOffset, r});
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
+            }
+        }
+        
+        if (pLen > 0) {
+            for (let i = 0; i < pLen; i+=1) {
+                const point = pointB[i],
+                    xP = point[0],
+                    yP = point[1],
+                    intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isPointCircleIntersect)(xP, yP, {x:xWithOffset, y:yWithOffset, r});
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
+            }
+        }
         return false;
     }
 
@@ -2231,11 +2273,15 @@ class GameStage {
      */
     #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
         const mapObjects = this.stageData.getBoundaries(),
+            ellipseB = this.stageData.getEllipseBoundaries(),
+            pointB = this.stageData.getPointBoundaries(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
-            len = mapObjects.length;
+            len = mapObjects.length,
+            eLen = ellipseB.length,
+            pLen = pointB.length;
 
         for (let i = 0; i < len; i+=1) {
             const item = mapObjects[i];
@@ -2251,6 +2297,33 @@ class GameStage {
                 //console.log("polygon: ", polygonWithOffsetAndRotation);
                 //console.log("intersect: ", intersect);
                 return intersect;
+            }
+        }
+        if (eLen > 0) {
+            for (let i = 0; i < eLen; i+=1) {
+                const ellipse = ellipseB[i],
+                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isEllipsePolygonIntersect)(ellipse, polygonWithOffsetAndRotation);
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
+            }
+        }
+        
+        if (pLen > 0) {
+            for (let i = 0; i < pLen; i+=1) {
+                const point = pointB[i],
+                    x = point[0],
+                    y = point[1],
+                    intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isPointPolygonIntersect)(x, y, polygonWithOffsetAndRotation);
+            if (intersect) {
+                //console.log("rotation: ", rotation);
+                //console.log("polygon: ", polygonWithOffsetAndRotation);
+                //console.log("intersect: ", intersect);
+                return intersect;
+            }
             }
         }
         return false;
@@ -2301,7 +2374,16 @@ class GameStageData {
      * @type {Array<Array<number>>}
      */
     #boundaries = [];
-
+    /**
+     * ellipse boundaries
+     * @type {Array<Array<number>>}
+     */
+    #ellipseBoundaries = [];
+    /**
+     * point boundaries
+     * @type {Array<Array<number>>}
+     */
+    #pointBoundaries = [];
     /**
      * whole world boundaries, calculated once on prepare stage
      * @type {Array<Array<number>>}
@@ -2350,12 +2432,22 @@ class GameStageData {
         this.#boundaries.push(...boundaries);
     }
 
+    _addEllipseBoundaries(boundaries) {
+        this.#ellipseBoundaries.push(...boundaries);
+    }
+
+    _addPointBoundaries(boundaries) {
+        this.#pointBoundaries.push(...boundaries);
+    }
+
     /**
      * Clear map boundaries
      * @ignore
      */
     _clearBoundaries() {
         this.#boundaries = [];
+        this.#ellipseBoundaries = [];
+        this.#pointBoundaries = [];
     }
 
     /**
@@ -2474,6 +2566,22 @@ class GameStageData {
      */
     getBoundaries() {
         return this.#boundaries;
+    }
+
+    /**
+     * 
+     * @returns {Array<Array<number>>}
+     */
+    getEllipseBoundaries() {
+        return this.#ellipseBoundaries;
+    }
+
+    /**
+     * 
+     * @returns {Array<Array<number>>}
+     */
+    getPointBoundaries() {
+        return this.#pointBoundaries;
     }
 
     getWholeWorldBoundaries() {
@@ -2889,6 +2997,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawTextObject_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./DrawTextObject.js */ "./src/base/DrawTextObject.js");
 /* harmony import */ var _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgram.js */ "./src/base/WebGl/ImagesDrawProgram.js");
 /* harmony import */ var _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgram.js */ "./src/base/WebGl/PrimitivesDrawProgram.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../index.js */ "./src/index.js");
 
 
 
@@ -2897,6 +3006,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 //import { calculateBufferData } from "../wa/release.js";
+
 
 
 
@@ -3180,7 +3290,7 @@ class IRender {
         const bindResults = await Promise.allSettled(renderObjectsPromises);
         bindResults.forEach((result) => {
             if (result.status === "rejected") {
-                reject(result.reason);
+                Promise.reject(result.reason);
                 isErrors = true;
                 errors.push(result.reason);
             }
@@ -3353,15 +3463,41 @@ class IRender {
     #drawBoundariesWebGl() {
         return new Promise((resolve) => {
             const b = this.stageData.getBoundaries(),
+                eB = this.stageData.getEllipseBoundaries(),
+                pB = this.stageData.getPointBoundaries(),
                 len = b.length,
+                eLen = eB.length,
+                pLen = pB.length,
                 linesArray = [];
         
-            for (let i = 0; i < len; i++) {
-                const item = b[i];
-                linesArray.push(item[0], item[1]);
-                linesArray.push(item[2], item[3]);
+            //for (let i = 0; i < len; i++) {
+            //    const item = b[i];
+            //    linesArray.push(item[0], item[1]);
+            //    linesArray.push(item[2], item[3]);
+            //}
+            this.#webGlEngine._drawLines(b.flat(), this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+            if (eLen) {
+                //draw ellipse boundaries
+                eB.forEach(element => {
+                    const x = element[0],
+                        y = element[1],
+                        radX = element[2],
+                        radY = element[3],
+                        vertices = _index_js__WEBPACK_IMPORTED_MODULE_16__.utils.calculateEllipseVertices(x, y, radX, radY);
+                        this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
+                        //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                });
             }
-            this.#webGlEngine._drawLines(linesArray, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+            if (pLen) {
+                //draw point boundaries
+                pB.forEach(element => {
+                    const x = element[0],
+                        y = element[1],
+                        vertices = [x,y, x+1,y+1];
+
+                        this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                });
+            }
             resolve();
         });
     }
@@ -3469,9 +3605,13 @@ class IRender {
                 setTimeout(() => requestAnimationFrame(this.#drawViews), wait_time);
             }
         }).catch((errors) => {
-            errors.forEach((err) => {
-                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
-            });
+            if (errors.forEach) {
+                errors.forEach((err) => {
+                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
+                });
+            } else {
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.WARNING_CODES.UNHANDLED_DRAW_ISSUE, errors.message);
+            }
             this._stopRender();
         });
     };
@@ -4317,6 +4457,10 @@ class WebGlEngine {
      */
     #gl;
     /**
+     * @type {number}
+     */
+    #MAX_TEXTURES;
+    /**
      * @type {boolean}
      */
     #debug;
@@ -4350,6 +4494,7 @@ class WebGlEngine {
         this.#gl = context;
         this.#gameOptions = gameOptions;
         this.#debug = gameOptions.debug.checkWebGlErrors;
+        this.#MAX_TEXTURES = context.getParameter(context.MAX_TEXTURE_IMAGE_UNITS);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
     }
@@ -4406,6 +4551,8 @@ class WebGlEngine {
 
     _clearView() {
         const gl = this.#gl;
+        //cleanup buffer, is it required?
+        //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.clearColor(0, 0, 0, 0);// shouldn't be gl.clearColor(0, 0, 0, 1); ?
         // Clear the color buffer with specified clear color
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
@@ -4746,6 +4893,7 @@ class WebGlEngine {
         
         let textureStorage = renderObject._textureStorage;
         if (!textureStorage) {
+            //const activeTexture = gl.getParameter(gl.ACTIVE_TEXTURE);
             textureStorage = new _TextureStorage_js__WEBPACK_IMPORTED_MODULE_4__.TextureStorage(gl.createTexture());
             renderObject._textureStorage = textureStorage;
         }
@@ -4756,7 +4904,7 @@ class WebGlEngine {
             this.#bindTexture(gl, textureStorage._texture);
         }
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-        
+        gl.depthMask(false);
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
     };
 
@@ -5151,6 +5299,8 @@ class WebGlEngine {
                 
             let boundariesRowsIndexes = new Map(),
                 boundaries = [],
+                ellipseBoundaries = [],
+                pointBoundaries = [],
                 tileImagesData = [];
 
             if (!layerData) {
@@ -5188,13 +5338,16 @@ class WebGlEngine {
                     cellMargin = tileset.margin,
 
                     verticesBufferData = [],
-                    texturesBufferData = [];
-                //@toDo: move this check upper level
+                    texturesBufferData = [],
+                    
+                    // if tileset contains boundaries
+                    tilesetBoundaries = tileset.tiles;
+
+                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                    pageData._setWorldDimensions(worldW, worldH);
+                }
                 if (setBoundaries) {
-                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                        (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                        pageData._setWorldDimensions(worldW, worldH);
-                    }
                     // boundaries cleanups every draw cycles, we need to set world boundaries again
                     if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                         pageData._setMapBoundaries();
@@ -5241,140 +5394,193 @@ class WebGlEngine {
                                 texX2, texY2
                             );
                             if (setBoundaries) {
-                                let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
-                                    bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
-                                    topLine = [ mapPosX, mapPosY, mapPosX + tilesetwidth, mapPosY],
-                                    leftLine = [ mapPosX, mapPosY + tilesetheight, mapPosX, mapPosY ],
-                                    currentAddedCellIndexes = [null, null, null, null];
-                                
-                                const topRow = row !== 0 ? boundariesRowsIndexes.get(row - 1) : undefined;
-                                if (topRow ) {
-                                    const topCellIndexes = topRow.get(col);
-                                    if (topCellIndexes) {
-                                        //remove double lines from top
-                                        const bottomTopCellIndex = topCellIndexes[INDEX_BOTTOM_LINE],
-                                            bottomTopCell = boundaries[bottomTopCellIndex];
-                                        if (bottomTopCell) {
-                                            const bottomTopCellX1 = bottomTopCell[INDEX_X1],
-                                                bottomTopCellY1 = bottomTopCell[INDEX_Y1],
-                                                bottomTopCellX2 = bottomTopCell[INDEX_X2],
-                                                bottomTopCellY2 = bottomTopCell[INDEX_Y2],
-                                                topX1 = topLine[INDEX_X1],
-                                                topY1 = topLine[INDEX_Y1],
-                                                topX2 = topLine[INDEX_X2],
-                                                topY2 = topLine[INDEX_Y2];
+                                // if boundary is set in tileset
+                                let isBoundaryPreset = false;
+                                if (tilesetBoundaries && tilesetBoundaries.length > 0) {
+                                    const tilesetBoundary = tilesetBoundaries.find((boundary) => boundary.id === tile);
+                                    if (tilesetBoundary) {
+                                        isBoundaryPreset = true;
+                                        const objectGroup = tilesetBoundary.objectgroup,
+                                            objects = objectGroup.objects;
                                             
-                                            if (topX1 === bottomTopCellX2 && topY1 === bottomTopCellY2 &&
-                                                topX2 === bottomTopCellX1 && topY2 === bottomTopCellY1) {
-                                                boundaries[bottomTopCellIndex] = undefined;
-                                                topLine = undefined;
+                                        objects.forEach((object) => {
+                                            const baseX = mapPosX + object.x, 
+                                                baseY = mapPosY + object.y,
+                                                rotation = object.rotation;
+                                            if (rotation !== 0) {
+                                                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)("tileset.tiles.rotation property is not supported yet");
+                                            }
+                                            if (object.polygon) {
+                                                object.polygon.forEach(
+                                                    (point, idx) => {
+                                                        const next = object.polygon[idx + 1];
+                                                        if (next) {
+                                                            boundaries.push([point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY]);
+                                                        } else {
+                                                            // last point -> link to the first
+                                                            const first = object.polygon[0];
+                                                            boundaries.push([point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY]);
+                                                        }
+                                                    });
+                                            } else if (object.point) {
+                                                // x/y coordinate
+                                                pointBoundaries.push([baseX, baseY]);
+                                            } else if (object.ellipse) {
+                                                const radX = object.width / 2,
+                                                    radY = object.height / 2;
+                                                ellipseBoundaries.push([baseX + radX, baseY + radY, radX, radY]);
+                                            } else {
+                                                // object is rect
+                                                const width = object.width,
+                                                    height = object.height,
+                                                    x2 = width + baseX,
+                                                    y2 = height + baseY;
+                                                boundaries.push([baseX, baseY, x2, baseY]);
+                                                boundaries.push([x2, baseY, x2, y2]);
+                                                boundaries.push([x2, y2, baseX, y2]);
+                                                boundaries.push([baseX, y2, baseX, baseY]);
+                                            }
+                                        });
+                                    }
+
+                                // extract rect boundary for the whole tile
+                                }
+                                if (isBoundaryPreset === false) {
+
+                                    let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
+                                        bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
+                                        topLine = [ mapPosX, mapPosY, mapPosX + tilesetwidth, mapPosY],
+                                        leftLine = [ mapPosX, mapPosY + tilesetheight, mapPosX, mapPosY ],
+                                        currentAddedCellIndexes = [null, null, null, null];
+                                    
+                                    const topRow = row !== 0 ? boundariesRowsIndexes.get(row - 1) : undefined;
+                                    if (topRow ) {
+                                        const topCellIndexes = topRow.get(col);
+                                        if (topCellIndexes) {
+                                            //remove double lines from top
+                                            const bottomTopCellIndex = topCellIndexes[INDEX_BOTTOM_LINE],
+                                                bottomTopCell = boundaries[bottomTopCellIndex];
+                                            if (bottomTopCell) {
+                                                const bottomTopCellX1 = bottomTopCell[INDEX_X1],
+                                                    bottomTopCellY1 = bottomTopCell[INDEX_Y1],
+                                                    bottomTopCellX2 = bottomTopCell[INDEX_X2],
+                                                    bottomTopCellY2 = bottomTopCell[INDEX_Y2],
+                                                    topX1 = topLine[INDEX_X1],
+                                                    topY1 = topLine[INDEX_Y1],
+                                                    topX2 = topLine[INDEX_X2],
+                                                    topY2 = topLine[INDEX_Y2];
+                                                
+                                                if (topX1 === bottomTopCellX2 && topY1 === bottomTopCellY2 &&
+                                                    topX2 === bottomTopCellX1 && topY2 === bottomTopCellY1) {
+                                                    boundaries[bottomTopCellIndex] = undefined;
+                                                    topLine = undefined;
+                                                }
+                                            }
+
+                                            // merge line from top right
+                                            const rightTopCellIndex = topCellIndexes[INDEX_RIGHT_LINE],
+                                                rightTopCell = boundaries[rightTopCellIndex];
+                                            if (rightTopCell) {
+                                                const rightTopCellX1 = rightTopCell[INDEX_X1],
+                                                    rightTopCellY1 = rightTopCell[INDEX_Y1],
+                                                    rightTopCellX2 = rightTopCell[INDEX_X2],
+                                                    rightX1 = rightLine[INDEX_X1],
+                                                    rightX2 = rightLine[INDEX_X2];
+                                                if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
+                                                    boundaries[rightTopCellIndex] = undefined;
+                                                    rightLine[INDEX_X1] = rightTopCellX1;
+                                                    rightLine[INDEX_Y1] = rightTopCellY1;
+                                                }
+                                            }
+                                            // merge line from top left
+                                            const leftTopCellIndex = topCellIndexes[INDEX_LEFT_LINE],
+                                                leftTopCell = boundaries[leftTopCellIndex];
+                                            if (leftTopCell) {
+                                                const leftTopCellX1 = leftTopCell[INDEX_X1],
+                                                    leftTopCellX2 = leftTopCell[INDEX_X2],
+                                                    leftTopCellY2 = leftTopCell[INDEX_Y2],
+                                                    leftX1 = leftLine[INDEX_X1],
+                                                    leftX2 = leftLine[INDEX_X2];
+                                                if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
+                                                    boundaries[leftTopCellIndex] = undefined;
+                                                    leftLine[INDEX_X2] = leftTopCellX2;
+                                                    leftLine[INDEX_Y2] = leftTopCellY2;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    const leftCellIndexes = col !== 0 ? currentRowIndexes.get(col - 1) : undefined;
+                                    if (leftCellIndexes) {
+
+                                        //remove double lines from left
+                                        const rightLeftCellIndex = leftCellIndexes[INDEX_RIGHT_LINE],
+                                            rightLeftCell = boundaries[rightLeftCellIndex],
+                                            rightLeftCellX1 = rightLeftCell[INDEX_X1],
+                                            rightLeftCellY1 = rightLeftCell[INDEX_Y1],
+                                            rightLeftCellX2 = rightLeftCell[INDEX_X2],
+                                            rightLeftCellY2 = rightLeftCell[INDEX_Y2],
+                                            leftX1 = leftLine[INDEX_X1],
+                                            leftY1 = leftLine[INDEX_Y1],
+                                            leftX2 = leftLine[INDEX_X2],
+                                            leftY2 = leftLine[INDEX_Y2];
+
+                                        if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
+                                            leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
+                                            boundaries[rightLeftCellIndex] = undefined;
+                                            leftLine = undefined;
+                                        }
+
+                                        //merge long lines from left top
+                                        const topLeftCellIndex = leftCellIndexes[INDEX_TOP_LINE],
+                                            topLeftCell = boundaries[topLeftCellIndex];
+                                        if (topLeftCell && topLine) {
+                                            const topLeftCellX1 = topLeftCell[INDEX_X1],
+                                                topLeftCellY1 = topLeftCell[INDEX_Y1],
+                                                topLeftCellY2 = topLeftCell[INDEX_Y2],
+                                                topY1 = topLine[INDEX_Y1],
+                                                topY2 = topLine[INDEX_Y2];
+                                            if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
+                                                boundaries[topLeftCellIndex] = undefined;
+                                                topLine[INDEX_X1] = topLeftCellX1;
+                                                topLine[INDEX_Y1] = topLeftCellY1;
                                             }
                                         }
 
-                                        // merge line from top right
-                                        const rightTopCellIndex = topCellIndexes[INDEX_RIGHT_LINE],
-                                            rightTopCell = boundaries[rightTopCellIndex];
-                                        if (rightTopCell) {
-                                            const rightTopCellX1 = rightTopCell[INDEX_X1],
-                                                rightTopCellY1 = rightTopCell[INDEX_Y1],
-                                                rightTopCellX2 = rightTopCell[INDEX_X2],
-                                                rightX1 = rightLine[INDEX_X1],
-                                                rightX2 = rightLine[INDEX_X2];
-                                            if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
-                                                boundaries[rightTopCellIndex] = undefined;
-                                                rightLine[INDEX_X1] = rightTopCellX1;
-                                                rightLine[INDEX_Y1] = rightTopCellY1;
+                                        // merge long lines from left bottom
+                                        const bottomLeftCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
+                                            bottomLeftCell = boundaries[bottomLeftCellIndex];
+                                        if (bottomLeftCell) {
+                                            const bottomLeftCellY1 = bottomLeftCell[INDEX_Y1],
+                                                bottomLeftCellX2 = bottomLeftCell[INDEX_X2],
+                                                bottomLeftCellY2 = bottomLeftCell[INDEX_Y2],
+                                                bottomY1 = bottomLine[INDEX_Y1],
+                                                bottomY2 = bottomLine[INDEX_Y2];
+                                            if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
+                                                boundaries[bottomLeftCellIndex] = undefined;
+                                                //opposite direction
+                                                bottomLine[INDEX_X2] = bottomLeftCellX2;
+                                                bottomLine[INDEX_Y2] = bottomLeftCellY2;
                                             }
                                         }
-                                        // merge line from top left
-                                        const leftTopCellIndex = topCellIndexes[INDEX_LEFT_LINE],
-                                            leftTopCell = boundaries[leftTopCellIndex];
-                                        if (leftTopCell) {
-                                            const leftTopCellX1 = leftTopCell[INDEX_X1],
-                                                leftTopCellX2 = leftTopCell[INDEX_X2],
-                                                leftTopCellY2 = leftTopCell[INDEX_Y2],
-                                                leftX1 = leftLine[INDEX_X1],
-                                                leftX2 = leftLine[INDEX_X2];
-                                            if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
-                                                boundaries[leftTopCellIndex] = undefined;
-                                                leftLine[INDEX_X2] = leftTopCellX2;
-                                                leftLine[INDEX_Y2] = leftTopCellY2;
-                                            }
-                                        }
-                                    }
-                                }
-                                const leftCellIndexes = col !== 0 ? currentRowIndexes.get(col - 1) : undefined;
-                                if (leftCellIndexes) {
 
-                                    //remove double lines from left
-                                    const rightLeftCellIndex = leftCellIndexes[INDEX_RIGHT_LINE],
-                                        rightLeftCell = boundaries[rightLeftCellIndex],
-                                        rightLeftCellX1 = rightLeftCell[INDEX_X1],
-                                        rightLeftCellY1 = rightLeftCell[INDEX_Y1],
-                                        rightLeftCellX2 = rightLeftCell[INDEX_X2],
-                                        rightLeftCellY2 = rightLeftCell[INDEX_Y2],
-                                        leftX1 = leftLine[INDEX_X1],
-                                        leftY1 = leftLine[INDEX_Y1],
-                                        leftX2 = leftLine[INDEX_X2],
-                                        leftY2 = leftLine[INDEX_Y2];
-
-                                    if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
-                                        leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
-                                        boundaries[rightLeftCellIndex] = undefined;
-                                        leftLine = undefined;
                                     }
 
-                                    //merge long lines from left top
-                                    const topLeftCellIndex = leftCellIndexes[INDEX_TOP_LINE],
-                                        topLeftCell = boundaries[topLeftCellIndex];
-                                    if (topLeftCell && topLine) {
-                                        const topLeftCellX1 = topLeftCell[INDEX_X1],
-                                            topLeftCellY1 = topLeftCell[INDEX_Y1],
-                                            topLeftCellY2 = topLeftCell[INDEX_Y2],
-                                            topY1 = topLine[INDEX_Y1],
-                                            topY2 = topLine[INDEX_Y2];
-                                        if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
-                                            boundaries[topLeftCellIndex] = undefined;
-                                            topLine[INDEX_X1] = topLeftCellX1;
-                                            topLine[INDEX_Y1] = topLeftCellY1;
-                                        }
+                                    if (topLine) {
+                                        boundaries.push(topLine);
+                                        currentAddedCellIndexes[INDEX_TOP_LINE] = boundaries.length - 1;
                                     }
-
-                                    // merge long lines from left bottom
-                                    const bottomLeftCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
-                                        bottomLeftCell = boundaries[bottomLeftCellIndex];
-                                    if (bottomLeftCell) {
-                                        const bottomLeftCellY1 = bottomLeftCell[INDEX_Y1],
-                                            bottomLeftCellX2 = bottomLeftCell[INDEX_X2],
-                                            bottomLeftCellY2 = bottomLeftCell[INDEX_Y2],
-                                            bottomY1 = bottomLine[INDEX_Y1],
-                                            bottomY2 = bottomLine[INDEX_Y2];
-                                        if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
-                                            boundaries[bottomLeftCellIndex] = undefined;
-                                            //opposite direction
-                                            bottomLine[INDEX_X2] = bottomLeftCellX2;
-                                            bottomLine[INDEX_Y2] = bottomLeftCellY2;
-                                        }
+                                    boundaries.push(rightLine);
+                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = boundaries.length - 1;
+                                    boundaries.push(bottomLine);
+                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = boundaries.length - 1;
+                                    if (leftLine) {
+                                        boundaries.push(leftLine);
+                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = boundaries.length - 1;
                                     }
-
+                                    //save values indexes cols info
+                                    currentRowIndexes.set(col, currentAddedCellIndexes);
                                 }
-
-                                if (topLine) {
-                                    boundaries.push(topLine);
-                                    currentAddedCellIndexes[INDEX_TOP_LINE] = boundaries.length - 1;
-                                }
-                                boundaries.push(rightLine);
-                                currentAddedCellIndexes[INDEX_RIGHT_LINE] = boundaries.length - 1;
-                                boundaries.push(bottomLine);
-                                currentAddedCellIndexes[INDEX_BOTTOM_LINE] = boundaries.length - 1;
-                                if (leftLine) {
-                                    boundaries.push(leftLine);
-                                    currentAddedCellIndexes[INDEX_LEFT_LINE] = boundaries.length - 1;
-                                }
-                                //save values indexes cols info
-                                currentRowIndexes.set(col, currentAddedCellIndexes);
                             }
-
                         }
                         mapIndex++;
                     }
@@ -5392,6 +5598,12 @@ class WebGlEngine {
                 // filter undefined value
                 const filtered = boundaries.filter(array => array);
                 pageData._addBoundariesArray(filtered);
+                if (ellipseBoundaries.length > 0) {
+                    pageData._addEllipseBoundaries(ellipseBoundaries);
+                }
+                if (pointBoundaries.length > 0) {
+                    pageData._addPointBoundaries(pointBoundaries);
+                }
             }
             resolve(tileImagesData);
         });
@@ -5647,10 +5859,14 @@ class WebGlEngine {
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
-                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.DRAW_PREPARE_ERROR, "Can't extract triangles. Probably vertices input is not correct, or the order is wrong");
+                    // sometimes fails
+                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices. Probably vertices input is not correct, or the order is wrong");
+                    return triangulatedPolygon;
                 }
+                i++;
             }
-            i++;
+            // if (cs < 0): it's jumping over next vertex, maybe not a good solution? Moving up
+            // i++;
         }
         
         return triangulatedPolygon;
@@ -5708,6 +5924,18 @@ class WebGlEngine {
     /*------------------------------------
      * End Textures
     --------------------------------------*/
+
+    isPowerOfTwo(value) {
+        return (value & (value - 1)) === 0;
+    }
+
+    nextHighestPowerOfTwo(x) {
+        --x;
+        for (var i = 1; i < 32; i <<= 1) {
+            x = x | x >> i;
+        }
+        return x + 1;
+    }
 }
 
 /***/ }),
@@ -5928,7 +6156,8 @@ const WARNING_CODES =  {
     MODULE_ALREADY_INSTALLED: "MODULE_ALREADY_INSTALLED",
     DEPRECATED_PARAMETER: "DEPRECATED_PARAMETER",
     NEW_BEHAVIOR_INTRODUCED: "NEW_BEHAVIOR_INTRODUCED",
-    TEXTURE_IMAGE_TEMP_OVERFLOW: "TEXTURE_IMAGE_TEMP_OVERFLOW"
+    TEXTURE_IMAGE_TEMP_OVERFLOW: "TEXTURE_IMAGE_TEMP_OVERFLOW",
+    TRIANGULATE_ISSUE: "TRIANGULATE_ISSUE"
 };
 
 /***/ }),
@@ -6034,6 +6263,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "angle_2points": () => (/* binding */ angle_2points),
 /* harmony export */   "angle_3points": () => (/* binding */ angle_3points),
+/* harmony export */   "calculateEllipseVertices": () => (/* binding */ calculateEllipseVertices),
 /* harmony export */   "countClosestTraversal": () => (/* binding */ countClosestTraversal),
 /* harmony export */   "countClosestTraversal2": () => (/* binding */ countClosestTraversal2),
 /* harmony export */   "countDistance": () => (/* binding */ countDistance),
@@ -6042,6 +6272,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "dotProductWithAngle": () => (/* binding */ dotProductWithAngle),
 /* harmony export */   "generateUniqId": () => (/* binding */ generateUniqId),
 /* harmony export */   "isCircleLineIntersect": () => (/* binding */ isCircleLineIntersect),
+/* harmony export */   "isEllipseCircleIntersect": () => (/* binding */ isEllipseCircleIntersect),
+/* harmony export */   "isEllipseLineIntersect": () => (/* binding */ isEllipseLineIntersect),
+/* harmony export */   "isEllipsePolygonIntersect": () => (/* binding */ isEllipsePolygonIntersect),
 /* harmony export */   "isLineShorter": () => (/* binding */ isLineShorter),
 /* harmony export */   "isMobile": () => (/* binding */ isMobile),
 /* harmony export */   "isPointCircleIntersect": () => (/* binding */ isPointCircleIntersect),
@@ -6193,7 +6426,7 @@ function isPointLineIntersect(point, line) {
         lengthAB = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, point.x, point.y).length + new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x2, line.y2, point.x, point.y).length;
 
     if (lengthAB <= lineL + 0.2) {
-        //Logger.debug("point to line intersect. line len: " + lineL + ", line AB len: " + lengthAB);
+        //console.log("point to line intersect. line len: " + lineL + ", line AB len: " + lengthAB);
         return true;
     }
     return false;
@@ -6239,9 +6472,22 @@ function isPolygonLineIntersect(polygon, line) {
     return null;
 }
 
-function isPointPolygonIntersect(/*x, y, polygon*/) {
-    //const vertices = polygon.vertices;
+function isPointPolygonIntersect(x, y, polygon) {
+    const len = polygon.length;
+    
+    for (let i = 0; i < len; i+=1) {
+        let vertex1 = polygon[i],
+            vertex2 = polygon[i + 1];
 
+        // if last vertex, set vertex2 as the first
+        if (!vertex2) {
+            vertex2 = polygon[0];
+        }
+
+        if (isPointLineIntersect({x,y}, {x1: vertex1[0], y1: vertex1[1], x2: vertex2[0], y2: vertex2[1]})) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -6253,10 +6499,18 @@ function isPointRectIntersect(x, y, rect) {
     }
 }
 
+/**
+ * 
+ * @param {number} x 
+ * @param {number} y 
+ * @param {{x:number, y:number, r:number}} circle 
+ * @returns {boolean}
+ */
 function isPointCircleIntersect(x, y, circle) {
-    const radius = circle.width,
+    const radius = circle.r,
         lineToCircleCenter = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y),
         pointCircleLineLength = lineToCircleCenter.length;
+        
     if (pointCircleLineLength < radius)
         return true;
     else
@@ -6292,7 +6546,104 @@ function isCircleLineIntersect(x, y, r, line) {
         return true;
     } else {
         return false;
+    } 
+}
+
+/**
+ * 
+ * @param {Array<number>} ellipse - x,y,radX,radY
+ * @param {Array<Array<number>>} line [x1,y1],[x2,y2]
+ */
+function isEllipseLineIntersect(ellipse, line) {
+    const x = ellipse[0],
+        y = ellipse[1],
+        radX = ellipse[2],
+        radY = ellipse[3],
+        x1 = line[0][0],
+        y1 = line[0][1],
+        x2 = line[1][0],
+        y2 = line[1][1],
+        lineAToElCenter = { x: x - x1, y: y - y1 }, //new Vector(x, y, x1, y1),
+        lineBToElCenter = { x: x - x2, y: y - y2 }, //new Vector(x, y, x2, y2),
+        lineAToElCenterLen = Math.sqrt(Math.pow(lineAToElCenter.x, 2) + Math.pow(lineAToElCenter.y, 2)),
+        lineBToElCenterLen = Math.sqrt(Math.pow(lineBToElCenter.x, 2) + Math.pow(lineBToElCenter.y, 2)),
+        lineToCenterLenMin = Math.min(lineAToElCenterLen, lineBToElCenterLen),
+        ellipseMax = Math.max(radX, radY);
+        
+    if (lineToCenterLenMin > ellipseMax) {
+        return false;
     }
+    
+    const traversalLine = lineToCenterLenMin === lineAToElCenterLen ? lineAToElCenter : lineBToElCenter,
+        angleToAxisX = Math.atan2(traversalLine.y, traversalLine.x);
+    
+    const intersectX = Math.cos(angleToAxisX) * radX,
+        intersectY = Math.sin(angleToAxisX) * radY,
+        lineToCenter = { x: 0 - intersectX, y: 0 - intersectY },
+        intersectLineLen = Math.sqrt(Math.pow(lineToCenter.x, 2) + Math.pow(lineToCenter.y, 2));
+    //console.log("lenToCheck: ", lenToCheck);
+    //console.log("x: ", intersectX);
+    if (lineToCenterLenMin > intersectLineLen) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * 
+ * @param {Array<number>} ellipse - x,y,radX,radY
+ * @param {{x:number, y:number, r:number}} circle
+ * @returns {Array<number> | boolean} - [x, y] traversal point
+ */
+function isEllipseCircleIntersect(ellipse, circle) {
+    const ellipseX = ellipse[0],
+        ellipseY = ellipse[1],
+        ellipseToCircleLine = { x: ellipseX - circle.x, y: ellipseY - circle.y },
+        len = Math.sqrt(Math.pow(ellipseToCircleLine.x, 2) + Math.pow(ellipseToCircleLine.y, 2)),
+        maxRad = Math.max(ellipse[2], ellipse[3]);
+    // no collisions for sure
+    if (len > (maxRad + circle.r)) {
+        return false;
+    } else {
+        // check possible collision
+        const angle = angle_2points(ellipseX, ellipseY, circle.x, circle.y),
+            traversalX = ellipseX + (ellipse[2] * Math.cos(angle)),
+            traversalY =  ellipseY + (ellipse[3] * Math.sin(angle)),
+            vecTrX = ellipseX - traversalX,
+            vecTrY = ellipseY - traversalY,
+            traversalLen = Math.sqrt(Math.pow(vecTrX, 2) + Math.pow(vecTrY, 2)) + circle.r;
+            if (len <= traversalLen) {
+                return [vecTrX, vecTrY];
+            } else {
+                return false;
+            }
+    }
+    
+}
+
+/**
+ * 
+ * @param {Array<number>} ellipse - x,y,radX,radY
+ * @param {Array<Array<number>>} polygon - x,y
+ * @returns {boolean}
+ */
+function isEllipsePolygonIntersect(ellipse, polygon) {
+    const len = polygon.length;
+
+    for (let i = 0; i < len; i+=1) {
+        let vertex1 = polygon[i],
+            vertex2 = polygon[i + 1];
+
+        // if last vertex, set vertex2 as the first
+        if (!vertex2) {
+            vertex2 = polygon[0];
+        }
+
+        if (isEllipseLineIntersect(ellipse, [vertex1, vertex2])) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function generateUniqId() {
@@ -6307,6 +6658,28 @@ function verticesArrayToArrayNumbers(array) {
         numbers.push([vertex.x, vertex.y]);
     }
     return numbers;
+}
+
+/**
+ * @param {number} x
+ * @param {number} y
+ * @param {number} radiusX
+ * @param {number} radiusY
+ * @param {number} [angle = 2 * Math.PI]
+ * @param {number} [step = Math.PI/12] 
+ * @returns {Array<number>}
+ */
+function calculateEllipseVertices(x = 0, y = 0, radiusX, radiusY, angle = 2*Math.PI, step = Math.PI/8) {
+    let ellipsePolygonCoords = [];
+
+    for (let r = 0; r <= angle; r += step) {
+        let x2 = Math.cos(r) * radiusX + x,
+            y2 = Math.sin(r) * radiusY + y;
+
+        ellipsePolygonCoords.push([x2, y2]);
+    }
+
+    return ellipsePolygonCoords;
 }
 
 

@@ -481,8 +481,8 @@ export class IRender {
                 eB.forEach(element => {
                     const x = element[0],
                         y = element[1],
-                        radX = element[2]/2,
-                        radY = element[3]/2,
+                        radX = element[2],
+                        radY = element[3],
                         vertices = utils.calculateEllipseVertices(x, y, radX, radY);
                         this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
                         //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);

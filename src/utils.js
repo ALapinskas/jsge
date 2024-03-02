@@ -209,10 +209,18 @@ function isPointRectIntersect(x, y, rect) {
     }
 }
 
+/**
+ * 
+ * @param {number} x 
+ * @param {number} y 
+ * @param {{x:number, y:number, r:number}} circle 
+ * @returns {boolean}
+ */
 function isPointCircleIntersect(x, y, circle) {
-    const radius = circle.width,
+    const radius = circle.r,
         lineToCircleCenter = new Vector(x, y, circle.x, circle.y),
         pointCircleLineLength = lineToCircleCenter.length;
+        
     if (pointCircleLineLength < radius)
         return true;
     else
@@ -224,16 +232,31 @@ function isCircleLineIntersect(x, y, r, line) {
         y1 = line.y1,
         x2 = line.x2,
         y2 = line.y2,
-        vec1 = {x: x1 - x, y: y1-y}, //new Vector(x, y, x1, y1), vector from A to circle center
-        vec2 = {x: x2 - x, y: y2-y}, //new Vector(x, y, x2, y2), vector from B to circle center
-        vec1Len = Math.sqrt(Math.pow(vec1.x, 2) + Math.pow(vec1.y, 2)),
-        vec2Len = Math.sqrt(Math.pow(vec2.x, 2) + Math.pow(vec2.y, 2)),
-        minLen = Math.min(vec1Len, vec2Len);
-
-    if (minLen > r) {
-        return false;
+        vec1 = {x: x1 - x, y: y1-y}, //new Vector(x, y, x1, y1),
+        vec2 = {x: x2 - x, y: y2-y}, //new Vector(x, y, x2, y2),
+        vec3 = {x: x2 - x1, y: y2-y1}, //new Vector(x1 ,y1, x2, y2),
+        vec4 = {x: x1 - x2, y: y1-y2}, //new Vector(x2, y2, x1, y1),
+        vec3Len = Math.sqrt(Math.pow(vec3.x, 2) + Math.pow(vec3.y, 2)),//vec3.length,
+        dotP1 = dotProduct(vec1, vec4),
+        dotP2 = dotProduct(vec2, vec3);
+        // checks if the line is inside the circle,
+        // max_dist = Math.max(vec1Len, vec2Len);
+    let min_dist;
+    
+    if (dotP1 > 0 && dotP2 > 0) {
+        min_dist = crossProduct(vec1,vec2)/vec3Len;
+        if (min_dist < 0) {
+            min_dist *= -1;
+        }
+    } else {
+        min_dist = Math.min(vec1.length, vec2.length);
     }
-    return true; // minLen <= r    
+    
+    if (min_dist <= r) { // && max_dist >= r) {
+        return true;
+    } else {
+        return false;
+    } 
 }
 
 /**
@@ -244,8 +267,8 @@ function isCircleLineIntersect(x, y, r, line) {
 function isEllipseLineIntersect(ellipse, line) {
     const x = ellipse[0],
         y = ellipse[1],
-        radX = ellipse[2]/2,
-        radY = ellipse[3]/2,
+        radX = ellipse[2],
+        radY = ellipse[3],
         x1 = line[0][0],
         y1 = line[0][1],
         x2 = line[1][0],
@@ -274,6 +297,38 @@ function isEllipseLineIntersect(ellipse, line) {
         return false;
     }
     return true;
+}
+
+/**
+ * 
+ * @param {Array<number>} ellipse - x,y,radX,radY
+ * @param {{x:number, y:number, r:number}} circle
+ * @returns {Array<number> | boolean} - [x, y] traversal point
+ */
+function isEllipseCircleIntersect(ellipse, circle) {
+    const ellipseX = ellipse[0],
+        ellipseY = ellipse[1],
+        ellipseToCircleLine = { x: ellipseX - circle.x, y: ellipseY - circle.y },
+        len = Math.sqrt(Math.pow(ellipseToCircleLine.x, 2) + Math.pow(ellipseToCircleLine.y, 2)),
+        maxRad = Math.max(ellipse[2], ellipse[3]);
+    // no collisions for sure
+    if (len > (maxRad + circle.r)) {
+        return false;
+    } else {
+        // check possible collision
+        const angle = angle_2points(ellipseX, ellipseY, circle.x, circle.y),
+            traversalX = ellipseX + (ellipse[2] * Math.cos(angle)),
+            traversalY =  ellipseY + (ellipse[3] * Math.sin(angle)),
+            vecTrX = ellipseX - traversalX,
+            vecTrY = ellipseY - traversalY,
+            traversalLen = Math.sqrt(Math.pow(vecTrX, 2) + Math.pow(vecTrY, 2)) + circle.r;
+            if (len <= traversalLen) {
+                return [vecTrX, vecTrY];
+            } else {
+                return false;
+            }
+    }
+    
 }
 
 /**
@@ -357,6 +412,7 @@ export {
     isPolygonLineIntersect,
     isCircleLineIntersect,
     isEllipseLineIntersect,
+    isEllipseCircleIntersect,
     isEllipsePolygonIntersect,
     generateUniqId,
     verticesArrayToArrayNumbers,

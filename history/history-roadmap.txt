@@ -50,8 +50,12 @@ f: fixed defects
 # History
 1.3.0:
     f: iRender error handling
+    f: Autofixing world size for maps without boundaries
     f: iRender "reject is not defined"
+    f: text artifacts in Chrome
     +: Tiled collision support: custom rects, polygons, ellipses, dots
+    +: AtlasXML support
+    +: Tanks game
 
 1.2.2:
     f: Infinity message for 0 milliseconds render cycles

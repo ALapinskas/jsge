@@ -4,9 +4,15 @@ import AssetsManager from "../src/AssetsManager.js"
 const manager = new AssetsManager();
 
 // 2. Add files to the queue
-manager.addAudio("default", "./knopka-schelchok-korotkii-chetkii-myagkii1.mp3")
-manager.addImage("soldier", "./SpritesheetGuns.png")
-manager.addTileMap("tilemap", "./map.tmj")
+manager.addAudio("default", "./knopka-schelchok-korotkii-chetkii-myagkii1.mp3");
+manager.addImage("soldier", "./SpritesheetGuns.png");
+manager.addImage("racing", "./spritesheet_tiles_s.png");
+manager.addTileMap("tilemap", "./map.tmj"); 
+manager.addAtlasXML("atlas", "./img/allSprites_default.xml");
+
+// lets say we want to load related tileset separately
+// manager.addTileMap("tilemap", "./map.tmj", true); 
+// manager.addTileSet("tileset", "./Tileset.tsj");
 
 // 3. Subscribe for progress to track the loading progress status
 manager.addEventListener("progress", (event) => {
@@ -24,21 +30,36 @@ manager.preload().then(() => {
     const audio = manager.getAudio("default"),
         imageBitmap = manager.getImage("soldier"),
         tilemap = manager.getTileMap("tilemap"),
+        tilesetSep = manager.getTileSet("tileset"),
+        racingImage = manager.getImage("racing"),
         tilesets = tilemap.tilesets,
-        tilesetImages = tilesets.map((tileset) => manager.getImage(tileset.data.name));
+        tilesetImages = tilesets.map((tileset) => tilesetSep ? manager.getImage(tilesetSep.name): manager.getImage(tileset.data.name)),
+        atlasImageMap = manager.getAtlasImageMap("atlas"),
+        tankBody_green = manager.getImage("tankBody_green"),
+        tileSand_roadCornerUL = manager.getImage("tileSand_roadCornerUL"); // atlasImageMap.tankBody_green
 
-    audio.play()
+    audio.play();
 
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
+    
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     //draw image
-    ctx.drawImage(imageBitmap,0,0, imageBitmap.width, imageBitmap.height)
+    ctx.drawImage(imageBitmap,0,0, imageBitmap.width, imageBitmap.height);
     //draw tilesets:
     tilesetImages.forEach((image, idx) => {
         const m = idx + 1;
-        ctx.drawImage(image,m*100,m* 100, image.width, image.height)
-    })
+        ctx.drawImage(image,m*100,m* 100, image.width, image.height);
+    });
 
+    ctx.drawImage(racingImage, 0, 100);
+    //console.log(barrelBlack_sideImage);
+    //ctx.putImageData(tankBody_green, 0, 0);
+    ctx.drawImage(tileSand_roadCornerUL, 150, 0, tankBody_green.width, tankBody_green.height);
+    ctx.drawImage(tankBody_green, 170, 0, tankBody_green.width, tankBody_green.height);
+    //const test = ctx.getImageData(0, 0, 200, 200);
+    //console.log(test);
+    //ctx.putImageData(test, 200, 0);
     document.body.appendChild(canvas) 
 });
 
@@ -46,19 +67,20 @@ manager.preload().then(() => {
 const loaderMethodForSpineText = () => { console.log("upload SpineText"); return Promise.resolve("result spine text"); },
     loaderMethodForSpineAtlas = () => { console.log("upload SpineAtlas"); return Promise.resolve("result spine atlas"); };
 
-manager.registerLoader("SpineText", loaderMethodForSpineText);
-manager.registerLoader("SpineAtlas", loaderMethodForSpineAtlas);
+const manager2 = new AssetsManager();
+manager2.registerLoader("SpineText", loaderMethodForSpineText);
+manager2.registerLoader("SpineAtlas", loaderMethodForSpineAtlas);
 //use default upload fetch method
-manager.registerLoader("ReadmeText");
+manager2.registerLoader("ReadmeText");
 
-manager.addSpineText("defaultSpineText", "./spineText.json");
-manager.addSpineAtlas("defaultSpineAtlas", "./spine.atlas");
-manager.addReadmeText("defaultReadmeKey", "./readme.txt");
+manager2.addSpineText("defaultSpineText", "./spineText.json");
+manager2.addSpineAtlas("defaultSpineAtlas", "./spine.atlas");
+manager2.addReadmeText("defaultReadmeKey", "./readme.txt");
 
-manager.preload().then(() => {
-    console.log(manager.getSpineText("defaultSpineText"));
-    console.log(manager.getSpineAtlas("defaultSpineAtlas"));
-    manager.getReadmeText("defaultReadmeKey").text().then((result) => {
+manager2.preload().then(() => {
+    console.log(manager2.getSpineText("defaultSpineText"));
+    console.log(manager2.getSpineAtlas("defaultSpineAtlas"));
+    manager2.getReadmeText("defaultReadmeKey").text().then((result) => {
         console.log(result);
     });
 });
@@ -67,11 +89,14 @@ manager.preload().then(() => {
 setTimeout(() => {
     const loaderWithIncorrectValue =  () => { console.log("upload and return incorrect value"); return {}; };
 
-    manager.registerLoader("IncorrectValueLoader", loaderWithIncorrectValue);
-    manager.addIncorrectValueLoader("default", "./spineText.json");
-    manager.preload().catch((err) => {
+    manager2.registerLoader("IncorrectValueLoader", loaderWithIncorrectValue);
+    manager2.addIncorrectValueLoader("default", "./spineText.json");
+    manager2.preload().catch((err) => {
         if (err.message.includes("uploadMethod should be instance of Promise")) {
             console.log("expected, incorrect upload method return value");
+        } else {
+            console.log("unexpected issue!");
+            console.error(err.message);
         }
     });
 }, 1000);

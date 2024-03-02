@@ -10,6 +10,10 @@ export class WebGlEngine {
      */
     #gl;
     /**
+     * @type {number}
+     */
+    #MAX_TEXTURES;
+    /**
      * @type {boolean}
      */
     #debug;
@@ -43,6 +47,7 @@ export class WebGlEngine {
         this.#gl = context;
         this.#gameOptions = gameOptions;
         this.#debug = gameOptions.debug.checkWebGlErrors;
+        this.#MAX_TEXTURES = context.getParameter(context.MAX_TEXTURE_IMAGE_UNITS);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
     }
@@ -441,6 +446,7 @@ export class WebGlEngine {
         
         let textureStorage = renderObject._textureStorage;
         if (!textureStorage) {
+            //const activeTexture = gl.getParameter(gl.ACTIVE_TEXTURE);
             textureStorage = new TextureStorage(gl.createTexture());
             renderObject._textureStorage = textureStorage;
         }
@@ -451,7 +457,7 @@ export class WebGlEngine {
             this.#bindTexture(gl, textureStorage._texture);
         }
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-        
+        gl.depthMask(false);
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
     };
 
@@ -890,12 +896,11 @@ export class WebGlEngine {
                     // if tileset contains boundaries
                     tilesetBoundaries = tileset.tiles;
 
-                //@toDo: move this check upper level
+                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
+                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                    pageData._setWorldDimensions(worldW, worldH);
+                }
                 if (setBoundaries) {
-                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                        Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                        pageData._setWorldDimensions(worldW, worldH);
-                    }
                     // boundaries cleanups every draw cycles, we need to set world boundaries again
                     if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                         pageData._setMapBoundaries();
@@ -974,9 +979,9 @@ export class WebGlEngine {
                                                 // x/y coordinate
                                                 pointBoundaries.push([baseX, baseY]);
                                             } else if (object.ellipse) {
-                                                const diameterX = object.width,
-                                                    diameterY = object.height;
-                                                ellipseBoundaries.push([baseX + diameterX / 2, baseY + diameterY / 2, diameterX, diameterY]);
+                                                const radX = object.width / 2,
+                                                    radY = object.height / 2;
+                                                ellipseBoundaries.push([baseX + radX, baseY + radY, radX, radY]);
                                             } else {
                                                 // object is rect
                                                 const width = object.width,

@@ -180,13 +180,20 @@ export class DrawTextObject extends DrawShapeObject {
         const canvas = document.createElement("canvas"),
             ctx = canvas.getContext("2d");
         if (ctx) { 
+            if (this.#textureCanvas) {
+                // remove old one
+                this.#textureCanvas.remove();
+            }
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
-            let boxWidth = this.boundariesBox.width, 
+            const boxWidth = this.boundariesBox.width, 
                 boxHeight = this.boundariesBox.height;
             
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;
+            // writing texture unit without cleanup the canvas, 
+            // case text artifacts in chrome
+            ctx.clearRect(0, 0, boxWidth, boxHeight);
             ctx.font = this.font;
             ctx.textBaseline = "bottom";// bottom
             if (this.fillStyle) {
