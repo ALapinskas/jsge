@@ -514,6 +514,13 @@ export class GameStage {
             newY = centerY + (len * Math.sin(rotation + vertexAngle));
         return [newX, newY];
     }
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} r 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
     #isCircleToBoundariesCollision(x, y, r) {
         const mapObjects = this.stageData.getBoundaries(),
             ellipseB = this.stageData.getEllipseBoundaries(),

@@ -303,7 +303,7 @@ function isEllipseLineIntersect(ellipse, line) {
  * 
  * @param {Array<number>} ellipse - x,y,radX,radY
  * @param {{x:number, y:number, r:number}} circle
- * @returns {Array<number> | boolean} - [x, y] traversal point
+ * @returns {{x:number, y:number, p:number} | boolean}
  */
 function isEllipseCircleIntersect(ellipse, circle) {
     const ellipseX = ellipse[0],
@@ -323,7 +323,7 @@ function isEllipseCircleIntersect(ellipse, circle) {
             vecTrY = ellipseY - traversalY,
             traversalLen = Math.sqrt(Math.pow(vecTrX, 2) + Math.pow(vecTrY, 2)) + circle.r;
             if (len <= traversalLen) {
-                return [vecTrX, vecTrY];
+                return {x: vecTrX, y: vecTrY, p:1};
             } else {
                 return false;
             }

@@ -24,8 +24,12 @@ export class LoadingStage extends GameStage {
         const widthPart = this.#barWidth / this.#total;
 
         this.#loaded = loaded;
-        
-        this.loadingBarProgress.width = widthPart * this.#loaded;
+        const newWidth = widthPart * this.#loaded;
+        // sometimes additional items are added to queue in load process
+        // to avoid bar width overflow additional check added below:
+        const applyWidth = loaded > this.#total ? this.#barWidth : newWidth;
+
+        this.loadingBarProgress.width = applyWidth;
     };
 
     start(options) {
@@ -33,7 +37,7 @@ export class LoadingStage extends GameStage {
     }
 
     // a workaround for checking upload progress before render
-    get iLoader() {
-        return ({filesWaitingForUpload:0});
-    }
+    //get iLoader() {
+    //    return ({filesWaitingForUpload:0});
+    //}
 } 
