@@ -2207,6 +2207,13 @@ class GameStage {
             newY = centerY + (len * Math.sin(rotation + vertexAngle));
         return [newX, newY];
     }
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} r 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
     #isCircleToBoundariesCollision(x, y, r) {
         const mapObjects = this.stageData.getBoundaries(),
             ellipseB = this.stageData.getEllipseBoundaries(),
@@ -6199,8 +6206,12 @@ class LoadingStage extends _base_GameStage_js__WEBPACK_IMPORTED_MODULE_0__.GameS
         const widthPart = this.#barWidth / this.#total;
 
         this.#loaded = loaded;
-        
-        this.loadingBarProgress.width = widthPart * this.#loaded;
+        const newWidth = widthPart * this.#loaded;
+        // sometimes additional items are added to queue in load process
+        // to avoid bar width overflow additional check added below:
+        const applyWidth = loaded > this.#total ? this.#barWidth : newWidth;
+
+        this.loadingBarProgress.width = applyWidth;
     };
 
     start(options) {
@@ -6208,9 +6219,9 @@ class LoadingStage extends _base_GameStage_js__WEBPACK_IMPORTED_MODULE_0__.GameS
     }
 
     // a workaround for checking upload progress before render
-    get iLoader() {
-        return ({filesWaitingForUpload:0});
-    }
+    //get iLoader() {
+    //    return ({filesWaitingForUpload:0});
+    //}
 } 
 
 /***/ }),
@@ -6593,7 +6604,7 @@ function isEllipseLineIntersect(ellipse, line) {
  * 
  * @param {Array<number>} ellipse - x,y,radX,radY
  * @param {{x:number, y:number, r:number}} circle
- * @returns {Array<number> | boolean} - [x, y] traversal point
+ * @returns {{x:number, y:number, p:number} | boolean}
  */
 function isEllipseCircleIntersect(ellipse, circle) {
     const ellipseX = ellipse[0],
@@ -6613,7 +6624,7 @@ function isEllipseCircleIntersect(ellipse, circle) {
             vecTrY = ellipseY - traversalY,
             traversalLen = Math.sqrt(Math.pow(vecTrX, 2) + Math.pow(vecTrY, 2)) + circle.r;
             if (len <= traversalLen) {
-                return [vecTrX, vecTrY];
+                return {x: vecTrX, y: vecTrY, p:1};
             } else {
                 return false;
             }
