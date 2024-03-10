@@ -25,8 +25,8 @@ export class BigMap extends GameStage {
         this.draw.tiledLayer("walls", "big_map", true, this.personSightView);
 		
 		this.person = this.draw.image(55, 250, 48, 48, "person", 2, {r: 8});
-		// fire animation switch frames 2-3-2, not repeat, animation speed 5 render circles per frame
-		this.person.addAnimation("fire", [2,3,2], false, 5);
+		// fire animation switch frames 2-3-2, not repeat, animation speed 100 ms each frame
+		this.person.addAnimation("fire", [{duration:100, id:2},{duration:100,id:3},{duration:100,id:2}], false);
 		
 		this.createButtons();
 		this.registerListeners();

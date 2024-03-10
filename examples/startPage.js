@@ -52,7 +52,8 @@ export class StartPage extends GameStage {
         this.navItemBigMap = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 40, "Big map", "20px sans-serif", "black");
         this.navItemTestCustomWebGl = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 70, "Custom WebGl program", "20px sans-serif", "black");
         this.navTanksGame = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 100, "Tanks game", "20px sans-serif", "black");
-        
+    
+        //this.#createOptionsBlock();
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
         this.#menuClickMediaElement = this.audio.getAudio(MENU_CLICK_AUDIO_NAME);
     }

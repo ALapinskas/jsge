@@ -19,7 +19,7 @@ this.fireball = this.draw.image(posX, posY, imageW, imageH, "image_key");
 ```
 4. Then add an animation event: 
 ```
-this.fireball.addAnimation("startAnimation", [0,1,2,3], isLoop = false, cyclesPerFrame = 1);
+this.fireball.addAnimation("startAnimation", [0,1,2,3], isLoop = false);
 ```
 5. And start it, emitting the event:
 ```
@@ -40,6 +40,15 @@ this.fireball.stopRepeatedAnimation("startAnimation");
 ```
 this.fireball.addAnimation("startAnimation", [0,1,2,3], true, 5);
 ```
+8. In jsge@1.4.0 added:
+- frame time. Instead of array of ids, add
+Array of objects: 
+```
+this.fireball.addAnimation("startAnimation", [{duration: 150, id:0},{duration:100, id:1},{ duration:100, id:2},{duration:100, id:3}], true);
+```
+duration - is frame time in ms.
+<br />
+- [Tiled animations]{@tutorial how_to_load_and_use_tilemaps} support.
 
 ## Live example
 <p class="codepen" data-height="500" data-default-tab="js,result" data-slug-hash="zYeQoGY" data-user="yaalfred" style="height: 500px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid; margin: 1em 0; padding: 1em;">

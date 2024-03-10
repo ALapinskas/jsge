@@ -14,26 +14,32 @@ const PROGRESS_EVENT_TYPE={loadstart:"loadstart",progress:"progress",abort:"abor
 
 /***/ }),
 
-/***/ "./src/base/AnimationEventImageObj.js":
-/*!********************************************!*\
-  !*** ./src/base/AnimationEventImageObj.js ***!
-  \********************************************/
+/***/ "./src/base/AnimationEvent.js":
+/*!************************************!*\
+  !*** ./src/base/AnimationEvent.js ***!
+  \************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "AnimationEventImageObj": () => (/* binding */ AnimationEventImageObj)
+/* harmony export */   "AnimationEvent": () => (/* binding */ AnimationEvent)
 /* harmony export */ });
-class AnimationEventImageObj {
+class AnimationEvent {
     #eventName;
-    /**
-     * @type {Array<number>}
-     */
-    #animationSpriteIndexes;
     /**
      * @type {number}
      */
-    #currentSpriteIndex;
+    #defaultDurationTime = 100;
+    /**
+     * Array [sprite index, duration]
+     * @type { Array<Array<number, number>> }
+     */
+    #animationSpriteIndexes;
+    /**
+     * 
+     * @type {number}
+     */
+    #currentAnimationItemIndex;
     /**
      * @type {boolean}
      */
@@ -42,20 +48,18 @@ class AnimationEventImageObj {
      * @type {boolean}
      */
     #isRepeated;
-    /**
-     * @type {number}
-     */
-    #cyclesPerFrame;
-    // first cycle should be always skipped, eg showing the current frame
-    #cyclesSkipped = 0;
+    #lastAnimationTimeStamp;
     
-    constructor(eventName, animationSpriteIndexes, isRepeated = false, cyclesPerFrame, currentSpriteIndex, isActive = false) {
+    constructor(eventName, animationSpriteIndexes, isRepeated = false, currentSpriteIndex, isActive = false) {
         this.#eventName = eventName;
-        this.#animationSpriteIndexes = animationSpriteIndexes;
-        this.#cyclesPerFrame = cyclesPerFrame;
-        this.#currentSpriteIndex = currentSpriteIndex ? currentSpriteIndex : 0;
+        this.#animationSpriteIndexes = this.#convertToArray(animationSpriteIndexes);
+        this.#currentAnimationItemIndex = currentSpriteIndex ? currentSpriteIndex : 0;
         this.#isActive = isActive;
         this.#isRepeated = isRepeated;
+    }
+
+    get name() {
+        return this.#eventName;
     }
 
     get isActive() {
@@ -63,41 +67,57 @@ class AnimationEventImageObj {
     }
 
     get currentSprite() {
-        return this.#animationSpriteIndexes[this.#currentSpriteIndex];
+        return this.#animationSpriteIndexes[this.#currentAnimationItemIndex][0];
     }
 
-    get isLastSprite() {
-        return (this.#animationSpriteIndexes.length - 1) === this.#currentSpriteIndex;
+    get _isLastSprite() {
+        return (this.#animationSpriteIndexes.length - 1) === this.#currentAnimationItemIndex;
     }
 
-    iterateSprite() {
-        if (this.#cyclesPerFrame <= this.#cyclesSkipped) {
-            if (!this.isLastSprite) {
-                this.#currentSpriteIndex = this.#currentSpriteIndex + 1;
+    iterateAnimationIndex() {
+        const currentIndex = this.#currentAnimationItemIndex,
+            currentDuration = this.#animationSpriteIndexes[currentIndex][1],
+            lastIterationTime = Date.now() - this.#lastAnimationTimeStamp;
+        // iterate or skip
+        if (currentDuration < lastIterationTime) {
+            if (!this._isLastSprite) {
+                this.#currentAnimationItemIndex++;
             } else {
                 if (!this.#isRepeated) {
                     this.deactivateAnimation();
                 } else {
-                    this.#currentSpriteIndex = 0;
+                    // take first element
+                    this.#currentAnimationItemIndex = 0;
+                    
                 }
             }
-            // if animation is in progress, we reset it to the first item, because the first cycles already skipped
-            this.#cyclesSkipped = 1;
-        } else {
-            this.#cyclesSkipped += 1;
+            // reset timestamp
+            this.#lastAnimationTimeStamp = Date.now();
         }
     }
 
     activateAnimation = () => {
         this.#isActive = true;
-        this.#currentSpriteIndex = 0;
-        this.#cyclesSkipped = 0;
+        this.#currentAnimationItemIndex = 0;
+        this.#lastAnimationTimeStamp = Date.now();
     };
 
     deactivateAnimation = () => {
         this.#isActive = false;
-        this.#cyclesSkipped = 0;
     };
+
+    #convertToArray(animationSpriteIndexes) {
+        let animationArray = [];
+        animationSpriteIndexes.forEach(element => {
+            if (typeof element.id === "number" && typeof element.duration === "number") {
+                animationArray.push([element.id, element.duration]);
+            } else {
+                animationArray.push([element, this.#defaultDurationTime]);
+            }
+            
+        });
+        return animationArray;
+    }
 }
 
 /***/ }),
@@ -266,7 +286,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "DrawImageObject": () => (/* binding */ DrawImageObject)
 /* harmony export */ });
-/* harmony import */ var _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AnimationEventImageObj.js */ "./src/base/AnimationEventImageObj.js");
+/* harmony import */ var _AnimationEvent_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AnimationEvent.js */ "./src/base/AnimationEvent.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
 /* harmony import */ var _WebGl_TextureStorage_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./WebGl/TextureStorage.js */ "./src/base/WebGl/TextureStorage.js");
@@ -304,7 +324,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     #emitter;
     /**
-     * @type {Map<string, AnimationEventImageObj>}
+     * @type {Map<string, AnimationEvent>}
      */
     #animations;
     /**
@@ -414,7 +434,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      * Determines if image is animated or not
      * @type {boolean}
      */
-    get isAnimations() {
+    get hasAnimations() {
         return this.#animations.size > 0;
     }
 
@@ -440,7 +460,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     _processActiveAnimations() {
         for (let animationEvent of this.#animations.values()) {
             if (animationEvent.isActive) {
-                animationEvent.iterateSprite();
+                animationEvent.iterateAnimationIndex();
                 this.#imageIndex = animationEvent.currentSprite;
             }
         }
@@ -493,19 +513,29 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     /**
      * Adds image animations
      * @param { string } eventName -animation name
-     * @param { Array<number> } animationSpriteIndexes - animation image indexes
+     * @param { Array<number> | Array<{duration:number, id:number}> } animationSpriteIndexes - animation image indexes
      * @param { boolean } [isRepeated = false] - animation is cycled or not, cycled animation could be stopped only with stopRepeatedAnimation();
-     * @param { number } [cyclesPerFrame = 1] - determines on how many cycles should one frame be shown, the actual speed depends on gameOptions.render.minCycleTime
      */
-    addAnimation (eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame = 1) {
-        if (cyclesPerFrame < 1) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_4__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_1__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " cyclesPerFrame should be >= 1");
+    addAnimation (eventName, animationSpriteIndexes, isRepeated) {
+        if (!this.#checkAnimationParams(animationSpriteIndexes)) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_4__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_1__.ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " animationSpriteIndexes should be Array of indexes, or Array of objects {duration:number, id:number}");
         }
-        const animationEvent = new _AnimationEventImageObj_js__WEBPACK_IMPORTED_MODULE_0__.AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame);
+        const animationEvent = new _AnimationEvent_js__WEBPACK_IMPORTED_MODULE_0__.AnimationEvent(eventName, animationSpriteIndexes, isRepeated);
         this.#animations.set(eventName, animationEvent);
         this.addEventListener(eventName, this.#activateAnimation);
     }
 
+    #checkAnimationParams (animationSpriteIndexes) {
+        let isCorrect = true;
+        animationSpriteIndexes.forEach(element => {
+            if (typeof element !== "number") {
+                if (typeof element.duration !== "number" || typeof element.id !== "number") {
+                    isCorrect = false;
+                }
+            }     
+        });
+        return isCorrect;
+    }
     #activateAnimation = (event) => {
         const animationEvent = this.#animations.get(event.type);
         animationEvent.activateAnimation();
@@ -1459,8 +1489,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "DrawTiledLayer": () => (/* binding */ DrawTiledLayer)
 /* harmony export */ });
-/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
-/* harmony import */ var _WebGl_TextureStorage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./WebGl/TextureStorage.js */ "./src/base/WebGl/TextureStorage.js");
+/* harmony import */ var _AnimationEvent_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AnimationEvent.js */ "./src/base/AnimationEvent.js");
+/* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
+/* harmony import */ var _WebGl_TextureStorage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./WebGl/TextureStorage.js */ "./src/base/WebGl/TextureStorage.js");
+
 
 
 /**
@@ -1472,6 +1504,10 @@ class DrawTiledLayer {
     #tileMapKey;
     #tilemap;
     #tilesets;
+    /**
+     * @type {string}
+     */
+    #DELIMITER = "-#-";
     #tilesetImages;
     /**
      * @type {Array<TextureStorage>}
@@ -1485,6 +1521,10 @@ class DrawTiledLayer {
      * @type {number}
      */
     #sortIndex = 0;
+    /**
+     * @type {Map<string, AnimationEvent>}
+     */
+    #animations = new Map();
     #isOffsetTurnedOff;
 
     /**
@@ -1503,6 +1543,7 @@ class DrawTiledLayer {
         if (shapeMask) {
             this.setMask(shapeMask);
         }
+        this.#processTilesets(tilesets);
     }
 
     /**
@@ -1595,12 +1636,134 @@ class DrawTiledLayer {
         this.#isOffsetTurnedOff = true;
     }
 
+    /**
+     * Determines if image is animated or not
+     * @type {boolean}
+     */
+    get hasAnimations() {
+        return this.#animations.size > 0;
+    }
+
+    /**
+     * @ignore
+     */
     get _textureStorages() {
         return this.#textureStorages;
     }
 
+    /**
+     * @ignore
+     */
     _setTextureStorage(index, value) {
         this.#textureStorages[index] = value;
+    }
+
+    /**
+     * Tilesets has a property tiles, which could contain tile animations
+     * or object boundaries, this is workaround for split this and add
+     * additional properties for use in draw phase:
+     * _hasAnimations
+     * _animations - Map<id:activeSprite>
+     * _hasBoundaries
+     * _boundaries - Map<id:objectgroup>
+     * @param {*} tilesets
+     */
+    #processTilesets(tilesets) {
+        for (let tileset of tilesets) {
+            const tiles = tileset.data.tiles,
+                name = tileset.data.name;
+            if (tiles) {
+                for (let tile of tiles) {
+                    const animation = tile.animation,
+                        objectgroup = tile.objectgroup,
+                        id = tile.id;
+                    if (animation) {
+                        const eventName = name + this.#DELIMITER + id, 
+                            animationIndexes = this.#fixAnimationsItems(animation),
+                            animationEvent = new _AnimationEvent_js__WEBPACK_IMPORTED_MODULE_0__.AnimationEvent(eventName, animationIndexes, true);
+
+                        this.#animations.set(eventName, animationEvent);
+                        // add additional properties
+                        if (!tileset.data._hasAnimations) {
+                            tileset.data._hasAnimations = true;
+                            tileset.data._animations = new Map();
+                            //
+                            tileset.data._animations.set(id, animationIndexes[0][0]);
+                        }
+                        this.#activateAnimation(animationEvent);
+                    }
+                    if (objectgroup) {
+                        if (tileset.data._hasBoundaries) {
+                            tileset.data._boundaries.set(id, objectgroup);
+                        } else {
+                            // add additional properties
+                            tileset.data._hasBoundaries = true;
+                            tileset.data._boundaries = new Map();
+                            tileset.data._boundaries.set(id, objectgroup);
+                        }
+                        
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {Array<{duration:number, tileid:number}>} animation 
+     * @returns {Array<{duration:number, id:number}>}
+     */
+    #fixAnimationsItems(animation) {
+        return animation.map((animation_item) => ({duration:animation_item.duration, id: animation_item.tileid}));
+    }
+    /**
+     * @ignore
+     */
+    _processActiveAnimations() {
+        for (let animationEvent of this.#animations.values()) {
+            if (animationEvent.isActive) {
+                animationEvent.iterateAnimationIndex();
+                this.#switchCurrentActiveSprite(animationEvent);
+            }
+        }
+    }
+
+    #activateAnimation = (animationEvent) => {
+        animationEvent.activateAnimation();
+        this.#switchCurrentActiveSprite(animationEvent);
+    }; 
+
+    #switchCurrentActiveSprite = (animationEvent) => {
+        const [tilesetKey, animationId] = animationEvent.name.split(this.#DELIMITER),
+            tilesetIndex = this.#tilesets.findIndex(tileset => tileset.data.name === tilesetKey),
+            tileset = this.#tilesets[tilesetIndex];
+            
+        tileset.data._animations.set(parseInt(animationId), animationEvent.currentSprite);
+    }
+
+    /**
+     *
+     * @param {string} eventName - animation name
+     */
+    stopRepeatedAnimation (eventName) {
+        this.#animations.get(eventName).deactivateAnimation();
+    }
+
+    /**
+     * Removes animations
+     */
+    removeAllAnimations() {
+        for (let [eventName, animationEvent] of this.#animations.entries()) {
+            this.removeEventListener(eventName, animationEvent.activateAnimation);
+            animationEvent.deactivateAnimation();
+        }
+        this.#animations.clear();
+        this.#animations = undefined;
+    }
+
+    destroy() {
+        this.removeAllAnimations();
+        super.destroy();
     }
 }
 
@@ -3272,7 +3435,7 @@ class IRender {
                     i--;
                     continue;
                 }
-                if (object.isAnimations) {
+                if (object.hasAnimations) {
                     object._processActiveAnimations();
                 }
                 const promise = await this._bindRenderObject(object)
@@ -5053,17 +5216,22 @@ class WebGlEngine {
             drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
             shapeMaskId = renderLayer._maskId;
 
-        let verticesNumber = 0;
+        let verticesNumber = 0,
+            isTextureBind = false;
         for (let i = 0; i < renderLayerData.length; i++) {
             const data = renderLayerData[i],
                 vectors = data[0],
                 textures = data[1],
                 image_name = data[2],
                 image = data[3];
-            // a workaround for renderlayers.tilesets.length > 1
-            // work correctly only if layer contains textures
-            // from single tileset, otherwise it will fail
+            // if layer use multiple tilesets
             if (vectors.length > 0 && textures.length > 0) {
+                // need to have additional draw call for each new texture added
+                // probably it could be combined in one draw call if multiple textures 
+                // could be used in one draw call
+                if (isTextureBind) {
+                    await this._render(verticesNumber, gl.TRIANGLES);
+                }
                 // set the resolution
                 gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
                 gl.uniform2f(translationLocation,translation[0], translation[1]);
@@ -5079,7 +5247,7 @@ class WebGlEngine {
                     type = gl.FLOAT, // data is 32bit floats
                     normalize = false,
                     stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                    offset = verticesNumber * 4; // start of beginning of the buffer
+                    offset = 0  // verticesNumber * 4; // start of beginning of the buffer
                 gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 
                 //textures buffer
@@ -5090,10 +5258,11 @@ class WebGlEngine {
                 gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
 
                 let textureStorage = renderLayer._textureStorages[i];
+                
                 if (!textureStorage) {
                     textureStorage = new _TextureStorage_js__WEBPACK_IMPORTED_MODULE_4__.TextureStorage(gl.createTexture(), i);
                     renderLayer._setTextureStorage(i, textureStorage);
-                } 
+                }
                 if (textureStorage._isTextureRecalculated === true) { 
                     this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
                     textureStorage._isTextureRecalculated = false;
@@ -5102,10 +5271,11 @@ class WebGlEngine {
                 }
                 gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
                 gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
-                verticesNumber += vectors.length / 2;
+                verticesNumber = vectors.length / 2;
                 if (shapeMaskId) {
                     gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
                 }
+                isTextureBind = true;
             }
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
@@ -5316,19 +5486,19 @@ class WebGlEngine {
             }
             
             for (let i = 0; i < tilesets.length; i++) {
-                const tileset = tilesets[i].data,
+                const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
-                    tilesetwidth = tileset.tilewidth,
-                    tilesetheight = tileset.tileheight,
+                    tilesetwidth = tilesetData.tilewidth,
+                    tilesetheight = tilesetData.tileheight,
                     atlasImage = tilesetImages[i],
                     //atlasWidth = atlasImage.width,
                     //atlasHeight = atlasImage.height,
-                    atlasWidth = tileset.imagewidth,
-                    atlasHeight = tileset.imageheight,
+                    atlasWidth = tilesetData.imagewidth,
+                    atlasHeight = tilesetData.imageheight,
                     //atlasRows = atlasHeight / tileheight,
-                    atlasColumns = tileset.columns,
+                    atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     worldW = tilewidth * layerCols,
@@ -5341,15 +5511,18 @@ class WebGlEngine {
                     screenRows = worldH > canvasH ? Math.ceil(canvasH / tileheight) + 1 : layerRows,
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
-                    cellSpacing = tileset.spacing,
-                    cellMargin = tileset.margin,
+                    cellSpacing = tilesetData.spacing,
+                    cellMargin = tilesetData.margin,
+
+                    hasAnimations = tilesetData._hasAnimations,
 
                     verticesBufferData = [],
                     texturesBufferData = [],
                     
-                    // if tileset contains boundaries
-                    tilesetBoundaries = tileset.tiles;
-
+                    // additional property which is set in DrawTiledLayer
+                    hasBoundaries = tilesetData._hasBoundaries,
+                    tilesetBoundaries = tilesetData._boundaries; // Map
+                
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                     pageData._setWorldDimensions(worldW, worldH);
@@ -5367,12 +5540,22 @@ class WebGlEngine {
                     let currentRowIndexes = new Map();
                     for (let col = 0; col < screenCols; col++) {
                         let tile = layerData.data[mapIndex];
-                        
+
                         if ((tile >= firstgid) && (tile < nextgid)) {
                             const mapPosX = col * dtwidth - moduleLeft,
                                 mapPosY = row * dtheight - moduloTop;
 
+                            // actual tile index
                             tile -= firstgid;
+                            // switch if animations are set
+                            if (hasAnimations) {
+                                const activeTile = tilesetData._animations.get(tile);
+                                if (typeof activeTile !== "undefined") {
+                                    tile = activeTile;
+                                }   
+                            }
+
+                            // calculate map position and atlas position
                             const colNum = tile % atlasColumns,
                                 rowNum = Math.floor(tile / atlasColumns),
                                 atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
@@ -5401,13 +5584,13 @@ class WebGlEngine {
                                 texX2, texY2
                             );
                             if (setBoundaries) {
-                                // if boundary is set in tileset
+                                // if boundary is set in tilesetData
                                 let isBoundaryPreset = false;
-                                if (tilesetBoundaries && tilesetBoundaries.length > 0) {
-                                    const tilesetBoundary = tilesetBoundaries.find((boundary) => boundary.id === tile);
+                                if (hasBoundaries && tilesetBoundaries.size > 0) {
+                                    const tilesetBoundary = tilesetBoundaries.get(tile);
                                     if (tilesetBoundary) {
                                         isBoundaryPreset = true;
-                                        const objectGroup = tilesetBoundary.objectgroup,
+                                        const objectGroup = tilesetBoundary,
                                             objects = objectGroup.objects;
                                             
                                         objects.forEach((object) => {
@@ -5415,7 +5598,7 @@ class WebGlEngine {
                                                 baseY = mapPosY + object.y,
                                                 rotation = object.rotation;
                                             if (rotation !== 0) {
-                                                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)("tileset.tiles.rotation property is not supported yet");
+                                                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)("tilesetData.tiles.rotation property is not supported yet");
                                             }
                                             if (object.polygon) {
                                                 object.polygon.forEach(
@@ -5597,8 +5780,8 @@ class WebGlEngine {
                     }
                     mapIndex += skipColsRight;
                 }
-                //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name, renderLayer._maskId);
-                tileImagesData.push([new Float32Array(verticesBufferData), new Float32Array(texturesBufferData), tileset.name, atlasImage]);
+                //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tilesetData.name, renderLayer._maskId);
+                tileImagesData.push([new Float32Array(verticesBufferData), new Float32Array(texturesBufferData), tilesetData.name, atlasImage]);
             }
             
             if (setBoundaries) {
@@ -5623,6 +5806,8 @@ class WebGlEngine {
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                tilewidth = dtwidth,
+                tileheight = dtheight,
                 setBoundaries = renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions,
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
@@ -5634,31 +5819,27 @@ class WebGlEngine {
                 reject();
             }
             for (let i = 0; i <= tilesets.length - 1; i++) {
-                const tileset = tilesets[i].data,
+                const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
-                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
-                    tilewidth = tileset.tilewidth,
-                    tileheight = tileset.tileheight,
-                    //atlasRows = tileset.imageheight / tileheight,
-                    //atlasColumns = tileset.imagewidth / tilewidth,
-                    atlasColumns = tileset.columns,
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tilesetData.name),
+                    tilesetwidth = tilesetData.tilewidth,
+                    tilesetheight = tilesetData.tileheight,
+                    //atlasRows = tilesetData.imageheight / tileheight,
+                    //atlasColumns = tilesetData.imagewidth / tilewidth,
+                    atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     worldW = tilewidth * layerCols,
                     worldH = tileheight * layerRows,
                     visibleCols = Math.ceil(canvasW / tilewidth),
                     visibleRows = Math.ceil(canvasH / tileheight),
-                    offsetCols = layerCols - visibleCols,
-                    offsetRows = layerRows - visibleRows,
-                    moduloTop = yOffset % tileheight,
-                    moduloLeft = xOffset % tilewidth,
                     atlasImage = tilesetImages[i],
                     atlasWidth = atlasImage.width,
                     atlasHeight = atlasImage.height,
-                    cellSpacing = tileset.spacing,
-                    cellMargin = tileset.margin;
+                    cellSpacing = tilesetData.spacing,
+                    cellMargin = tilesetData.margin;
                 
                 let mapIndex = 0,
                     verticesBufferData = [],
@@ -5677,16 +5858,16 @@ class WebGlEngine {
                             tile -= firstgid;
                             const colNum = tile % atlasColumns,
                                 rowNum = Math.floor(tile / atlasColumns),
-                                atlasPosX = colNum * tilewidth + (colNum * cellSpacing),
-                                atlasPosY = rowNum * tileheight + (rowNum * cellSpacing),
+                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
+                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing),
                                 vecX1 = col * dtwidth - xOffset,
                                 vecY1 = row * dtheight - yOffset,
-                                vecX2 = vecX1 + tilewidth,
-                                vecY2 = vecY1 + tileheight,
+                                vecX2 = vecX1 + tilesetwidth,
+                                vecY2 = vecY1 + tilesetheight,
                                 texX1 = 1 / atlasWidth * atlasPosX,
                                 texY1 = 1 / atlasHeight * atlasPosY,
-                                texX2 = texX1 + (1 / atlasWidth * tilewidth),
-                                texY2 = texY1 + (1 / atlasHeight * tileheight);
+                                texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
+                                texY2 = texY1 + (1 / atlasHeight * tilesetheight);
                                 
                             verticesBufferData.push(
                                 vecX1, vecY1,
@@ -5710,7 +5891,7 @@ class WebGlEngine {
                 }
                 const v = new Float32Array(verticesBufferData);
                 const t = new Float32Array(texturesBufferData);
-                tileImagesData.push([v, t, tileset.name, atlasImage]);
+                tileImagesData.push([v, t, tilesetData.name, atlasImage]);
             }
             resolve(tileImagesData);
         });
@@ -5729,6 +5910,8 @@ class WebGlEngine {
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                tilewidth = dtwidth,
+                tileheight = dtheight,
                 offsetDataItemsFullNum = layerData.data.length,
                 offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
                 setBoundaries = false, //renderLayer.setBoundaries,
@@ -5746,15 +5929,15 @@ class WebGlEngine {
             }
             
             for (let i = 0; i < tilesets.length; i++) {
-                const tileset = tilesets[i].data,
+                const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
-                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
-                    tilewidth = tileset.tilewidth,
-                    tileheight = tileset.tileheight,
-                    //atlasRows = tileset.imageheight / tileheight,
-                    atlasColumns = tileset.columns,
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tilesetData.name),
+                    tilesetwidth = tilesetData.tilewidth,
+                    tilesetheight = tilesetData.tileheight,
+                    //atlasRows = tilesetData.imageheight / tileheight,
+                    atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     //visibleCols = Math.ceil(canvasW / tilewidth),
@@ -5772,8 +5955,8 @@ class WebGlEngine {
                     texturesCoordsItemsNum = 12,
                     vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
                     texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum,
-                    cellSpacing = tileset.spacing,
-                    cellMargin = tileset.margin;
+                    cellSpacing = tilesetData.spacing,
+                    cellMargin = tilesetData.margin;
                 
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
@@ -5787,12 +5970,12 @@ class WebGlEngine {
                 if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                     pageData._setMapBoundaries();
                 }
-                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
+                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
                 
                 const verticesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum) : [],
                     texturesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum) : [];
                     
-                tileImagesData.push([verticesBufferData, texturesBufferData, tileset.name, atlasImage]);
+                tileImagesData.push([verticesBufferData, texturesBufferData, tilesetData.name, atlasImage]);
                 if (setBoundaries) {
                     pageData._mergeBoundaries();
                     renderLayer.setBoundaries = false;
@@ -6141,6 +6324,7 @@ const ERROR_CODES = {
     UNEXPECTED_EVENT_NAME: "UNEXPECTED_EVENT_NAME",
     WEBGL_ERROR: "WEBGL_ERROR",
     DRAW_PREPARE_ERROR: "DRAW_PREPARE_ERROR",
+    UNEXPECTED_TILE_ID: "UNEXPECTED_TILE_ID",
     UNEXPECTED_TOUCH_AREA: "UNEXPECTED TOUCH AREA",
     UNEXPECTED_METHOD_TYPE: "UNEXPECTED METHOD TYPE"
 };

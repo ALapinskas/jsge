@@ -34,3 +34,16 @@ adding addTileSet() calls:
     stage.iLoader.addTileSet(key, url, gui2);
 ```
 *added audio files is better to register in the AudioInterface, {@tutorial how_to_add_and_use_audio}
+
+### AtlasXML
+From jsge@1.3.0 iLoader supports AtlasXML files:
+```
+register() {
+    stage.iLoader.addAtlasXML(key, url);
+}
+
+start() {
+    // part of xml: <SubTexture name="tankBody_blue.png" x="257" y="42" width="38" height="38"/>
+    stage.draw.image(100, 300, 38, 38, "tankBody_blue");
+}
+```

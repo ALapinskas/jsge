@@ -44,6 +44,30 @@
                  "tileid":7
                 }],
          "id":0
+        }, 
+        {
+         "animation":[
+                {
+                 "duration":100,
+                 "tileid":3
+                }, 
+                {
+                 "duration":100,
+                 "tileid":4
+                }, 
+                {
+                 "duration":100,
+                 "tileid":5
+                }, 
+                {
+                 "duration":100,
+                 "tileid":6
+                }, 
+                {
+                 "duration":100,
+                 "tileid":7
+                }],
+         "id":3
         }],
  "tilewidth":64,
  "type":"tileset",

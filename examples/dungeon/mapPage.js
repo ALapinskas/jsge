@@ -53,6 +53,7 @@ export class MapPage extends GameStage {
         this.draw.tiledLayer("background", this.tilemapKey, false, this.sightView);
         this.draw.tiledLayer("walls", this.tilemapKey, true, this.sightView);
         this.draw.tiledLayer("decs", this.tilemapKey, false, this.sightView);
+        this.draw.tiledLayer("animated_decs", this.tilemapKey, false, this.sightView);
         
         this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.4)", Math.PI/8, 60);
         this.fireRange.setMask(this.sightView);
@@ -260,8 +261,8 @@ export class MapPage extends GameStage {
     #createFireball = () => {
         const f = this.draw.image(this.player.x, this.player.y, 16, 16, this.fireImagesKey, 406, {r:4});
         f.rotation = this.fireRange.rotation;
-        f.addAnimation(ANIMATION_FIREMOVE, [406, 407, 408, 409, 500], true, 5);
-        f.addAnimation(ANIMATION_REACHWALL, [116, 117, 118], false, 5);
+        f.addAnimation(ANIMATION_FIREMOVE, [{duration:100, id:406}, {duration:100, id:407}, {duration:100, id:408}, {duration:100, id:409}, {duration:100, id:500}], true);
+        f.addAnimation(ANIMATION_REACHWALL, [{duration:100, id:116}, {duration:100, id:117}, {duration:100, id:118}], false);
 
         f.emit(ANIMATION_FIREMOVE);
 

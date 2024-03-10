@@ -1,4 +1,4 @@
-import { AnimationEventImageObj } from "./AnimationEventImageObj.js";
+import { AnimationEvent } from "./AnimationEvent.js";
 import { CONST, ERROR_CODES } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
@@ -31,7 +31,7 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #emitter;
     /**
-     * @type {Map<string, AnimationEventImageObj>}
+     * @type {Map<string, AnimationEvent>}
      */
     #animations;
     /**
@@ -141,7 +141,7 @@ export class DrawImageObject extends DrawShapeObject {
      * Determines if image is animated or not
      * @type {boolean}
      */
-    get isAnimations() {
+    get hasAnimations() {
         return this.#animations.size > 0;
     }
 
@@ -167,7 +167,7 @@ export class DrawImageObject extends DrawShapeObject {
     _processActiveAnimations() {
         for (let animationEvent of this.#animations.values()) {
             if (animationEvent.isActive) {
-                animationEvent.iterateSprite();
+                animationEvent.iterateAnimationIndex();
                 this.#imageIndex = animationEvent.currentSprite;
             }
         }
@@ -220,19 +220,29 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * Adds image animations
      * @param { string } eventName -animation name
-     * @param { Array<number> } animationSpriteIndexes - animation image indexes
+     * @param { Array<number> | Array<{duration:number, id:number}> } animationSpriteIndexes - animation image indexes
      * @param { boolean } [isRepeated = false] - animation is cycled or not, cycled animation could be stopped only with stopRepeatedAnimation();
-     * @param { number } [cyclesPerFrame = 1] - determines on how many cycles should one frame be shown, the actual speed depends on gameOptions.render.minCycleTime
      */
-    addAnimation (eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame = 1) {
-        if (cyclesPerFrame < 1) {
-            Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " cyclesPerFrame should be >= 1");
+    addAnimation (eventName, animationSpriteIndexes, isRepeated) {
+        if (!this.#checkAnimationParams(animationSpriteIndexes)) {
+            Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " animationSpriteIndexes should be Array of indexes, or Array of objects {duration:number, id:number}");
         }
-        const animationEvent = new AnimationEventImageObj(eventName, animationSpriteIndexes, isRepeated, cyclesPerFrame);
+        const animationEvent = new AnimationEvent(eventName, animationSpriteIndexes, isRepeated);
         this.#animations.set(eventName, animationEvent);
         this.addEventListener(eventName, this.#activateAnimation);
     }
 
+    #checkAnimationParams (animationSpriteIndexes) {
+        let isCorrect = true;
+        animationSpriteIndexes.forEach(element => {
+            if (typeof element !== "number") {
+                if (typeof element.duration !== "number" || typeof element.id !== "number") {
+                    isCorrect = false;
+                }
+            }     
+        });
+        return isCorrect;
+    }
     #activateAnimation = (event) => {
         const animationEvent = this.#animations.get(event.type);
         animationEvent.activateAnimation();

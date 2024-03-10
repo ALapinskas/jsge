@@ -48,9 +48,17 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.4.0:
+    +: Tiled Editor: added animated tiles support
+    +: Examples: setting options switch screen
+    r: addAnimation(), removed cyclesPerFrame,  
+    r: addAnimation(), animationSpriteIndexes is now Array<number> | Array<{duration:number, id:number}>
+    f: tilesets.tiles property which has mix of animated and boundaries tiles
+    f: drawing layers, which use multiple different tilesets
+    f: world size infinite set for wasm and not optimized render
+
 1.3.1:
     r: isEllipseCircleIntersect() return type
-    f: loading bar overflow
 
 1.3.0:
     f: iRender error handling

@@ -344,7 +344,6 @@ function linktoExternal(longName, name) {
  * @param {object} members The members that will be used to create the sidebar.
  * @param {array<object>} members.classes
  * @param {array<object>} members.externals
- * @param {array<object>} members.globals
  * @param {array<object>} members.mixins
  * @param {array<object>} members.modules
  * @param {array<object>} members.namespaces
@@ -368,25 +367,6 @@ function buildNav(members) {
     nav += buildMemberNav(members.mixins, 'Mixins', seen, linkto);
     nav += buildMemberNav(members.tutorials, 'Tutorials', seenTutorials, linktoTutorial);
 
-    if (members.globals.length) {
-        globalNav = '';
-
-        members.globals.forEach(({kind, longname, name}) => {
-            if ( kind !== 'typedef' && !hasOwnProp.call(seen, longname) ) {
-                globalNav += `<li>${linkto(longname, name)}</li>`;
-            }
-            seen[longname] = true;
-        });
-
-        if (!globalNav) {
-            // turn the heading into a link so you can actually get to the global stage
-            nav += `<h3>${linkto('global', 'Global')}</h3>`;
-        }
-        else {
-            nav += `<h3>Global</h3><ul>${globalNav}</ul>`;
-        }
-    }
-
     return nav;
 }
 
@@ -401,7 +381,6 @@ exports.publish = (taffyData, opts, tutorials) => {
     let externals;
     let files;
     let fromDir;
-    let globalUrl;
     let indexUrl;
     let interfaces;
     let members;
@@ -431,9 +410,6 @@ exports.publish = (taffyData, opts, tutorials) => {
     // doesn't try to hand them out later
     indexUrl = helper.getUniqueFilename('index');
     // don't call registerLink() on this one! 'index' is also a valid longname
-
-    globalUrl = helper.getUniqueFilename('global');
-    helper.registerLink('global', globalUrl);
 
     // set up templating
     view.layout = conf.default.layoutFile ?
@@ -606,8 +582,6 @@ exports.publish = (taffyData, opts, tutorials) => {
     if (outputSourceFiles) {
         generateSourceFiles(sourceFiles, opts.encoding);
     }
-
-    if (members.globals.length) { generate('Global', [{kind: 'globalobj'}], globalUrl); }
 
     // index stage displays information from package.json and lists files
     files = find({kind: 'file'});

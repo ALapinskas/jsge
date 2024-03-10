@@ -50,3 +50,10 @@ SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
   on <a href="https://codepen.io">CodePen</a>.</span>
 </p>
 <script async src="https://cpwebassets.codepen.io/assets/embed/ei.js"></script>
+
+### Boundaries and animations
+From jsge@1.4.0 added support: 
+- [Tiled object collisions(boundaries)]{@link https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-collision-editor} - different boundaries shapes: polygons, ellipses, dots
+- [Tiled animations]{@link https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-animation-editor}
+
+Engine will process them automatically when tiledLayer is created.

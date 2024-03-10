@@ -599,17 +599,22 @@ export class WebGlEngine {
             drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
             shapeMaskId = renderLayer._maskId;
 
-        let verticesNumber = 0;
+        let verticesNumber = 0,
+            isTextureBind = false;
         for (let i = 0; i < renderLayerData.length; i++) {
             const data = renderLayerData[i],
                 vectors = data[0],
                 textures = data[1],
                 image_name = data[2],
                 image = data[3];
-            // a workaround for renderlayers.tilesets.length > 1
-            // work correctly only if layer contains textures
-            // from single tileset, otherwise it will fail
+            // if layer use multiple tilesets
             if (vectors.length > 0 && textures.length > 0) {
+                // need to have additional draw call for each new texture added
+                // probably it could be combined in one draw call if multiple textures 
+                // could be used in one draw call
+                if (isTextureBind) {
+                    await this._render(verticesNumber, gl.TRIANGLES);
+                }
                 // set the resolution
                 gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
                 gl.uniform2f(translationLocation,translation[0], translation[1]);
@@ -625,7 +630,7 @@ export class WebGlEngine {
                     type = gl.FLOAT, // data is 32bit floats
                     normalize = false,
                     stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                    offset = verticesNumber * 4; // start of beginning of the buffer
+                    offset = 0  // verticesNumber * 4; // start of beginning of the buffer
                 gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 
                 //textures buffer
@@ -636,10 +641,11 @@ export class WebGlEngine {
                 gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
 
                 let textureStorage = renderLayer._textureStorages[i];
+                
                 if (!textureStorage) {
                     textureStorage = new TextureStorage(gl.createTexture(), i);
                     renderLayer._setTextureStorage(i, textureStorage);
-                } 
+                }
                 if (textureStorage._isTextureRecalculated === true) { 
                     this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
                     textureStorage._isTextureRecalculated = false;
@@ -648,10 +654,11 @@ export class WebGlEngine {
                 }
                 gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
                 gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
-                verticesNumber += vectors.length / 2;
+                verticesNumber = vectors.length / 2;
                 if (shapeMaskId) {
                     gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
                 }
+                isTextureBind = true;
             }
         }
         return Promise.resolve([verticesNumber, gl.TRIANGLES]);
@@ -862,19 +869,19 @@ export class WebGlEngine {
             }
             
             for (let i = 0; i < tilesets.length; i++) {
-                const tileset = tilesets[i].data,
+                const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
-                    tilesetwidth = tileset.tilewidth,
-                    tilesetheight = tileset.tileheight,
+                    tilesetwidth = tilesetData.tilewidth,
+                    tilesetheight = tilesetData.tileheight,
                     atlasImage = tilesetImages[i],
                     //atlasWidth = atlasImage.width,
                     //atlasHeight = atlasImage.height,
-                    atlasWidth = tileset.imagewidth,
-                    atlasHeight = tileset.imageheight,
+                    atlasWidth = tilesetData.imagewidth,
+                    atlasHeight = tilesetData.imageheight,
                     //atlasRows = atlasHeight / tileheight,
-                    atlasColumns = tileset.columns,
+                    atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     worldW = tilewidth * layerCols,
@@ -887,15 +894,18 @@ export class WebGlEngine {
                     screenRows = worldH > canvasH ? Math.ceil(canvasH / tileheight) + 1 : layerRows,
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
-                    cellSpacing = tileset.spacing,
-                    cellMargin = tileset.margin,
+                    cellSpacing = tilesetData.spacing,
+                    cellMargin = tilesetData.margin,
+
+                    hasAnimations = tilesetData._hasAnimations,
 
                     verticesBufferData = [],
                     texturesBufferData = [],
                     
-                    // if tileset contains boundaries
-                    tilesetBoundaries = tileset.tiles;
-
+                    // additional property which is set in DrawTiledLayer
+                    hasBoundaries = tilesetData._hasBoundaries,
+                    tilesetBoundaries = tilesetData._boundaries; // Map
+                
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                     pageData._setWorldDimensions(worldW, worldH);
@@ -913,12 +923,22 @@ export class WebGlEngine {
                     let currentRowIndexes = new Map();
                     for (let col = 0; col < screenCols; col++) {
                         let tile = layerData.data[mapIndex];
-                        
+
                         if ((tile >= firstgid) && (tile < nextgid)) {
                             const mapPosX = col * dtwidth - moduleLeft,
                                 mapPosY = row * dtheight - moduloTop;
 
+                            // actual tile index
                             tile -= firstgid;
+                            // switch if animations are set
+                            if (hasAnimations) {
+                                const activeTile = tilesetData._animations.get(tile);
+                                if (typeof activeTile !== "undefined") {
+                                    tile = activeTile;
+                                }   
+                            }
+
+                            // calculate map position and atlas position
                             const colNum = tile % atlasColumns,
                                 rowNum = Math.floor(tile / atlasColumns),
                                 atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
@@ -947,13 +967,13 @@ export class WebGlEngine {
                                 texX2, texY2
                             );
                             if (setBoundaries) {
-                                // if boundary is set in tileset
+                                // if boundary is set in tilesetData
                                 let isBoundaryPreset = false;
-                                if (tilesetBoundaries && tilesetBoundaries.length > 0) {
-                                    const tilesetBoundary = tilesetBoundaries.find((boundary) => boundary.id === tile);
+                                if (hasBoundaries && tilesetBoundaries.size > 0) {
+                                    const tilesetBoundary = tilesetBoundaries.get(tile);
                                     if (tilesetBoundary) {
                                         isBoundaryPreset = true;
-                                        const objectGroup = tilesetBoundary.objectgroup,
+                                        const objectGroup = tilesetBoundary,
                                             objects = objectGroup.objects;
                                             
                                         objects.forEach((object) => {
@@ -961,7 +981,7 @@ export class WebGlEngine {
                                                 baseY = mapPosY + object.y,
                                                 rotation = object.rotation;
                                             if (rotation !== 0) {
-                                                Warning("tileset.tiles.rotation property is not supported yet");
+                                                Warning("tilesetData.tiles.rotation property is not supported yet");
                                             }
                                             if (object.polygon) {
                                                 object.polygon.forEach(
@@ -1143,8 +1163,8 @@ export class WebGlEngine {
                     }
                     mapIndex += skipColsRight;
                 }
-                //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tileset.name, renderLayer._maskId);
-                tileImagesData.push([new Float32Array(verticesBufferData), new Float32Array(texturesBufferData), tileset.name, atlasImage]);
+                //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tilesetData.name, renderLayer._maskId);
+                tileImagesData.push([new Float32Array(verticesBufferData), new Float32Array(texturesBufferData), tilesetData.name, atlasImage]);
             }
             
             if (setBoundaries) {
@@ -1169,6 +1189,8 @@ export class WebGlEngine {
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                tilewidth = dtwidth,
+                tileheight = dtheight,
                 setBoundaries = renderLayer.setBoundaries,
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions,
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
@@ -1180,31 +1202,27 @@ export class WebGlEngine {
                 reject();
             }
             for (let i = 0; i <= tilesets.length - 1; i++) {
-                const tileset = tilesets[i].data,
+                const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
-                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
-                    tilewidth = tileset.tilewidth,
-                    tileheight = tileset.tileheight,
-                    //atlasRows = tileset.imageheight / tileheight,
-                    //atlasColumns = tileset.imagewidth / tilewidth,
-                    atlasColumns = tileset.columns,
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tilesetData.name),
+                    tilesetwidth = tilesetData.tilewidth,
+                    tilesetheight = tilesetData.tileheight,
+                    //atlasRows = tilesetData.imageheight / tileheight,
+                    //atlasColumns = tilesetData.imagewidth / tilewidth,
+                    atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     worldW = tilewidth * layerCols,
                     worldH = tileheight * layerRows,
                     visibleCols = Math.ceil(canvasW / tilewidth),
                     visibleRows = Math.ceil(canvasH / tileheight),
-                    offsetCols = layerCols - visibleCols,
-                    offsetRows = layerRows - visibleRows,
-                    moduloTop = yOffset % tileheight,
-                    moduloLeft = xOffset % tilewidth,
                     atlasImage = tilesetImages[i],
                     atlasWidth = atlasImage.width,
                     atlasHeight = atlasImage.height,
-                    cellSpacing = tileset.spacing,
-                    cellMargin = tileset.margin;
+                    cellSpacing = tilesetData.spacing,
+                    cellMargin = tilesetData.margin;
                 
                 let mapIndex = 0,
                     verticesBufferData = [],
@@ -1223,16 +1241,16 @@ export class WebGlEngine {
                             tile -= firstgid;
                             const colNum = tile % atlasColumns,
                                 rowNum = Math.floor(tile / atlasColumns),
-                                atlasPosX = colNum * tilewidth + (colNum * cellSpacing),
-                                atlasPosY = rowNum * tileheight + (rowNum * cellSpacing),
+                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
+                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing),
                                 vecX1 = col * dtwidth - xOffset,
                                 vecY1 = row * dtheight - yOffset,
-                                vecX2 = vecX1 + tilewidth,
-                                vecY2 = vecY1 + tileheight,
+                                vecX2 = vecX1 + tilesetwidth,
+                                vecY2 = vecY1 + tilesetheight,
                                 texX1 = 1 / atlasWidth * atlasPosX,
                                 texY1 = 1 / atlasHeight * atlasPosY,
-                                texX2 = texX1 + (1 / atlasWidth * tilewidth),
-                                texY2 = texY1 + (1 / atlasHeight * tileheight);
+                                texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
+                                texY2 = texY1 + (1 / atlasHeight * tilesetheight);
                                 
                             verticesBufferData.push(
                                 vecX1, vecY1,
@@ -1256,7 +1274,7 @@ export class WebGlEngine {
                 }
                 const v = new Float32Array(verticesBufferData);
                 const t = new Float32Array(texturesBufferData);
-                tileImagesData.push([v, t, tileset.name, atlasImage]);
+                tileImagesData.push([v, t, tilesetData.name, atlasImage]);
             }
             resolve(tileImagesData);
         });
@@ -1275,6 +1293,8 @@ export class WebGlEngine {
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                tilewidth = dtwidth,
+                tileheight = dtheight,
                 offsetDataItemsFullNum = layerData.data.length,
                 offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
                 setBoundaries = false, //renderLayer.setBoundaries,
@@ -1292,15 +1312,15 @@ export class WebGlEngine {
             }
             
             for (let i = 0; i < tilesets.length; i++) {
-                const tileset = tilesets[i].data,
+                const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
-                    //tilesetImages = this.iLoader.getTilesetImageArray(tileset.name),
-                    tilewidth = tileset.tilewidth,
-                    tileheight = tileset.tileheight,
-                    //atlasRows = tileset.imageheight / tileheight,
-                    atlasColumns = tileset.columns,
+                    //tilesetImages = this.iLoader.getTilesetImageArray(tilesetData.name),
+                    tilesetwidth = tilesetData.tilewidth,
+                    tilesetheight = tilesetData.tileheight,
+                    //atlasRows = tilesetData.imageheight / tileheight,
+                    atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     //visibleCols = Math.ceil(canvasW / tilewidth),
@@ -1318,8 +1338,8 @@ export class WebGlEngine {
                     texturesCoordsItemsNum = 12,
                     vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
                     texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum,
-                    cellSpacing = tileset.spacing,
-                    cellMargin = tileset.margin;
+                    cellSpacing = tilesetData.spacing,
+                    cellMargin = tilesetData.margin;
                 
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
@@ -1333,12 +1353,12 @@ export class WebGlEngine {
                 if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                     pageData._setMapBoundaries();
                 }
-                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilewidth, tileheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
+                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
                 
                 const verticesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum) : [],
                     texturesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum) : [];
                     
-                tileImagesData.push([verticesBufferData, texturesBufferData, tileset.name, atlasImage]);
+                tileImagesData.push([verticesBufferData, texturesBufferData, tilesetData.name, atlasImage]);
                 if (setBoundaries) {
                     pageData._mergeBoundaries();
                     renderLayer.setBoundaries = false;

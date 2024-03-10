@@ -265,7 +265,7 @@ export class IRender {
                     i--;
                     continue;
                 }
-                if (object.isAnimations) {
+                if (object.hasAnimations) {
                     object._processActiveAnimations();
                 }
                 const promise = await this._bindRenderObject(object)
