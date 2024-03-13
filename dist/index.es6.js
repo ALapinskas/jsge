@@ -159,7 +159,7 @@ class DrawCircleObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.
     constructor(x, y, radius, bgColor) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE, x, y, bgColor);
         this.#radius = radius;
-        this.#vertices = this._calculateConusVertices(radius);
+        this.#vertices = this._interpolateConus(radius);
     }
 
     /**
@@ -230,7 +230,7 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
         this.#radius = radius;
         this.#angle = angle;
         this.#fade_min = fade;
-        this.#vertices = this._calculateConusVertices(radius, angle);
+        this.#vertices = this._interpolateConus(radius, angle);
     }
 
     /**
@@ -1194,7 +1194,7 @@ class DrawShapeObject {
      * @returns {Array<number>}
      * @ignore
      */
-    _calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/14) {
+    _interpolateConus(radius, angle = 2*Math.PI, step = Math.PI/14) {
         let conusPolygonCoords = [0, 0];
 
         for (let r = 0; r <= angle; r += step) {
@@ -1280,7 +1280,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     /**
      * @type {HTMLCanvasElement}
      */
-    #textureCanvas;
+    #textureCanvas = document.createElement("canvas");
 
     /**
      * @type {TextureStorage}
@@ -1304,8 +1304,8 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
      * @type {Rectangle}
      */
     get boundariesBox() {
-        const width = this.textMetrics ? this.textMetrics.width : 300,
-            height = this.textMetrics ? this.textMetrics.actualBoundingBoxAscent + /*this.textMetrics.actualBoundingBoxDescent*/ 5: 30;
+        const width = this.textMetrics ? Math.floor(this.textMetrics.width) : 300,
+            height = this.textMetrics ? Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent): 30;
         return new _Primitives_js__WEBPACK_IMPORTED_MODULE_1__.Rectangle(this.x, this.y - height, width, height);
     }
 
@@ -1438,13 +1438,9 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
      * @returns {void}
      */
     #calculateCanvasTextureAndMeasurements() {
-        const canvas = document.createElement("canvas"),
-            ctx = canvas.getContext("2d");
-        if (ctx) { 
-            if (this.#textureCanvas) {
-                // remove old one
-                this.#textureCanvas.remove();
-            }
+        const ctx = this.#textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
+        if (ctx) {
+            //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
             const boxWidth = this.boundariesBox.width, 
@@ -1452,8 +1448,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
             
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;
-            // writing texture unit without cleanup the canvas, 
-            // case text artifacts in chrome
+            // after canvas resize, have to cleanup and set the font again
             ctx.clearRect(0, 0, boxWidth, boxHeight);
             ctx.font = this.font;
             ctx.textBaseline = "bottom";// bottom
@@ -1466,10 +1461,13 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
                 ctx.strokeText(this.text, 0, boxHeight);
             }
             
-            this.#textureCanvas = canvas;
             if (this.#textureStorage) {
                 this.#textureStorage._isTextureRecalculated = true;
             }
+
+            // debug canvas
+            // this.#textureCanvas.style.position = "absolute";
+            // document.body.appendChild(this.#textureCanvas);
             
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_3__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
@@ -4442,7 +4440,6 @@ const imgFragmentShader = `
 
     //texCoords passed in from the vertex shader
     varying vec2 v_texCoord;
-
     void main() {
         vec4 color = texture2D(u_image, v_texCoord);
         gl_FragColor = color;
@@ -5068,7 +5065,7 @@ class WebGlEngine {
             renderObject._textureStorage = textureStorage;
         }
         if (textureStorage._isTextureRecalculated === true) {
-            this.#updateWebGlTexture(gl, textureStorage._texture, renderObject._textureCanvas);
+            this.#updateTextWebGlTexture(gl, textureStorage._texture, renderObject._textureCanvas);
             textureStorage._isTextureRecalculated = false;
         } else {
             this.#bindTexture(gl, textureStorage._texture);
@@ -5097,7 +5094,7 @@ class WebGlEngine {
             image_name = renderObject.key,
             shapeMaskId = renderObject._maskId,
             spacing = renderObject.spacing,
-            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
             scale = [1, 1];
         let imageX = 0,
             imageY = 0,
@@ -6093,14 +6090,23 @@ class WebGlEngine {
     #updateWebGlTexture(gl, texture, textureImage, textureNum = 0, useMipMaps = false) {
         this.#bindTexture(gl, texture, textureNum);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
-        // already default value
+        // LINEAR filtering is better for images and tiles, but for texts it produces a small blur
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        // for textures not power of 2 (texts for example)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+    }
+
+    #updateTextWebGlTexture(gl, texture, textureImage, textureNum = 0) {
+        this.#bindTexture(gl, texture, textureNum);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
+        // LINEAR filtering is better for images and tiles, but for texts it produces a small blur
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         // for textures not power of 2 (texts for example)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST);
-        if (useMipMaps)
-            gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     }
 
     #bindTexture(gl, texture, textureNum = 0) {

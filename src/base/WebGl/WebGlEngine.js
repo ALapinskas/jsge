@@ -451,7 +451,7 @@ export class WebGlEngine {
             renderObject._textureStorage = textureStorage;
         }
         if (textureStorage._isTextureRecalculated === true) {
-            this.#updateWebGlTexture(gl, textureStorage._texture, renderObject._textureCanvas);
+            this.#updateTextWebGlTexture(gl, textureStorage._texture, renderObject._textureCanvas);
             textureStorage._isTextureRecalculated = false;
         } else {
             this.#bindTexture(gl, textureStorage._texture);
@@ -480,7 +480,7 @@ export class WebGlEngine {
             image_name = renderObject.key,
             shapeMaskId = renderObject._maskId,
             spacing = renderObject.spacing,
-            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
             scale = [1, 1];
         let imageX = 0,
             imageY = 0,
@@ -1476,14 +1476,23 @@ export class WebGlEngine {
     #updateWebGlTexture(gl, texture, textureImage, textureNum = 0, useMipMaps = false) {
         this.#bindTexture(gl, texture, textureNum);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
-        // already default value
+        // LINEAR filtering is better for images and tiles, but for texts it produces a small blur
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        // for textures not power of 2 (texts for example)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+    }
+
+    #updateTextWebGlTexture(gl, texture, textureImage, textureNum = 0) {
+        this.#bindTexture(gl, texture, textureNum);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
+        // LINEAR filtering is better for images and tiles, but for texts it produces a small blur
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         // for textures not power of 2 (texts for example)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, useMipMaps ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST);
-        if (useMipMaps)
-            gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     }
 
     #bindTexture(gl, texture, textureNum = 0) {

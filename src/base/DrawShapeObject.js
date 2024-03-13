@@ -218,7 +218,7 @@ export class DrawShapeObject {
      * @returns {Array<number>}
      * @ignore
      */
-    _calculateConusVertices(radius, angle = 2*Math.PI, step = Math.PI/14) {
+    _interpolateConus(radius, angle = 2*Math.PI, step = Math.PI/14) {
         let conusPolygonCoords = [0, 0];
 
         for (let r = 0; r <= angle; r += step) {

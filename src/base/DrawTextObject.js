@@ -19,7 +19,7 @@ export class DrawTextObject extends DrawShapeObject {
     /**
      * @type {HTMLCanvasElement}
      */
-    #textureCanvas;
+    #textureCanvas = document.createElement("canvas");
 
     /**
      * @type {TextureStorage}
@@ -43,8 +43,8 @@ export class DrawTextObject extends DrawShapeObject {
      * @type {Rectangle}
      */
     get boundariesBox() {
-        const width = this.textMetrics ? this.textMetrics.width : 300,
-            height = this.textMetrics ? this.textMetrics.actualBoundingBoxAscent + /*this.textMetrics.actualBoundingBoxDescent*/ 5: 30;
+        const width = this.textMetrics ? Math.floor(this.textMetrics.width) : 300,
+            height = this.textMetrics ? Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent): 30;
         return new Rectangle(this.x, this.y - height, width, height);
     }
 
@@ -177,13 +177,9 @@ export class DrawTextObject extends DrawShapeObject {
      * @returns {void}
      */
     #calculateCanvasTextureAndMeasurements() {
-        const canvas = document.createElement("canvas"),
-            ctx = canvas.getContext("2d");
-        if (ctx) { 
-            if (this.#textureCanvas) {
-                // remove old one
-                this.#textureCanvas.remove();
-            }
+        const ctx = this.#textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
+        if (ctx) {
+            //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
             const boxWidth = this.boundariesBox.width, 
@@ -191,8 +187,7 @@ export class DrawTextObject extends DrawShapeObject {
             
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;
-            // writing texture unit without cleanup the canvas, 
-            // case text artifacts in chrome
+            // after canvas resize, have to cleanup and set the font again
             ctx.clearRect(0, 0, boxWidth, boxHeight);
             ctx.font = this.font;
             ctx.textBaseline = "bottom";// bottom
@@ -205,10 +200,13 @@ export class DrawTextObject extends DrawShapeObject {
                 ctx.strokeText(this.text, 0, boxHeight);
             }
             
-            this.#textureCanvas = canvas;
             if (this.#textureStorage) {
                 this.#textureStorage._isTextureRecalculated = true;
             }
+
+            // debug canvas
+            // this.#textureCanvas.style.position = "absolute";
+            // document.body.appendChild(this.#textureCanvas);
             
         } else {
             Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");

@@ -32,7 +32,7 @@ export class DrawConusObject extends DrawShapeObject {
         this.#radius = radius;
         this.#angle = angle;
         this.#fade_min = fade;
-        this.#vertices = this._calculateConusVertices(radius, angle);
+        this.#vertices = this._interpolateConus(radius, angle);
     }
 
     /**

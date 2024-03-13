@@ -43,7 +43,7 @@ function createOptionsBlock() {
     const webGLErrorsWrap = document.createElement("div");
     webGLErrorsWrap.style.marginBottom = "20px";
     const webGLErrorsLabel = document.createElement("label");
-    webGLErrorsLabel.innerText = "Show WebGl Errors";
+    webGLErrorsLabel.innerText = "Output WebGl Errors";
     const webGLErrorsCheckbox = document.createElement("input");
     webGLErrorsCheckbox.setAttribute('type', 'checkbox');
     webGLErrorsCheckbox.name = "webGLErrors";

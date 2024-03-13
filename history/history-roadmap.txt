@@ -48,6 +48,11 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.4.1:
+    f: fixed texts box size measurements
+    f: texts artifacts
+    f: textures images and tiles filtering NEAREST -> LINEAR
+    
 1.4.0:
     +: Tiled Editor: added animated tiles support
     +: Examples: setting options switch screen

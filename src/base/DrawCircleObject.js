@@ -23,7 +23,7 @@ export class DrawCircleObject extends DrawShapeObject {
     constructor(x, y, radius, bgColor) {
         super(CONST.DRAW_TYPE.CIRCLE, x, y, bgColor);
         this.#radius = radius;
-        this.#vertices = this._calculateConusVertices(radius);
+        this.#vertices = this._interpolateConus(radius);
     }
 
     /**
