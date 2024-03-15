@@ -38,6 +38,7 @@ export class StartPage extends GameStage {
         this.iLoader.addSpineBinary(SPINE.SpineGoblinsBinary, "./spine/spine-assets/goblins-pro.skel");
 
         this.iLoader.addImage(SPINE.SpineTexture, "./spine/spine-assets/spineboy-pma.png");
+        this.iLoader.addEventListener("error", this.#loaderErrorHandler);
     }
 
     init() {
@@ -71,6 +72,7 @@ export class StartPage extends GameStage {
         canvas.addEventListener("mousemove", this.#mouseHoverEvent);            
         canvas.addEventListener("click", this.#mouseClickEvent);
         document.addEventListener("keydown", this.pressKeyAction);
+        
     }
 
     #mouseHoverEvent = (event) => {
@@ -178,6 +180,11 @@ export class StartPage extends GameStage {
             this.iSystem.startGameStage(TANKS_PAGE);
         }
     };
+
+    #loaderErrorHandler = (error) => {
+        console.log("--->>>>error");
+        console.log(error);
+    }
 
     unregisterEventListeners() {
         const canvas = this.canvasHtmlElement;

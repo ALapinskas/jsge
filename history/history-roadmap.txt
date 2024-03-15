@@ -48,6 +48,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.4.2:
+    r: updated assetsm to version 0.1.7
+    r: refactored class scheme according uml rules
+
 1.4.1:
     f: fixed texts box size measurements
     f: texts artifacts

@@ -9,17 +9,21 @@ const PROGRESS_EVENT_TYPE = {
 }
 
 const ERROR_MESSAGES = {
+    // Critical
+    LOADER_NOT_REGISTERED: " loader is not registered.",
     RECURSION_ERROR: "Too much recursion. Stop iteration.",
-    ATLAS_IMAGE_LOADING_FAILED: "Can't load atlas image ",
-    TILESET_LOADING_FAILED: "Can't load related tileset ",
-    TILEMAP_LOADING_FAILED: "Can't load tilemap ",
-    AUDIO_LOADING_FAILED: "Can't load audio ",
     NOT_CORRECT_METHOD_TYPE: "uploadMethod should be instance of Promise and return upload result value",
+    XML_FILE_EXTENSION_INCORRECT: " AtlasXML file extension is incorrect, only .xml file supported",
+    TILESET_FILE_EXTENSION_INCORRECT: " tileset file extension is not correct, only .tsj or .json files are supported",
+    TILEMAP_FILE_EXTENSION_INCORRECT: " tilemap file extension is not correct, only .tmj or .json files are supported",
+    INPUT_PARAMS_ARE_INCORRECT: " fileKey and url should be provided",
+    // Non critical
+    ATLAS_IMAGE_LOADING_FAILED: "Error loading atlas image ",
+    TILESET_LOADING_FAILED: "Error loading related tileset ",
+    TILEMAP_LOADING_FAILED: "Error loading tilemap ",
+    AUDIO_LOADING_FAILED: "Error loading audio ",
+    IMAGE_LOADING_FAILED: "Error loading image ",
     XML_FORMAT_INCORRECT: " XML format is not correct.",
-    XML_FILE_EXTENSION_INCORRECT: "Only xml files are supported",
-    TILESET_FILE_EXTENSION_INCORRECT: "Related Tileset file extension is not correct, only .tsj or .json files are supported",
-    TILEMAP_FILE_EXTENSION_INCORRECT: "Tilemap file extension is not correct, only .tmj or .json files are supported",
-    INPUT_PARAMS_ARE_INCORRECT: "fileKey and url should be provided"
 }
 
 class Loader {
@@ -61,14 +65,14 @@ class Loader {
 
     /**
      * 
-     * @param {*} uploadResult 
+     * @param {null | Object} uploadResult 
      * @param {string} key 
      * @returns {Promise<void>}
      */
     #processUploadResult = (uploadResult, key) => {
         return new Promise((resolve,reject) => {
-            if(!uploadResult || uploadResult.length === 0 ) {
-                Warning("uploadMethod for " + this.#fileType + " should return Promise with upload value");
+            if ( !uploadResult && uploadResult !== null ) {
+                Warning("AssetsManager: uploadMethod for " + this.#fileType + " returns incorrect value");
             }
             this.#addUploadResultValue(key, uploadResult);
             this.#removeUploadFromQueue(key);
@@ -98,7 +102,7 @@ class Loader {
 
     _addFile = (key, paramsArr) => {
         if (this.#loadingQueue.has(key)) {
-            Warning("File " + this.#fileType + " with key " + key + " is already added");
+            Warning("AssetsManager: File " + this.#fileType + " with key " + key + " is already added");
         }
         this.#loadingQueue.set(key, paramsArr);
     }
@@ -198,13 +202,13 @@ export default class AssetsManager {
             } else {
                 loadCount++;
                 if (loadCount > this.#MAX_LOADING_CYCLES) {
+                    const err = new Error(ERROR_MESSAGES.RECURSION_ERROR);
+                    this.#dispatchLoadingError(err);
                     return Promise.reject(new Error(ERROR_MESSAGES.RECURSION_ERROR));
                 } else {
                     return this.#uploadFilesRecursive(loadCount);
                 }
             }
-        }).catch((err) => {
-            return Promise.reject(err);
         });
     }
 
@@ -223,10 +227,10 @@ export default class AssetsManager {
                     if (result.status === "rejected") {
                         const error = result.reason;
                         // incorrect method is a critical issue
-                        if (this.#isUploadErrorCritical(error)){
+                        if (this.#isUploadErrorCritical(error)) {
                             reject(error);
                         } else {
-                            Warning(error);
+                            Warning("AssetsManager: " + error.message);
                             this.#dispatchLoadingError(error);
                         }
                     }
@@ -238,7 +242,7 @@ export default class AssetsManager {
 
     addEventListener(type, fn, ...args) {
         if (!PROGRESS_EVENT_TYPE[type]) {
-            Warning("Event type should be one of the ProgressEvent.type");
+            Warning("AssetsManager: Event type should be one of the ProgressEvent.type");
         } else {
             this.#emitter.addEventListener(type, fn, ...args);
         }   
@@ -271,8 +275,9 @@ export default class AssetsManager {
                     return Promise.resolve(atlas);
                 } else {
                     const err = new Error(key + ERROR_MESSAGES.XML_FORMAT_INCORRECT);
-                
-                    return Promise.reject(err);
+                    this.#dispatchLoadingError(err);
+                    return Promise.resolve(err);
+                    // return Promise.reject(err);
                 }
             });
     }
@@ -323,7 +328,8 @@ export default class AssetsManager {
             img.onerror = () => {
                 const err = new Error(ERROR_MESSAGES.ATLAS_IMAGE_LOADING_FAILED + url);
                 this.#dispatchLoadingError(err);
-                reject(err);
+                resolve(null);
+                //reject(err);
             };
             img.src = url;
         });
@@ -350,7 +356,9 @@ export default class AssetsManager {
                 return Promise.resolve(data);
             }).catch(() => {
                 const err = new Error(ERROR_MESSAGES.TILESET_LOADING_FAILED + url);
-                return Promise.reject(err);
+                this.#dispatchLoadingError(err);
+                return Promise.resolve(null);
+                //return Promise.reject(err);
             });
     }
 
@@ -400,7 +408,8 @@ export default class AssetsManager {
                     err = new Error(ERROR_MESSAGES.TILEMAP_LOADING_FAILED + url);
                 }
                 this.#dispatchLoadingError(err);
-                return Promise.reject(err);
+                return Promise.resolve(null);
+                //return Promise.reject(err);
             });
     }
 
@@ -411,7 +420,7 @@ export default class AssetsManager {
      * @returns {Promise}
      */
     _loadAudio = (key, url) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const audio = new Audio(url);
             
             audio.addEventListener("loadeddata", () => {
@@ -422,7 +431,8 @@ export default class AssetsManager {
             audio.addEventListener("error", () => {
                 const err = new Error(ERROR_MESSAGES.AUDIO_LOADING_FAILED + url);
                 this.#dispatchLoadingError(err);
-                reject(err);
+                resolve(null);
+                //reject(err);
             });
         });
     }
@@ -454,7 +464,8 @@ export default class AssetsManager {
                 img.onerror = () => {
                     const err = new Error(ERROR_MESSAGES.IMAGE_LOADING_FAILED + url);
                     this.#dispatchLoadingError(err);
-                    reject(err);
+                    resolve(null);
+                    // reject(err);
                 };
                 img.src = url;
             }
@@ -465,7 +476,7 @@ export default class AssetsManager {
         if (url.includes(".xml")) {
             return;
         } else {
-            Exception(ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT);
+            Exception(url + ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT);
         }
     }
 
@@ -473,7 +484,7 @@ export default class AssetsManager {
         if (url.includes(".tsj") || url.includes(".json")) {
             return;
         } else {
-            Exception(ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT);
+            Exception(url + ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT);
         }
     }
 
@@ -481,12 +492,17 @@ export default class AssetsManager {
         if (url.includes(".tmj") || url.includes(".json")) {
             return;
         } else {
-            Exception(ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT);
+            Exception(url + ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT);
         }
     }
 
     #isUploadErrorCritical(error) {
-        return error.message.includes(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE);
+        return error.message.includes(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE)
+            || error.message.includes(ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.INPUT_PARAMS_ARE_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.LOADER_NOT_REGISTERED);
     }
 
     /**
@@ -514,10 +530,10 @@ export default class AssetsManager {
     addFile(fileType, fileKey, url, ...args) {
         const loader = this.#registeredLoaders.get(fileType);
         if (loader) {
-            this.#checkInputParams(fileKey, url);
+            this.#checkInputParams(fileKey, url, fileType);
             loader._addFile(fileKey, [url, ...args]);
         } else {
-            Exception("Loader for " + fileType + " is not registered!");
+            Exception(fileType + ERROR_MESSAGES.LOADER_NOT_REGISTERED);
         }
 
     }
@@ -540,13 +556,13 @@ export default class AssetsManager {
         }
     }
 
-    #checkInputParams(fileKey, url) {
+    #checkInputParams(fileKey, url, fileType) {
         const errorMessage = ERROR_MESSAGES.INPUT_PARAMS_ARE_INCORRECT;
         if (!fileKey || fileKey.trim().length === 0) {
-            Exception(errorMessage);
+            Exception("add" + fileType + "()" + errorMessage);
         }
         if (!url || url.trim().length === 0) {
-            Exception(errorMessage);
+            Exception("add" + fileType + "()" + errorMessage);
         }
         return;
     }
@@ -567,7 +583,8 @@ export default class AssetsManager {
     }
 
     #dispatchLoadingError(error) {
-        this.#emitter.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.error, { error }));
+        Warning("AssetsManger: " + error.message);
+        this.#emitter.dispatchEvent(new ErrorEvent(PROGRESS_EVENT_TYPE.error, { error }));
     }
 }
 
