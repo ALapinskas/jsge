@@ -6,6 +6,7 @@ import { MapPage as Racing } from "./racing/mapPage.js";
 import { SpinePage } from "./spine/spinePage.js";
 import { BigMap } from "./big_map/bigMap.js";
 import { Tanks } from "./tanks/tanks.js";
+import { Strategy } from "./strategy/strategy.js";
 
 import { CustomWebGlTestPage } from "./testCustomWebGl/index.js";
 import { CustomDrawObject, createCustomDrawObjectInstance, drawCustomObject } from "./testCustomWebGl/TestDrawObject.js";
@@ -17,6 +18,7 @@ const START_PAGE_NAME = "start",
     RACING_GAME = "racing",
     SPINE_GAME = "spine",
     BIG_MAP = "big_map",
+    STRATEGY_GAME = "strategy_game",
     CUSTOM_WEBGL_PAGE = "custom_webgl",
     TANKS_PAGE = "tanks";
     
@@ -213,6 +215,7 @@ function runApp(settings) {
     app.registerStage(RACING_GAME, Racing);
     app.registerStage(SPINE_GAME, SpinePage);
     app.registerStage(BIG_MAP, BigMap);
+    app.registerStage(STRATEGY_GAME, Strategy);
     app.registerStage(CUSTOM_WEBGL_PAGE, CustomWebGlTestPage);
     app.registerStage(TANKS_PAGE, Tanks);
     

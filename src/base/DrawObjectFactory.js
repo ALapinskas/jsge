@@ -8,6 +8,8 @@ import { DrawCircleObject } from "./DrawCircleObject.js";
 import { DrawTiledLayer } from "./DrawTiledLayer.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { GameStageData } from "./GameStageData.js";
+import { Exception } from "./Exception.js";
+import { ERROR_CODES } from "../constants.js";
 
 /**
  * Creates drawObjects instances.<br>
@@ -115,9 +117,13 @@ export class DrawObjectFactory {
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
-        const image = this.#iLoader.getImage(key),
+        const image = this.#iLoader.getImage(key);
+
+        if (!image) {
+            Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + key);
+        }
             
-            renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
+        const renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
         
         this.#addObjectToPageData(renderObject);
         return renderObject;

@@ -2,7 +2,7 @@ import { AnimationEvent } from "./AnimationEvent.js";
 import { CONST, ERROR_CODES } from "../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
-import { Exception } from "./Exception.js";
+import { Exception, Warning } from "./Exception.js";
 /**
  * Image object to draw
  * @extends DrawShapeObject
@@ -34,6 +34,10 @@ export class DrawImageObject extends DrawShapeObject {
      * @type {Map<string, AnimationEvent>}
      */
     #animations;
+    /**
+     * @type {null | string}
+     */
+    #activeAnimation;
     /**
      * @type {number}
      */
@@ -146,6 +150,13 @@ export class DrawImageObject extends DrawShapeObject {
     }
 
     /**
+     * @type {null | string}
+     */
+    get activeAnimation() {
+        return this.#activeAnimation;
+    }
+
+    /**
      * @deprecated - use .vertices instead 
      * @type {Array<Array<number>>}
      */
@@ -165,11 +176,11 @@ export class DrawImageObject extends DrawShapeObject {
      * @ignore
      */
     _processActiveAnimations() {
-        for (let animationEvent of this.#animations.values()) {
-            if (animationEvent.isActive) {
-                animationEvent.iterateAnimationIndex();
-                this.#imageIndex = animationEvent.currentSprite;
-            }
+        const activeAnimation = this.#activeAnimation;
+        if (activeAnimation) {
+            const animationEvent = this.#animations.get(activeAnimation);
+            animationEvent.iterateAnimationIndex();
+            this.#imageIndex = animationEvent.currentSprite;
         }
     }
     /**
@@ -244,17 +255,24 @@ export class DrawImageObject extends DrawShapeObject {
         return isCorrect;
     }
     #activateAnimation = (event) => {
-        const animationEvent = this.#animations.get(event.type);
+        const animationName = event.type,
+            animationEvent = this.#animations.get(animationName);
+        // only one active animation can exist at a time
+        if (this.#activeAnimation && this.#activeAnimation !== animationName) {
+            this.stopRepeatedAnimation(this.#activeAnimation);
+        }
         animationEvent.activateAnimation();
+        this.#activeAnimation = animationName;
         this.#imageIndex = animationEvent.currentSprite;
     }; 
 
     /**
      *
-     * @param {string} eventName - animation name
+     * @param {string=} eventName - animation name, if not provided - stop current active animation event
      */
     stopRepeatedAnimation (eventName) {
         this.#animations.get(eventName).deactivateAnimation();
+        this.#activeAnimation = null;
     }
 
     /**

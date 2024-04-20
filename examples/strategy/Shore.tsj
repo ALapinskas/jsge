@@ -1,0 +1,14 @@
+{ "columns":5,
+ "image":"images\/MiniWorldSprites\/Ground\/Shore.png",
+ "imageheight":16,
+ "imagewidth":80,
+ "margin":0,
+ "name":"Shore",
+ "spacing":0,
+ "tilecount":5,
+ "tiledversion":"1.10.2",
+ "tileheight":16,
+ "tilewidth":16,
+ "type":"tileset",
+ "version":"1.10"
+}

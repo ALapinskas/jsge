@@ -201,6 +201,35 @@ function isPointPolygonIntersect(x, y, polygon) {
     return false;
 }
 
+function isPointInsidePolygon(x, y, polygon) {
+    const len = polygon.length;
+    let intersections = 0;
+
+    for (let i = 0; i < len; i++) {
+        let vertex1 = polygon[i],
+            vertex2 = polygon[i + 1] ? polygon[i + 1] : polygon[0],
+            x1 = vertex1[0],
+            y1 = vertex1[1],
+            x2 = vertex2[0],
+            y2 = vertex2[1];
+            
+        if (y < y1 !== y < y2 && 
+            x < (x2 - x1) * (y - y1) / (y2 - y1) + x1) {
+            intersections++;
+        }
+    }
+    
+    if (intersections > 0) {
+        if (intersections % 2 === 0) {
+            return false;
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
+}
+
 function isPointRectIntersect(x, y, rect) {
     if (x >= rect.x && x <= rect.width + rect.x && y >= rect.y && y <= rect.y + rect.height) {
         return true;
@@ -360,6 +389,10 @@ function generateUniqId() {
     return Math.round(Math.random() * 1000000); 
 }
 
+function randomFromArray(array) {
+    return array[Math.floor(Math.random()*array.length)];
+}
+
 function verticesArrayToArrayNumbers(array) {
     const len = array.length,
         numbers = [];
@@ -414,7 +447,9 @@ export {
     isEllipseLineIntersect,
     isEllipseCircleIntersect,
     isEllipsePolygonIntersect,
+    isPointInsidePolygon,
     generateUniqId,
+    randomFromArray,
     verticesArrayToArrayNumbers,
     countDistance,
     calculateEllipseVertices };

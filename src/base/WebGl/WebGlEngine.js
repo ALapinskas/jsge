@@ -1433,7 +1433,7 @@ export class WebGlEngine {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
                     // sometimes fails
-                    Warning(WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices. Probably vertices input is not correct, or the order is wrong");
+                    Warning(WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices.");
                     return triangulatedPolygon;
                 }
                 i++;

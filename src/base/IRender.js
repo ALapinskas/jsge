@@ -438,7 +438,12 @@ export class IRender {
                     vars = this.#webGlEngine.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
 
                 if (!renderObject.image) {
-                    renderObject.image = this.iLoader.getImage(renderObject.key);
+                    const image = this.iLoader.getImage(renderObject.key);
+                    if (!image) {
+                        Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + renderObject.key);
+                    } else {
+                        renderObject.image = image;
+                    }
                 }
                 return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]))

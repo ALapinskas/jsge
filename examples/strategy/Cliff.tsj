@@ -1,0 +1,14 @@
+{ "columns":7,
+ "image":"images\/MiniWorldSprites\/Ground\/Cliff.png",
+ "imageheight":144,
+ "imagewidth":112,
+ "margin":0,
+ "name":"Cliff",
+ "spacing":0,
+ "tilecount":63,
+ "tiledversion":"1.10.2",
+ "tileheight":16,
+ "tilewidth":16,
+ "type":"tileset",
+ "version":"1.10"
+}
