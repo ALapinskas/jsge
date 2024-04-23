@@ -19,6 +19,7 @@ export class IExtension {
      * Is used for registering new Object in DrawObjectFactory, \
      * registered method could be then called with this.draw[createInstanceKey]
      * @param {string} createInstanceKey - a key for calling method from DrawObjectFactory
+     * @param {string} objectClassType - object draw type, used in object render
      * @param {function} createInstanceMethod - method 
      */
     registerDrawObject(createInstanceKey, createInstanceMethod) {
@@ -49,11 +50,11 @@ export class IExtension {
 
     /**
      * Register render method for class.
-     * @param {string} objectClassName - object name registered to DrawObjectFactory
+     * @param {string} objectClassType - object name registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
      * @param {string=} objectWebGlDrawProgram - a webgl program name previously registered with iExtension.registerAndCompileWebGlProgram()
      */
-    registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
-        this.#systemReference.iRender._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);
+    registerObjectRender(objectClassType, objectRenderMethod, objectWebGlDrawProgram) {
+        this.#systemReference.iRender._registerObjectRender(objectClassType, objectRenderMethod, objectWebGlDrawProgram);
     }
 }

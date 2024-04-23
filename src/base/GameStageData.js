@@ -42,6 +42,12 @@ export class GameStageData {
     #renderObjects = [];
     
     /**
+     * objectBoundaries, is used to draw object boundaries, if such option is enabled
+     * @type {Array<Array<number>>}
+     */
+    #objectsBoundaries = [];
+
+    /**
      * @type {boolean}
      */
     #isOffsetTurnedOff;
@@ -87,6 +93,10 @@ export class GameStageData {
         this.#pointBoundaries.push(...boundaries);
     }
 
+    _addObjectBoundaries(boundaries) {
+        this.#objectsBoundaries.push(boundaries);
+    }
+
     /**
      * Clear map boundaries
      * @ignore
@@ -95,6 +105,7 @@ export class GameStageData {
         this.#boundaries = [];
         this.#ellipseBoundaries = [];
         this.#pointBoundaries = [];
+        this.#objectsBoundaries = [];
     }
 
     /**
@@ -233,6 +244,14 @@ export class GameStageData {
 
     getWholeWorldBoundaries() {
         return this.#wholeWorldBoundaries;
+    }
+
+    _getObjectsBoundaries() {
+        return this.#objectsBoundaries;
+    }
+
+    _isRenderObjectsBoundaries() {
+        return this.#objectsBoundaries.length > 0;
     }
 
     /**

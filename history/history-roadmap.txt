@@ -48,6 +48,13 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.0:
+    r: draw objects refactored, drawing objects is now based on drawObject.type instead of drawObject.constructor.name
+    r: drawObject.type property is now required for correct render work
+    r: iRender.render error handing refactored
+    r: iRender.render draw object boundaries refactored
+    r: IExtension.registerObjectRender first parameter is now object type instead of object.constructor.name
+
 1.4.3:
     r: refactor class scheme
     r: refactor image animation behavior, added activeAnimation property

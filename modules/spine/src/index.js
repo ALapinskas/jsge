@@ -14,6 +14,10 @@ import { ERROR_MESSAGES } from "./const.js";
 const SPINE_ERROR = "SPINE_MODULE_ERROR: ";
 class DrawSpineObject {
     /**
+     * @type {string}
+     */
+    #type = "spine";
+    /**
      * @type {Skeleton}
      */
     #skeleton;
@@ -31,6 +35,10 @@ class DrawSpineObject {
         this.#skeleton.y = mapY;
         this.animationStateData = new AnimationStateData(this.#skeleton.data);
         this.animationState = new AnimationState(this.animationStateData);
+    }
+
+    get type() {
+        return this.#type;
     }
 
     /**
@@ -103,6 +111,10 @@ class DrawSpineObject {
 
 class DrawSpineTexture {
     /**
+     * @type {string}
+     */
+    #type = "spineTexture";
+    /**
      * @type {number}
      */
     #x;
@@ -132,6 +144,10 @@ class DrawSpineTexture {
         this.#width = width;
         this.#height = height;
         this.#image = image;
+    }
+
+    get type() {
+        return this.#type;
     }
 
     get x() {
@@ -296,7 +312,7 @@ export default class SpineModuleInitialization {
         };
 
         systemInterface.iExtension.registerRenderInit(renderInitMethod);
-        systemInterface.iExtension.registerObjectRender(DrawSpineObject.name, drawSpineObjectMethod);
-        systemInterface.iExtension.registerObjectRender(DrawSpineTexture.name, drawSpineTextureMethod);
+        systemInterface.iExtension.registerObjectRender("spine", drawSpineObjectMethod);
+        systemInterface.iExtension.registerObjectRender("spineTexture", drawSpineTextureMethod);
     }
 }

@@ -10,6 +10,7 @@ class CustomDrawObject {
         this.noiseImg = noiseImg;
         this.picImg = picImg; 
         this.rocksImg = rocksImg;
+        this.type = "custom_webgl_object";
     }
 
     set renderStartTime(time) {

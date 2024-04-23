@@ -133,6 +133,10 @@ export class WebGlEngine {
         });
     }
 
+    _renderN(vertices, textures, program, vars) {
+
+    }
+
     /*************************************
      * Register and compile programs
      ************************************/
@@ -341,8 +345,8 @@ export class WebGlEngine {
         gl.uniform1f(fadeMaxLocation, fadeLen);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        gl.bufferData(this.#gl.ARRAY_BUFFER, 
-            new Float32Array(coords), this.#gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, 
+            new Float32Array(coords), gl.STATIC_DRAW);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
         //Tell the attribute how to get data out of positionBuffer
@@ -494,6 +498,12 @@ export class WebGlEngine {
             imageX = colNum * renderObject.width + (colNum * spacing),
             imageY = rowNum * renderObject.height + (rowNum * spacing);
         }
+        // draw image boundaries, maybe its better to add them to boundaries array?
+        // but then needed to check if it is already there
+        if (renderObject.vertices && this.#gameOptions.debug.boundaries.drawObjectBoundaries) {
+            pageData._addObjectBoundaries(renderObject);
+        }
+        
         const posX = x - renderObject.width / 2,
             posY = y - renderObject.height / 2;
         const vecX1 = posX,
@@ -741,6 +751,7 @@ export class WebGlEngine {
             fade_min = renderObject.fade_min,
             fadeLen = renderObject.radius,
             lineWidth = this.#gameOptions.debug.boundaries.boundariesWidth;
+
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -756,10 +767,10 @@ export class WebGlEngine {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        this.#gl.bufferData(
-            this.#gl.ARRAY_BUFFER, 
+        gl.bufferData(
+            gl.ARRAY_BUFFER, 
             new Float32Array(coords),
-            this.#gl.STATIC_DRAW);
+            gl.STATIC_DRAW);
 
         verticesNumber += coords.length / 2;
         //Tell the attribute how to get data out of positionBuffer

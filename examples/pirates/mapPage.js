@@ -37,7 +37,7 @@ export class MapPage extends GameStage {
         
         this.draw.tiledLayer("water", this.tilemapKey);
         this.draw.tiledLayer("ground", this.tilemapKey, true);
-        this.draw.tiledLayer("items", this.tilemapKey);
+        this.draw.tiledLayer("items", this.tilemapKey, true);
 
         this.#windDirectionPointer = this.draw.polygon([
             {

@@ -113,13 +113,14 @@ export class IRender {
         );
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
 
-        this._registerObjectRender(DrawTextObject.name, this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this._registerObjectRender(DrawRectObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawPolygonObject.name, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawCircleObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawConusObject.name, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawTiledLayer.name, this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-        this._registerObjectRender(DrawLineObject.name, this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(CONST.DRAW_TYPE.IMAGE, this.#webGlEngine._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(CONST.DRAW_TYPE.TEXT, this.#webGlEngine._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(CONST.DRAW_TYPE.RECTANGLE, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(CONST.DRAW_TYPE.POLYGON, this.#webGlEngine._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(CONST.DRAW_TYPE.CIRCLE, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(CONST.DRAW_TYPE.CONUS, this.#webGlEngine._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(CONST.DRAW_TYPE.TILED_LAYER, this.#webGlEngine._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(CONST.DRAW_TYPE.LINE, this.#webGlEngine._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
     }
 
     /**
@@ -236,12 +237,12 @@ export class IRender {
 
     /**
      * @ignore
-     * @param {string} objectClassName - object name registered to DrawObjectFactory
+     * @param {string} objectClassType - object type registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
      * @param {string=} objectWebGlDrawProgram 
      */
-    _registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
-        this.#registeredRenderObjects.set(objectClassName, {method: objectRenderMethod, webglProgramName: objectWebGlDrawProgram});
+    _registerObjectRender(objectClassType, objectRenderMethod, objectWebGlDrawProgram) {
+        this.#registeredRenderObjects.set(objectClassType, {method: objectRenderMethod, webglProgramName: objectWebGlDrawProgram});
     }
 
     /****************************
@@ -275,6 +276,11 @@ export class IRender {
             if (this.systemSettings.gameOptions.debug.boundaries.drawLayerBoundaries) {
                 renderObjectsPromises.push(this.#drawBoundariesWebGl()
                     .catch((err) => Promise.reject(err))); 
+            }
+            if (this.systemSettings.gameOptions.debug.boundaries.drawObjectBoundaries && this.stageData._isRenderObjectsBoundaries()) {
+                this.stageData._getObjectsBoundaries().forEach(drawObject => {
+                    renderObjectsPromises.push(this.#webGlEngine._drawPolygon(drawObject, this.stageData));
+                });
             }
             //const bindResults = await Promise.allSettled(renderObjectsPromises);
             //bindResults.forEach((result) => {
@@ -419,8 +425,11 @@ export class IRender {
      * @returns {Promise<void>}
      */
     _bindRenderObject(renderObject) {
-        const name = renderObject.constructor.name,
-            registeredRenderObject = this.#registeredRenderObjects.get(name);
+        const type = renderObject.type;
+        if (!type) {
+            return Promise.reject({code: ERROR_CODES.DRAW_OBJECT_TYPE_NOT_SET, message: renderObject.constructor.name + " , type property is not set, stop draw"});
+        }
+        const registeredRenderObject = this.#registeredRenderObjects.get(type);
         if (registeredRenderObject) {
             const name = registeredRenderObject.webglProgramName;
             if (name) {
@@ -432,32 +441,7 @@ export class IRender {
                 return registeredRenderObject.method(renderObject, this.drawContext, this.stageData);
             }
         } else {
-            // a workaround for images and its extend classes drawing
-            if (renderObject.type === CONST.DRAW_TYPE.IMAGE) {
-                const program = this.#webGlEngine.getProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES),
-                    vars = this.#webGlEngine.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
-
-                if (!renderObject.image) {
-                    const image = this.iLoader.getImage(renderObject.key);
-                    if (!image) {
-                        Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + renderObject.key);
-                    } else {
-                        renderObject.image = image;
-                    }
-                }
-                return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.stageData, program, vars)
-                    .then((results) => this.#webGlEngine._render(results[0], results[1]))
-                    .then(() => {
-                        if (renderObject.vertices && this.systemSettings.gameOptions.debug.boundaries.drawObjectBoundaries) {
-                            return this.#webGlEngine._drawPolygon(renderObject, this.stageData);
-                        } else {
-                            return Promise.resolve();
-                        }
-                    });
-            } else {
-                console.warn("no registered draw object method for " + name + " skip draw");
-                return Promise.resolve();
-            }
+            return Promise.reject({code: ERROR_CODES.DRAW_METHOD_NOT_REGISTERED, message: "draw method for object type " + type + " is not registered, stop draw"});
         }
     }
 
@@ -614,8 +598,10 @@ export class IRender {
                 errors.forEach((err) => {
                     Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, err);
                 });
+            } else if (errors.code) {
+                Warning(errors.code, errors.message);
             } else {
-                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, errors.message);
+                Warning(WARNING_CODES.UNHANDLED_DRAW_ISSUE, errors);
             }
             this._stopRender();
         });

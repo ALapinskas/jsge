@@ -1,3 +1,4 @@
+import { CONST } from "../constants.js";
 import { AnimationEvent } from "./AnimationEvent.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
@@ -6,6 +7,7 @@ import { TextureStorage } from "./WebGl/TextureStorage.js";
  * @see {@link DrawObjectFactory} should be created with factory method
  */
 export class DrawTiledLayer {
+    #drawType = CONST.DRAW_TYPE.TILED_LAYER;
     #layerKey;
     #tileMapKey;
     #tilemap;
@@ -50,6 +52,10 @@ export class DrawTiledLayer {
             this.setMask(shapeMask);
         }
         this.#processTilesets(tilesets);
+    }
+
+    get type() {
+        return this.#drawType;
     }
 
     /**

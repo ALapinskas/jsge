@@ -23,14 +23,9 @@ const START_PAGE_NAME = "start",
     TANKS_PAGE = "tanks";
     
 const TEST_WEBGL_PROGRAM_KEY = "test",
+    TEST_WEBGL_OBJECT_TYPE = "custom_webgl_object",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
 
-// Test different optimizations
-//SystemSettings.gameOptions.render.minCycleTime = 0;
-//SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT;
-//SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED;
-//SystemSettings.gameOptions.debug.boundaries.drawLayerBoundaries = true;
-//SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
 let optionsForm = document.createElement("form");
 optionsForm.name = "options";
 optionsForm.style.display = "flex";
@@ -222,7 +217,7 @@ function runApp(settings) {
     // пробуем пользовательскую webgl программу
     app.iSystem.iExtension.registerAndCompileWebGlProgram(TEST_WEBGL_PROGRAM_KEY, testVertexShader, testFragmentShader, testUniforms, testAttributes);
     app.iSystem.iExtension.registerDrawObject(TEST_CUSTOM_DRAW_OBJECT_KEY, createCustomDrawObjectInstance);
-    app.iSystem.iExtension.registerObjectRender(CustomDrawObject.name, drawCustomObject, TEST_WEBGL_PROGRAM_KEY);
+    app.iSystem.iExtension.registerObjectRender(TEST_WEBGL_OBJECT_TYPE, drawCustomObject, TEST_WEBGL_PROGRAM_KEY);
     
     app.preloadAllData().then(() => {
         app.iSystem.startGameStage(START_PAGE_NAME);

@@ -44,4 +44,17 @@ export class DrawCircleObject extends DrawShapeObject {
     get radius() {
         return this.#radius;
     }
+
+    prepareDraw(pageData, gl) {
+        const [ xOffset, yOffset ] = rthis.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
+        x = this.x - xOffset,
+        y = this.y - yOffset,
+        scale = [1, 1],
+        rotation = this.rotation,
+        coords = this.vertices,
+        fillStyle = this.bgColor,
+        fade_min = this.fade_min,
+        fadeLen = this.radius,
+        blend = this.blendFunc ? this.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA];
+    }
 }

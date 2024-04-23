@@ -1,6 +1,6 @@
 {
   "name": "jsge-spine-module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "jsge spine module",
   "main": "dist/index.js",
   "type": "module",

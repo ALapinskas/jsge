@@ -61,13 +61,14 @@ export class MapPage extends GameStage {
         const monster1 = new Ghost(455, 450, 16, 16, "tilemap", 108, 1);
         const monster2 = new Ghost(570, 410, 16, 16, "tilemap", 108, 1);
         const monster3 = new Ghost(455, 390, 16, 16, "tilemap", 108, 1);
-        monster1.setMask(this.sightView);
-        monster2.setMask(this.sightView);
-        monster3.setMask(this.sightView);
-
+        
         this.addRenderObject(monster1);
         this.addRenderObject(monster2);
         this.addRenderObject(monster3);
+
+        monster1.setMask(this.sightView);
+        monster2.setMask(this.sightView);
+        monster3.setMask(this.sightView);
 
         this.player = this.draw.image(55, 250, 16, 16, "tilemap", 84, {r: 8}, 1);
         this.player.setMask(this.sightView);
