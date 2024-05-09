@@ -489,8 +489,8 @@ export class IRender {
                         radX = element[2],
                         radY = element[3],
                         vertices = utils.calculateEllipseVertices(x, y, radX, radY);
-                        this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
-                        //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
+                    //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
                 });
             }
             if (pLen) {
@@ -500,7 +500,7 @@ export class IRender {
                         y = element[1],
                         vertices = [x,y, x+1,y+1];
 
-                        this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
                 });
             }
             resolve();
@@ -532,11 +532,11 @@ export class IRender {
         this.#currentGameStageData = stageData;
         this.fixCanvasSize();
         switch (gameOptions.library) {
-            case CONST.LIBRARY.WEBGL:
-                await this.#prepareViews();
-                this.timeStart = Date.now();
-                setTimeout(() => requestAnimationFrame(this.#drawViews));
-                break;
+        case CONST.LIBRARY.WEBGL:
+            await this.#prepareViews();
+            this.timeStart = Date.now();
+            setTimeout(() => requestAnimationFrame(this.#drawViews));
+            break;
         }
         if (gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES) {
             this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), gameOptions.render.cyclesTimeCalc.averageFPStime);

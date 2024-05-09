@@ -268,8 +268,8 @@ export class WebGlEngine {
             break;
         case CONST.DRAW_TYPE.CIRCLE: {
             const coords = renderObject.vertices;
-            gl.bufferData(this.#gl.ARRAY_BUFFER, 
-                new Float32Array(coords), this.#gl.STATIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, 
+                new Float32Array(coords), gl.STATIC_DRAW);
             verticesNumber += coords.length / 2;
             break;
         }
@@ -341,8 +341,8 @@ export class WebGlEngine {
         gl.uniform1f(fadeMaxLocation, fadeLen);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        gl.bufferData(this.#gl.ARRAY_BUFFER, 
-            new Float32Array(coords), this.#gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, 
+            new Float32Array(coords), gl.STATIC_DRAW);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
         //Tell the attribute how to get data out of positionBuffer
@@ -630,7 +630,7 @@ export class WebGlEngine {
                     type = gl.FLOAT, // data is 32bit floats
                     normalize = false,
                     stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                    offset = 0  // verticesNumber * 4; // start of beginning of the buffer
+                    offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
                 gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 
                 //textures buffer
@@ -756,10 +756,10 @@ export class WebGlEngine {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        this.#gl.bufferData(
-            this.#gl.ARRAY_BUFFER, 
+        gl.bufferData(
+            gl.ARRAY_BUFFER, 
             new Float32Array(coords),
-            this.#gl.STATIC_DRAW);
+            gl.STATIC_DRAW);
 
         verticesNumber += coords.length / 2;
         //Tell the attribute how to get data out of positionBuffer
@@ -805,10 +805,10 @@ export class WebGlEngine {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        this.#gl.bufferData(
-            this.#gl.ARRAY_BUFFER, 
+        gl.bufferData(
+            gl.ARRAY_BUFFER, 
             new Float32Array(linesArray),
-            this.#gl.STATIC_DRAW);
+            gl.STATIC_DRAW);
 
         verticesNumber += linesArray.length / 2;
         //Tell the attribute how to get data out of positionBuffer

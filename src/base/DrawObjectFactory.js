@@ -188,7 +188,7 @@ export class DrawObjectFactory {
         const instance = createInstance(...args);
         this.#addObjectToPageData(instance);
         return instance;
-    }
+    };
 
     /**
      * @ignore

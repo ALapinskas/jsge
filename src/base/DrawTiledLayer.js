@@ -245,7 +245,7 @@ export class DrawTiledLayer {
             tileset = this.#tilesets[tilesetIndex];
             
         tileset.data._animations.set(parseInt(animationId), animationEvent.currentSprite);
-    }
+    };
 
     /**
      *

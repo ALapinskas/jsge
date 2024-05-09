@@ -351,11 +351,11 @@ function isEllipseCircleIntersect(ellipse, circle) {
             vecTrX = ellipseX - traversalX,
             vecTrY = ellipseY - traversalY,
             traversalLen = Math.sqrt(Math.pow(vecTrX, 2) + Math.pow(vecTrY, 2)) + circle.r;
-            if (len <= traversalLen) {
-                return {x: vecTrX, y: vecTrY, p:1};
-            } else {
-                return false;
-            }
+        if (len <= traversalLen) {
+            return {x: vecTrX, y: vecTrY, p:1};
+        } else {
+            return false;
+        }
     }
     
 }

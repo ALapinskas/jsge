@@ -38,7 +38,7 @@ export class GameStage {
      */
     #isActive;
     /**
-     * @type {ISystem}
+     * @typedef {ISystem}
      */
     #iSystemReference;
     /**
@@ -551,7 +551,7 @@ export class GameStage {
         if (eLen > 0) {
             for (let i = 0; i < eLen; i+=1) {
                 const ellipse = ellipseB[i],
-                intersect = isEllipseCircleIntersect(ellipse, {x:xWithOffset, y:yWithOffset, r});
+                    intersect = isEllipseCircleIntersect(ellipse, {x:xWithOffset, y:yWithOffset, r});
                 if (intersect) {
                     //console.log("rotation: ", rotation);
                     //console.log("polygon: ", polygonWithOffsetAndRotation);
@@ -616,7 +616,7 @@ export class GameStage {
         if (eLen > 0) {
             for (let i = 0; i < eLen; i+=1) {
                 const ellipse = ellipseB[i],
-                intersect = isEllipsePolygonIntersect(ellipse, polygonWithOffsetAndRotation);
+                    intersect = isEllipsePolygonIntersect(ellipse, polygonWithOffsetAndRotation);
                 if (intersect) {
                     //console.log("rotation: ", rotation);
                     //console.log("polygon: ", polygonWithOffsetAndRotation);
@@ -632,12 +632,12 @@ export class GameStage {
                     x = point[0],
                     y = point[1],
                     intersect = isPointPolygonIntersect(x, y, polygonWithOffsetAndRotation);
-            if (intersect) {
+                if (intersect) {
                 //console.log("rotation: ", rotation);
                 //console.log("polygon: ", polygonWithOffsetAndRotation);
                 //console.log("intersect: ", intersect);
-                return intersect;
-            }
+                    return intersect;
+                }
             }
         }
         return false;
