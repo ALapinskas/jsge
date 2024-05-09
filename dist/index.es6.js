@@ -328,6 +328,10 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     #animations;
     /**
+     * @type {null | string}
+     */
+    #activeAnimation;
+    /**
      * @type {number}
      */
     #imageIndex;
@@ -439,6 +443,13 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     }
 
     /**
+     * @type {null | string}
+     */
+    get activeAnimation() {
+        return this.#activeAnimation;
+    }
+
+    /**
      * @deprecated - use .vertices instead 
      * @type {Array<Array<number>>}
      */
@@ -458,11 +469,11 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      * @ignore
      */
     _processActiveAnimations() {
-        for (let animationEvent of this.#animations.values()) {
-            if (animationEvent.isActive) {
-                animationEvent.iterateAnimationIndex();
-                this.#imageIndex = animationEvent.currentSprite;
-            }
+        const activeAnimation = this.#activeAnimation;
+        if (activeAnimation) {
+            const animationEvent = this.#animations.get(activeAnimation);
+            animationEvent.iterateAnimationIndex();
+            this.#imageIndex = animationEvent.currentSprite;
         }
     }
     /**
@@ -537,17 +548,24 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         return isCorrect;
     }
     #activateAnimation = (event) => {
-        const animationEvent = this.#animations.get(event.type);
+        const animationName = event.type,
+            animationEvent = this.#animations.get(animationName);
+        // only one active animation can exist at a time
+        if (this.#activeAnimation && this.#activeAnimation !== animationName) {
+            this.stopRepeatedAnimation(this.#activeAnimation);
+        }
         animationEvent.activateAnimation();
+        this.#activeAnimation = animationName;
         this.#imageIndex = animationEvent.currentSprite;
     }; 
 
     /**
      *
-     * @param {string} eventName - animation name
+     * @param {string=} eventName - animation name, if not provided - stop current active animation event
      */
     stopRepeatedAnimation (eventName) {
         this.#animations.get(eventName).deactivateAnimation();
+        this.#activeAnimation = null;
     }
 
     /**
@@ -638,6 +656,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./DrawTiledLayer.js */ "./src/base/DrawTiledLayer.js");
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/DrawShapeObject.js");
 /* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
+/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+
+
 
 
 
@@ -755,9 +777,13 @@ class DrawObjectFactory {
      * @returns {DrawImageObject}
      */
     image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
-        const image = this.#iLoader.getImage(key),
+        const image = this.#iLoader.getImage(key);
+
+        if (!image) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_10__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_11__.ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + key);
+        }
             
-            renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
+        const renderObject = new _DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
         
         this.#addObjectToPageData(renderObject);
         return renderObject;
@@ -822,7 +848,7 @@ class DrawObjectFactory {
         const instance = createInstance(...args);
         this.#addObjectToPageData(instance);
         return instance;
-    }
+    };
 
     /**
      * @ignore
@@ -1737,7 +1763,7 @@ class DrawTiledLayer {
             tileset = this.#tilesets[tilesetIndex];
             
         tileset.data._animations.set(parseInt(animationId), animationEvent.currentSprite);
-    }
+    };
 
     /**
      *
@@ -1892,7 +1918,7 @@ class GameStage {
      */
     #isActive;
     /**
-     * @type {ISystem}
+     * @typedef {ISystem}
      */
     #iSystemReference;
     /**
@@ -2405,7 +2431,7 @@ class GameStage {
         if (eLen > 0) {
             for (let i = 0; i < eLen; i+=1) {
                 const ellipse = ellipseB[i],
-                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isEllipseCircleIntersect)(ellipse, {x:xWithOffset, y:yWithOffset, r});
+                    intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isEllipseCircleIntersect)(ellipse, {x:xWithOffset, y:yWithOffset, r});
                 if (intersect) {
                     //console.log("rotation: ", rotation);
                     //console.log("polygon: ", polygonWithOffsetAndRotation);
@@ -2470,7 +2496,7 @@ class GameStage {
         if (eLen > 0) {
             for (let i = 0; i < eLen; i+=1) {
                 const ellipse = ellipseB[i],
-                intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isEllipsePolygonIntersect)(ellipse, polygonWithOffsetAndRotation);
+                    intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isEllipsePolygonIntersect)(ellipse, polygonWithOffsetAndRotation);
                 if (intersect) {
                     //console.log("rotation: ", rotation);
                     //console.log("polygon: ", polygonWithOffsetAndRotation);
@@ -2486,12 +2512,12 @@ class GameStage {
                     x = point[0],
                     y = point[1],
                     intersect = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.isPointPolygonIntersect)(x, y, polygonWithOffsetAndRotation);
-            if (intersect) {
+                if (intersect) {
                 //console.log("rotation: ", rotation);
                 //console.log("polygon: ", polygonWithOffsetAndRotation);
                 //console.log("intersect: ", intersect);
-                return intersect;
-            }
+                    return intersect;
+                }
             }
         }
         return false;
@@ -3606,7 +3632,12 @@ class IRender {
                     vars = this.#webGlEngine.getProgramVarLocations(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
 
                 if (!renderObject.image) {
-                    renderObject.image = this.iLoader.getImage(renderObject.key);
+                    const image = this.iLoader.getImage(renderObject.key);
+                    if (!image) {
+                        (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + renderObject.key);
+                    } else {
+                        renderObject.image = image;
+                    }
                 }
                 return this.#webGlEngine._bindImage(renderObject, this.drawContext, this.stageData, program, vars)
                     .then((results) => this.#webGlEngine._render(results[0], results[1]))
@@ -3652,8 +3683,8 @@ class IRender {
                         radX = element[2],
                         radY = element[3],
                         vertices = _index_js__WEBPACK_IMPORTED_MODULE_16__.utils.calculateEllipseVertices(x, y, radX, radY);
-                        this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
-                        //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
+                    //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
                 });
             }
             if (pLen) {
@@ -3663,7 +3694,7 @@ class IRender {
                         y = element[1],
                         vertices = [x,y, x+1,y+1];
 
-                        this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
                 });
             }
             resolve();
@@ -3695,11 +3726,11 @@ class IRender {
         this.#currentGameStageData = stageData;
         this.fixCanvasSize();
         switch (gameOptions.library) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.LIBRARY.WEBGL:
-                await this.#prepareViews();
-                this.timeStart = Date.now();
-                setTimeout(() => requestAnimationFrame(this.#drawViews));
-                break;
+        case _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.LIBRARY.WEBGL:
+            await this.#prepareViews();
+            this.timeStart = Date.now();
+            setTimeout(() => requestAnimationFrame(this.#drawViews));
+            break;
         }
         if (gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES) {
             this.#fpsAverageCountTimer = setInterval(() => this.#countFPSaverage(), gameOptions.render.cyclesTimeCalc.averageFPStime);
@@ -4882,8 +4913,8 @@ class WebGlEngine {
             break;
         case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE: {
             const coords = renderObject.vertices;
-            gl.bufferData(this.#gl.ARRAY_BUFFER, 
-                new Float32Array(coords), this.#gl.STATIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, 
+                new Float32Array(coords), gl.STATIC_DRAW);
             verticesNumber += coords.length / 2;
             break;
         }
@@ -4955,8 +4986,8 @@ class WebGlEngine {
         gl.uniform1f(fadeMaxLocation, fadeLen);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        gl.bufferData(this.#gl.ARRAY_BUFFER, 
-            new Float32Array(coords), this.#gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, 
+            new Float32Array(coords), gl.STATIC_DRAW);
 
         gl.enableVertexAttribArray(positionAttributeLocation);
         //Tell the attribute how to get data out of positionBuffer
@@ -5244,7 +5275,7 @@ class WebGlEngine {
                     type = gl.FLOAT, // data is 32bit floats
                     normalize = false,
                     stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                    offset = 0  // verticesNumber * 4; // start of beginning of the buffer
+                    offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
                 gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
 
                 //textures buffer
@@ -5370,10 +5401,10 @@ class WebGlEngine {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        this.#gl.bufferData(
-            this.#gl.ARRAY_BUFFER, 
+        gl.bufferData(
+            gl.ARRAY_BUFFER, 
             new Float32Array(coords),
-            this.#gl.STATIC_DRAW);
+            gl.STATIC_DRAW);
 
         verticesNumber += coords.length / 2;
         //Tell the attribute how to get data out of positionBuffer
@@ -5419,10 +5450,10 @@ class WebGlEngine {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
-        this.#gl.bufferData(
-            this.#gl.ARRAY_BUFFER, 
+        gl.bufferData(
+            gl.ARRAY_BUFFER, 
             new Float32Array(linesArray),
-            this.#gl.STATIC_DRAW);
+            gl.STATIC_DRAW);
 
         verticesNumber += linesArray.length / 2;
         //Tell the attribute how to get data out of positionBuffer
@@ -6047,7 +6078,7 @@ class WebGlEngine {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
                     // sometimes fails
-                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices. Probably vertices input is not correct, or the order is wrong");
+                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices.");
                     return triangulatedPolygon;
                 }
                 i++;
@@ -6319,6 +6350,7 @@ const ERROR_CODES = {
     VIEW_NOT_EXIST: "VIEW_NOT_EXIST",
     ELEMENT_NOT_EXIST: "ELEMENT_NOT_EXIST",
     FILE_NOT_EXIST: "FILE_NOT_EXIST",
+    CANT_GET_THE_IMAGE: "CANT_GET_THE_IMAGE",
     UNEXPECTED_INPUT_PARAMS: "UNEXPECTED_INPUT_PARAMS",
     UNHANDLED_EXCEPTION: "UNHANDLED_EXCEPTION",
     CANVAS_KEY_NOT_SPECIFIED: "CANVAS_KEY_NOT_SPECIFIED",
@@ -6479,6 +6511,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isLineShorter": () => (/* binding */ isLineShorter),
 /* harmony export */   "isMobile": () => (/* binding */ isMobile),
 /* harmony export */   "isPointCircleIntersect": () => (/* binding */ isPointCircleIntersect),
+/* harmony export */   "isPointInsidePolygon": () => (/* binding */ isPointInsidePolygon),
 /* harmony export */   "isPointLineIntersect": () => (/* binding */ isPointLineIntersect),
 /* harmony export */   "isPointOnTheLine": () => (/* binding */ isPointOnTheLine),
 /* harmony export */   "isPointPolygonIntersect": () => (/* binding */ isPointPolygonIntersect),
@@ -6486,6 +6519,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isPolygonLineIntersect": () => (/* binding */ isPolygonLineIntersect),
 /* harmony export */   "isSafari": () => (/* binding */ isSafari),
 /* harmony export */   "pointToCircleDistance": () => (/* binding */ pointToCircleDistance),
+/* harmony export */   "randomFromArray": () => (/* binding */ randomFromArray),
 /* harmony export */   "verticesArrayToArrayNumbers": () => (/* binding */ verticesArrayToArrayNumbers)
 /* harmony export */ });
 /* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
@@ -6692,6 +6726,35 @@ function isPointPolygonIntersect(x, y, polygon) {
     return false;
 }
 
+function isPointInsidePolygon(x, y, polygon) {
+    const len = polygon.length;
+    let intersections = 0;
+
+    for (let i = 0; i < len; i++) {
+        let vertex1 = polygon[i],
+            vertex2 = polygon[i + 1] ? polygon[i + 1] : polygon[0],
+            x1 = vertex1[0],
+            y1 = vertex1[1],
+            x2 = vertex2[0],
+            y2 = vertex2[1];
+            
+        if (y < y1 !== y < y2 && 
+            x < (x2 - x1) * (y - y1) / (y2 - y1) + x1) {
+            intersections++;
+        }
+    }
+    
+    if (intersections > 0) {
+        if (intersections % 2 === 0) {
+            return false;
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
+}
+
 function isPointRectIntersect(x, y, rect) {
     if (x >= rect.x && x <= rect.width + rect.x && y >= rect.y && y <= rect.y + rect.height) {
         return true;
@@ -6813,11 +6876,11 @@ function isEllipseCircleIntersect(ellipse, circle) {
             vecTrX = ellipseX - traversalX,
             vecTrY = ellipseY - traversalY,
             traversalLen = Math.sqrt(Math.pow(vecTrX, 2) + Math.pow(vecTrY, 2)) + circle.r;
-            if (len <= traversalLen) {
-                return {x: vecTrX, y: vecTrY, p:1};
-            } else {
-                return false;
-            }
+        if (len <= traversalLen) {
+            return {x: vecTrX, y: vecTrY, p:1};
+        } else {
+            return false;
+        }
     }
     
 }
@@ -6849,6 +6912,10 @@ function isEllipsePolygonIntersect(ellipse, polygon) {
 
 function generateUniqId() {
     return Math.round(Math.random() * 1000000); 
+}
+
+function randomFromArray(array) {
+    return array[Math.floor(Math.random()*array.length)];
 }
 
 function verticesArrayToArrayNumbers(array) {
