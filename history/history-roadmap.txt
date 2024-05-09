@@ -52,6 +52,7 @@ f: fixed defects
     r: refactor class scheme
     r: refactor image animation behavior, added activeAnimation property
     +: units.randomFromArray()
+    +: example/strategy game
 
 1.4.2:
     r: updated assetsm to version 0.1.7
