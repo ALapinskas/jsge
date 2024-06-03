@@ -1,53 +1,13 @@
-# Application Requirements
-    1. Platforms:
-        Web, Chrome, Firefox browsers with webgl1 support.
-        Desktop, mobile screens full support.
-    2. Engine:
-        2d primitives drawing
-        2d collisions detection
-        support tiled editor json files for images and sprites
-        images preload
-        huge images cut for a screen size
-        centering map
-        sprites animations
-        canvas overlapping effects
-    Does system required a new canvas for every GameStage? Probably it can use only one for all of them,
-    and the IRender will be the same for every stage. Then, GameStageData will have to be divided for two parts,
-    GameStageData for each stage, and common data, probably it is a GameSettings.
-    3. Modules requirements:
-        1. Modules are external installable parts of application that should extend the application functionality.
-        2. Application functionality by that could be extended by modules should have an endpoint to do that.
-        
-        Modules types:
-        1. System modules. Which will have access to systemInterface and its child functionality.
-        2. GameStage modules. Which will have same access as system modules and additionally
-         screenPage child functionality, such as GameStage.start, stop, render, context and stageData.
-        GameStage modules should be installed for every screenPage separately, or installed for one stage 
-        and activated for the others.
-        3. Render modules, is GameStage modules, focused on render objects:
-            1. Modules could extend current render system by doing:
-                * Extend drawObjectFactory to have new drawObjects
-                * Provide information to the IRender on how this objects should be drawn, 
-                    the webgl programs they should use,
-                    this webgl programs itself,
-                    init render phase if needed,
-                    render method for this objects
-            2. Render modules will need to access next part of application:
-                * a iLoader, which could be accessed via ISystem.
-                * SystemSettings, which could be accessed via ISystem.
-                * draw context, which is a part of IRender and could be accessed via GameStage.
-                * GameStageData, which is a part of IRender and could be accessed via GameStage.
-                * GameStage.start, .stop methods
-        
-
-Todo: https://github.com/users/ALapinskas/projects/2
-
 # Map
 r: code refactoring
 +  added new functionality/classes
 f: fixed defects
 
 # History
+1.4.31:
+    r: ADR(Architecture Design Records) moved to the separate folder
+    +: Added discord channel for feedback and questions
+
 1.4.3:
     r: refactor class scheme
     r: refactor image animation behavior, added activeAnimation property
@@ -117,7 +77,7 @@ f: fixed defects
     
 1.1.0:
     f: fixed npm registry issue
-    r: GameStage.system -> GameStage.ISystem
+    r: GameStage.system -> GameStage.iSystem
     r: SystemSettings is now a class
     
 1.0.0:

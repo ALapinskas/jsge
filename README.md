@@ -1,8 +1,6 @@
-# JsGE@1.4.2
-
 Javascript Game Engine
 
-This engine was designed to work with maps from Tiled editor.
+This engine was designed to simplify creating javascript 2d game applications.
 
 Advantages:
 * Fresh codebase, depends on latest javascript features such as classes and privacy. 
@@ -32,4 +30,9 @@ How to run examples:
 3. visit localhost:9000
 
 API docs and tutorials: [jsge.reslc.ru](https://jsge.reslc.ru) \
-Files: [https://github.com/ALapinskas/jsge](https://github.com/ALapinskas/jsge)
+github: [https://github.com/ALapinskas/jsge](https://github.com/ALapinskas/jsge)
+issues: [https://github.com/ALapinskas/jsge/issues] (https://github.com/ALapinskas/jsge/issues)
+npm: [https://www.npmjs.com/package/jsge](https://www.npmjs.com/package/jsge)
+
+Feedback and Questions: 
+[https://discord.com/channels/1246373335202398268] (https://discord.com/channels/1246373335202398268)

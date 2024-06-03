@@ -1,0 +1,79 @@
+Date: Oct 12 2023
+Add modules functionality / Добавление модульности
+
+Status: Done
+
+Context: 
+    Current implementation have minimum requirement functionality. 
+    Required to add optional extended functionality for render spine animations, 
+    and add possibility to extend render functionality in future, 
+    such as add custom render objects and their webgl programs. 
+    Also add and endpoint to install all functionality from one place and have ability to extend other parts of application.
+
+    Render can be extended by:
+    Extend drawObjectFactory to have new drawObjects
+    Provide information to the IRender on how this objects should be drawn, 
+    the webgl programs they should use, additional init render phase if needed.
+
+    Modules will need to access next part of application:
+    iLoader, which could be accessed via ISystem.
+    SystemSettings, which could be accessed via ISystem.
+    draw context, which is a part of IRender and could be accessed via GameStage.
+    GameStageData, which is a part of IRender and could be accessed via GameStage.
+    GameStage.start(), .stop() methods
+
+    Текущая реализация имеет минимальное количество функциональности для работы. 
+    Требуется добавить опциональную расширенную функциональность для рендера spine анимаций, 
+    а также добавить возможность в будущем расширять функциональность рендера, 
+    чтобы получить возможность добавлять свои объекты рендера и webgl программы для них. 
+    Также добавить возможность упаковки данной функциональности в один модуль, 
+    для простоты установки и расширения других частей приложения.
+
+    Расширения рендера должны делать следующее:
+    Расширять DrawObjectFactory, для создания экземпляров новых объектов
+    Сообщать iRender, как эти объекты должны рисоваться, 
+    какую webgl программу использовать, 
+    использовать дополнительную init фазу, если нужно.
+
+    Модули должны иметь доступ к следующим частям приложения:
+    iLoader, через ISystem.
+    SystemSettings, через ISystem.
+    draw context, часть IRender и может быть доступна через GameStage.
+    GameStageData, часть IRender и может быть доступна через GameStage.
+    GameStage.start(), .stop() методы.
+
+Decision:
+    Create an endpoint to install modules: 
+    iSystem.installModule(moduleKey, moduleClass, ...args), 
+    init module constructor can apply params: (iSystem, ...args), 
+    and have access to all public params of iSystem, to extend them.
+
+    Create an endpoint class to extend render functionality: iExtension/iSystem.iExtension Class includes methods:
+    registerDrawObject(createInstanceKey, createInstanceMethod) - method for extend DrawObjectFactory, 
+    creates new object with key createInstanceKey and create instance method createInstanceMethod, 
+    after created, create instance method can be called from drawObjectFactory: this.draw[createInstanceKey]
+    registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars) - method for register 
+    new webgl program
+    registerRenderInit(method) - метод для регистрации метода инициализации
+    registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) - method for register render 
+    for object with class name objectClassName
+
+    Добавить точку установки модулей: iSystem.installModule(moduleKey, moduleClass, ...args), 
+    инициализирующий конструктор класса модуля будет принимать следующие параметры (iSystem, ...args), 
+    тем самым получит доступ к всем публичным параметрам iSystem, для добавления новой функциональности.
+
+    Добавить новый класс для расширения рендера: iExtension/iSystem.iExtension Класс имеет методы:
+    registerDrawObject(createInstanceKey, createInstanceMethod) - метод для расширения DrawObjectFactory, 
+    добавляет новый объект с ключом createInstanceKey и методом создания экземпляра createInstanceMethod, 
+    после добавления, объект может быть создан с помощью this.draw[createInstanceKey]
+    registerAndCompileWebGlProgram(programName, vertexShader, fragmentShader, uVars, aVars) - метод для регистрации 
+    новой webgl программы
+    registerRenderInit(method) - метод для регистрации метода инициализации
+    registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) - метод для регистрации 
+    рендера для объекта рендера с именем класса objectClassName
+
+    Todo: https://github.com/users/ALapinskas/projects/2
+
+Impact:
+    This functionality doesn't impact on basic application functions.
+    Данная функциональность никак не повлияет на базовые функции приложения.

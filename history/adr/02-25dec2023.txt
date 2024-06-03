@@ -1,0 +1,32 @@
+Date: Dec 25 2023
+Rename classes and public properties / Переименование классов и публичных свойств
+
+Status: Done
+
+Context: 
+    Current class naming make a mess,
+    Interface classes has too long prefix
+    Public links to this classes doesn't marked
+    ScreenPage - name incorrectly described the role of the class.
+
+    Текущее наименование классов и публичных свойств вносит путаницу,
+    классы интерфейсов имеют слишком длинные наименования,
+    публичные ссылки на эти классы никак не выделены,
+    ScreenPage - "Страница экрана" - наименование не правильно отражает задачу класса.
+
+Decision:
+    Rename classes next way: 
+        ScreenPage -> GameStage,
+        screenPageData -> stageData,
+    cut class name prefix: interface -> i
+    add i to public links to this classes
+
+    Переименовать классы следующим образом: 
+        ScreenPage -> GameStage, "Стадия игры"/"Уровень игры"
+        screenPageData -> stageData,
+    сократить приставку классов interface -> i
+    добавить приставку i публичным ссылкам на эти классы
+
+Impact:
+    This functionality will break backward capability, major version will have to be increased
+    Данная функциональность сломает обратную совместимость, потребуется увеличить мажорную версию
