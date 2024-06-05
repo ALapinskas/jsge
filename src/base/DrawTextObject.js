@@ -110,12 +110,16 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
+     * font color
      * @type {string}
      */
     get fillStyle() {
         return this.#fillStyle;
     }
 
+    /**
+     * font color
+     */
     set fillStyle(value) {
         if (value !== this.#fillStyle) {
             this.#fillStyle = value;
@@ -124,12 +128,16 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
+     * font stroke color
      * @type {string}
      */
     get strokeStyle() {
         return this.#strokeStyle;
     }
 
+    /**
+     * font stroke color
+     */
     set strokeStyle(value) {
         if (value !== this.#strokeStyle) {
             this.#strokeStyle = value;

@@ -24,7 +24,7 @@ export class System {
     #iSystem;
     /**
      * @param {SystemSettings} iSystemSettings - holds iSystem settings
-     * @param {HTMLElement} [canvasContainer] - If it is not passed, iSystem will create div element and attach it to body
+     * @param {HTMLElement | null} [canvasContainer = null] - If it is not passed, iSystem will create div element and attach it to body
      */
     constructor(iSystemSettings, canvasContainer) {
         if (!iSystemSettings) {
@@ -57,7 +57,7 @@ export class System {
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {GameStage} stage
+     * @param {typeof GameStage} stage
      */
     registerStage(screenPageName, stage) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {

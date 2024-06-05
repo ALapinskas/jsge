@@ -52,7 +52,6 @@ const primitivesFragmentShader = `
     uniform vec4 u_color;
     uniform float u_fade_min; 
     uniform float u_fade_max;
-    uniform vec2 a_position;
     uniform vec2 u_resolution;
     uniform vec2 u_translation;
 

@@ -66,4 +66,6 @@ export class SystemSettings {
     };
 
     static defaultCanvasKey = "default";
+
+    static customSettings = {};
 }

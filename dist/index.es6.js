@@ -1397,12 +1397,16 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
+     * font color
      * @type {string}
      */
     get fillStyle() {
         return this.#fillStyle;
     }
 
+    /**
+     * font color
+     */
     set fillStyle(value) {
         if (value !== this.#fillStyle) {
             this.#fillStyle = value;
@@ -1411,12 +1415,16 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
+     * font stroke color
      * @type {string}
      */
     get strokeStyle() {
         return this.#strokeStyle;
     }
 
+    /**
+     * font stroke color
+     */
     set strokeStyle(value) {
         if (value !== this.#strokeStyle) {
             this.#strokeStyle = value;
@@ -4328,7 +4336,7 @@ class System {
     #iSystem;
     /**
      * @param {SystemSettings} iSystemSettings - holds iSystem settings
-     * @param {HTMLElement} [canvasContainer] - If it is not passed, iSystem will create div element and attach it to body
+     * @param {HTMLElement | null} [canvasContainer = null] - If it is not passed, iSystem will create div element and attach it to body
      */
     constructor(iSystemSettings, canvasContainer) {
         if (!iSystemSettings) {
@@ -4361,7 +4369,7 @@ class System {
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {GameStage} stage
+     * @param {typeof GameStage} stage
      */
     registerStage(screenPageName, stage) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
@@ -4549,7 +4557,6 @@ const primitivesFragmentShader = `
     uniform vec4 u_color;
     uniform float u_fade_min; 
     uniform float u_fade_max;
-    uniform vec2 a_position;
     uniform vec2 u_resolution;
     uniform vec2 u_translation;
 
@@ -6246,6 +6253,8 @@ class SystemSettings {
     };
 
     static defaultCanvasKey = "default";
+
+    static customSettings = {};
 }
 
 /***/ }),
