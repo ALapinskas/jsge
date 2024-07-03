@@ -51,7 +51,7 @@ export class IExtension {
      * Register render method for class.
      * @param {string} objectClassName - object name registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
-     * @param {string=} objectWebGlDrawProgram - a webgl program name previously registered with iExtension.registerAndCompileWebGlProgram()
+     * @param {string} objectWebGlDrawProgram - a webgl program name previously registered with iExtension.registerAndCompileWebGlProgram()
      */
     registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
         this.#systemReference.iRender._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);

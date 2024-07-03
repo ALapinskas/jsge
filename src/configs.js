@@ -16,7 +16,7 @@ export class SystemSettings {
         // no other variants only WEBGL for now
         library: CONST.LIBRARY.WEBGL,
         optimization: CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
-        optimizationWASMUrl: "/src/wa/calculateBufferDataWat.wasm",
+        optimizationWASMUrl: "./src/wa/calculateBufferDataWat.wasm",
         optimizationAssemblyUrl: "/src/wa/calculateBufferDataAssembly.wasm",
         loadingScreen: {
             backgroundColor:  "rgba(128, 128, 128, 0.6)",
@@ -51,6 +51,8 @@ export class SystemSettings {
     
 
     static network = {
+        // disable INetwork by default
+        enabled: false,
         address: "https://gameserver.reslc.ru:9009",
         gatherRoomsInfoInterval: 5000
     };

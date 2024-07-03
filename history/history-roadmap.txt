@@ -4,6 +4,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.4.4:
+    r: disable iNetwork interface by default
+    
 1.4.32:
     f: Mobile Chrome@125.0.6422.147 issue: "Name conflicts between an uniform and an attribute: a_position"
     f: registerStage() type issue

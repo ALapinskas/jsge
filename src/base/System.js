@@ -57,7 +57,7 @@ export class System {
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {typeof GameStage} stage
+     * @param {GameStage} stage
      */
     registerStage(screenPageName, stage) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {

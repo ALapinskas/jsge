@@ -3013,7 +3013,7 @@ class IExtension {
      * Register render method for class.
      * @param {string} objectClassName - object name registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
-     * @param {string=} objectWebGlDrawProgram - a webgl program name previously registered with iExtension.registerAndCompileWebGlProgram()
+     * @param {string} objectWebGlDrawProgram - a webgl program name previously registered with iExtension.registerAndCompileWebGlProgram()
      */
     registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
         this.#systemReference.iRender._registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram);
@@ -3043,6 +3043,9 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * Represents Socket connection
+ * 
+ * From 1.4.4 disabled by default,
+ * to enable, set settings.network.enabled to true
  */
 class INetwork extends EventTarget {
     #systemSettings;
@@ -3876,7 +3879,7 @@ class ISystem {
      */
     #iExtension;
     /**
-     * @type {INetwork}
+     * @type {INetwork | null}
      */
     #systemServerConnection;
     /**
@@ -3915,7 +3918,7 @@ class ISystem {
         this.#systemSettings = systemSettings;
         
         this.#systemAudioInterface = new _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio(this.iLoader);
-        this.#systemServerConnection = new _INetwork_js__WEBPACK_IMPORTED_MODULE_2__.INetwork(systemSettings);
+        this.#systemServerConnection = systemSettings.network.enabled ? new _INetwork_js__WEBPACK_IMPORTED_MODULE_2__.INetwork(systemSettings) : null;
         this.#iRender = new _IRender_js__WEBPACK_IMPORTED_MODULE_8__.IRender(this.systemSettings, this.iLoader, canvasContainer);
         this.#iExtension = new _IExtension_js__WEBPACK_IMPORTED_MODULE_9__.IExtension(this, this.#iRender);
         this.#registeredStagesReference = registeredStages;
@@ -3956,7 +3959,7 @@ class ISystem {
     };
     
     /**
-     * @type { INetwork }
+     * @type { INetwork | null }
      */
     get iNetwork () {
         return this.#systemServerConnection;
@@ -4369,7 +4372,7 @@ class System {
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {typeof GameStage} stage
+     * @param {GameStage} stage
      */
     registerStage(screenPageName, stage) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
@@ -6203,7 +6206,7 @@ class SystemSettings {
         // no other variants only WEBGL for now
         library: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.LIBRARY.WEBGL,
         optimization: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
-        optimizationWASMUrl: "/src/wa/calculateBufferDataWat.wasm",
+        optimizationWASMUrl: "./src/wa/calculateBufferDataWat.wasm",
         optimizationAssemblyUrl: "/src/wa/calculateBufferDataAssembly.wasm",
         loadingScreen: {
             backgroundColor:  "rgba(128, 128, 128, 0.6)",
@@ -6238,6 +6241,8 @@ class SystemSettings {
     
 
     static network = {
+        // disable INetwork by default
+        enabled: false,
         address: "https://gameserver.reslc.ru:9009",
         gatherRoomsInfoInterval: 5000
     };

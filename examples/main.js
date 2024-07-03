@@ -7,6 +7,7 @@ import { SpinePage } from "./spine/spinePage.js";
 import { BigMap } from "./big_map/bigMap.js";
 import { Tanks } from "./tanks/tanks.js";
 import { Strategy } from "./strategy/strategy.js";
+import { Primitives } from "./primitives/primitives.js";
 
 import { CustomWebGlTestPage } from "./testCustomWebGl/index.js";
 import { CustomDrawObject, createCustomDrawObjectInstance, drawCustomObject } from "./testCustomWebGl/TestDrawObject.js";
@@ -20,7 +21,8 @@ const START_PAGE_NAME = "start",
     BIG_MAP = "big_map",
     STRATEGY_GAME = "strategy_game",
     CUSTOM_WEBGL_PAGE = "custom_webgl",
-    TANKS_PAGE = "tanks";
+    TANKS_PAGE = "tanks",
+    PRIMITIVES_PAGE = "primitives";
     
 const TEST_WEBGL_PROGRAM_KEY = "test",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
@@ -218,6 +220,7 @@ function runApp(settings) {
     app.registerStage(STRATEGY_GAME, Strategy);
     app.registerStage(CUSTOM_WEBGL_PAGE, CustomWebGlTestPage);
     app.registerStage(TANKS_PAGE, Tanks);
+    app.registerStage(PRIMITIVES_PAGE, Primitives)
     
     // пробуем пользовательскую webgl программу
     app.iSystem.iExtension.registerAndCompileWebGlProgram(TEST_WEBGL_PROGRAM_KEY, testVertexShader, testFragmentShader, testUniforms, testAttributes);

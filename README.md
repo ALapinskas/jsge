@@ -1,4 +1,4 @@
-Javascript Game Engine
+# Javascript Game Engine
 
 This engine was designed to simplify creating javascript 2d game applications.
 

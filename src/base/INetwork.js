@@ -5,6 +5,9 @@ import { SystemEvent } from "./Events/SystemEvent.js";
 
 /**
  * Represents Socket connection
+ * 
+ * From 1.4.4 disabled by default,
+ * to enable, set settings.network.enabled to true
  */
 export class INetwork extends EventTarget {
     #systemSettings;

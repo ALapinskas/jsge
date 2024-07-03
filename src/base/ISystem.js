@@ -28,7 +28,7 @@ export class ISystem {
      */
     #iExtension;
     /**
-     * @type {INetwork}
+     * @type {INetwork | null}
      */
     #systemServerConnection;
     /**
@@ -67,7 +67,7 @@ export class ISystem {
         this.#systemSettings = systemSettings;
         
         this.#systemAudioInterface = new ISystemAudio(this.iLoader);
-        this.#systemServerConnection = new INetwork(systemSettings);
+        this.#systemServerConnection = systemSettings.network.enabled ? new INetwork(systemSettings) : null;
         this.#iRender = new IRender(this.systemSettings, this.iLoader, canvasContainer);
         this.#iExtension = new IExtension(this, this.#iRender);
         this.#registeredStagesReference = registeredStages;
@@ -108,7 +108,7 @@ export class ISystem {
     };
     
     /**
-     * @type { INetwork }
+     * @type { INetwork | null }
      */
     get iNetwork () {
         return this.#systemServerConnection;
