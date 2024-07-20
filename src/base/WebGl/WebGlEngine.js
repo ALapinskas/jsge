@@ -1124,7 +1124,7 @@ export class WebGlEngine {
                                                     rightX1 = boundaries[rightTopRightFirstIndex + INDEX_X1],
                                                     rightX2 = boundaries[rightTopRightFirstIndex + INDEX_X2];
                                                 if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
-                                                    pageData._removeBoundaryLine(rightTopRightFirstIndex)
+                                                    pageData._removeBoundaryLine(rightTopRightFirstIndex);
                                                     rightLine[INDEX_X1] = rightTopCellX1;
                                                     rightLine[INDEX_Y1] = rightTopCellY1;
                                                 }
@@ -1140,7 +1140,7 @@ export class WebGlEngine {
                                                     leftX1 = leftLine[INDEX_X1],
                                                     leftX2 = leftLine[INDEX_X2];
                                                 if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
-                                                    pageData._removeBoundaryLine(leftTopCellIndex);
+                                                    pageData._removeBoundaryLine(leftTopRightFirstIndex);
                                                     leftLine[INDEX_X2] = leftTopCellX2;
                                                     leftLine[INDEX_Y2] = leftTopCellY2;
                                                 }
@@ -1165,7 +1165,7 @@ export class WebGlEngine {
 
                                         if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
                                             leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
-                                            pageData._removeBoundaryLine(rightLeftCellIndex);
+                                            pageData._removeBoundaryLine(rightLeftFirstCellIndex);
                                             leftLine = undefined;
                                         }
 
@@ -1180,7 +1180,7 @@ export class WebGlEngine {
                                                 topY1 = topLine[INDEX_Y1],
                                                 topY2 = topLine[INDEX_Y2];
                                             if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
-                                                pageData._removeBoundaryLine(topLeftCellIndex);
+                                                pageData._removeBoundaryLine(topLeftFirstCellIndex);
                                                 topLine[INDEX_X1] = topLeftCellX1;
                                                 topLine[INDEX_Y1] = topLeftCellY1;
                                             }
@@ -1197,7 +1197,7 @@ export class WebGlEngine {
                                                 bottomY1 = bottomLine[INDEX_Y1],
                                                 bottomY2 = bottomLine[INDEX_Y2];
                                             if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
-                                                pageData._removeBoundaryLine(bottomLeftCellIndex);
+                                                pageData._removeBoundaryLine(bottomLeftFirstCellIndex);
                                                 //opposite direction
                                                 bottomLine[INDEX_X2] = bottomLeftCellX2;
                                                 bottomLine[INDEX_Y2] = bottomLeftCellY2;
