@@ -20,8 +20,19 @@ export class GameStageData {
     #maxBoundariesSize = 0;
     /**
      * Points to next empty cell
+     * @type {number}
      */
     #bPointer = 0;
+    /**
+     * Points to next empty cell
+     * @type {number}
+     */
+    #pPointer = 0;
+    /**
+     * Points to next empty cell
+     * @type {number}
+     */
+    #ePointer = 0;
     /**
      * current screen boundaries, recalculated every render cycles
      * stored as floatArray, 
@@ -31,14 +42,18 @@ export class GameStageData {
     #boundaries;
     /**
      * ellipse boundaries
-     * @type {Array<Array<number>>}
+     * stored as floatArray, 
+     * each 4 cells, represent am ellipse with cords centerX, centerY, radiusX, radiusY
+     * @type {Float32Array}
      */
-    #ellipseBoundaries = [];
+    #ellipseBoundaries;
     /**
      * point boundaries
-     * @type {Array<Array<number>>}
+     * stored as floatArray, 
+     * each 2 cells, represent a point with coords x1,y1
+     * @type {Float32Array}
      */
-    #pointBoundaries = [];
+    #pointBoundaries;
     /**
      * whole world boundaries, calculated once on prepare stage
      * @type {Array<Array<number>>}
@@ -62,6 +77,8 @@ export class GameStageData {
     constructor(gameOptions) {
         this.#maxBoundariesSize = gameOptions.render.boundaries.maxBoundariesHeapSize;
         this.#boundaries = new Float32Array(this.#maxBoundariesSize);
+        this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
+        this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
     }
 
     /**
@@ -107,23 +124,29 @@ export class GameStageData {
         this.#bPointer++;
     }
 
+    _addEllipseBoundary(w,h, x,y) {
+        this.#ellipseBoundaries[this.#ePointer] = w;
+        this.#ePointer++;
+        this.#ellipseBoundaries[this.#ePointer] = h;
+        this.#ePointer++;
+        this.#ellipseBoundaries[this.#ePointer] = x;
+        this.#ePointer++;
+        this.#ellipseBoundaries[this.#ePointer] = y;
+        this.#ePointer++;
+    }
+
+    _addPointBoundary(x,y) {
+        this.#pointBoundaries[this.#pPointer] = x;
+        this.#pPointer++;
+        this.#pointBoundaries[this.#pPointer] = y;
+        this.#pPointer++;
+    }
+
     _removeBoundaryLine(startPos) {
         this.#boundaries[startPos] = 0;
         this.#boundaries[startPos + 1] = 0;
         this.#boundaries[startPos + 2] = 0;
         this.#boundaries[startPos + 3] = 0;
-    }
-
-    _addBoundariesFloat(boundaries) {
-        //const len = 
-    }
-
-    _addEllipseBoundaries(boundaries) {
-        this.#ellipseBoundaries.push(...boundaries);
-    }
-
-    _addPointBoundaries(boundaries) {
-        this.#pointBoundaries.push(...boundaries);
     }
 
     /**
@@ -132,10 +155,12 @@ export class GameStageData {
      */
     _clearBoundaries() {
         this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#bPointer = 0;
+        this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
+        this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
 
-        this.#ellipseBoundaries = [];
-        this.#pointBoundaries = [];
+        this.#bPointer = 0;
+        this.#ePointer = 0;
+        this.#pPointer = 0;
     }
 
     /**
@@ -282,7 +307,7 @@ export class GameStageData {
 
     /**
      * 
-     * @returns {Array<Array<number>>}
+     * @returns {Float32Array}
      */
     getEllipseBoundaries() {
         return this.#ellipseBoundaries;
@@ -290,7 +315,7 @@ export class GameStageData {
 
     /**
      * 
-     * @returns {Array<Array<number>>}
+     * @returns {Float32Array}
      */
     getPointBoundaries() {
         return this.#pointBoundaries;
@@ -346,6 +371,20 @@ export class GameStageData {
      */
     get boundariesLen() {
         return this.#bPointer;
+    }
+
+    /**
+     * @type {number}
+     */
+    get ellipseBLen() {
+        return this.#ePointer;
+    }
+
+    /**
+     * @type {number}
+     */
+    get pointBLen() {
+        return this.#pPointer;
     }
 
     /**

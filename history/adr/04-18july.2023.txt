@@ -4,21 +4,38 @@ Optimize and make render faster / Сделать оптимизацию и ув�
 Status: In progress
 
 Context:
+    It seems that the performance in terms of memory consumption is a little slow,
+    wasm version is a little faster, but js is slower,
+    the problem is using arrays for intermediate results 
+    and storing objects for collision calculations.
+
     Похоже, что производительность в части потребления памяти немного хромает,
     wasm версия работает чуть быстрее,но js - медленнее,
-    проблема заключается в использовании массивов для промежуточных результатов.
+    проблема заключается в использовании массивов для промежуточных результатов 
+    и хранения объектов для расчета столкновений.
     
 Decision:
+    Optimize the engine to use ArrayBuffer instead of an Array.
+    1. Rewrite methods in WebGlEngine 
+    2. Rewrite methods and data structures in GameStageData
+        * array boundaries Array<Array>> -> Float32Array
+        * ellipse boundaries Array<Array>> -> Float32Array
+        * point boundaries Array<Array>> -> Float32Array
+        * add boundaries bPointer, which will points to the last empty cell
+        * add ePointer
+        * add pPointer
+    3. Add optional parameters 
+        * maximum size of the boundaries array
+    4. Rewrite the collision detector to work with Float32Array
+
     Оптимизировать движок и писать данные в буфер, вместо массива.
     1. Переписать методы в WebGlEngine 
     2. Переписать методы и структуры данных в GameStageData
         * массив boundaries -> Float32Array
-        * массив renderObjects -> Float32Array
-        * добавить указатель boundaries bPointer
-        * добавить указатель renderObjects rPointer
+        * добавить указатель boundaries bPointer, 
+          он должен указывать на последний пустой слот в буфере
     3. Добавить опциональные параметры 
         * максимального размера массива границ(boundaries)
-        * максимального размера массива renderObjects
     4. Переделать работу детектора коллизий для работы с Float32Array
 
 Impact:

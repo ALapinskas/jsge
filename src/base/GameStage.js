@@ -530,8 +530,8 @@ export class GameStage {
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             len = this.stageData.boundariesLen,
-            eLen = ellipseB.length,
-            pLen = pointB.length;
+            eLen = this.stageData.ellipseBLen,
+            pLen = this.stageData.pointBLen;
 
         for (let i = 0; i < len; i+=4) {
             const x1 = mapObjects[i],
@@ -553,8 +553,8 @@ export class GameStage {
             }
         }
         if (eLen > 0) {
-            for (let i = 0; i < eLen; i+=1) {
-                const ellipse = ellipseB[i],
+            for (let i = 0; i < eLen; i+=4) {
+                const ellipse = [ellipseB[i], ellipseB[i+1], ellipseB[i+2], ellipseB[i+3]],
                     intersect = isEllipseCircleIntersect(ellipse, {x:xWithOffset, y:yWithOffset, r});
                 if (intersect) {
                     //console.log("rotation: ", rotation);
@@ -566,10 +566,9 @@ export class GameStage {
         }
         
         if (pLen > 0) {
-            for (let i = 0; i < pLen; i+=1) {
-                const point = pointB[i],
-                    xP = point[0],
-                    yP = point[1],
+            for (let i = 0; i < pLen; i+=2) {
+                const xP = pointB[i],
+                    yP = pointB[i + 1],
                     intersect = isPointCircleIntersect(xP, yP, {x:xWithOffset, y:yWithOffset, r});
                 if (intersect) {
                     //console.log("rotation: ", rotation);
@@ -620,8 +619,8 @@ export class GameStage {
             }
         }
         if (eLen > 0) {
-            for (let i = 0; i < eLen; i+=1) {
-                const ellipse = ellipseB[i],
+            for (let i = 0; i < eLen; i+=4) {
+                const ellipse = [ellipseB[i], ellipseB[i+1], ellipseB[i+2], ellipseB[i+3]],
                     intersect = isEllipsePolygonIntersect(ellipse, polygonWithOffsetAndRotation);
                 if (intersect) {
                     //console.log("rotation: ", rotation);
@@ -633,10 +632,9 @@ export class GameStage {
         }
         
         if (pLen > 0) {
-            for (let i = 0; i < pLen; i+=1) {
-                const point = pointB[i],
-                    x = point[0],
-                    y = point[1],
+            for (let i = 0; i < pLen; i+=2) {
+                const x = pointB[i],
+                    y = pointB[i+1],
                     intersect = isPointPolygonIntersect(x, y, polygonWithOffsetAndRotation);
                 if (intersect) {
                 //console.log("rotation: ", rotation);

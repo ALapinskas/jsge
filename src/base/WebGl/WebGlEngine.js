@@ -1050,11 +1050,12 @@ export class WebGlEngine {
                                                     });
                                             } else if (object.point) {
                                                 // x/y coordinate
-                                                pointBoundaries.push([baseX, baseY]);
+                                                pageData._addPointBoundary(baseX, baseY);
                                             } else if (object.ellipse) {
                                                 const radX = object.width / 2,
                                                     radY = object.height / 2;
-                                                ellipseBoundaries.push([baseX + radX, baseY + radY, radX, radY]);
+                                                    
+                                                pageData._addEllipseBoundary(baseX + radX, baseY + radY, radX, radY);
                                             } else {
                                                 // object is rect
                                                 const width = object.width,

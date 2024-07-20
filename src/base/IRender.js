@@ -468,9 +468,9 @@ export class IRender {
             const b = this.stageData.getRawBoundaries(),
                 eB = this.stageData.getEllipseBoundaries(),
                 pB = this.stageData.getPointBoundaries(),
-                len = b.length,
-                eLen = eB.length,
-                pLen = pB.length,
+                len = this.stageData.boundariesLen,
+                eLen = this.stageData.ellipseBLen,
+                pLen = this.stageData?.pointBLen,
                 linesArray = [];
         
             //for (let i = 0; i < len; i++) {
@@ -481,25 +481,25 @@ export class IRender {
             this.#webGlEngine._drawLines(b, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
             if (eLen) {
                 //draw ellipse boundaries
-                eB.forEach(element => {
-                    const x = element[0],
-                        y = element[1],
-                        radX = element[2],
-                        radY = element[3],
+                for (let i = 0; i < eLen; i+=4) {
+                    const x = eB[i],
+                        y = eB[i+1],
+                        radX = eB[i+2],
+                        radY = eB[i+3],
                         vertices = utils.calculateEllipseVertices(x, y, radX, radY);
                     this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
                     //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
-                });
+                }
             }
             if (pLen) {
                 //draw point boundaries
-                pB.forEach(element => {
-                    const x = element[0],
-                        y = element[1],
+                for (let i = 0; i < pLen; i+=2) {
+                    const x = pB[i],
+                        y = pB[i+1],
                         vertices = [x,y, x+1,y+1];
 
                     this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
-                });
+                }
             }
             resolve();
         });
