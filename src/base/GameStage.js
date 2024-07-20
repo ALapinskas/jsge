@@ -529,24 +529,27 @@ export class GameStage {
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
-            len = mapObjects.length * 4,
+            len = this.stageData.boundariesLen,
             eLen = ellipseB.length,
             pLen = pointB.length;
 
         for (let i = 0; i < len; i+=4) {
-            const object = {
-                x1: mapObjects[i],
-                y1: mapObjects[i + 1],
-                x2: mapObjects[i + 2],
-                y2: mapObjects[i + 3]
-            },
-            intersect = isCircleLineIntersect(xWithOffset, yWithOffset, r, object);
-            
-            if (intersect) {
-                //console.log("rotation: ", rotation);
-                //console.log("polygon: ", polygonWithOffsetAndRotation);
-                //console.log("intersect: ", intersect);
-                return intersect;
+            const x1 = mapObjects[i],
+                y1 = mapObjects[i + 1],
+                x2 = mapObjects[i + 2],
+                y2 = mapObjects[i + 3];
+
+            if (x1 === 0 && y1 === 0 && x2 === 0 && y2 === 0) {
+                continue;
+            } else {
+                const intersect = isCircleLineIntersect(xWithOffset, yWithOffset, r, {x1, y1, x2, y2});
+                
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
             }
         }
         if (eLen > 0) {
@@ -583,7 +586,7 @@ export class GameStage {
      * @param {number} x
      * @param {number} y
      * @param {Array<Array<number>>} polygon
-     * @param {number} rotation 
+     * @param {number} rotation
      * @returns {{x:number, y:number, p:number} | boolean}
      */
     #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
@@ -594,23 +597,26 @@ export class GameStage {
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
-            len = mapObjects.length * 4,
+            len = this.stageData.boundariesLen,
             eLen = ellipseB.length,
             pLen = pointB.length;
 
         for (let i = 0; i < len; i+=4) {
-            const object = {
-                    x1: mapObjects[i],
-                    y1: mapObjects[i + 1],
-                    x2: mapObjects[i + 2],
-                    y2: mapObjects[i + 3]
-                },
-                intersect = isPolygonLineIntersect(polygonWithOffsetAndRotation, object);
-            if (intersect) {
-                //console.log("rotation: ", rotation);
-                //console.log("polygon: ", polygonWithOffsetAndRotation);
-                //console.log("intersect: ", intersect);
-                return intersect;
+            const x1 = mapObjects[i],
+                y1 = mapObjects[i + 1],
+                x2 = mapObjects[i + 2],
+                y2 = mapObjects[i + 3];
+
+            if (x1 === 0 && y1 === 0 && x2 === 0 && y2 === 0) {
+                continue;
+            } else {
+                const intersect = isPolygonLineIntersect(polygonWithOffsetAndRotation, {x1, y1, x2, y2});
+                if (intersect) {
+                    //console.log("rotation: ", rotation);
+                    //console.log("polygon: ", polygonWithOffsetAndRotation);
+                    //console.log("intersect: ", intersect);
+                    return intersect;
+                }
             }
         }
         if (eLen > 0) {

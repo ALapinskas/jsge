@@ -465,7 +465,7 @@ export class IRender {
      */
     #drawBoundariesWebGl() {
         return new Promise((resolve) => {
-            const b = this.stageData.getBoundaries(),
+            const b = this.stageData.getRawBoundaries(),
                 eB = this.stageData.getEllipseBoundaries(),
                 pB = this.stageData.getPointBoundaries(),
                 len = b.length,
@@ -478,7 +478,7 @@ export class IRender {
             //    linesArray.push(item[0], item[1]);
             //    linesArray.push(item[2], item[3]);
             //}
-            this.#webGlEngine._drawLines(b.flat(), this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+            this.#webGlEngine._drawLines(b, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
             if (eLen) {
                 //draw ellipse boundaries
                 eB.forEach(element => {

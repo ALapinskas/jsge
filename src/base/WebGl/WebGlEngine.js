@@ -808,7 +808,7 @@ export class WebGlEngine {
 
         gl.bufferData(
             gl.ARRAY_BUFFER, 
-            new Float32Array(linesArray),
+            (linesArray instanceof Float32Array ? linesArray : new Float32Array(linesArray)),
             gl.STATIC_DRAW);
 
         verticesNumber += linesArray.length / 2;
@@ -859,7 +859,7 @@ export class WebGlEngine {
                 setBoundaries = renderLayer.setBoundaries;
                 
             let boundariesRowsIndexes = new Map(),
-                boundaries = [],
+                // boundaries = [],
                 ellipseBoundaries = [],
                 pointBoundaries = [],
                 tileImagesData = [];
@@ -1041,11 +1041,11 @@ export class WebGlEngine {
                                                     (point, idx) => {
                                                         const next = object.polygon[idx + 1];
                                                         if (next) {
-                                                            boundaries.push([point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY]);
+                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
                                                         } else {
                                                             // last point -> link to the first
                                                             const first = object.polygon[0];
-                                                            boundaries.push([point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY]);
+                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
                                                         }
                                                     });
                                             } else if (object.point) {
@@ -1061,10 +1061,18 @@ export class WebGlEngine {
                                                     height = object.height,
                                                     x2 = width + baseX,
                                                     y2 = height + baseY;
-                                                boundaries.push([baseX, baseY, x2, baseY]);
-                                                boundaries.push([x2, baseY, x2, y2]);
-                                                boundaries.push([x2, y2, baseX, y2]);
-                                                boundaries.push([baseX, y2, baseX, baseY]);
+
+                                                //boundaries.push([baseX, baseY, x2, baseY]);
+                                                pageData._addBoundaryLine(baseX, baseY, x2, baseY);
+
+                                                //boundaries.push([x2, baseY, x2, y2]);
+                                                pageData._addBoundaryLine(x2, baseY, x2, y2);
+
+                                                //boundaries.push([]);
+                                                pageData._addBoundaryLine(x2, y2, baseX, y2);
+
+                                                //boundaries.push([baseX, y2, baseX, baseY]);
+                                                pageData._addBoundaryLine(baseX, y2, baseX, baseY);
                                             }
                                         });
                                     }
@@ -1072,6 +1080,7 @@ export class WebGlEngine {
                                 // extract rect boundary for the whole tile
                                 }
                                 if (isBoundaryPreset === false) {
+                                    const boundaries = pageData.getRawBoundaries();
 
                                     let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
                                         bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
@@ -1085,12 +1094,13 @@ export class WebGlEngine {
                                         if (topCellIndexes) {
                                             //remove double lines from top
                                             const bottomTopCellIndex = topCellIndexes[INDEX_BOTTOM_LINE],
-                                                bottomTopCell = boundaries[bottomTopCellIndex];
+                                                bottomTopLeftFirstIndex = bottomTopCellIndex * 4,
+                                                bottomTopCell = boundaries[bottomTopLeftFirstIndex];
                                             if (bottomTopCell) {
-                                                const bottomTopCellX1 = bottomTopCell[INDEX_X1],
-                                                    bottomTopCellY1 = bottomTopCell[INDEX_Y1],
-                                                    bottomTopCellX2 = bottomTopCell[INDEX_X2],
-                                                    bottomTopCellY2 = bottomTopCell[INDEX_Y2],
+                                                const bottomTopCellX1 = bottomTopCell,
+                                                    bottomTopCellY1 = boundaries[bottomTopLeftFirstIndex + INDEX_Y1],
+                                                    bottomTopCellX2 = boundaries[bottomTopLeftFirstIndex + INDEX_X2],
+                                                    bottomTopCellY2 = boundaries[bottomTopLeftFirstIndex + INDEX_Y2],
                                                     topX1 = topLine[INDEX_X1],
                                                     topY1 = topLine[INDEX_Y1],
                                                     topX2 = topLine[INDEX_X2],
@@ -1098,37 +1108,39 @@ export class WebGlEngine {
                                                 
                                                 if (topX1 === bottomTopCellX2 && topY1 === bottomTopCellY2 &&
                                                     topX2 === bottomTopCellX1 && topY2 === bottomTopCellY1) {
-                                                    boundaries[bottomTopCellIndex] = undefined;
+                                                    pageData._removeBoundaryLine(bottomTopLeftFirstIndex);
                                                     topLine = undefined;
                                                 }
                                             }
 
                                             // merge line from top right
                                             const rightTopCellIndex = topCellIndexes[INDEX_RIGHT_LINE],
-                                                rightTopCell = boundaries[rightTopCellIndex];
-                                            if (rightTopCell) {
-                                                const rightTopCellX1 = rightTopCell[INDEX_X1],
-                                                    rightTopCellY1 = rightTopCell[INDEX_Y1],
-                                                    rightTopCellX2 = rightTopCell[INDEX_X2],
-                                                    rightX1 = rightLine[INDEX_X1],
-                                                    rightX2 = rightLine[INDEX_X2];
+                                                rightTopRightFirstIndex = rightTopCellIndex * 4,
+                                                rightTopX1 = boundaries[rightTopRightFirstIndex];
+                                            if (rightTopX1) {
+                                                const rightTopCellX1 = rightTopX1,
+                                                    rightTopCellY1 = rightTopX1[INDEX_Y1],
+                                                    rightTopCellX2 = boundaries[rightTopRightFirstIndex + INDEX_X2],
+                                                    rightX1 = boundaries[rightTopRightFirstIndex + INDEX_X1],
+                                                    rightX2 = boundaries[rightTopRightFirstIndex + INDEX_X2];
                                                 if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
-                                                    boundaries[rightTopCellIndex] = undefined;
+                                                    pageData._removeBoundaryLine(rightTopRightFirstIndex)
                                                     rightLine[INDEX_X1] = rightTopCellX1;
                                                     rightLine[INDEX_Y1] = rightTopCellY1;
                                                 }
                                             }
                                             // merge line from top left
                                             const leftTopCellIndex = topCellIndexes[INDEX_LEFT_LINE],
-                                                leftTopCell = boundaries[leftTopCellIndex];
-                                            if (leftTopCell) {
-                                                const leftTopCellX1 = leftTopCell[INDEX_X1],
-                                                    leftTopCellX2 = leftTopCell[INDEX_X2],
-                                                    leftTopCellY2 = leftTopCell[INDEX_Y2],
+                                                leftTopRightFirstIndex = leftTopCellIndex * 4,
+                                                leftTopX1 = boundaries[leftTopRightFirstIndex];
+                                            if (leftTopX1) {
+                                                const leftTopCellX1 = leftTopX1,
+                                                    leftTopCellX2 = boundaries[leftTopRightFirstIndex + INDEX_X2],
+                                                    leftTopCellY2 = boundaries[leftTopRightFirstIndex + INDEX_Y2],
                                                     leftX1 = leftLine[INDEX_X1],
                                                     leftX2 = leftLine[INDEX_X2];
                                                 if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
-                                                    boundaries[leftTopCellIndex] = undefined;
+                                                    pageData._removeBoundaryLine(leftTopCellIndex);
                                                     leftLine[INDEX_X2] = leftTopCellX2;
                                                     leftLine[INDEX_Y2] = leftTopCellY2;
                                                 }
@@ -1140,11 +1152,12 @@ export class WebGlEngine {
 
                                         //remove double lines from left
                                         const rightLeftCellIndex = leftCellIndexes[INDEX_RIGHT_LINE],
-                                            rightLeftCell = boundaries[rightLeftCellIndex],
-                                            rightLeftCellX1 = rightLeftCell[INDEX_X1],
-                                            rightLeftCellY1 = rightLeftCell[INDEX_Y1],
-                                            rightLeftCellX2 = rightLeftCell[INDEX_X2],
-                                            rightLeftCellY2 = rightLeftCell[INDEX_Y2],
+                                            rightLeftFirstCellIndex = rightLeftCellIndex * 4,
+                                            rightLeftX1 = boundaries[rightLeftFirstCellIndex],
+                                            rightLeftCellX1 = rightLeftX1,
+                                            rightLeftCellY1 = boundaries[rightLeftCellIndex + INDEX_Y1],
+                                            rightLeftCellX2 = boundaries[rightLeftCellIndex + INDEX_X2],
+                                            rightLeftCellY2 = boundaries[rightLeftCellIndex + INDEX_Y2],
                                             leftX1 = leftLine[INDEX_X1],
                                             leftY1 = leftLine[INDEX_Y1],
                                             leftX2 = leftLine[INDEX_X2],
@@ -1152,21 +1165,22 @@ export class WebGlEngine {
 
                                         if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
                                             leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
-                                            boundaries[rightLeftCellIndex] = undefined;
+                                            pageData._removeBoundaryLine(rightLeftCellIndex);
                                             leftLine = undefined;
                                         }
 
                                         //merge long lines from left top
                                         const topLeftCellIndex = leftCellIndexes[INDEX_TOP_LINE],
-                                            topLeftCell = boundaries[topLeftCellIndex];
-                                        if (topLeftCell && topLine) {
-                                            const topLeftCellX1 = topLeftCell[INDEX_X1],
-                                                topLeftCellY1 = topLeftCell[INDEX_Y1],
-                                                topLeftCellY2 = topLeftCell[INDEX_Y2],
+                                            topLeftFirstCellIndex= topLeftCellIndex * 4,
+                                            topLeftX1 = boundaries[topLeftFirstCellIndex];
+                                        if (topLeftX1 && topLine) {
+                                            const topLeftCellX1 = topLeftX1,
+                                                topLeftCellY1 = boundaries[topLeftFirstCellIndex + INDEX_Y1],
+                                                topLeftCellY2 = boundaries[topLeftFirstCellIndex + INDEX_Y2],
                                                 topY1 = topLine[INDEX_Y1],
                                                 topY2 = topLine[INDEX_Y2];
                                             if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
-                                                boundaries[topLeftCellIndex] = undefined;
+                                                pageData._removeBoundaryLine(topLeftCellIndex);
                                                 topLine[INDEX_X1] = topLeftCellX1;
                                                 topLine[INDEX_Y1] = topLeftCellY1;
                                             }
@@ -1174,15 +1188,16 @@ export class WebGlEngine {
 
                                         // merge long lines from left bottom
                                         const bottomLeftCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
-                                            bottomLeftCell = boundaries[bottomLeftCellIndex];
-                                        if (bottomLeftCell) {
-                                            const bottomLeftCellY1 = bottomLeftCell[INDEX_Y1],
-                                                bottomLeftCellX2 = bottomLeftCell[INDEX_X2],
-                                                bottomLeftCellY2 = bottomLeftCell[INDEX_Y2],
+                                            bottomLeftFirstCellIndex = bottomLeftCellIndex * 4,
+                                            bottomLeftCellX1 = boundaries[bottomLeftFirstCellIndex];
+                                        if (bottomLeftCellX1) {
+                                            const bottomLeftCellY1 = boundaries[bottomLeftFirstCellIndex + INDEX_Y1],
+                                                bottomLeftCellX2 = boundaries[bottomLeftFirstCellIndex + INDEX_X2],
+                                                bottomLeftCellY2 = boundaries[bottomLeftFirstCellIndex + INDEX_Y2],
                                                 bottomY1 = bottomLine[INDEX_Y1],
                                                 bottomY2 = bottomLine[INDEX_Y2];
                                             if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
-                                                boundaries[bottomLeftCellIndex] = undefined;
+                                                pageData._removeBoundaryLine(bottomLeftCellIndex);
                                                 //opposite direction
                                                 bottomLine[INDEX_X2] = bottomLeftCellX2;
                                                 bottomLine[INDEX_Y2] = bottomLeftCellY2;
@@ -1192,16 +1207,16 @@ export class WebGlEngine {
                                     }
 
                                     if (topLine) {
-                                        boundaries.push(topLine);
-                                        currentAddedCellIndexes[INDEX_TOP_LINE] = boundaries.length - 1;
+                                        pageData._addBoundaryLine(topLine[0], topLine[1], topLine[2], topLine[3]);
+                                        currentAddedCellIndexes[INDEX_TOP_LINE] = (boundaries.length / 4) - 1;
                                     }
-                                    boundaries.push(rightLine);
-                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = boundaries.length - 1;
-                                    boundaries.push(bottomLine);
-                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = boundaries.length - 1;
+                                    pageData._addBoundaryLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
+                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = (boundaries.length / 4) - 1;
+                                    pageData._addBoundaryLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
+                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = (boundaries.length / 4) - 1;
                                     if (leftLine) {
-                                        boundaries.push(leftLine);
-                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = boundaries.length - 1;
+                                        pageData._addBoundaryLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
+                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = (boundaries.length / 4) - 1;
                                     }
                                     //save values indexes cols info
                                     currentRowIndexes.set(col, currentAddedCellIndexes);
@@ -1222,8 +1237,8 @@ export class WebGlEngine {
             
             if (setBoundaries) {
                 // filter undefined value
-                const filtered = boundaries.filter(array => array);
-                pageData._addBoundariesArray(filtered);
+                //const filtered = boundaries.filter(array => array);
+                //pageData._addBoundariesArray(filtered);
                 if (ellipseBoundaries.length > 0) {
                     pageData._addEllipseBoundaries(ellipseBoundaries);
                 }

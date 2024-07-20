@@ -77,10 +77,7 @@ export class GameStageData {
      * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
      */
     #addBoundaries(boundaries) {
-        this._addBoundaryValue(boundaries.x1);
-        this._addBoundaryValue(boundaries.y1);
-        this._addBoundaryValue(boundaries.x2);
-        this._addBoundaryValue(boundaries.y2);
+        this._addBoundaryLine(boundaries.x1,boundaries.y1, boundaries.x2, boundaries.y2);
     }
 
     /**
@@ -92,16 +89,26 @@ export class GameStageData {
         const len = boundaries.length;
         for (let i = 0; i < len; i++) {
             const boundary = boundaries[i];
-            this._addBoundaryValue(boundary[0]);
-            this._addBoundaryValue(boundary[1]);
-            this._addBoundaryValue(boundary[2]);
-            this._addBoundaryValue(boundary[3]);
+            this._addBoundaryLne(boundary[0], boundary[1], boundary[2], boundary[3]);
         }
     }
 
-    _addBoundaryValue(value) {
-        this.#boundaries[this.#bPointer] = value;
+    _addBoundaryLine(x1, y1, x2, y2) {
+        this.#boundaries[this.#bPointer] = x1;
         this.#bPointer++;
+        this.#boundaries[this.#bPointer] = y1;
+        this.#bPointer++;
+        this.#boundaries[this.#bPointer] = x2;
+        this.#bPointer++;
+        this.#boundaries[this.#bPointer] = y2;
+        this.#bPointer++;
+    }
+
+    _removeBoundaryLine(startPos) {
+        this.#boundaries[startPos] = 0;
+        this.#boundaries[startPos + 1] = 0;
+        this.#boundaries[startPos + 2] = 0;
+        this.#boundaries[startPos + 3] = 0;
     }
 
     _addBoundariesFloat(boundaries) {
@@ -329,6 +336,13 @@ export class GameStageData {
      */
     get mapRotate() {
         return this.#rotate;
+    }
+
+    /**
+     * @type {number}
+     */
+    get boundariesLen() {
+        return this.#bPointer;
     }
 
     /**
