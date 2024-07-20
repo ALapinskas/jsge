@@ -646,10 +646,11 @@ export class WebGlEngine {
                     textureStorage = new TextureStorage(gl.createTexture(), i);
                     renderLayer._setTextureStorage(i, textureStorage);
                 }
-                if (textureStorage._isTextureRecalculated === true) { 
+                if (textureStorage._isTextureRecalculated === true) {
                     this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
                     textureStorage._isTextureRecalculated = false;
                 } else {
+                    //console.log("bind texture");
                     this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
                 }
                 gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
@@ -899,12 +900,17 @@ export class WebGlEngine {
 
                     hasAnimations = tilesetData._hasAnimations,
 
-                    verticesBufferData = [],
-                    texturesBufferData = [],
+                    //verticesBufferData = [],
+                    //texturesBufferData = [],
+                    bufferDataSize = screenRows * screenCols * 12;
                     
                     // additional property which is set in DrawTiledLayer
-                    hasBoundaries = tilesetData._hasBoundaries,
+                    const hasBoundaries = tilesetData._hasBoundaries,
                     tilesetBoundaries = tilesetData._boundaries; // Map
+                
+                let v = new Float32Array(bufferDataSize),
+                    t = new Float32Array(bufferDataSize),
+                    filledSize = 0;
                 
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
@@ -951,21 +957,68 @@ export class WebGlEngine {
                                 texY1 = (1 / atlasHeight) * atlasPosY,
                                 texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
                                 texY2 = texY1 + (1 / atlasHeight * tilesetheight);
-                            verticesBufferData.push(
-                                vecX1, vecY1,
-                                vecX2, vecY1,
-                                vecX1, vecY2,
-                                vecX1, vecY2,
-                                vecX2, vecY1,
-                                vecX2, vecY2);
-                            texturesBufferData.push(
-                                texX1, texY1,
-                                texX2, texY1,
-                                texX1, texY2,
-                                texX1, texY2,
-                                texX2, texY1,
-                                texX2, texY2
-                            );
+
+                            // 0 vecX1
+                            v[filledSize] = vecX1;
+                            t[filledSize] = texX1;
+
+                            // 1 vecY1
+                            filledSize++;
+                            v[filledSize] = vecY1;
+                            t[filledSize] = texY1;
+                            
+                            // 2 vecX2
+                            filledSize++;
+                            v[filledSize] = vecX2;
+                            t[filledSize] = texX2;
+
+                            // 3 vecY1
+                            filledSize++;
+                            v[filledSize] = vecY1;
+                            t[filledSize] = texY1;
+
+                            // 4 vecX1
+                            filledSize++;
+                            v[filledSize] = vecX1;
+                            t[filledSize] = texX1;
+
+                            // 5 vecY2
+                            filledSize++;
+                            v[filledSize] = vecY2;
+                            t[filledSize] = texY2;
+
+                            // 6 vecX1
+                            filledSize++;
+                            v[filledSize] = vecX1;
+                            t[filledSize] = texX1;
+
+                            // 7 vecY2
+                            filledSize++;
+                            v[filledSize] = vecY2;
+                            t[filledSize] = texY2;
+
+                            // 8 vecX2
+                            filledSize++;
+                            v[filledSize] = vecX2;
+                            t[filledSize] = texX2;
+
+                            // 9 vecY1
+                            filledSize++;
+                            v[filledSize] = vecY1;
+                            t[filledSize] = texY1;
+
+                            // 10 vecX2, 
+                            filledSize++;
+                            v[filledSize] = vecX2;
+                            t[filledSize] = texX2;
+
+                            // 11 vecY2
+                            filledSize++;
+                            v[filledSize] = vecY2;
+                            t[filledSize] = texY2;
+
+                            filledSize++;
+                        
                             if (setBoundaries) {
                                 // if boundary is set in tilesetData
                                 let isBoundaryPreset = false;
@@ -1164,7 +1217,7 @@ export class WebGlEngine {
                     mapIndex += skipColsRight;
                 }
                 //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tilesetData.name, renderLayer._maskId);
-                tileImagesData.push([new Float32Array(verticesBufferData), new Float32Array(texturesBufferData), tilesetData.name, atlasImage]);
+                tileImagesData.push([v, t, tilesetData.name, atlasImage]);
             }
             
             if (setBoundaries) {
@@ -1222,12 +1275,14 @@ export class WebGlEngine {
                     atlasWidth = atlasImage.width,
                     atlasHeight = atlasImage.height,
                     cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin;
+                    cellMargin = tilesetData.margin,
+                    bufferDataSize = layerRows * layerCols * 12;
                 
                 let mapIndex = 0,
-                    verticesBufferData = [],
-                    texturesBufferData = [];
-
+                    v = new Float32Array(bufferDataSize),
+                    t = new Float32Array(bufferDataSize),
+                    filledSize = 0;
+                
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                     pageData._setWorldDimensions(worldW, worldH);
@@ -1251,29 +1306,74 @@ export class WebGlEngine {
                                 texY1 = 1 / atlasHeight * atlasPosY,
                                 texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
                                 texY2 = texY1 + (1 / atlasHeight * tilesetheight);
-                                
-                            verticesBufferData.push(
-                                vecX1, vecY1,
-                                vecX2, vecY1,
-                                vecX1, vecY2,
-                                vecX1, vecY2,
-                                vecX2, vecY1,
-                                vecX2, vecY2);
-                            texturesBufferData.push(
-                                texX1, texY1,
-                                texX2, texY1,
-                                texX1, texY2,
-                                texX1, texY2,
-                                texX2, texY1,
-                                texX2, texY2
-                            );
+                             
+                            // 0 vecX1
+                            v[filledSize] = vecX1;
+                            t[filledSize] = texX1;
 
+                            // 1 vecY1
+                            filledSize++;
+                            v[filledSize] = vecY1;
+                            t[filledSize] = texY1;
+                            
+                            // 2 vecX2
+                            filledSize++;
+                            v[filledSize] = vecX2;
+                            t[filledSize] = texX2;
+
+                            // 3 vecY1
+                            filledSize++;
+                            v[filledSize] = vecY1;
+                            t[filledSize] = texY1;
+
+                            // 4 vecX1
+                            filledSize++;
+                            v[filledSize] = vecX1;
+                            t[filledSize] = texX1;
+
+                            // 5 vecY2
+                            filledSize++;
+                            v[filledSize] = vecY2;
+                            t[filledSize] = texY2;
+
+                            // 6 vecX1
+                            filledSize++;
+                            v[filledSize] = vecX1;
+                            t[filledSize] = texX1;
+
+                            // 7 vecY2
+                            filledSize++;
+                            v[filledSize] = vecY2;
+                            t[filledSize] = texY2;
+
+                            // 8 vecX2
+                            filledSize++;
+                            v[filledSize] = vecX2;
+                            t[filledSize] = texX2;
+
+                            // 9 vecY1
+                            filledSize++;
+                            v[filledSize] = vecY1;
+                            t[filledSize] = texY1;
+
+                            // 10 vecX2, 
+                            filledSize++;
+                            v[filledSize] = vecX2;
+                            t[filledSize] = texX2;
+
+                            // 11 vecY2
+                            filledSize++;
+                            v[filledSize] = vecY2;
+                            t[filledSize] = texY2;
+
+                            filledSize++;
+                            
                         }
                         mapIndex++;
                     }
                 }
-                const v = new Float32Array(verticesBufferData);
-                const t = new Float32Array(texturesBufferData);
+                
+                
                 tileImagesData.push([v, t, tilesetData.name, atlasImage]);
             }
             resolve(tileImagesData);

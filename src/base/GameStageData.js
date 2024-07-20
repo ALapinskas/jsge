@@ -16,11 +16,16 @@ export class GameStageData {
     #centerX = 0;
     #centerY = 0;
     #rotate = 0;
+
+    #maxBoundariesSize = 0;
+    #bPointer = 0;
     /**
      * current screen boundaries, recalculated every render cycles
-     * @type {Array<Array<number>>}
+     * stored as floatArray, 
+     * each 4 cells, represent a line with coords x1,y1,x2,y2
+     * @type {Float32Array}
      */
-    #boundaries = [];
+    #boundaries;
     /**
      * ellipse boundaries
      * @type {Array<Array<number>>}
@@ -35,7 +40,7 @@ export class GameStageData {
      * whole world boundaries, calculated once on prepare stage
      * @type {Array<Array<number>>}
      */
-    #wholeWorldBoundaries = [];
+    #wholeWorldBoundaries;
     /**
      * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
      */
@@ -50,6 +55,11 @@ export class GameStageData {
      * @type {boolean}
      */
     #isWorldBoundariesEnabled = false;
+
+    constructor(gameOptions) {
+        this.#maxBoundariesSize = gameOptions.render.boundaries.maxBoundariesHeapSize;
+        this.#boundaries = new Float32Array(this.#maxBoundariesSize);
+    }
 
     /**
      * 
@@ -67,7 +77,10 @@ export class GameStageData {
      * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
      */
     #addBoundaries(boundaries) {
-        this.#boundaries.push([boundaries.x1, boundaries.y1, boundaries.x2, boundaries.y2]);
+        this._addBoundaryValue(boundaries.x1);
+        this._addBoundaryValue(boundaries.y1);
+        this._addBoundaryValue(boundaries.x2);
+        this._addBoundaryValue(boundaries.y2);
     }
 
     /**
@@ -76,7 +89,23 @@ export class GameStageData {
      * @ignore
      */
     _addBoundariesArray(boundaries) {
-        this.#boundaries.push(...boundaries);
+        const len = boundaries.length;
+        for (let i = 0; i < len; i++) {
+            const boundary = boundaries[i];
+            this._addBoundaryValue(boundary[0]);
+            this._addBoundaryValue(boundary[1]);
+            this._addBoundaryValue(boundary[2]);
+            this._addBoundaryValue(boundary[3]);
+        }
+    }
+
+    _addBoundaryValue(value) {
+        this.#boundaries[this.#bPointer] = value;
+        this.#bPointer++;
+    }
+
+    _addBoundariesFloat(boundaries) {
+        //const len = 
     }
 
     _addEllipseBoundaries(boundaries) {
@@ -92,7 +121,9 @@ export class GameStageData {
      * @ignore
      */
     _clearBoundaries() {
-        this.#boundaries = [];
+        this.#boundaries = new Float32Array(this.#maxBoundariesSize);
+        this.#bPointer = 0;
+
         this.#ellipseBoundaries = [];
         this.#pointBoundaries = [];
     }
@@ -153,11 +184,14 @@ export class GameStageData {
 
     /**
      * Merge same boundaries
+     * !not used
      * @ignore
+     * @deprecated
      */
     _mergeBoundaries(isWholeMapBoundaries = false) {
         const boundaries = isWholeMapBoundaries ? this.getWholeWorldBoundaries() : this.getBoundaries(),
             boundariesSet = new Set(boundaries);
+
         for (const line of boundariesSet.values()) {
             const lineX1 = line[0],
                 lineY1 = line[1],
@@ -182,7 +216,6 @@ export class GameStageData {
                 }
             }
         }
-
         if (isWholeMapBoundaries) {
             this.#boundaries = Array.from(boundariesSet);
         } else {
@@ -212,6 +245,28 @@ export class GameStageData {
      * @returns {Array<Array<number>>}
      */
     getBoundaries() {
+        const boundaries = this.#boundaries, 
+            len = this.#bPointer;
+
+        let bTempArray = [],
+            bArray = [];
+        
+        for (let i = 0; i < len; i++) {
+            const element = boundaries[i];
+            bTempArray.push(element);
+            if (((i + 1) % 4) === 0) {
+                bArray.push(bTempArray);
+                bTempArray = [];
+            }
+        }
+        return bArray;
+    }
+
+    /**
+     * 
+     * @returns {Float32Array}
+     */
+    getRawBoundaries() {
         return this.#boundaries;
     }
 

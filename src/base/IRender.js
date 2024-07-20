@@ -404,8 +404,6 @@ export class IRender {
                 }
                 this.stageData._setWholeMapBoundaries(boundaries);
                 this.stageData._mergeBoundaries(true);
-                console.warn("precalculated boundaries set");
-                console.log(this.stageData.getWholeWorldBoundaries());
                 resolve();
             } else {
                 resolve();
