@@ -1068,7 +1068,7 @@ export class WebGlEngine {
                                                 //boundaries.push([x2, baseY, x2, y2]);
                                                 pageData._addBoundaryLine(x2, baseY, x2, y2);
 
-                                                //boundaries.push([]);
+                                                //boundaries.push([x2, y2, baseX, y2]);
                                                 pageData._addBoundaryLine(x2, y2, baseX, y2);
 
                                                 //boundaries.push([baseX, y2, baseX, baseY]);
@@ -1208,15 +1208,15 @@ export class WebGlEngine {
 
                                     if (topLine) {
                                         pageData._addBoundaryLine(topLine[0], topLine[1], topLine[2], topLine[3]);
-                                        currentAddedCellIndexes[INDEX_TOP_LINE] = (boundaries.length / 4) - 1;
+                                        currentAddedCellIndexes[INDEX_TOP_LINE] = (pageData.boundariesLen / 4) - 1;
                                     }
                                     pageData._addBoundaryLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
-                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = (boundaries.length / 4) - 1;
+                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = (pageData.boundariesLen / 4) - 1;
                                     pageData._addBoundaryLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
-                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = (boundaries.length / 4) - 1;
+                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = (pageData.boundariesLen / 4) - 1;
                                     if (leftLine) {
                                         pageData._addBoundaryLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
-                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = (boundaries.length / 4) - 1;
+                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = (pageData.boundariesLen / 4) - 1;
                                     }
                                     //save values indexes cols info
                                     currentRowIndexes.set(col, currentAddedCellIndexes);
