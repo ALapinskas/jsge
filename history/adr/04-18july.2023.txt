@@ -34,6 +34,10 @@ Decision:
         * массив boundaries -> Float32Array
         * добавить указатель boundaries bPointer, 
           он должен указывать на последний пустой слот в буфере
+        * ellipse boundaries Array<Array>> -> Float32Array
+        * point boundaries Array<Array>> -> Float32Array
+        * добавить ePointer
+        * добавить bPointer
     3. Добавить опциональные параметры 
         * максимального размера массива границ(boundaries)
     4. Переделать работу детектора коллизий для работы с Float32Array
