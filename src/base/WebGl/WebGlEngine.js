@@ -1093,12 +1093,10 @@ export class WebGlEngine {
                                         const topCellIndexes = topRow.get(col);
                                         if (topCellIndexes) {
                                             //remove double lines from top
-                                            const bottomTopCellIndex = topCellIndexes[INDEX_BOTTOM_LINE],
-                                                bottomTopLeftFirstIndex = bottomTopCellIndex * 4,
-                                                bottomTopCell = boundaries[bottomTopLeftFirstIndex];
-                                            if (bottomTopCell) {
-                                                const bottomTopCellX1 = bottomTopCell,
-                                                    bottomTopCellY1 = boundaries[bottomTopLeftFirstIndex + INDEX_Y1],
+                                            const bottomTopLeftFirstIndex = topCellIndexes[INDEX_BOTTOM_LINE],
+                                                bottomTopCellX1 = boundaries[bottomTopLeftFirstIndex];
+                                            if (bottomTopCellX1) {
+                                                const bottomTopCellY1 = boundaries[bottomTopLeftFirstIndex + INDEX_Y1],
                                                     bottomTopCellX2 = boundaries[bottomTopLeftFirstIndex + INDEX_X2],
                                                     bottomTopCellY2 = boundaries[bottomTopLeftFirstIndex + INDEX_Y2],
                                                     topX1 = topLine[INDEX_X1],
@@ -1114,12 +1112,10 @@ export class WebGlEngine {
                                             }
 
                                             // merge line from top right
-                                            const rightTopCellIndex = topCellIndexes[INDEX_RIGHT_LINE],
-                                                rightTopRightFirstIndex = rightTopCellIndex * 4,
-                                                rightTopX1 = boundaries[rightTopRightFirstIndex];
-                                            if (rightTopX1) {
-                                                const rightTopCellX1 = rightTopX1,
-                                                    rightTopCellY1 = rightTopX1[INDEX_Y1],
+                                            const rightTopRightFirstIndex = topCellIndexes[INDEX_RIGHT_LINE],
+                                                rightTopCellX1 = boundaries[rightTopRightFirstIndex];
+                                            if (rightTopCellX1) {
+                                                const rightTopCellY1 = boundaries[rightTopRightFirstIndex + INDEX_Y1],
                                                     rightTopCellX2 = boundaries[rightTopRightFirstIndex + INDEX_X2],
                                                     rightX1 = boundaries[rightTopRightFirstIndex + INDEX_X1],
                                                     rightX2 = boundaries[rightTopRightFirstIndex + INDEX_X2];
@@ -1130,12 +1126,10 @@ export class WebGlEngine {
                                                 }
                                             }
                                             // merge line from top left
-                                            const leftTopCellIndex = topCellIndexes[INDEX_LEFT_LINE],
-                                                leftTopRightFirstIndex = leftTopCellIndex * 4,
-                                                leftTopX1 = boundaries[leftTopRightFirstIndex];
-                                            if (leftTopX1) {
-                                                const leftTopCellX1 = leftTopX1,
-                                                    leftTopCellX2 = boundaries[leftTopRightFirstIndex + INDEX_X2],
+                                            const leftTopRightFirstIndex = topCellIndexes[INDEX_LEFT_LINE],
+                                                leftTopCellX1 = boundaries[leftTopRightFirstIndex];
+                                            if (leftTopCellX1) {
+                                                const leftTopCellX2 = boundaries[leftTopRightFirstIndex + INDEX_X2],
                                                     leftTopCellY2 = boundaries[leftTopRightFirstIndex + INDEX_Y2],
                                                     leftX1 = leftLine[INDEX_X1],
                                                     leftX2 = leftLine[INDEX_X2];
@@ -1152,7 +1146,7 @@ export class WebGlEngine {
 
                                         //remove double lines from left
                                         const rightLeftCellIndex = leftCellIndexes[INDEX_RIGHT_LINE],
-                                            rightLeftFirstCellIndex = rightLeftCellIndex * 4,
+                                            rightLeftFirstCellIndex = rightLeftCellIndex,
                                             rightLeftX1 = boundaries[rightLeftFirstCellIndex],
                                             rightLeftCellX1 = rightLeftX1,
                                             rightLeftCellY1 = boundaries[rightLeftCellIndex + INDEX_Y1],
@@ -1170,12 +1164,10 @@ export class WebGlEngine {
                                         }
 
                                         //merge long lines from left top
-                                        const topLeftCellIndex = leftCellIndexes[INDEX_TOP_LINE],
-                                            topLeftFirstCellIndex= topLeftCellIndex * 4,
-                                            topLeftX1 = boundaries[topLeftFirstCellIndex];
-                                        if (topLeftX1 && topLine) {
-                                            const topLeftCellX1 = topLeftX1,
-                                                topLeftCellY1 = boundaries[topLeftFirstCellIndex + INDEX_Y1],
+                                        const topLeftFirstCellIndex = leftCellIndexes[INDEX_TOP_LINE],
+                                            topLeftCellX1 = boundaries[topLeftFirstCellIndex];
+                                        if (topLeftCellX1 && topLine) {
+                                            const topLeftCellY1 = boundaries[topLeftFirstCellIndex + INDEX_Y1],
                                                 topLeftCellY2 = boundaries[topLeftFirstCellIndex + INDEX_Y2],
                                                 topY1 = topLine[INDEX_Y1],
                                                 topY2 = topLine[INDEX_Y2];
@@ -1187,8 +1179,7 @@ export class WebGlEngine {
                                         }
 
                                         // merge long lines from left bottom
-                                        const bottomLeftCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
-                                            bottomLeftFirstCellIndex = bottomLeftCellIndex * 4,
+                                        const bottomLeftFirstCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
                                             bottomLeftCellX1 = boundaries[bottomLeftFirstCellIndex];
                                         if (bottomLeftCellX1) {
                                             const bottomLeftCellY1 = boundaries[bottomLeftFirstCellIndex + INDEX_Y1],
@@ -1208,15 +1199,15 @@ export class WebGlEngine {
 
                                     if (topLine) {
                                         pageData._addBoundaryLine(topLine[0], topLine[1], topLine[2], topLine[3]);
-                                        currentAddedCellIndexes[INDEX_TOP_LINE] = (pageData.boundariesLen / 4) - 1;
+                                        currentAddedCellIndexes[INDEX_TOP_LINE] = pageData.boundariesLen - 4;
                                     }
                                     pageData._addBoundaryLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
-                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = (pageData.boundariesLen / 4) - 1;
+                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = pageData.boundariesLen - 4;
                                     pageData._addBoundaryLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
-                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = (pageData.boundariesLen / 4) - 1;
+                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = pageData.boundariesLen - 4;
                                     if (leftLine) {
                                         pageData._addBoundaryLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
-                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = (pageData.boundariesLen / 4) - 1;
+                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = pageData.boundariesLen - 4;
                                     }
                                     //save values indexes cols info
                                     currentRowIndexes.set(col, currentAddedCellIndexes);

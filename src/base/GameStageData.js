@@ -18,6 +18,9 @@ export class GameStageData {
     #rotate = 0;
 
     #maxBoundariesSize = 0;
+    /**
+     * Points to next empty cell
+     */
     #bPointer = 0;
     /**
      * current screen boundaries, recalculated every render cycles
