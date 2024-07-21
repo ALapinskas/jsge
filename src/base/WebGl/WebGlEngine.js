@@ -254,7 +254,7 @@ export class WebGlEngine {
         gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
-
+        
         gl.enableVertexAttribArray(positionAttributeLocation);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
@@ -601,6 +601,9 @@ export class WebGlEngine {
 
         let verticesNumber = 0,
             isTextureBind = false;
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.enableVertexAttribArray(texCoordLocation);
+
         for (let i = 0; i < renderLayerData.length; i++) {
             const data = renderLayerData[i],
                 vectors = data[0],
@@ -624,7 +627,6 @@ export class WebGlEngine {
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER, vectors, gl.STATIC_DRAW);
 
-                gl.enableVertexAttribArray(positionAttributeLocation);
                 //Tell the attribute how to get data out of positionBuffer
                 const size = 2,
                     type = gl.FLOAT, // data is 32bit floats
@@ -637,7 +639,6 @@ export class WebGlEngine {
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER, textures, gl.STATIC_DRAW);
 
-                gl.enableVertexAttribArray(texCoordLocation);
                 gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
 
                 let textureStorage = renderLayer._textureStorages[i];
@@ -907,11 +908,19 @@ export class WebGlEngine {
                     // additional property which is set in DrawTiledLayer
                     const hasBoundaries = tilesetData._hasBoundaries,
                     tilesetBoundaries = tilesetData._boundaries; // Map
-                
-                let v = new Float32Array(bufferDataSize),
-                    t = new Float32Array(bufferDataSize),
+
+                let v = tilesetData.v ? tilesetData.v : new Float32Array(bufferDataSize),
+                    t = tilesetData.t ? tilesetData.t : new Float32Array(bufferDataSize),
                     filledSize = 0;
-                
+
+                if (!tilesetData.v) {
+                    tilesetData.v = v;
+                    tilesetData.t = t;
+                } else {
+                    v.fill(0);
+                    t.fill(0);
+                }
+
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                     pageData._setWorldDimensions(worldW, worldH);
@@ -919,6 +928,7 @@ export class WebGlEngine {
                 if (setBoundaries) {
                     if (!pageData.isMaxBoundariesSizeSet) {
                         pageData._setMaxBoundariesSize(bufferDataSize);
+                        pageData._initiateBoundariesData();
                     }
                     // boundaries cleanups every draw cycles, we need to set world boundaries again
                     if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
@@ -1289,10 +1299,15 @@ export class WebGlEngine {
                     bufferDataSize = layerData.nonEmptyCells * 12;
                 
                 let mapIndex = 0,
-                    v = new Float32Array(bufferDataSize),
-                    t = new Float32Array(bufferDataSize),
+                    v = layerData.v ? layerData.v : new Float32Array(bufferDataSize),
+                    t = layerData.t ? layerData.t : new Float32Array(bufferDataSize),
                     filledSize = 0;
-                
+
+                if (!layerData.v) {
+                    layerData.v = v;
+                    layerData.t = t;
+                }
+                 
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                     pageData._setWorldDimensions(worldW, worldH);

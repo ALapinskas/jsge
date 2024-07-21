@@ -158,13 +158,19 @@ export class GameStageData {
      * @ignore
      */
     _clearBoundaries() {
-        this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
-
+        this.#boundaries.fill(0);
+        this.#ellipseBoundaries.fill(0);
+        this.#pointBoundaries.fill(0);
+        
         this.#bPointer = 0;
         this.#ePointer = 0;
         this.#pPointer = 0;
+    }
+
+    _initiateBoundariesData() {
+        this.#boundaries = new Float32Array(this.#maxBoundariesSize);
+        this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
+        this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
     }
 
     /**

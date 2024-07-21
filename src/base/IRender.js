@@ -585,7 +585,9 @@ export class IRender {
             isCyclesTimeCalcCheckCurrent = this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT;
             
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
-        this.stageData._clearBoundaries();
+        if (this.stageData.isMaxBoundariesSizeSet) {
+            this.stageData._clearBoundaries();
+        }
         this.clearContext();
         
         this.render().then(() => {
