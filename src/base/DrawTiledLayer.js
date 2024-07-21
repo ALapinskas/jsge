@@ -180,6 +180,8 @@ export class DrawTiledLayer {
         for (let tileset of tilesets) {
             const tiles = tileset.data.tiles,
                 name = tileset.data.name;
+
+            tileset.data._isBufferSet = false;
             if (tiles) {
                 for (let tile of tiles) {
                     const animation = tile.animation,

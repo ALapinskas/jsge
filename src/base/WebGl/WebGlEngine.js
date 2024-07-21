@@ -857,13 +857,10 @@ export class WebGlEngine {
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
                 boundariesCalculations = this.#gameOptions.render.boundaries.realtimeCalculations,
-                setBoundaries = renderLayer.setBoundaries;
-                
-            let boundariesRowsIndexes = new Map(),
-                // boundaries = [],
-                ellipseBoundaries = [],
-                pointBoundaries = [],
+                setBoundaries = renderLayer.setBoundaries,
                 tileImagesData = [];
+                
+            let boundariesRowsIndexes = new Map();
 
             if (!layerData) {
                 Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
@@ -907,16 +904,19 @@ export class WebGlEngine {
                     
                     // additional property which is set in DrawTiledLayer
                     const hasBoundaries = tilesetData._hasBoundaries,
-                    tilesetBoundaries = tilesetData._boundaries; // Map
+                        tilesetBoundaries = tilesetData._boundaries,
+                        isBufferSet = tilesetData._isBufferSet; // Map
 
-                let v = tilesetData.v ? tilesetData.v : new Float32Array(bufferDataSize),
-                    t = tilesetData.t ? tilesetData.t : new Float32Array(bufferDataSize),
+                let v = isBufferSet ? tilesetData.v : new Float32Array(bufferDataSize),
+                    t = isBufferSet ? tilesetData.t : new Float32Array(bufferDataSize),
                     filledSize = 0;
 
-                if (!tilesetData.v) {
+                if (!isBufferSet) {
                     tilesetData.v = v;
                     tilesetData.t = t;
+                    tilesetData._isBufferSet = true;
                 } else {
+                    // cleanup
                     v.fill(0);
                     t.fill(0);
                 }
@@ -1240,17 +1240,6 @@ export class WebGlEngine {
                 tileImagesData.push([v, t, tilesetData.name, atlasImage]);
             }
             
-            if (setBoundaries) {
-                // filter undefined value
-                //const filtered = boundaries.filter(array => array);
-                //pageData._addBoundariesArray(filtered);
-                if (ellipseBoundaries.length > 0) {
-                    pageData._addEllipseBoundaries(ellipseBoundaries);
-                }
-                if (pointBoundaries.length > 0) {
-                    pageData._addPointBoundaries(pointBoundaries);
-                }
-            }
             resolve(tileImagesData);
         });
     }
