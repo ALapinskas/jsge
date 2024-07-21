@@ -32,8 +32,7 @@ export class SystemSettings {
             boundaries: {
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,
-                wholeWorldPrecalculations: false,
-                maxBoundariesHeapSize: 10_000 // max boundaries items
+                wholeWorldPrecalculations: false
             },
             
         },

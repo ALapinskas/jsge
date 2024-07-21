@@ -902,7 +902,7 @@ export class WebGlEngine {
 
                     //verticesBufferData = [],
                     //texturesBufferData = [],
-                    bufferDataSize = screenRows * screenCols * 12;
+                    bufferDataSize = layerData.nonEmptyCells * 12;
                     
                     // additional property which is set in DrawTiledLayer
                     const hasBoundaries = tilesetData._hasBoundaries,
@@ -917,6 +917,9 @@ export class WebGlEngine {
                     pageData._setWorldDimensions(worldW, worldH);
                 }
                 if (setBoundaries) {
+                    if (!pageData.isMaxBoundariesSizeSet) {
+                        pageData._setMaxBoundariesSize(bufferDataSize);
+                    }
                     // boundaries cleanups every draw cycles, we need to set world boundaries again
                     if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
                         pageData._setMapBoundaries();
@@ -1283,7 +1286,7 @@ export class WebGlEngine {
                     atlasHeight = atlasImage.height,
                     cellSpacing = tilesetData.spacing,
                     cellMargin = tilesetData.margin,
-                    bufferDataSize = layerRows * layerCols * 12;
+                    bufferDataSize = layerData.nonEmptyCells * 12;
                 
                 let mapIndex = 0,
                     v = new Float32Array(bufferDataSize),
@@ -1379,8 +1382,6 @@ export class WebGlEngine {
                         mapIndex++;
                     }
                 }
-                
-                
                 tileImagesData.push([v, t, tilesetData.name, atlasImage]);
             }
             resolve(tileImagesData);

@@ -18,6 +18,7 @@ export class GameStageData {
     #rotate = 0;
 
     #maxBoundariesSize = 0;
+    #isMaxBoundariesSizeSet = false;
     /**
      * Points to next empty cell
      * @type {number}
@@ -75,10 +76,10 @@ export class GameStageData {
     #isWorldBoundariesEnabled = false;
 
     constructor(gameOptions) {
-        this.#maxBoundariesSize = gameOptions.render.boundaries.maxBoundariesHeapSize;
-        this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
+        //this.#maxBoundariesSize = 
+        //this.#boundaries = new Float32Array(this.#maxBoundariesSize);
+        //this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
+        //this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
     }
 
     /**
@@ -92,6 +93,9 @@ export class GameStageData {
         this.#rotate = value;
     }
 
+    get isMaxBoundariesSizeSet() {
+        return this.#isMaxBoundariesSizeSet;
+    }
     /**
      * Add a Boundaries line
      * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
@@ -161,6 +165,16 @@ export class GameStageData {
         this.#bPointer = 0;
         this.#ePointer = 0;
         this.#pPointer = 0;
+    }
+
+    /**
+     * 
+     * @param {number} size
+     * @ignore
+     */
+    _setMaxBoundariesSize(size) {
+        this.#maxBoundariesSize = size;
+        this.#isMaxBoundariesSizeSet = true;
     }
 
     /**

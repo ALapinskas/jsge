@@ -44,12 +44,14 @@ export class DrawTiledLayer {
         this.#textureStorages = [];
         this.#tilesetImages = tilesetImages;
         this.#layerData = layerData;
+        
         this.#setBoundaries = setBoundaries;
         this.#drawBoundaries = setBoundaries ? setBoundaries : false;
         if (shapeMask) {
             this.setMask(shapeMask);
         }
         this.#processTilesets(tilesets);
+        this.#processLayerData(this.#layerData);
     }
 
     /**
@@ -212,6 +214,12 @@ export class DrawTiledLayer {
                 }
             }
         }
+    }
+
+    #processLayerData(layerData) {
+        const nonEmptyCells = layerData.data.filter((item) => item !== 0).length;
+
+        layerData.nonEmptyCells = nonEmptyCells;
     }
 
     /**

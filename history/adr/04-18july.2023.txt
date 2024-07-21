@@ -24,8 +24,7 @@ Decision:
         * add boundaries bPointer, which will points to the last empty cell
         * add ePointer
         * add pPointer
-    3. Add optional parameters 
-        * maximum size of the boundaries array
+    3. Max bufferArray sizes should be precalculated as (layer non empty cells * 12)
     4. Rewrite the collision detector to work with Float32Array
 
     Оптимизировать движок и писать данные в буфер, вместо массива.
@@ -38,8 +37,7 @@ Decision:
         * point boundaries Array<Array>> -> Float32Array
         * добавить ePointer
         * добавить bPointer
-    3. Добавить опциональные параметры 
-        * максимального размера массива границ(boundaries)
+    3. Максимальный размер буферов должны высчитываться по формуле (количество непустых ячеек * 12)
     4. Переделать работу детектора коллизий для работы с Float32Array
 
 Impact:
