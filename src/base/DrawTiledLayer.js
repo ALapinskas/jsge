@@ -181,7 +181,6 @@ export class DrawTiledLayer {
             const tiles = tileset.data.tiles,
                 name = tileset.data.name;
 
-            tileset.data._isBufferSet = false;
             if (tiles) {
                 for (let tile of tiles) {
                     const animation = tile.animation,
@@ -220,8 +219,10 @@ export class DrawTiledLayer {
 
     #processLayerData(layerData) {
         const nonEmptyCells = layerData.data.filter((item) => item !== 0).length;
-
         layerData.nonEmptyCells = nonEmptyCells;
+        this.tilesets.forEach(tileset => {
+            layerData[tileset.data.name] = {_isBufferSet:false, v: null, t: null};
+        });
     }
 
     /**

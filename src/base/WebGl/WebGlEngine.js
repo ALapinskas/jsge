@@ -900,27 +900,28 @@ export class WebGlEngine {
 
                     //verticesBufferData = [],
                     //texturesBufferData = [],
-                    bufferDataSize = layerData.nonEmptyCells * 12;
                     
+                    bufferDataSize = layerData.nonEmptyCells * 12;
+                    //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
                     const hasBoundaries = tilesetData._hasBoundaries,
                         tilesetBoundaries = tilesetData._boundaries,
-                        isBufferSet = tilesetData._isBufferSet; // Map
+                        isBufferSet = layerData[tilesetData.name]._isBufferSet; // Map
 
-                let v = isBufferSet ? tilesetData.v : new Float32Array(bufferDataSize),
-                    t = isBufferSet ? tilesetData.t : new Float32Array(bufferDataSize),
+                let v = isBufferSet ? layerData[tilesetData.name].v : new Float32Array(bufferDataSize),
+                    t = isBufferSet ? layerData[tilesetData.name].t : new Float32Array(bufferDataSize),
                     filledSize = 0;
-
+                    
                 if (!isBufferSet) {
-                    tilesetData.v = v;
-                    tilesetData.t = t;
-                    tilesetData._isBufferSet = true;
+                    layerData[tilesetData.name].v = v;
+                    layerData[tilesetData.name].t = t;
+                    layerData[tilesetData.name]._isBufferSet = true;
                 } else {
                     // cleanup
                     v.fill(0);
                     t.fill(0);
                 }
-
+                
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                     pageData._setWorldDimensions(worldW, worldH);
@@ -1236,6 +1237,7 @@ export class WebGlEngine {
                     }
                     mapIndex += skipColsRight;
                 }
+                
                 //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tilesetData.name, renderLayer._maskId);
                 tileImagesData.push([v, t, tilesetData.name, atlasImage]);
             }
@@ -1287,14 +1289,20 @@ export class WebGlEngine {
                     cellMargin = tilesetData.margin,
                     bufferDataSize = layerData.nonEmptyCells * 12;
                 
+                const isBufferSet = layerData[tilesetData.name]._isBufferSet;
                 let mapIndex = 0,
-                    v = layerData.v ? layerData.v : new Float32Array(bufferDataSize),
-                    t = layerData.t ? layerData.t : new Float32Array(bufferDataSize),
+                    v = isBufferSet ? layerData[tilesetData.name].v : new Float32Array(bufferDataSize),
+                    t = isBufferSet ? layerData[tilesetData.name].t : new Float32Array(bufferDataSize),
                     filledSize = 0;
-
-                if (!layerData.v) {
-                    layerData.v = v;
-                    layerData.t = t;
+            
+                if (!isBufferSet) {
+                    layerData[tilesetData.name].v = v;
+                    layerData[tilesetData.name].t = t;
+                    layerData[tilesetData.name]._isBufferSet = true;
+                } else {
+                    // cleanup
+                    v.fill(0);
+                    t.fill(0);
                 }
                  
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {

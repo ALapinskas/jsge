@@ -478,7 +478,8 @@ export class IRender {
             //    linesArray.push(item[0], item[1]);
             //    linesArray.push(item[2], item[3]);
             //}
-            this.#webGlEngine._drawLines(b, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+            if (len)
+                this.#webGlEngine._drawLines(b, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
             if (eLen) {
                 //draw ellipse boundaries
                 for (let i = 0; i < eLen; i+=4) {
