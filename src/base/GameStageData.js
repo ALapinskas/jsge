@@ -113,7 +113,7 @@ export class GameStageData {
         const len = boundaries.length;
         for (let i = 0; i < len; i++) {
             const boundary = boundaries[i];
-            this._addBoundaryLne(boundary[0], boundary[1], boundary[2], boundary[3]);
+            this._addBoundaryLine(boundary[0], boundary[1], boundary[2], boundary[3]);
         }
     }
 

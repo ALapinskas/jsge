@@ -1,6 +1,7 @@
 import { AnimationEvent } from "./AnimationEvent.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
+import { TiledLayerStorage } from "./WebGl/TiledLayerStorage.js";
 /**
  * A render object represents a layer from tiled editor
  * @see {@link DrawObjectFactory} should be created with factory method
@@ -218,10 +219,18 @@ export class DrawTiledLayer {
     }
 
     #processLayerData(layerData) {
-        const nonEmptyCells = layerData.data.filter((item) => item !== 0).length;
-        layerData.nonEmptyCells = nonEmptyCells;
-        this.tilesets.forEach(tileset => {
-            layerData[tileset.data.name] = {_isBufferSet:false, v: null, t: null};
+        this.tilesets.forEach((tileset, idx) => {
+            const firstgid = tileset.firstgid,
+                nextTileset = this.tilesets[idx + 1],
+                nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000,
+                // в layer.data могут использоваться данные с разных тайлсетов
+                // поэтому для хранения промежуточных данных отрисовки, 
+                // здесь создается объект
+                name = tileset.data.name + "_" + layerData.name,
+                nonEmptyCells = layerData.data.filter((tile) => ((tile >= firstgid) && (tile < nextgid))).length,
+                cells = layerData.data.length;
+                
+            layerData[name] = new TiledLayerStorage(cells, nonEmptyCells);
         });
     }
 

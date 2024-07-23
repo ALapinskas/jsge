@@ -5,7 +5,8 @@ f: fixed defects
 
 # History
 1.4.5:
-    r: refactor performance according adr#4, remove memory leaks
+    r: refactor performance according adr#4
+    +: introduced TiledLayerStorage() to store temp calculations data
 
 1.4.4:
     r: disable iNetwork interface by default

@@ -859,8 +859,6 @@ export class WebGlEngine {
                 boundariesCalculations = this.#gameOptions.render.boundaries.realtimeCalculations,
                 setBoundaries = renderLayer.setBoundaries,
                 tileImagesData = [];
-                
-            let boundariesRowsIndexes = new Map();
 
             if (!layerData) {
                 Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
@@ -868,6 +866,7 @@ export class WebGlEngine {
             }
             
             for (let i = 0; i < tilesets.length; i++) {
+                
                 const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
@@ -896,32 +895,24 @@ export class WebGlEngine {
                     cellSpacing = tilesetData.spacing,
                     cellMargin = tilesetData.margin,
 
-                    hasAnimations = tilesetData._hasAnimations,
-
-                    //verticesBufferData = [],
-                    //texturesBufferData = [],
-                    
-                    bufferDataSize = layerData.nonEmptyCells * 12;
+                    hasAnimations = tilesetData._hasAnimations;
                     //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
                     const hasBoundaries = tilesetData._hasBoundaries,
                         tilesetBoundaries = tilesetData._boundaries,
-                        isBufferSet = layerData[tilesetData.name]._isBufferSet; // Map
+                        tilesetName = tilesetData.name + "_" + layerData.name,
+                        bufferDataSize = layerData[tilesetName].bufferSize; 
 
-                let v = isBufferSet ? layerData[tilesetData.name].v : new Float32Array(bufferDataSize),
-                    t = isBufferSet ? layerData[tilesetData.name].t : new Float32Array(bufferDataSize),
+                let v = layerData[tilesetName].vectors,
+                    t = layerData[tilesetName].textures,
                     filledSize = 0;
-                    
-                if (!isBufferSet) {
-                    layerData[tilesetData.name].v = v;
-                    layerData[tilesetData.name].t = t;
-                    layerData[tilesetData.name]._isBufferSet = true;
-                } else {
-                    // cleanup
-                    v.fill(0);
-                    t.fill(0);
-                }
-                
+
+                let boundariesRowsIndexes = layerData[tilesetName]._bTempIndexes;
+                const fullRowCellsNum = screenCols * 4;   
+                // cleanup
+                v.fill(0);
+                t.fill(0);
+
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
                     pageData._setWorldDimensions(worldW, worldH);
@@ -940,7 +931,6 @@ export class WebGlEngine {
                 let mapIndex = skipRowsTop * layerCols;
                 for (let row = 0; row < screenRows; row++) {
                     mapIndex += skipColsLeft;
-                    let currentRowIndexes = new Map();
                     for (let col = 0; col < screenCols; col++) {
                         let tile = layerData.data[mapIndex];
 
@@ -1100,16 +1090,15 @@ export class WebGlEngine {
                                     let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
                                         bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
                                         topLine = [ mapPosX, mapPosY, mapPosX + tilesetwidth, mapPosY],
-                                        leftLine = [ mapPosX, mapPosY + tilesetheight, mapPosX, mapPosY ],
-                                        currentAddedCellIndexes = [null, null, null, null];
+                                        leftLine = [ mapPosX, mapPosY + tilesetheight, mapPosX, mapPosY ];
                                     
-                                    const topRow = row !== 0 ? boundariesRowsIndexes.get(row - 1) : undefined;
-                                    if (topRow ) {
-                                        const topCellIndexes = topRow.get(col);
-                                        if (topCellIndexes) {
+                                    // top cell
+                                    if (row !== 0) {
+                                        const topCellFirstIndex =  (row - 1) * fullRowCellsNum + (col * 4),
+                                            bottomTopLeftFirstIndex = boundariesRowsIndexes[topCellFirstIndex + INDEX_BOTTOM_LINE];
+                                        if (bottomTopLeftFirstIndex) {
                                             //remove double lines from top
-                                            const bottomTopLeftFirstIndex = topCellIndexes[INDEX_BOTTOM_LINE],
-                                                bottomTopCellX1 = boundaries[bottomTopLeftFirstIndex];
+                                            const bottomTopCellX1 = boundaries[bottomTopLeftFirstIndex];
                                             if (bottomTopCellX1) {
                                                 const bottomTopCellY1 = boundaries[bottomTopLeftFirstIndex + INDEX_Y1],
                                                     bottomTopCellX2 = boundaries[bottomTopLeftFirstIndex + INDEX_X2],
@@ -1127,7 +1116,7 @@ export class WebGlEngine {
                                             }
 
                                             // merge line from top right
-                                            const rightTopRightFirstIndex = topCellIndexes[INDEX_RIGHT_LINE],
+                                            const rightTopRightFirstIndex = boundariesRowsIndexes[ topCellFirstIndex + INDEX_RIGHT_LINE],
                                                 rightTopCellX1 = boundaries[rightTopRightFirstIndex];
                                             if (rightTopCellX1) {
                                                 const rightTopCellY1 = boundaries[rightTopRightFirstIndex + INDEX_Y1],
@@ -1141,7 +1130,7 @@ export class WebGlEngine {
                                                 }
                                             }
                                             // merge line from top left
-                                            const leftTopRightFirstIndex = topCellIndexes[INDEX_LEFT_LINE],
+                                            const leftTopRightFirstIndex =  boundariesRowsIndexes[topCellFirstIndex + INDEX_LEFT_LINE],
                                                 leftTopCellX1 = boundaries[leftTopRightFirstIndex];
                                             if (leftTopCellX1) {
                                                 const leftTopCellX2 = boundaries[leftTopRightFirstIndex + INDEX_X2],
@@ -1156,90 +1145,90 @@ export class WebGlEngine {
                                             }
                                         }
                                     }
-                                    const leftCellIndexes = col !== 0 ? currentRowIndexes.get(col - 1) : undefined;
-                                    if (leftCellIndexes) {
+                                    // leftCell
+                                    if (col !== 0) {
+                                        
+                                        const leftCell = row * fullRowCellsNum + ((col - 1) * 4),
+                                            topLeftFirstCellIndex = boundariesRowsIndexes[leftCell];
+                                        if (topLeftFirstCellIndex) {
 
-                                        //remove double lines from left
-                                        const rightLeftCellIndex = leftCellIndexes[INDEX_RIGHT_LINE],
-                                            rightLeftFirstCellIndex = rightLeftCellIndex,
-                                            rightLeftX1 = boundaries[rightLeftFirstCellIndex],
-                                            rightLeftCellX1 = rightLeftX1,
-                                            rightLeftCellY1 = boundaries[rightLeftCellIndex + INDEX_Y1],
-                                            rightLeftCellX2 = boundaries[rightLeftCellIndex + INDEX_X2],
-                                            rightLeftCellY2 = boundaries[rightLeftCellIndex + INDEX_Y2],
-                                            leftX1 = leftLine[INDEX_X1],
-                                            leftY1 = leftLine[INDEX_Y1],
-                                            leftX2 = leftLine[INDEX_X2],
-                                            leftY2 = leftLine[INDEX_Y2];
+                                            //remove double lines from left
+                                            const rightLeftCellIndex = boundariesRowsIndexes[leftCell + INDEX_RIGHT_LINE],
+                                                rightLeftX1 = boundaries[rightLeftCellIndex],
+                                                rightLeftCellX1 = rightLeftX1,
+                                                rightLeftCellY1 = boundaries[rightLeftCellIndex + INDEX_Y1],
+                                                rightLeftCellX2 = boundaries[rightLeftCellIndex + INDEX_X2],
+                                                rightLeftCellY2 = boundaries[rightLeftCellIndex + INDEX_Y2],
+                                                leftX1 = leftLine[INDEX_X1],
+                                                leftY1 = leftLine[INDEX_Y1],
+                                                leftX2 = leftLine[INDEX_X2],
+                                                leftY2 = leftLine[INDEX_Y2];
 
-                                        if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
-                                            leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
-                                            pageData._removeBoundaryLine(rightLeftFirstCellIndex);
-                                            leftLine = undefined;
-                                        }
-
-                                        //merge long lines from left top
-                                        const topLeftFirstCellIndex = leftCellIndexes[INDEX_TOP_LINE],
-                                            topLeftCellX1 = boundaries[topLeftFirstCellIndex];
-                                        if (topLeftCellX1 && topLine) {
-                                            const topLeftCellY1 = boundaries[topLeftFirstCellIndex + INDEX_Y1],
-                                                topLeftCellY2 = boundaries[topLeftFirstCellIndex + INDEX_Y2],
-                                                topY1 = topLine[INDEX_Y1],
-                                                topY2 = topLine[INDEX_Y2];
-                                            if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
-                                                pageData._removeBoundaryLine(topLeftFirstCellIndex);
-                                                topLine[INDEX_X1] = topLeftCellX1;
-                                                topLine[INDEX_Y1] = topLeftCellY1;
+                                            if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
+                                                leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
+                                                pageData._removeBoundaryLine(rightLeftCellIndex);
+                                                leftLine = undefined;
                                             }
-                                        }
 
-                                        // merge long lines from left bottom
-                                        const bottomLeftFirstCellIndex = leftCellIndexes[INDEX_BOTTOM_LINE],
-                                            bottomLeftCellX1 = boundaries[bottomLeftFirstCellIndex];
-                                        if (bottomLeftCellX1) {
-                                            const bottomLeftCellY1 = boundaries[bottomLeftFirstCellIndex + INDEX_Y1],
-                                                bottomLeftCellX2 = boundaries[bottomLeftFirstCellIndex + INDEX_X2],
-                                                bottomLeftCellY2 = boundaries[bottomLeftFirstCellIndex + INDEX_Y2],
-                                                bottomY1 = bottomLine[INDEX_Y1],
-                                                bottomY2 = bottomLine[INDEX_Y2];
-                                            if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
-                                                pageData._removeBoundaryLine(bottomLeftFirstCellIndex);
-                                                //opposite direction
-                                                bottomLine[INDEX_X2] = bottomLeftCellX2;
-                                                bottomLine[INDEX_Y2] = bottomLeftCellY2;
+                                            //merge long lines from left top
+                                            const topLeftCellX1 = boundaries[topLeftFirstCellIndex];
+                                            if (topLeftCellX1 && topLine) {
+                                                const topLeftCellY1 = boundaries[topLeftFirstCellIndex + INDEX_Y1],
+                                                    topLeftCellY2 = boundaries[topLeftFirstCellIndex + INDEX_Y2],
+                                                    topY1 = topLine[INDEX_Y1],
+                                                    topY2 = topLine[INDEX_Y2];
+                                                if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
+                                                    pageData._removeBoundaryLine(topLeftFirstCellIndex);
+                                                    topLine[INDEX_X1] = topLeftCellX1;
+                                                    topLine[INDEX_Y1] = topLeftCellY1;
+                                                }
                                             }
-                                        }
 
+                                            // merge long lines from left bottom
+                                            const bottomLeftFirstCellIndex = boundariesRowsIndexes[leftCell + INDEX_BOTTOM_LINE],
+                                                bottomLeftCellX1 = boundaries[bottomLeftFirstCellIndex];
+                                            if (bottomLeftCellX1) {
+                                                const bottomLeftCellY1 = boundaries[bottomLeftFirstCellIndex + INDEX_Y1],
+                                                    bottomLeftCellX2 = boundaries[bottomLeftFirstCellIndex + INDEX_X2],
+                                                    bottomLeftCellY2 = boundaries[bottomLeftFirstCellIndex + INDEX_Y2],
+                                                    bottomY1 = bottomLine[INDEX_Y1],
+                                                    bottomY2 = bottomLine[INDEX_Y2];
+                                                if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
+                                                    pageData._removeBoundaryLine(bottomLeftFirstCellIndex);
+                                                    //opposite direction
+                                                    bottomLine[INDEX_X2] = bottomLeftCellX2;
+                                                    bottomLine[INDEX_Y2] = bottomLeftCellY2;
+                                                }
+                                            }
+
+                                        }
                                     }
-
+                                    const currentCellIndex = row * fullRowCellsNum + (col * 4);
                                     if (topLine) {
                                         pageData._addBoundaryLine(topLine[0], topLine[1], topLine[2], topLine[3]);
-                                        currentAddedCellIndexes[INDEX_TOP_LINE] = pageData.boundariesLen - 4;
+                                        boundariesRowsIndexes[currentCellIndex + INDEX_TOP_LINE] = pageData.boundariesLen - 4;
                                     }
                                     pageData._addBoundaryLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
-                                    currentAddedCellIndexes[INDEX_RIGHT_LINE] = pageData.boundariesLen - 4;
+                                    boundariesRowsIndexes[currentCellIndex + INDEX_RIGHT_LINE] = pageData.boundariesLen - 4;
                                     pageData._addBoundaryLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
-                                    currentAddedCellIndexes[INDEX_BOTTOM_LINE] = pageData.boundariesLen - 4;
+                                    boundariesRowsIndexes[currentCellIndex + INDEX_BOTTOM_LINE] = pageData.boundariesLen - 4;
                                     if (leftLine) {
                                         pageData._addBoundaryLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
-                                        currentAddedCellIndexes[INDEX_LEFT_LINE] = pageData.boundariesLen - 4;
+                                        boundariesRowsIndexes[currentCellIndex + INDEX_LEFT_LINE] = pageData.boundariesLen - 4;
                                     }
-                                    //save values indexes cols info
-                                    currentRowIndexes.set(col, currentAddedCellIndexes);
+                                    
                                 }
                             }
                         }
                         mapIndex++;
                     }
-                    if (currentRowIndexes.size > 0) {
-                        //save values indexes rows info
-                        boundariesRowsIndexes.set(row, currentRowIndexes);
-                    }
                     mapIndex += skipColsRight;
                 }
-                
+                //console.log(boundariesRowsIndexes);
                 //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tilesetData.name, renderLayer._maskId);
                 tileImagesData.push([v, t, tilesetData.name, atlasImage]);
+                //cleanup
+                boundariesRowsIndexes.fill(0);
             }
             
             resolve(tileImagesData);
@@ -1287,23 +1276,16 @@ export class WebGlEngine {
                     atlasHeight = atlasImage.height,
                     cellSpacing = tilesetData.spacing,
                     cellMargin = tilesetData.margin,
-                    bufferDataSize = layerData.nonEmptyCells * 12;
+                    tilesetName = tilesetData.name + "_" + layerData.name;
                 
-                const isBufferSet = layerData[tilesetData.name]._isBufferSet;
                 let mapIndex = 0,
-                    v = isBufferSet ? layerData[tilesetData.name].v : new Float32Array(bufferDataSize),
-                    t = isBufferSet ? layerData[tilesetData.name].t : new Float32Array(bufferDataSize),
+                    v = layerData[tilesetName].vectors,
+                    t = layerData[tilesetName].textures,
                     filledSize = 0;
             
-                if (!isBufferSet) {
-                    layerData[tilesetData.name].v = v;
-                    layerData[tilesetData.name].t = t;
-                    layerData[tilesetData.name]._isBufferSet = true;
-                } else {
-                    // cleanup
-                    v.fill(0);
-                    t.fill(0);
-                }
+                // cleanup
+                v.fill(0);
+                t.fill(0);
                  
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
@@ -1466,6 +1448,13 @@ export class WebGlEngine {
                     pageData._setWorldDimensions(worldW, worldH);
                 }
 
+                if (!pageData.isMaxBoundariesSizeSet) {
+                    const tilesetName = tilesetData.name + "_" + layerData.name,
+                        bufferDataSize = layerData[tilesetName].bufferSize; 
+                    pageData._setMaxBoundariesSize(bufferDataSize);
+                    pageData._initiateBoundariesData();
+                }
+
                 //if (this.canvas.width !== worldW || this.canvas.height !== worldH) {
                 //    this._setCanvasSize(worldW, worldH);
                 //}
@@ -1479,10 +1468,6 @@ export class WebGlEngine {
                     texturesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum) : [];
                     
                 tileImagesData.push([verticesBufferData, texturesBufferData, tilesetData.name, atlasImage]);
-                if (setBoundaries) {
-                    pageData._mergeBoundaries();
-                    renderLayer.setBoundaries = false;
-                }
             }
             resolve(tileImagesData);
         });

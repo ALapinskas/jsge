@@ -4,12 +4,12 @@ Optimize and make render faster / Сделать оптимизацию и ув�
 Status: In progress
 
 Context:
-    It seems that the performance in terms of memory consumption is a little slow,
+    It seems that the performance in terms of memory consumption is a little slow in Firefox@129.0b6,
     wasm version is a little faster, but js is slower,
     the problem is using arrays for intermediate results 
     and storing objects for collision calculations.
 
-    Похоже, что производительность в части потребления памяти немного хромает,
+    Похоже, что производительность в части потребления памяти немного хромает в Firefox@129.0b6,
     wasm версия работает чуть быстрее,но js - медленнее,
     проблема заключается в использовании массивов для промежуточных результатов 
     и хранения объектов для расчета столкновений.
