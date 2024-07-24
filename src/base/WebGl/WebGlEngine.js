@@ -1043,24 +1043,24 @@ export class WebGlEngine {
                                                 Warning("tilesetData.tiles.rotation property is not supported yet");
                                             }
                                             if (object.polygon) {
-                                                const polyLen = object.polygon.length;
-                                                for (let i = 0; i < polyLen; i+=2) {
-                                                    const point = object.polygon[i],
-                                                        next = object.polygon[i + 1];
-                                                    if (next) {
-                                                        pageData._addBoundaryLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
-                                                    } else {
-                                                        // last point -> link to the first
-                                                        const first = object.polygon[0];
-                                                        pageData._addBoundaryLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
-                                                    }
-                                                }
+                                                object.polygon.forEach(
+                                                    (point, idx) => {
+                                                        const next = object.polygon[idx + 1];
+                                                        if (next) {
+                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
+                                                        } else {
+                                                            // last point -> link to the first
+                                                            const first = object.polygon[0];
+                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
+                                                        }
+                                                    });
                                             } else if (object.point) {
                                                 // x/y coordinate
                                                 pageData._addPointBoundary(baseX, baseY);
                                             } else if (object.ellipse) {
                                                 const radX = object.width / 2,
                                                     radY = object.height / 2;
+                                                console.log("add ellipse: ", object);
                                                 pageData._addEllipseBoundary(baseX + radX, baseY + radY, radX, radY);
                                             } else {
                                                 // object is rect

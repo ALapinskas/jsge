@@ -217,6 +217,8 @@ export class DrawTiledLayer {
                         }
                         objectgroup.objects.forEach((object) => {
                             if (object.ellipse) {
+                                console.log("ellipse add ", ellipseBLen);
+                                console.log("for ", name);
                                 ellipseBLen += 4; // x, y, wRad, hRad
                             } else if (object.point) {
                                 pointBLen += 2; // x, y
@@ -243,6 +245,8 @@ export class DrawTiledLayer {
             polygonBLen+=(nonEmptyCells * 16);
             layerData[data_name] = new TiledLayerStorage(cells, nonEmptyCells);
         });
+        console.log(ellipseBLen);
+        console.log("layer data: ", layerData);
         layerData.ellipseBoundariesLen = ellipseBLen;
         layerData.pointBoundariesLen = pointBLen;
         layerData.polygonBoundariesLen = polygonBLen;
