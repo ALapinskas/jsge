@@ -161,7 +161,7 @@ export class DrawObjectFactory {
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
         const tilemap = this.#iLoader.getTileMap(tileMapKey),
-            tilesets = tilemap.tilesets,
+            tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)),
             tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             layerData = tilemap.layers.find((layer) => layer.name === layerKey),
             renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);

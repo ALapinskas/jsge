@@ -855,7 +855,7 @@ export class WebGlEngine {
                 tileheight = dtheight,
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions,
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
-                [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
+                [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0, 0] : pageData.worldOffset,
                 boundariesCalculations = this.#gameOptions.render.boundaries.realtimeCalculations,
                 setBoundaries = renderLayer.setBoundaries,
                 tileImagesData = [];
@@ -899,8 +899,8 @@ export class WebGlEngine {
                     // additional property which is set in DrawTiledLayer
                     const hasBoundaries = tilesetData._hasBoundaries,
                         tilesetBoundaries = tilesetData._boundaries,
-                        tilesetName = tilesetData.name + "_" + layerData.name,
-                        layerTilesetData = layerData[tilesetName],
+                        tilesetName = tilesetData.name,
+                        layerTilesetData = tilesets[i]._temp,
                         polygonBondMax = layerData.polygonBoundariesLen,
                         ellipseBondMax = layerData.ellipseBoundariesLen,
                         pointBondMax = layerData.pointBoundariesLen; 
@@ -908,10 +908,10 @@ export class WebGlEngine {
                 let v = layerTilesetData.vectors,
                     t = layerTilesetData.textures,
                     filledSize = 0;
-
+                    
                 v.fill(0);
                 t.fill(0);
-                let boundariesRowsIndexes = layerData[tilesetName]._bTempIndexes;
+                let boundariesRowsIndexes = layerTilesetData._bTempIndexes;
                 const fullRowCellsNum = screenCols * 4;
 
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {

@@ -1,7 +1,5 @@
-import { CONST, WARNING_CODES } from "../constants.js";
 import { AnimationEvent } from "./AnimationEvent.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Warning } from "./Exception.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
 import { TiledLayerTempStorage } from "./WebGl/TiledLayerTempStorage.js";
 /**
@@ -239,14 +237,15 @@ export class DrawTiledLayer {
                 }
             }
             
-            const data_name = tileset.data.name + "_" + layerData.name,
-                nonEmptyCells = layerData.data.filter((tile) => ((tile >= firstgid) && (tile < nextgid))).length,
+            const nonEmptyCells = layerData.data.filter((tile) => ((tile >= firstgid) && (tile < nextgid))).length,
                 cells = layerData.data.length;
+
             if (this.#setBoundaries) {
                 polygonBLen+=(nonEmptyCells * 16); // potential boundaries also nonEmptyCells
             }
             // создаем вспомогательный объект для расчетов и хранения данных отрисовки
-            layerData[data_name] = new TiledLayerTempStorage(cells, nonEmptyCells);
+            // help class for draw calculations
+            tileset._temp = new TiledLayerTempStorage(cells, nonEmptyCells);
         });
         
         // save boundaries max possible lengths
