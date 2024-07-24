@@ -18,6 +18,8 @@ export class GameStageData {
     #rotate = 0;
 
     #maxBoundariesSize = 0;
+    #maxEllipseBoundSize = 0;
+    #maxPointBSize = 0;
     #isMaxBoundariesSizeSet = false;
     /**
      * Points to next empty cell
@@ -128,7 +130,7 @@ export class GameStageData {
         this.#bPointer++;
     }
 
-    _addEllipseBoundary(w,h, x,y) {
+    _addEllipseBoundary(w, h, x, y) {
         this.#ellipseBoundaries[this.#ePointer] = w;
         this.#ePointer++;
         this.#ellipseBoundaries[this.#ePointer] = h;
@@ -169,17 +171,22 @@ export class GameStageData {
 
     _initiateBoundariesData() {
         this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
+        this.#ellipseBoundaries = new Float32Array(this.#maxEllipseBoundSize);
+        this.#pointBoundaries = new Float32Array(this.#maxPointBSize);
     }
 
     /**
      * 
-     * @param {number} size
+     * @param {number} bSize
+     * @param {number} polSize - polygon boundaries size
+     * @param {number} eSize - ellipse boundaries size
+     * @param {number} pSize - points boundaries size
      * @ignore
      */
-    _setMaxBoundariesSize(size) {
-        this.#maxBoundariesSize = size;
+    _setMaxBoundariesSize(bSize, eSize = 0, pSize = 0) {
+        this.#maxBoundariesSize = bSize;
+        this.#maxEllipseBoundSize = eSize;
+        this.#maxPointBSize = pSize;
         this.#isMaxBoundariesSizeSet = true;
     }
 

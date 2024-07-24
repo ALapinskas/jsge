@@ -901,17 +901,19 @@ export class WebGlEngine {
                     const hasBoundaries = tilesetData._hasBoundaries,
                         tilesetBoundaries = tilesetData._boundaries,
                         tilesetName = tilesetData.name + "_" + layerData.name,
-                        bufferDataSize = layerData[tilesetName].bufferSize; 
+                        layerTilesetData = layerData[tilesetName],
+                        polygonBondMax = layerData.polygonBoundariesLen,
+                        ellipseBondMax = layerData.ellipseBoundariesLen,
+                        pointBondMax = layerData.pointBoundariesLen; 
 
-                let v = layerData[tilesetName].vectors,
-                    t = layerData[tilesetName].textures,
+                let v = layerTilesetData.vectors,
+                    t = layerTilesetData.textures,
                     filledSize = 0;
 
-                let boundariesRowsIndexes = layerData[tilesetName]._bTempIndexes;
-                const fullRowCellsNum = screenCols * 4;   
-                // cleanup
                 v.fill(0);
                 t.fill(0);
+                let boundariesRowsIndexes = layerData[tilesetName]._bTempIndexes;
+                const fullRowCellsNum = screenCols * 4;
 
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
@@ -919,7 +921,7 @@ export class WebGlEngine {
                 }
                 if (setBoundaries) {
                     if (!pageData.isMaxBoundariesSizeSet) {
-                        pageData._setMaxBoundariesSize(bufferDataSize);
+                        pageData._setMaxBoundariesSize(polygonBondMax, ellipseBondMax, pointBondMax);
                         pageData._initiateBoundariesData();
                     }
                     // boundaries cleanups every draw cycles, we need to set world boundaries again
@@ -1041,24 +1043,24 @@ export class WebGlEngine {
                                                 Warning("tilesetData.tiles.rotation property is not supported yet");
                                             }
                                             if (object.polygon) {
-                                                object.polygon.forEach(
-                                                    (point, idx) => {
-                                                        const next = object.polygon[idx + 1];
-                                                        if (next) {
-                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
-                                                        } else {
-                                                            // last point -> link to the first
-                                                            const first = object.polygon[0];
-                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
-                                                        }
-                                                    });
+                                                const polyLen = object.polygon.length;
+                                                for (let i = 0; i < polyLen; i+=2) {
+                                                    const point = object.polygon[i],
+                                                        next = object.polygon[i + 1];
+                                                    if (next) {
+                                                        pageData._addBoundaryLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
+                                                    } else {
+                                                        // last point -> link to the first
+                                                        const first = object.polygon[0];
+                                                        pageData._addBoundaryLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
+                                                    }
+                                                }
                                             } else if (object.point) {
                                                 // x/y coordinate
                                                 pageData._addPointBoundary(baseX, baseY);
                                             } else if (object.ellipse) {
                                                 const radX = object.width / 2,
                                                     radY = object.height / 2;
-                                                    
                                                 pageData._addEllipseBoundary(baseX + radX, baseY + radY, radX, radY);
                                             } else {
                                                 // object is rect
@@ -1282,10 +1284,6 @@ export class WebGlEngine {
                     v = layerData[tilesetName].vectors,
                     t = layerData[tilesetName].textures,
                     filledSize = 0;
-            
-                // cleanup
-                v.fill(0);
-                t.fill(0);
                  
                 if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
                     Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");

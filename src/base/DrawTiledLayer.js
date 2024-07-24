@@ -1,5 +1,7 @@
+import { CONST, WARNING_CODES } from "../constants.js";
 import { AnimationEvent } from "./AnimationEvent.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
+import { Warning } from "./Exception.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
 import { TiledLayerStorage } from "./WebGl/TiledLayerStorage.js";
 /**
@@ -51,8 +53,7 @@ export class DrawTiledLayer {
         if (shapeMask) {
             this.setMask(shapeMask);
         }
-        this.#processTilesets(tilesets);
-        this.#processLayerData(this.#layerData);
+        this.#processData(tilesets, layerData);
     }
 
     /**
@@ -177,11 +178,14 @@ export class DrawTiledLayer {
      * _boundaries - Map<id:objectgroup>
      * @param {*} tilesets
      */
-    #processTilesets(tilesets) {
-        for (let tileset of tilesets) {
+    #processData(tilesets, layerData) {
+        let ellipseBLen = 0,
+            pointBLen = 0,
+            polygonBLen = 0;
+        tilesets.forEach((tileset, idx) => {
             const tiles = tileset.data.tiles,
                 name = tileset.data.name;
-
+                
             if (tiles) {
                 for (let tile of tiles) {
                     const animation = tile.animation,
@@ -211,27 +215,37 @@ export class DrawTiledLayer {
                             tileset.data._boundaries = new Map();
                             tileset.data._boundaries.set(id, objectgroup);
                         }
-                        
+                        objectgroup.objects.forEach((object) => {
+                            if (object.ellipse) {
+                                ellipseBLen += 4; // x, y, wRad, hRad
+                            } else if (object.point) {
+                                pointBLen += 2; // x, y
+                            } else if (object.polygon) {
+                                polygonBLen += object.polygon.length * 2; // each point * 2(x,y)
+                            } else { // rect object
+                                polygonBLen += 16; // 4 faces * 4 cords for each one
+                            }
+                        });
                     }
                 }
             }
-        }
-    }
 
-    #processLayerData(layerData) {
-        this.tilesets.forEach((tileset, idx) => {
             const firstgid = tileset.firstgid,
                 nextTileset = this.tilesets[idx + 1],
                 nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000,
                 // в layer.data могут использоваться данные с разных тайлсетов
                 // поэтому для хранения промежуточных данных отрисовки, 
                 // здесь создается объект
-                name = tileset.data.name + "_" + layerData.name,
+                data_name = tileset.data.name + "_" + layerData.name,
                 nonEmptyCells = layerData.data.filter((tile) => ((tile >= firstgid) && (tile < nextgid))).length,
                 cells = layerData.data.length;
                 
-            layerData[name] = new TiledLayerStorage(cells, nonEmptyCells);
+            polygonBLen+=(nonEmptyCells * 16);
+            layerData[data_name] = new TiledLayerStorage(cells, nonEmptyCells);
         });
+        layerData.ellipseBoundariesLen = ellipseBLen;
+        layerData.pointBoundariesLen = pointBLen;
+        layerData.polygonBoundariesLen = polygonBLen;
     }
 
     /**

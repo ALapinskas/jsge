@@ -470,14 +470,8 @@ export class IRender {
                 pB = this.stageData.getPointBoundaries(),
                 len = this.stageData.boundariesLen,
                 eLen = this.stageData.ellipseBLen,
-                pLen = this.stageData?.pointBLen,
-                linesArray = [];
+                pLen = this.stageData.pointBLen;
         
-            //for (let i = 0; i < len; i++) {
-            //    const item = b[i];
-            //    linesArray.push(item[0], item[1]);
-            //    linesArray.push(item[2], item[3]);
-            //}
             if (len)
                 this.#webGlEngine._drawLines(b, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
             if (eLen) {
