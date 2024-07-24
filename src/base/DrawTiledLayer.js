@@ -3,7 +3,7 @@ import { AnimationEvent } from "./AnimationEvent.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { Warning } from "./Exception.js";
 import { TextureStorage } from "./WebGl/TextureStorage.js";
-import { TiledLayerStorage } from "./WebGl/TiledLayerStorage.js";
+import { TiledLayerTempStorage } from "./WebGl/TiledLayerTempStorage.js";
 /**
  * A render object represents a layer from tiled editor
  * @see {@link DrawObjectFactory} should be created with factory method
@@ -179,12 +179,17 @@ export class DrawTiledLayer {
      * @param {*} tilesets
      */
     #processData(tilesets, layerData) {
+        // границы для слоя создаются одни, даже если они высчитываются с разных тайлсетов
+        // поэтому суммируем и находим максимальное их количество
         let ellipseBLen = 0,
             pointBLen = 0,
             polygonBLen = 0;
         tilesets.forEach((tileset, idx) => {
             const tiles = tileset.data.tiles,
-                name = tileset.data.name;
+                name = tileset.data.name,
+                firstgid = tileset.firstgid,
+                nextTileset = this.tilesets[idx + 1],
+                nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000;
                 
             if (tiles) {
                 for (let tile of tiles) {
@@ -206,7 +211,7 @@ export class DrawTiledLayer {
                         }
                         this.#activateAnimation(animationEvent);
                     }
-                    if (objectgroup) {
+                    if (objectgroup && this.#setBoundaries) {
                         if (tileset.data._hasBoundaries) {
                             tileset.data._boundaries.set(id, objectgroup);
                         } else {
@@ -217,36 +222,34 @@ export class DrawTiledLayer {
                         }
                         objectgroup.objects.forEach((object) => {
                             if (object.ellipse) {
-                                console.log("ellipse add ", ellipseBLen);
-                                console.log("for ", name);
-                                ellipseBLen += 4; // x, y, wRad, hRad
+                                const cellsWithB = layerData.data.filter((tile) => tile === id + firstgid).length;
+                                ellipseBLen += (4 * cellsWithB); // (x, y, wRad, hRad) * layer items
                             } else if (object.point) {
-                                pointBLen += 2; // x, y
+                                const cellsWithB = layerData.data.filter((tile) => tile === id + firstgid).length;
+                                pointBLen += (2 * cellsWithB); // (x, y) * layer items
                             } else if (object.polygon) {
-                                polygonBLen += object.polygon.length * 2; // each point * 2(x,y)
+                                const cellsWithB = layerData.data.filter((tile) => tile === id + firstgid).length;
+                                polygonBLen += (object.polygon.length * 2 * cellsWithB); // (each point * 2(x,y) ) * layer items
                             } else { // rect object
-                                polygonBLen += 16; // 4 faces * 4 cords for each one
+                                const cellsWithB = layerData.data.filter((tile) => tile === id + firstgid).length;
+                                polygonBLen += (16 * cellsWithB); // (4 faces * 4 cords for each one) * layer items
                             }
                         });
                     }
                 }
             }
-
-            const firstgid = tileset.firstgid,
-                nextTileset = this.tilesets[idx + 1],
-                nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000,
-                // в layer.data могут использоваться данные с разных тайлсетов
-                // поэтому для хранения промежуточных данных отрисовки, 
-                // здесь создается объект
-                data_name = tileset.data.name + "_" + layerData.name,
+            
+            const data_name = tileset.data.name + "_" + layerData.name,
                 nonEmptyCells = layerData.data.filter((tile) => ((tile >= firstgid) && (tile < nextgid))).length,
                 cells = layerData.data.length;
-                
-            polygonBLen+=(nonEmptyCells * 16);
-            layerData[data_name] = new TiledLayerStorage(cells, nonEmptyCells);
+            if (this.#setBoundaries) {
+                polygonBLen+=(nonEmptyCells * 16); // potential boundaries also nonEmptyCells
+            }
+            // создаем вспомогательный объект для расчетов и хранения данных отрисовки
+            layerData[data_name] = new TiledLayerTempStorage(cells, nonEmptyCells);
         });
-        console.log(ellipseBLen);
-        console.log("layer data: ", layerData);
+        
+        // save boundaries max possible lengths
         layerData.ellipseBoundariesLen = ellipseBLen;
         layerData.pointBoundariesLen = pointBLen;
         layerData.polygonBoundariesLen = polygonBLen;

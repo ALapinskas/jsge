@@ -894,7 +894,6 @@ export class WebGlEngine {
                     skipColsRight = layerCols - screenCols - skipColsLeft,
                     cellSpacing = tilesetData.spacing,
                     cellMargin = tilesetData.margin,
-
                     hasAnimations = tilesetData._hasAnimations;
                     //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
@@ -1060,7 +1059,7 @@ export class WebGlEngine {
                                             } else if (object.ellipse) {
                                                 const radX = object.width / 2,
                                                     radY = object.height / 2;
-                                                console.log("add ellipse: ", object);
+                                                    
                                                 pageData._addEllipseBoundary(baseX + radX, baseY + radY, radX, radY);
                                             } else {
                                                 // object is rect
@@ -1094,7 +1093,7 @@ export class WebGlEngine {
                                         topLine = [ mapPosX, mapPosY, mapPosX + tilesetwidth, mapPosY],
                                         leftLine = [ mapPosX, mapPosY + tilesetheight, mapPosX, mapPosY ];
                                     
-                                    // top cell
+                                    // top cell7
                                     if (row !== 0) {
                                         const topCellFirstIndex =  (row - 1) * fullRowCellsNum + (col * 4),
                                             bottomTopLeftFirstIndex = boundariesRowsIndexes[topCellFirstIndex + INDEX_BOTTOM_LINE];

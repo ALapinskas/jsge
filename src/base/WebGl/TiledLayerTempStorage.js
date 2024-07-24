@@ -1,7 +1,7 @@
 /**
  * storing vectors and textures for DrawTiledLayer
  */
-export class TiledLayerStorage {
+export class TiledLayerTempStorage {
     /**
      * @type {Float32Array}
      */
