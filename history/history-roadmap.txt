@@ -5,8 +5,15 @@ f: fixed defects
 
 # History
 1.4.5:
-    r: refactor performance according adr#4
+    r: refactor according adr#4
+    r: refactor folder structure
+    r: scheme supplemented
+    r: TextureStorage -> ImageTempStorage
     +: introduced TiledLayerTempStorage() to store temp calculations data
+    +: _initiateJsRender() introduced, method is used to precalculate and initiate boundaries arrays
+    +: getRawBoundaries() returns Float32Array boundaries
+    +: getEllipseBoundaries() returns Float32Array ellipse tiledLayer boundaries
+    +: getPointBoundaries() returns Float32Array point tiledLayer boundaries
 
 1.4.4:
     r: disable iNetwork interface by default

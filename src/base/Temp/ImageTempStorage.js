@@ -1,7 +1,7 @@
 /**
  * storing current WebGLTexture
  */
-export class TextureStorage {
+export class ImageTempStorage {
     /**
      * @type {Number}
      */

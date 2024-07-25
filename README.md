@@ -1,6 +1,6 @@
 # Javascript Game Engine
 
-This engine was designed to simplify creating javascript 2d game applications.
+This engine was designed to simplify creating javascript game applications.
 
 Advantages:
 * Fresh codebase, depends on latest javascript features such as classes and privacy. 

@@ -1,5 +1,5 @@
-import { DrawImageObject } from "../../src/base/DrawImageObject.js";
-import { DrawRectObject } from "../../src/base/DrawRectObject.js";
+import { DrawImageObject } from "../../src/base/2d/DrawImageObject.js";
+import { DrawRectObject } from "../../src/base/2d/DrawRectObject.js";
 import { DrawObjectFactory } from "../../src/base/DrawObjectFactory.js";
 import { countDistance, angle_2points } from "../../src/utils.js";
 

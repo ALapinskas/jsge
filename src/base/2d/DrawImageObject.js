@@ -1,8 +1,8 @@
-import { AnimationEvent } from "./AnimationEvent.js";
-import { CONST, ERROR_CODES } from "../constants.js";
+import { AnimationEvent } from "../AnimationEvent.js";
+import { CONST, ERROR_CODES } from "../../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { TextureStorage } from "./WebGl/TextureStorage.js";
-import { Exception, Warning } from "./Exception.js";
+import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
+import { Exception, Warning } from "../Exception.js";
 /**
  * Image object to draw
  * @extends DrawShapeObject
@@ -55,7 +55,7 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #circleBoundaries;
     /**
-     * @type {TextureStorage}
+     * @type {ImageTempStorage}
      */
     #textureStorage;
 

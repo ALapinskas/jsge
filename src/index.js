@@ -1,6 +1,6 @@
 import { System } from "./base/System.js";
 import { GameStage } from "./base/GameStage.js";
-import { DrawImageObject } from "./base/DrawImageObject.js";
+import { DrawImageObject } from "./base/2d/DrawImageObject.js";
 import { ISystemAudio } from "./base/ISystemAudio.js";
 import * as Primitives from "./base/Primitives.js";
 import { SystemSettings } from "./configs.js";

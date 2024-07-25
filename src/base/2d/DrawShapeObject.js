@@ -1,5 +1,5 @@
-import { CONST } from "../constants.js";
-import { utils } from "../index.js";
+import { CONST } from "../../constants.js";
+import { utils } from "../../index.js";
 
 /**
  * A base draw object.

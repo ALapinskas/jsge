@@ -1,7 +1,7 @@
-import { AnimationEvent } from "./AnimationEvent.js";
+import { AnimationEvent } from "../AnimationEvent.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { TextureStorage } from "./WebGl/TextureStorage.js";
-import { TiledLayerTempStorage } from "./WebGl/TiledLayerTempStorage.js";
+import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
+import { TiledLayerTempStorage } from "../Temp/TiledLayerTempStorage.js";
 /**
  * A render object represents a layer from tiled editor
  * @see {@link DrawObjectFactory} should be created with factory method
@@ -17,7 +17,7 @@ export class DrawTiledLayer {
     #DELIMITER = "-#-";
     #tilesetImages;
     /**
-     * @type {Array<TextureStorage>}
+     * @type {Array<ImageTempStorage>}
      */
     #textureStorages;
     #layerData;

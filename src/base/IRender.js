@@ -1,4 +1,4 @@
-import { DrawTiledLayer } from "./DrawTiledLayer.js";
+import { DrawTiledLayer } from "./2d/DrawTiledLayer.js";
 import { Exception, Warning } from "./Exception.js";
 import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { WebGlEngine } from "./WebGl/WebGlEngine.js";
@@ -7,13 +7,13 @@ import { GameStageData } from "./GameStageData.js";
 import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 //import { calculateBufferData } from "../wa/release.js";
 import { CONST } from "../constants.js";
-import { DrawImageObject } from "./DrawImageObject.js";
-import { DrawCircleObject } from "./DrawCircleObject.js";
-import { DrawConusObject } from "./DrawConusObject.js";
-import { DrawLineObject } from "./DrawLineObject.js";
-import { DrawPolygonObject } from "./DrawPolygonObject.js";
-import { DrawRectObject } from "./DrawRectObject.js";
-import { DrawTextObject } from "./DrawTextObject.js";
+import { DrawImageObject } from "./2d/DrawImageObject.js";
+import { DrawCircleObject } from "./2d/DrawCircleObject.js";
+import { DrawConusObject } from "./2d/DrawConusObject.js";
+import { DrawLineObject } from "./2d/DrawLineObject.js";
+import { DrawPolygonObject } from "./2d/DrawPolygonObject.js";
+import { DrawRectObject } from "./2d/DrawRectObject.js";
+import { DrawTextObject } from "./2d/DrawTextObject.js";
 import { imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes } from "./WebGl/ImagesDrawProgram.js";
 import { primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes } from "./WebGl/PrimitivesDrawProgram.js";
 import { utils } from "../index.js";
@@ -99,6 +99,8 @@ export class IRender {
         this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
 
         this.#webGlEngine = new WebGlEngine(this.#drawContext, this.#systemSettingsReference.gameOptions);
+        
+        this._registerRenderInit(this.#webGlEngine._initiateJsRender);
         if (this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.NATIVE_WAT ||
             this.systemSettings.gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT) {
             this._registerRenderInit(this.#webGlEngine._initiateWasm);
@@ -181,8 +183,8 @@ export class IRender {
         return this.iLoader.filesWaitingForUpload === 0;
     };
 
-    initiateContext = () => {
-        return Promise.all(this.#initPromises.map(method => method()));
+    initiateContext = (stageData) => {
+        return Promise.all(this.#initPromises.map(method => method(stageData)));
     };
 
     clearContext() {
@@ -224,7 +226,7 @@ export class IRender {
 
     /**
      * @ignore
-     * @param {function():Promise<void>} method 
+     * @param {function(GameStageData):Promise<void>} method 
      * @returns {void}
      */
     _registerRenderInit(method) {
@@ -554,7 +556,7 @@ export class IRender {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
             const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
-            viewPromises.push(this.initiateContext());
+            viewPromises.push(this.initiateContext(this.#currentGameStageData));
             if (isBoundariesPrecalculations) {
                 console.warn("isBoundariesPrecalculations() is turned off");
                 //for (const view of this.#views.values()) {
@@ -580,9 +582,7 @@ export class IRender {
             isCyclesTimeCalcCheckCurrent = this.systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT;
             
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
-        if (this.stageData.isMaxBoundariesSizeSet) {
-            this.stageData._clearBoundaries();
-        }
+        this.stageData._clearBoundaries();
         this.clearContext();
         
         this.render().then(() => {

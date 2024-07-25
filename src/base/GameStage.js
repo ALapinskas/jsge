@@ -3,13 +3,13 @@ import { GameStageData } from "./GameStageData.js";
 import { Exception, Warning } from "./Exception.js";
 import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
-import { DrawCircleObject } from "./DrawCircleObject.js";
-import { DrawConusObject } from "./DrawConusObject.js";
-import { DrawImageObject } from "./DrawImageObject.js";
-import { DrawLineObject } from "./DrawLineObject.js";
-import { DrawPolygonObject } from "./DrawPolygonObject.js";
-import { DrawRectObject } from "./DrawRectObject.js";
-import { DrawTextObject } from "./DrawTextObject.js";
+import { DrawCircleObject } from "./2d/DrawCircleObject.js";
+import { DrawConusObject } from "./2d/DrawConusObject.js";
+import { DrawImageObject } from "./2d/DrawImageObject.js";
+import { DrawLineObject } from "./2d/DrawLineObject.js";
+import { DrawPolygonObject } from "./2d/DrawPolygonObject.js";
+import { DrawRectObject } from "./2d/DrawRectObject.js";
+import { DrawTextObject } from "./2d/DrawTextObject.js";
 import { ISystem } from "./ISystem.js";
 import { ISystemAudio } from "./ISystemAudio.js";
 import { SystemSettings } from "../configs.js";
@@ -597,8 +597,8 @@ export class GameStage {
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
             len = this.stageData.boundariesLen,
-            eLen = ellipseB.length,
-            pLen = pointB.length;
+            eLen = this.stageData.ellipseBLen,
+            pLen = this.stageData.pointBLen;
 
         for (let i = 0; i < len; i+=4) {
             const x1 = mapObjects[i],

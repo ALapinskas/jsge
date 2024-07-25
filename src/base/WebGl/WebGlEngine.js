@@ -1,8 +1,9 @@
 import { ERROR_CODES, CONST, WARNING_CODES } from "../../constants.js";
 import { crossProduct } from "../../utils.js";
+import { DrawTiledLayer } from "../2d/DrawTiledLayer.js";
 import { Exception, Warning } from "../Exception.js";
 import { GameStageData } from "../GameStageData.js";
-import { TextureStorage } from "./TextureStorage.js";
+import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
 
 export class WebGlEngine {
     /**
@@ -63,6 +64,70 @@ export class WebGlEngine {
     _fixCanvasSize(width, height) {
         this.#gl.viewport(0, 0, width, height);
     }
+    _initiateJsRender = (stageData) => {
+        return new Promise((resolve, reject) => {
+            const tileLayers = stageData.getObjectsByInstance(DrawTiledLayer),
+                [ settingsWorldWidth, settingsWorldHeight ] = stageData.worldDimensions;
+
+            // count max possible boundaries sizes
+            let maxBSize = 0,
+                maxESize = 0,
+                maxPSize = 0,
+                maxWorldW = 0,
+                maxWorldH = 0;
+
+            tileLayers.forEach(tiledLayer => {
+                const setBoundaries = tiledLayer.setBoundaries,
+                    layerData = tiledLayer.layerData,
+                    tilemap = tiledLayer.tilemap,
+                    tilesets = tiledLayer.tilesets,
+                    { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
+                    tilewidth = dtwidth,
+                    tileheight = dtheight;
+
+                for (let i = 0; i < tilesets.length; i++) {
+                    const layerCols = layerData.width,
+                        layerRows = layerData.height,
+                        worldW = tilewidth * layerCols,
+                        worldH = tileheight * layerRows;
+                        
+                        const polygonBondMax = layerData.polygonBoundariesLen,
+                            ellipseBondMax = layerData.ellipseBoundariesLen,
+                            pointBondMax = layerData.pointBoundariesLen; 
+    
+                    if (maxWorldW < worldW) {
+                        maxWorldW = worldW
+                    }
+                    if (maxWorldH < worldH) {
+                        maxWorldH = worldH;
+                    }
+                    
+                    if (setBoundaries) {
+                        maxBSize += polygonBondMax;
+                        maxESize += ellipseBondMax;
+                        maxPSize += pointBondMax;
+    
+                        // boundaries cleanups every draw cycles, we need to set world boundaries again
+                        
+                    }
+                }
+            });
+
+            if (maxWorldW !== 0 && maxWorldH !== 0 && (maxWorldW !== settingsWorldWidth || maxWorldH !== settingsWorldHeight)) {
+                Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
+                stageData._setWorldDimensions(maxWorldW, maxWorldH);
+            }
+
+            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
+                maxBSize+=16; //4 sides * 4 cords x1,y1,x2,y,2
+            }
+            stageData._setMaxBoundariesSize(maxBSize, maxESize, maxPSize);
+            stageData._initiateBoundariesData();
+
+            resolve(true);
+        });
+
+    }
     _initWebGlAttributes = () => {
         const gl = this.#gl;
         gl.enable(gl.BLEND);
@@ -77,7 +142,7 @@ export class WebGlEngine {
      * 
      * @returns {Promise<void>}
      */
-    _initiateWasm = () => {
+    _initiateWasm = (stageData) => {
         const url = this.#gameOptions.optimization === CONST.OPTIMIZATION.WEB_ASSEMBLY.NATIVE_WAT ? this.#gameOptions.optimizationWASMUrl : this.#gameOptions.optimizationAssemblyUrl;
         return new Promise((resolve, reject) => {
             this.layerData = new WebAssembly.Memory({
@@ -447,7 +512,7 @@ export class WebGlEngine {
         let textureStorage = renderObject._textureStorage;
         if (!textureStorage) {
             //const activeTexture = gl.getParameter(gl.ACTIVE_TEXTURE);
-            textureStorage = new TextureStorage(gl.createTexture());
+            textureStorage = new ImageTempStorage(gl.createTexture());
             renderObject._textureStorage = textureStorage;
         }
         if (textureStorage._isTextureRecalculated === true) {
@@ -549,7 +614,7 @@ export class WebGlEngine {
 
         let textureStorage = renderObject._textureStorage;
         if (!textureStorage) {
-            textureStorage = new TextureStorage(gl.createTexture());
+            textureStorage = new ImageTempStorage(gl.createTexture());
             renderObject._textureStorage = textureStorage;
         } 
         if (textureStorage._isTextureRecalculated === true) {
@@ -604,6 +669,12 @@ export class WebGlEngine {
         gl.enableVertexAttribArray(positionAttributeLocation);
         gl.enableVertexAttribArray(texCoordLocation);
 
+        // set the resolution
+        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+        gl.uniform2f(translationLocation,translation[0], translation[1]);
+        gl.uniform2f(scaleLocation, scale[0], scale[1]);
+        gl.uniform1f(rotationRotation, rotation);
+
         for (let i = 0; i < renderLayerData.length; i++) {
             const data = renderLayerData[i],
                 vectors = data[0],
@@ -618,11 +689,6 @@ export class WebGlEngine {
                 if (isTextureBind) {
                     await this._render(verticesNumber, gl.TRIANGLES);
                 }
-                // set the resolution
-                gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-                gl.uniform2f(translationLocation,translation[0], translation[1]);
-                gl.uniform2f(scaleLocation, scale[0], scale[1]);
-                gl.uniform1f(rotationRotation, rotation);
                 
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER, vectors, gl.STATIC_DRAW);
@@ -644,7 +710,7 @@ export class WebGlEngine {
                 let textureStorage = renderLayer._textureStorages[i];
                 
                 if (!textureStorage) {
-                    textureStorage = new TextureStorage(gl.createTexture(), i);
+                    textureStorage = new ImageTempStorage(gl.createTexture(), i);
                     renderLayer._setTextureStorage(i, textureStorage);
                 }
                 if (textureStorage._isTextureRecalculated === true) {
@@ -853,7 +919,6 @@ export class WebGlEngine {
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 tilewidth = dtwidth,
                 tileheight = dtheight,
-                [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions,
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0, 0] : pageData.worldOffset,
                 boundariesCalculations = this.#gameOptions.render.boundaries.realtimeCalculations,
@@ -863,6 +928,10 @@ export class WebGlEngine {
             if (!layerData) {
                 Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
                 reject();
+            }
+
+            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
+                pageData._setMapBoundaries();
             }
             
             for (let i = 0; i < tilesets.length; i++) {
@@ -899,11 +968,7 @@ export class WebGlEngine {
                     // additional property which is set in DrawTiledLayer
                     const hasBoundaries = tilesetData._hasBoundaries,
                         tilesetBoundaries = tilesetData._boundaries,
-                        tilesetName = tilesetData.name,
-                        layerTilesetData = tilesets[i]._temp,
-                        polygonBondMax = layerData.polygonBoundariesLen,
-                        ellipseBondMax = layerData.ellipseBoundariesLen,
-                        pointBondMax = layerData.pointBoundariesLen; 
+                        layerTilesetData = tilesets[i]._temp;
 
                 let v = layerTilesetData.vectors,
                     t = layerTilesetData.textures,
@@ -913,22 +978,7 @@ export class WebGlEngine {
                 t.fill(0);
                 let boundariesRowsIndexes = layerTilesetData._bTempIndexes;
                 const fullRowCellsNum = screenCols * 4;
-
-                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                    pageData._setWorldDimensions(worldW, worldH);
-                }
-                if (setBoundaries) {
-                    if (!pageData.isMaxBoundariesSizeSet) {
-                        pageData._setMaxBoundariesSize(polygonBondMax, ellipseBondMax, pointBondMax);
-                        pageData._initiateBoundariesData();
-                    }
-                    // boundaries cleanups every draw cycles, we need to set world boundaries again
-                    if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                        pageData._setMapBoundaries();
-                    }
-                }
-
+                
                 let mapIndex = skipRowsTop * layerCols;
                 for (let row = 0; row < screenRows; row++) {
                     mapIndex += skipColsLeft;
@@ -1245,8 +1295,6 @@ export class WebGlEngine {
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
                 tilewidth = dtwidth,
                 tileheight = dtheight,
-                setBoundaries = renderLayer.setBoundaries,
-                [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions,
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset;
             
@@ -1255,6 +1303,11 @@ export class WebGlEngine {
                 Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
                 reject();
             }
+
+            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
+                pageData._setMapBoundaries();
+            }
+
             for (let i = 0; i <= tilesets.length - 1; i++) {
                 const tilesetData = tilesets[i].data,
                     firstgid = tilesets[i].firstgid,
@@ -1277,17 +1330,16 @@ export class WebGlEngine {
                     atlasHeight = atlasImage.height,
                     cellSpacing = tilesetData.spacing,
                     cellMargin = tilesetData.margin,
-                    tilesetName = tilesetData.name + "_" + layerData.name;
+                    layerTilesetData = tilesets[i]._temp;
                 
                 let mapIndex = 0,
-                    v = layerData[tilesetName].vectors,
-                    t = layerData[tilesetName].textures,
+                    v = layerTilesetData.vectors,
+                    t = layerTilesetData.textures,
                     filledSize = 0;
-                 
-                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                    pageData._setWorldDimensions(worldW, worldH);
-                }
+                
+                v.fill(0);
+                t.fill(0);
+
                 for (let row = 0; row < layerRows; row++) {
                     for (let col = 0; col < layerCols; col++) {
                         let tile = layerData.data[mapIndex];
@@ -1409,6 +1461,10 @@ export class WebGlEngine {
                 Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
                 reject();
             }
+
+            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
+                pageData._setMapBoundaries();
+            }
             
             for (let i = 0; i < tilesets.length; i++) {
                 const tilesetData = tilesets[i].data,
@@ -1437,28 +1493,8 @@ export class WebGlEngine {
                     texturesCoordsItemsNum = 12,
                     vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
                     texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum,
-                    cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin;
+                    cellSpacing = tilesetData.spacing;
                 
-                if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                    Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                    pageData._setWorldDimensions(worldW, worldH);
-                }
-
-                if (!pageData.isMaxBoundariesSizeSet) {
-                    const tilesetName = tilesetData.name + "_" + layerData.name,
-                        bufferDataSize = layerData[tilesetName].bufferSize; 
-                    pageData._setMaxBoundariesSize(bufferDataSize);
-                    pageData._initiateBoundariesData();
-                }
-
-                //if (this.canvas.width !== worldW || this.canvas.height !== worldH) {
-                //    this._setCanvasSize(worldW, worldH);
-                //}
-                // boundaries cleanups every draw cycles, we need to set world boundaries again
-                if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                    pageData._setMapBoundaries();
-                }
                 const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
                 
                 const verticesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum) : [],

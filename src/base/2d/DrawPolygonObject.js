@@ -1,12 +1,11 @@
-import { CONST } from "../constants.js";
+import { CONST } from "../../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
- * Line object to draw.
  * @extends DrawShapeObject
  * @see {@link DrawObjectFactory} should be created with factory method
  */
-export class DrawLineObject extends DrawShapeObject {
+export class DrawPolygonObject extends DrawShapeObject {
     /**
      * @type {Array<Array<number>>}
      */
@@ -16,8 +15,8 @@ export class DrawLineObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
-        this.#vertices = vertices;
+        super(CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
+        this.#vertices = this._convertVerticesArray(vertices);
     }
 
     /**

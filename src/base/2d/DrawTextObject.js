@@ -1,8 +1,8 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Rectangle } from "./Primitives.js";
-import { CONST, ERROR_CODES } from "../constants.js";
-import { Exception } from "./Exception.js";
-import { TextureStorage } from "./WebGl/TextureStorage.js";
+import { Rectangle } from "../Primitives.js";
+import { CONST, ERROR_CODES } from "../../constants.js";
+import { Exception } from "../Exception.js";
+import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
 
 /**
  * @extends DrawShapeObject
@@ -22,7 +22,7 @@ export class DrawTextObject extends DrawShapeObject {
     #textureCanvas = document.createElement("canvas");
 
     /**
-     * @type {TextureStorage}
+     * @type {ImageTempStorage}
      */
     #textureStorage;
 

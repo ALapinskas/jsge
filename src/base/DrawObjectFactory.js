@@ -1,12 +1,12 @@
-import { DrawRectObject } from "./DrawRectObject.js";
-import { DrawTextObject } from "./DrawTextObject.js";
-import { DrawConusObject } from "./DrawConusObject.js";
-import { DrawImageObject } from "./DrawImageObject.js";
-import { DrawLineObject } from "./DrawLineObject.js";
-import { DrawPolygonObject } from "./DrawPolygonObject.js";
-import { DrawCircleObject } from "./DrawCircleObject.js";
-import { DrawTiledLayer } from "./DrawTiledLayer.js";
-import { DrawShapeObject } from "./DrawShapeObject.js";
+import { DrawRectObject } from "./2d/DrawRectObject.js";
+import { DrawTextObject } from "./2d/DrawTextObject.js";
+import { DrawConusObject } from "./2d/DrawConusObject.js";
+import { DrawImageObject } from "./2d/DrawImageObject.js";
+import { DrawLineObject } from "./2d/DrawLineObject.js";
+import { DrawPolygonObject } from "./2d/DrawPolygonObject.js";
+import { DrawCircleObject } from "./2d/DrawCircleObject.js";
+import { DrawTiledLayer } from "./2d/DrawTiledLayer.js";
+import { DrawShapeObject } from "./2d/DrawShapeObject.js";
 import { GameStageData } from "./GameStageData.js";
 import { Exception } from "./Exception.js";
 import { ERROR_CODES } from "../constants.js";
@@ -161,9 +161,9 @@ export class DrawObjectFactory {
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
         const tilemap = this.#iLoader.getTileMap(tileMapKey),
-            tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)),
+            tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)), // copy to avoid change same tilemap instance in different tiledLayers
             tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
-            layerData = tilemap.layers.find((layer) => layer.name === layerKey),
+            layerData = Object.assign({}, tilemap.layers.find((layer) => layer.name === layerKey)), // copy to avoid change same tilemap instance in different tiledLayers
             renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
 
         this.#addObjectToPageData(renderObject);
