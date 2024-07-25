@@ -4,9 +4,9 @@ r: code refactoring
 f: fixed defects
 
 # History
-1.4.5:
+1.5.0:
     r: refactor according adr#4
-    r: refactor folder structure
+    r: refactor folder structure: draw objects moved to ./base/2d, temp objects to ./base/temp
     r: scheme supplemented
     r: TextureStorage -> ImageTempStorage
     +: introduced TiledLayerTempStorage() to store temp calculations data
