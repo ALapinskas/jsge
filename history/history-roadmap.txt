@@ -15,6 +15,7 @@ f: fixed defects
     +: getEllipseBoundaries() returns Float32Array ellipse tiledLayer boundaries
     +: getPointBoundaries() returns Float32Array point tiledLayer boundaries
 
+
 1.4.4:
     r: disable iNetwork interface by default
     
