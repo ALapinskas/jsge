@@ -61,9 +61,13 @@ export class IRender {
      */
     #loaderReference;
     /**
-     * @type {Array<number>}
+     * @type {Float32Array}
      */
     #tempRCircleT;
+    /**
+     * @type {number}
+     */
+    #tempRCircleTPointer = 0;
     /**
      * @type {NodeJS.Timer | null}
      */
@@ -93,7 +97,7 @@ export class IRender {
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = iLoader;
 
-        this.#tempRCircleT = [];
+        this.#tempRCircleT = new Float32Array(this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime);
         this.#minCycleTime = this.systemSettings.gameOptions.render.minCycleTime;
 
         this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
@@ -254,17 +258,21 @@ export class IRender {
      * @returns {Promise<void>}
      */
     async render() {
-        let renderObjectsPromises = [],
-            errors = [],
-            isErrors = false;
         const renderObjects = this.stageData.renderObjects;
-        if (renderObjects.length !== 0) {
+            
+        let errors = [],
+            isErrors = false,
+            len = renderObjects.length,
+            renderObjectsPromises = new Array(len);
+
+        if (len !== 0) {
             //this.#checkCollisions(view.renderObjects);
-            for (let i = 0; i < renderObjects.length; i++) {
+            for (let i = 0; i < len; i++) {
                 const object = renderObjects[i];
                 if (object.isRemoved) {
                     renderObjects.splice(i, 1);
                     i--;
+                    len--;
                     continue;
                 }
                 if (object.hasAnimations) {
@@ -272,7 +280,7 @@ export class IRender {
                 }
                 const promise = await this._bindRenderObject(object)
                     .catch((err) => Promise.reject(err));
-                renderObjectsPromises.push(promise);
+                renderObjectsPromises[i] = promise;
             }
             if (this.systemSettings.gameOptions.debug.boundaries.drawLayerBoundaries) {
                 renderObjectsPromises.push(this.#drawBoundariesWebGl()
@@ -504,7 +512,7 @@ export class IRender {
 
     #countFPSaverage() {
         const timeLeft = this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime,
-            steps = this.#tempRCircleT.length;
+            steps = this.#tempRCircleTPointer;
         let fullTime = 0;
         for (let i = 0; i < steps; i++) {
             const timeStep = this.#tempRCircleT[i];
@@ -513,7 +521,8 @@ export class IRender {
         console.log("FPS average for", timeLeft/1000, "sec, is ", (1000 / (fullTime / steps)).toFixed(2));
 
         // cleanup
-        this.#tempRCircleT = [];
+        this.#tempRCircleT.fill(0);
+        this.#tempRCircleTPointer = 0;
     }
 
     /**
@@ -544,7 +553,8 @@ export class IRender {
     _stopRender = () => {
         this.#isActive = false;
         this.#currentGameStageData = null;
-        this.#tempRCircleT = [];
+        this.#tempRCircleT.fill(0);
+        this.#tempRCircleTPointer = 0;
         clearInterval(this.#fpsAverageCountTimer);
         this.#fpsAverageCountTimer = null;
     };
@@ -598,7 +608,8 @@ export class IRender {
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
 
             if (cycleTime > 0) {
-                this.#tempRCircleT.push(cycleTime);
+                this.#tempRCircleT[this.#tempRCircleTPointer] = cycleTime;
+                this.#tempRCircleTPointer++;
             }
 
             if (this.#isActive) {

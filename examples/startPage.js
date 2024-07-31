@@ -208,7 +208,7 @@ export class StartPage extends GameStage {
         if (isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.boundariesBox)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
-            this.iSystem.startGameStage(PIRATES_GAME);
+            this.iSystem.startGameStage(PRIMITIVES_PAGE);
 
         }
     };

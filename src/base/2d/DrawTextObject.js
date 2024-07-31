@@ -1,5 +1,5 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
-import { Rectangle } from "../Primitives.js";
+import { Rectangle } from "./Primitives.js";
 import { CONST, ERROR_CODES } from "../../constants.js";
 import { Exception } from "../Exception.js";
 import { ImageTempStorage } from "../Temp/ImageTempStorage.js";

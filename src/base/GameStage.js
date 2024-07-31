@@ -14,7 +14,7 @@ import { ISystem } from "./ISystem.js";
 import { ISystemAudio } from "./ISystemAudio.js";
 import { SystemSettings } from "../configs.js";
 import { isPointLineIntersect, isEllipseCircleIntersect, isPointCircleIntersect, isEllipsePolygonIntersect, isPolygonLineIntersect, isPointPolygonIntersect, angle_2points, isCircleLineIntersect } from "../utils.js";
-import { Vector } from "./Primitives.js";
+import { Vector } from "./2d/Primitives.js";
 
 /**
  * Represents the stage of the game,<br>

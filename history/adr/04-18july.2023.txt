@@ -1,7 +1,7 @@
 Date: July 18 2024
 Optimize and make render faster / Сделать оптимизацию и увеличить быстродействие отрисовки
 
-Status: In progress
+Status: Done
 
 Context:
     It seems that the performance in terms of memory consumption is a little slow in Firefox@129.0b6,

@@ -250,7 +250,7 @@ export class MapPage extends GameStage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.iSystem.stopGameStage("dungeon");
+            this.iSystem.stopGameStage("primitives");
             this.iSystem.startGameStage("start");
         } else {
             const fireball = this.#createFireball();

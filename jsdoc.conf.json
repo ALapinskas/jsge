@@ -2,7 +2,7 @@
     "plugins": [],
     "recurseDepth": 10,
     "source": {
-        "include": ["./src", "./src/base"],
+        "include": ["./src", "./src/base", "./src/base/2d"],
         "includePattern": ".+\\.js(doc|x)?$",
         "excludePattern": "(^|\\/|\\\\)_"
     },

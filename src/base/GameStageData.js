@@ -173,7 +173,6 @@ export class GameStageData {
     /**
      * 
      * @param {number} bSize
-     * @param {number} polSize - polygon boundaries size
      * @param {number} eSize - ellipse boundaries size
      * @param {number} pSize - points boundaries size
      * @ignore
@@ -297,7 +296,9 @@ export class GameStageData {
     }
 
     /**
-     * 
+     * current screen boundaries, 
+     * this method is for backward capability with jsge@1.4.4
+     * recommended to use getRawBoundaries()
      * @returns {Array<Array<number>>}
      */
     getBoundaries() {
@@ -319,7 +320,9 @@ export class GameStageData {
     }
 
     /**
-     * 
+     * current screen boundaries
+     * polygon boundaries from Tiled and Tiled boundaries layers are merged here
+     * each 4 cells, represent a line with coords x1,y1,x2,y2
      * @returns {Float32Array}
      */
     getRawBoundaries() {
@@ -327,7 +330,9 @@ export class GameStageData {
     }
 
     /**
-     * 
+     * ellipse boundaries from Tiled,
+     * stored as floatArray, 
+     * each 4 cells, represent am ellipse with cords centerX, centerY, radiusX, radiusY
      * @returns {Float32Array}
      */
     getEllipseBoundaries() {
@@ -335,7 +340,9 @@ export class GameStageData {
     }
 
     /**
-     * 
+     * point boundaries from Tiled,
+     * stored as floatArray, 
+     * each 2 cells, represent a point with coords x1,y1
      * @returns {Float32Array}
      */
     getPointBoundaries() {
@@ -353,6 +360,7 @@ export class GameStageData {
         return this.#isWorldBoundariesEnabled;
     }
     /**
+     * Current canvas dimensions
      * @type {Array<number>}
      */
     get canvasDimensions() {
@@ -360,6 +368,7 @@ export class GameStageData {
     }
 
     /**
+     * Current game world dimensions
      * @type {Array<number>}
      */
     get worldDimensions() {
@@ -367,6 +376,7 @@ export class GameStageData {
     }
     
     /**
+     * Current word x/y offset
      * @type {Array<number>}
      */
     get worldOffset() {
@@ -374,6 +384,7 @@ export class GameStageData {
     }
 
     /**
+     * Current focus point
      * @type {Array<number>}
      */
     get mapCenter() {
@@ -388,6 +399,7 @@ export class GameStageData {
     }
 
     /**
+     * Tiled polygon and Tiled layer boundaries length
      * @type {number}
      */
     get boundariesLen() {
@@ -395,6 +407,7 @@ export class GameStageData {
     }
 
     /**
+     * Tiled ellipse boundaries length
      * @type {number}
      */
     get ellipseBLen() {
@@ -402,6 +415,7 @@ export class GameStageData {
     }
 
     /**
+     * Tiled point length
      * @type {number}
      */
     get pointBLen() {

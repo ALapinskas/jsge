@@ -766,7 +766,7 @@ export class WebGlEngine {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
         const triangles = this.#triangulatePolygon(vertices);
-        
+
         const polygonVerticesNum = triangles.length;
         if (polygonVerticesNum % 3 !== 0) {
             Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "polygon boundaries vertices are not correct, skip drawing");
@@ -1516,25 +1516,34 @@ export class WebGlEngine {
     }
 
     #triangulatePolygon(vertices) {
-        return this.#triangulate(vertices);
+        const triangulatedPolygon = new Float32Array(vertices.length * vertices.length),
+            pointer = 0;
+            
+        const [triangulated, len] = this.#triangulate(vertices, triangulatedPolygon, pointer);
+        
+        const sliced = triangulated.slice(0, len);
+        
+        return sliced;
     }
 
     /**
      * 
      * @param {Array<Array<number>>} polygonVertices 
-     * @param {Array<number>} triangulatedPolygon 
-     * @returns {Array<number>}
+     * @param {Float32Array} triangulatedPolygon 
+     * @returns {Array}
      */
-    #triangulate (polygonVertices, triangulatedPolygon = []) {
+    #triangulate (polygonVertices, triangulatedPolygon, pointer) {
         const len = polygonVertices.length,
             vectorsCS = (a, b, c) => crossProduct({x:c[0] - a[0], y: c[1] - a[1]}, {x:b[0] - a[0], y: b[1] - a[1]});
 
         if (len <= 3) {
             polygonVertices.forEach(vertex => {
-                triangulatedPolygon.push(vertex[0]);
-                triangulatedPolygon.push(vertex[1]);
+                triangulatedPolygon[pointer] = vertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = vertex[1];
+                pointer++;
             });
-            return triangulatedPolygon;
+            return [triangulatedPolygon, pointer];
         }
         const verticesSortedByY = [...polygonVertices].sort((curr, next) => next[1] - curr[1]);
         const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
@@ -1560,19 +1569,25 @@ export class WebGlEngine {
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
             if (cs < 0) {
-                triangulatedPolygon.push(prevVertex[0]);
-                triangulatedPolygon.push(prevVertex[1]);
-                triangulatedPolygon.push(currentVertex[0]);
-                triangulatedPolygon.push(currentVertex[1]);
-                triangulatedPolygon.push(nextVertex[0]);
-                triangulatedPolygon.push(nextVertex[1]);
+                triangulatedPolygon[pointer] = prevVertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = prevVertex[1];
+                pointer++;
+                triangulatedPolygon[pointer] = currentVertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = currentVertex[1];
+                pointer++;
+                triangulatedPolygon[pointer] = nextVertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = nextVertex[1];
+                pointer++;
                 processedVertices = processedVertices.filter((val, index) => index !== i);
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
                     // sometimes fails
                     Warning(WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices.");
-                    return triangulatedPolygon;
+                    return [triangulatedPolygon, pointer];
                 }
                 i++;
             }
@@ -1580,7 +1595,7 @@ export class WebGlEngine {
             // i++;
         }
         
-        return triangulatedPolygon;
+        return [triangulatedPolygon, pointer];
     }
 
     #bindPolygon(vertices) {

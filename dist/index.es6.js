@@ -942,7 +942,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "DrawTextObject": () => (/* binding */ DrawTextObject)
 /* harmony export */ });
 /* harmony import */ var _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./DrawShapeObject.js */ "./src/base/2d/DrawShapeObject.js");
-/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/2d/Primitives.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../Exception.js */ "./src/base/Exception.js");
 /* harmony import */ var _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../Temp/ImageTempStorage.js */ "./src/base/Temp/ImageTempStorage.js");
@@ -1504,6 +1504,101 @@ class DrawTiledLayer {
 
 /***/ }),
 
+/***/ "./src/base/2d/Primitives.js":
+/*!***********************************!*\
+  !*** ./src/base/2d/Primitives.js ***!
+  \***********************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Rectangle": () => (/* binding */ Rectangle),
+/* harmony export */   "Vector": () => (/* binding */ Vector),
+/* harmony export */   "Vertex": () => (/* binding */ Vertex)
+/* harmony export */ });
+class Vertex {
+    #x;
+    #y;
+    constructor(x, y) {
+        this.#x = x;
+        this.#y = y;
+    }
+
+    get x() {
+        return this.#x;
+    }
+
+    get y() {
+        return this.#y;
+    }
+}
+
+class Rectangle {
+    #x;
+    #y;
+    #w;
+    #h;
+    constructor(x, y, w, h) {
+        this.#x = x;
+        this.#y = y;
+        this.#w = w;
+        this.#h = h; 
+    }
+    /**
+     * @type {number}
+     */
+    get x() {
+        return this.#x;
+    }
+    /**
+     * @type {number}
+     */
+    get y() {
+        return this.#y;
+    }
+    /**
+     * @type {number}
+     */
+    get width() {
+        return this.#w;
+    }
+    /**
+     * @type {number}
+     */
+    get height() {
+        return this.#h;
+    }
+}
+
+class Vector {
+    #x;
+    #y;
+    constructor(x1, y1, x2, y2) {
+        this.#x = x2 - x1;
+        this.#y = y2 - y1;
+    }
+
+    get x() {
+        return this.#x;
+    }
+
+    get y() {
+        return this.#y;
+    }
+
+    get length() {
+        return Math.sqrt(Math.pow(this.#x, 2) + Math.pow(this.#y, 2));
+    }
+
+    get tetaAngle() {
+        return Math.atan2(this.#y, this.#x);
+    }
+}
+
+
+
+/***/ }),
+
 /***/ "./src/base/AnimationEvent.js":
 /*!************************************!*\
   !*** ./src/base/AnimationEvent.js ***!
@@ -1926,7 +2021,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../utils.js */ "./src/utils.js");
-/* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _2d_Primitives_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./2d/Primitives.js */ "./src/base/2d/Primitives.js");
 
 
 
@@ -2387,7 +2482,7 @@ class GameStage {
     }
 
     #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
-        const len = new _Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(circle1X, circle1Y, circle2X, circle2Y).length;
+        const len = new _2d_Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(circle1X, circle1Y, circle2X, circle2Y).length;
         console.log(len);
         console.log(circle1R);
         console.log(circle2R);
@@ -2436,7 +2531,7 @@ class GameStage {
     }
 
     #calculateShiftedVertexPos(vertex, centerX, centerY, rotation) {
-        const vector = new _Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(0, 0, vertex[0], vertex[1]),
+        const vector = new _2d_Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(0, 0, vertex[0], vertex[1]),
             vertexAngle = (0,_utils_js__WEBPACK_IMPORTED_MODULE_15__.angle_2points)(0, 0, vertex[0], vertex[1]),
             len = vector.length;
             
@@ -2773,7 +2868,6 @@ class GameStageData {
     /**
      * 
      * @param {number} bSize
-     * @param {number} polSize - polygon boundaries size
      * @param {number} eSize - ellipse boundaries size
      * @param {number} pSize - points boundaries size
      * @ignore
@@ -2897,7 +2991,9 @@ class GameStageData {
     }
 
     /**
-     * 
+     * current screen boundaries, 
+     * this method is for backward capability with jsge@1.4.4
+     * recommended to use getRawBoundaries()
      * @returns {Array<Array<number>>}
      */
     getBoundaries() {
@@ -2919,7 +3015,9 @@ class GameStageData {
     }
 
     /**
-     * 
+     * current screen boundaries
+     * polygon boundaries from Tiled and Tiled boundaries layers are merged here
+     * each 4 cells, represent a line with coords x1,y1,x2,y2
      * @returns {Float32Array}
      */
     getRawBoundaries() {
@@ -2927,7 +3025,9 @@ class GameStageData {
     }
 
     /**
-     * 
+     * ellipse boundaries from Tiled,
+     * stored as floatArray, 
+     * each 4 cells, represent am ellipse with cords centerX, centerY, radiusX, radiusY
      * @returns {Float32Array}
      */
     getEllipseBoundaries() {
@@ -2935,7 +3035,9 @@ class GameStageData {
     }
 
     /**
-     * 
+     * point boundaries from Tiled,
+     * stored as floatArray, 
+     * each 2 cells, represent a point with coords x1,y1
      * @returns {Float32Array}
      */
     getPointBoundaries() {
@@ -2953,6 +3055,7 @@ class GameStageData {
         return this.#isWorldBoundariesEnabled;
     }
     /**
+     * Current canvas dimensions
      * @type {Array<number>}
      */
     get canvasDimensions() {
@@ -2960,6 +3063,7 @@ class GameStageData {
     }
 
     /**
+     * Current game world dimensions
      * @type {Array<number>}
      */
     get worldDimensions() {
@@ -2967,6 +3071,7 @@ class GameStageData {
     }
     
     /**
+     * Current word x/y offset
      * @type {Array<number>}
      */
     get worldOffset() {
@@ -2974,6 +3079,7 @@ class GameStageData {
     }
 
     /**
+     * Current focus point
      * @type {Array<number>}
      */
     get mapCenter() {
@@ -2988,6 +3094,7 @@ class GameStageData {
     }
 
     /**
+     * Tiled polygon and Tiled layer boundaries length
      * @type {number}
      */
     get boundariesLen() {
@@ -2995,6 +3102,7 @@ class GameStageData {
     }
 
     /**
+     * Tiled ellipse boundaries length
      * @type {number}
      */
     get ellipseBLen() {
@@ -3002,6 +3110,7 @@ class GameStageData {
     }
 
     /**
+     * Tiled point length
      * @type {number}
      */
     get pointBLen() {
@@ -3443,9 +3552,13 @@ class IRender {
      */
     #loaderReference;
     /**
-     * @type {Array<number>}
+     * @type {Float32Array}
      */
     #tempRCircleT;
+    /**
+     * @type {number}
+     */
+    #tempRCircleTPointer = 0;
     /**
      * @type {NodeJS.Timer | null}
      */
@@ -3475,7 +3588,7 @@ class IRender {
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = iLoader;
 
-        this.#tempRCircleT = [];
+        this.#tempRCircleT = new Float32Array(this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime);
         this.#minCycleTime = this.systemSettings.gameOptions.render.minCycleTime;
 
         this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
@@ -3636,17 +3749,21 @@ class IRender {
      * @returns {Promise<void>}
      */
     async render() {
-        let renderObjectsPromises = [],
-            errors = [],
-            isErrors = false;
         const renderObjects = this.stageData.renderObjects;
-        if (renderObjects.length !== 0) {
+            
+        let errors = [],
+            isErrors = false,
+            len = renderObjects.length,
+            renderObjectsPromises = new Array(len);
+
+        if (len !== 0) {
             //this.#checkCollisions(view.renderObjects);
-            for (let i = 0; i < renderObjects.length; i++) {
+            for (let i = 0; i < len; i++) {
                 const object = renderObjects[i];
                 if (object.isRemoved) {
                     renderObjects.splice(i, 1);
                     i--;
+                    len--;
                     continue;
                 }
                 if (object.hasAnimations) {
@@ -3654,7 +3771,7 @@ class IRender {
                 }
                 const promise = await this._bindRenderObject(object)
                     .catch((err) => Promise.reject(err));
-                renderObjectsPromises.push(promise);
+                renderObjectsPromises[i] = promise;
             }
             if (this.systemSettings.gameOptions.debug.boundaries.drawLayerBoundaries) {
                 renderObjectsPromises.push(this.#drawBoundariesWebGl()
@@ -3886,7 +4003,7 @@ class IRender {
 
     #countFPSaverage() {
         const timeLeft = this.systemSettings.gameOptions.render.cyclesTimeCalc.averageFPStime,
-            steps = this.#tempRCircleT.length;
+            steps = this.#tempRCircleTPointer;
         let fullTime = 0;
         for (let i = 0; i < steps; i++) {
             const timeStep = this.#tempRCircleT[i];
@@ -3895,7 +4012,8 @@ class IRender {
         console.log("FPS average for", timeLeft/1000, "sec, is ", (1000 / (fullTime / steps)).toFixed(2));
 
         // cleanup
-        this.#tempRCircleT = [];
+        this.#tempRCircleT.fill(0);
+        this.#tempRCircleTPointer = 0;
     }
 
     /**
@@ -3926,7 +4044,8 @@ class IRender {
     _stopRender = () => {
         this.#isActive = false;
         this.#currentGameStageData = null;
-        this.#tempRCircleT = [];
+        this.#tempRCircleT.fill(0);
+        this.#tempRCircleTPointer = 0;
         clearInterval(this.#fpsAverageCountTimer);
         this.#fpsAverageCountTimer = null;
     };
@@ -3980,7 +4099,8 @@ class IRender {
             this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.EVENTS.SYSTEM.RENDER.END);
 
             if (cycleTime > 0) {
-                this.#tempRCircleT.push(cycleTime);
+                this.#tempRCircleT[this.#tempRCircleTPointer] = cycleTime;
+                this.#tempRCircleTPointer++;
             }
 
             if (this.#isActive) {
@@ -4371,101 +4491,6 @@ class Logger {
             args.forEach(message => console.log(message));
     }
 }
-
-/***/ }),
-
-/***/ "./src/base/Primitives.js":
-/*!********************************!*\
-  !*** ./src/base/Primitives.js ***!
-  \********************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "Rectangle": () => (/* binding */ Rectangle),
-/* harmony export */   "Vector": () => (/* binding */ Vector),
-/* harmony export */   "Vertex": () => (/* binding */ Vertex)
-/* harmony export */ });
-class Vertex {
-    #x;
-    #y;
-    constructor(x, y) {
-        this.#x = x;
-        this.#y = y;
-    }
-
-    get x() {
-        return this.#x;
-    }
-
-    get y() {
-        return this.#y;
-    }
-}
-
-class Rectangle {
-    #x;
-    #y;
-    #w;
-    #h;
-    constructor(x, y, w, h) {
-        this.#x = x;
-        this.#y = y;
-        this.#w = w;
-        this.#h = h; 
-    }
-    /**
-     * @type {number}
-     */
-    get x() {
-        return this.#x;
-    }
-    /**
-     * @type {number}
-     */
-    get y() {
-        return this.#y;
-    }
-    /**
-     * @type {number}
-     */
-    get width() {
-        return this.#w;
-    }
-    /**
-     * @type {number}
-     */
-    get height() {
-        return this.#h;
-    }
-}
-
-class Vector {
-    #x;
-    #y;
-    constructor(x1, y1, x2, y2) {
-        this.#x = x2 - x1;
-        this.#y = y2 - y1;
-    }
-
-    get x() {
-        return this.#x;
-    }
-
-    get y() {
-        return this.#y;
-    }
-
-    get length() {
-        return Math.sqrt(Math.pow(this.#x, 2) + Math.pow(this.#y, 2));
-    }
-
-    get tetaAngle() {
-        return Math.atan2(this.#y, this.#x);
-    }
-}
-
-
 
 /***/ }),
 
@@ -5650,7 +5675,7 @@ class WebGlEngine {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
         const triangles = this.#triangulatePolygon(vertices);
-        
+
         const polygonVerticesNum = triangles.length;
         if (polygonVerticesNum % 3 !== 0) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_3__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "polygon boundaries vertices are not correct, skip drawing");
@@ -6400,25 +6425,34 @@ class WebGlEngine {
     }
 
     #triangulatePolygon(vertices) {
-        return this.#triangulate(vertices);
+        const triangulatedPolygon = new Float32Array(vertices.length * vertices.length),
+            pointer = 0;
+            
+        const [triangulated, len] = this.#triangulate(vertices, triangulatedPolygon, pointer);
+        
+        const sliced = triangulated.slice(0, len);
+        
+        return sliced;
     }
 
     /**
      * 
      * @param {Array<Array<number>>} polygonVertices 
-     * @param {Array<number>} triangulatedPolygon 
-     * @returns {Array<number>}
+     * @param {Float32Array} triangulatedPolygon 
+     * @returns {Array}
      */
-    #triangulate (polygonVertices, triangulatedPolygon = []) {
+    #triangulate (polygonVertices, triangulatedPolygon, pointer) {
         const len = polygonVertices.length,
             vectorsCS = (a, b, c) => (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.crossProduct)({x:c[0] - a[0], y: c[1] - a[1]}, {x:b[0] - a[0], y: b[1] - a[1]});
 
         if (len <= 3) {
             polygonVertices.forEach(vertex => {
-                triangulatedPolygon.push(vertex[0]);
-                triangulatedPolygon.push(vertex[1]);
+                triangulatedPolygon[pointer] = vertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = vertex[1];
+                pointer++;
             });
-            return triangulatedPolygon;
+            return [triangulatedPolygon, pointer];
         }
         const verticesSortedByY = [...polygonVertices].sort((curr, next) => next[1] - curr[1]);
         const topVertexIndex = polygonVertices.indexOf(verticesSortedByY[0]),
@@ -6444,19 +6478,25 @@ class WebGlEngine {
             const cs = vectorsCS(prevVertex, currentVertex, nextVertex);
     
             if (cs < 0) {
-                triangulatedPolygon.push(prevVertex[0]);
-                triangulatedPolygon.push(prevVertex[1]);
-                triangulatedPolygon.push(currentVertex[0]);
-                triangulatedPolygon.push(currentVertex[1]);
-                triangulatedPolygon.push(nextVertex[0]);
-                triangulatedPolygon.push(nextVertex[1]);
+                triangulatedPolygon[pointer] = prevVertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = prevVertex[1];
+                pointer++;
+                triangulatedPolygon[pointer] = currentVertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = currentVertex[1];
+                pointer++;
+                triangulatedPolygon[pointer] = nextVertex[0];
+                pointer++;
+                triangulatedPolygon[pointer] = nextVertex[1];
+                pointer++;
                 processedVertices = processedVertices.filter((val, index) => index !== i);
             } else {
                 skipCount += 1;
                 if (skipCount > processedVerticesLen) {
                     // sometimes fails
                     (0,_Exception_js__WEBPACK_IMPORTED_MODULE_3__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.TRIANGULATE_ISSUE, "Can't extract all triangles vertices.");
-                    return triangulatedPolygon;
+                    return [triangulatedPolygon, pointer];
                 }
                 i++;
             }
@@ -6464,7 +6504,7 @@ class WebGlEngine {
             // i++;
         }
         
-        return triangulatedPolygon;
+        return [triangulatedPolygon, pointer];
     }
 
     #bindPolygon(vertices) {
@@ -6841,7 +6881,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "DrawImageObject": () => (/* reexport safe */ _base_2d_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__.DrawImageObject),
 /* harmony export */   "GameStage": () => (/* reexport safe */ _base_GameStage_js__WEBPACK_IMPORTED_MODULE_1__.GameStage),
 /* harmony export */   "ISystemAudio": () => (/* reexport safe */ _base_ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio),
-/* harmony export */   "Primitives": () => (/* reexport module object */ _base_Primitives_js__WEBPACK_IMPORTED_MODULE_4__),
+/* harmony export */   "Primitives": () => (/* reexport module object */ _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_4__),
 /* harmony export */   "System": () => (/* reexport safe */ _base_System_js__WEBPACK_IMPORTED_MODULE_0__.System),
 /* harmony export */   "SystemSettings": () => (/* reexport safe */ _configs_js__WEBPACK_IMPORTED_MODULE_5__.SystemSettings),
 /* harmony export */   "utils": () => (/* reexport module object */ _utils_js__WEBPACK_IMPORTED_MODULE_7__)
@@ -6850,7 +6890,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _base_GameStage_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./base/GameStage.js */ "./src/base/GameStage.js");
 /* harmony import */ var _base_2d_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./base/2d/DrawImageObject.js */ "./src/base/2d/DrawImageObject.js");
 /* harmony import */ var _base_ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./base/ISystemAudio.js */ "./src/base/ISystemAudio.js");
-/* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./base/2d/Primitives.js */ "./src/base/2d/Primitives.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./configs.js */ "./src/configs.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./utils.js */ "./src/utils.js");
@@ -6903,7 +6943,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "randomFromArray": () => (/* binding */ randomFromArray),
 /* harmony export */   "verticesArrayToArrayNumbers": () => (/* binding */ verticesArrayToArrayNumbers)
 /* harmony export */ });
-/* harmony import */ var _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/Primitives.js */ "./src/base/Primitives.js");
+/* harmony import */ var _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./base/2d/Primitives.js */ "./src/base/2d/Primitives.js");
 
 
 function isMobile() {
@@ -6915,7 +6955,7 @@ function isSafari() {
 }
 
 function pointToCircleDistance(x, y, circle) {
-    const pointToCircleCenterDistance = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y).length;
+    const pointToCircleCenterDistance = new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y).length;
     return pointToCircleCenterDistance - circle.r;
 }
 
@@ -7030,16 +7070,16 @@ function isPointOnTheLine(point, line, m_error = 0) {
 }
 
 function countDistance(obj1, obj2) {
-    return new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(obj1.x, obj1.y, obj2.x, obj2.y).length;
+    return new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(obj1.x, obj1.y, obj2.x, obj2.y).length;
 }
 
 function isLineShorter(line1, line2) {
-    return (new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line1.x1, line1.y1, line1.x2, line1.y2)).length < (new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line2.x1, line2.y1, line2.x2, line2.y2)).length;
+    return (new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line1.x1, line1.y1, line1.x2, line1.y2)).length < (new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line2.x1, line2.y1, line2.x2, line2.y2)).length;
 }
 
 function isPointLineIntersect(point, line) {
-    const lineL = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, line.x2, line.y2).length,
-        lengthAB = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, point.x, point.y).length + new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x2, line.y2, point.x, point.y).length;
+    const lineL = new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, line.x2, line.y2).length,
+        lengthAB = new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x1, line.y1, point.x, point.y).length + new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(line.x2, line.y2, point.x, point.y).length;
 
     if (lengthAB <= lineL + 0.2) {
         //console.log("point to line intersect. line len: " + lineL + ", line AB len: " + lengthAB);
@@ -7153,7 +7193,7 @@ function isPointRectIntersect(x, y, rect) {
  */
 function isPointCircleIntersect(x, y, circle) {
     const radius = circle.r,
-        lineToCircleCenter = new _base_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y),
+        lineToCircleCenter = new _base_2d_Primitives_js__WEBPACK_IMPORTED_MODULE_0__.Vector(x, y, circle.x, circle.y),
         pointCircleLineLength = lineToCircleCenter.length;
         
     if (pointCircleLineLength < radius)
