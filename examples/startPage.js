@@ -64,6 +64,7 @@ export class StartPage extends GameStage {
     }
 
     start() {
+        console.log(START_PAGE_NAME + " started");
         this.registerEventListeners();
     }
 
@@ -90,7 +91,7 @@ export class StartPage extends GameStage {
             isNav7T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.boundariesBox),
             isNav8T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemStrategy.boundariesBox),
             isNav9T = isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.boundariesBox);
-
+            
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
         } else if (this.navItemDun.strokeStyle) {

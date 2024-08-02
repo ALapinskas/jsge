@@ -7,7 +7,7 @@ Advantages:
 * OPP modular structure.
 * Webgl 1 under the hood.
 * Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
-* Images and tiles animations.
+* Images and tiles frame animations.
 * Spine 2d skeletal animation.
 * Tiles and objects collisions.
 

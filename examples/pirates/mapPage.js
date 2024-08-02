@@ -89,6 +89,7 @@ export class MapPage extends GameStage {
         this.registerEventListeners();
         this.#startWindDirectionChanging();
 
+        console.log("pirates started");
         this.moveVesselInterval = setInterval(() => {
             this.#moveVessel();
         }, 100);
@@ -206,7 +207,7 @@ export class MapPage extends GameStage {
             this.player.rotation = rad - Math.PI/2;
 
         const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
-
+        
         if (isNav1Traversed) {
             this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
             this.canvasHtmlElement.style.cursor = "pointer";

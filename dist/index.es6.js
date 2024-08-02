@@ -232,6 +232,10 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     #spacing = 0;
     /**
+     * @type {number}
+     */
+    #margin = 0;
+    /**
      * @type {Array<Array<number>>}
      */
     #vertices;
@@ -247,7 +251,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0, margin = 0) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
@@ -255,6 +259,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         this.image = image;
         this.#imageIndex = imageIndex;
         this.#spacing = spacing;
+        this.#margin = margin;
         this.#w = width;
         this.#h = height;
         this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : boundaries && boundaries.r ? this._calculateConusBoundaries(boundaries.r) : this._calculateRectVertices(width, height);
@@ -324,6 +329,14 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      */
     get spacing() {
         return this.#spacing;
+    }
+
+    /**
+     * Image spacing (for tilesets.margin > 0)
+     * @type {number}
+     */
+    get margin() {
+        return this.#margin;
     }
 
     /**
@@ -1845,16 +1858,17 @@ class DrawObjectFactory {
      * @param {number} [imageIndex = 0]
      * @param {Array<{x:Number, y:Number}> | {r:number}=} boundaries - boundaries as polygon, or circle
      * @param {number} [spacing = 0] - for tilesets.spacing > 0
+     * @param {number} [margin = 0] - for tilesets.margin > 0
      * @returns {DrawImageObject}
      */
-    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
+    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0, margin = 0) {
         const image = this.#iLoader.getImage(key);
 
         if (!image) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_10__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_11__.ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + key);
         }
             
-        const renderObject = new _2d_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
+        const renderObject = new _2d_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing, margin);
         
         this.#addObjectToPageData(renderObject);
         return renderObject;
@@ -5454,19 +5468,20 @@ class WebGlEngine {
             image_name = renderObject.key,
             shapeMaskId = renderObject._maskId,
             spacing = renderObject.spacing,
+            margin = renderObject.margin,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
             scale = [1, 1];
-        let imageX = 0,
-            imageY = 0,
+        let imageX = margin,
+            imageY = margin,
             colNum = 0,
             rowNum = 0,
             verticesNumber = 0;
         if (animationIndex !== 0) {
-            const imageColsNumber = (atlasImage.width + spacing) / (renderObject.width + spacing);
+            const imageColsNumber = (atlasImage.width + spacing - (2*margin)) / (renderObject.width + spacing);
             colNum = animationIndex % imageColsNumber;
             rowNum = Math.floor(animationIndex / imageColsNumber);
-            imageX = colNum * renderObject.width + (colNum * spacing),
-            imageY = rowNum * renderObject.height + (rowNum * spacing);
+            imageX = colNum * renderObject.width + (colNum * spacing) + margin,
+            imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
         }
         const posX = x - renderObject.width / 2,
             posY = y - renderObject.height / 2;
@@ -5911,8 +5926,8 @@ class WebGlEngine {
                             // calculate map position and atlas position
                             const colNum = tile % atlasColumns,
                                 rowNum = Math.floor(tile / atlasColumns),
-                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
-                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing),
+                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing) + cellMargin,
+                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing) + cellMargin,
                                 vecX1 = mapPosX,
                                 vecY1 = mapPosY,
                                 vecX2 = mapPosX + tilesetwidth,
@@ -6258,8 +6273,8 @@ class WebGlEngine {
                             tile -= firstgid;
                             const colNum = tile % atlasColumns,
                                 rowNum = Math.floor(tile / atlasColumns),
-                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing),
-                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing),
+                                atlasPosX = colNum * tilesetwidth + (colNum * cellSpacing) + cellMargin,
+                                atlasPosY = rowNum * tilesetheight + (rowNum * cellSpacing) + cellMargin,
                                 vecX1 = col * dtwidth - xOffset,
                                 vecY1 = row * dtheight - yOffset,
                                 vecX2 = vecX1 + tilesetwidth,
@@ -6402,7 +6417,8 @@ class WebGlEngine {
                     texturesCoordsItemsNum = 12,
                     vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
                     texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum,
-                    cellSpacing = tilesetData.spacing;
+                    cellSpacing = tilesetData.spacing,
+                    cellMargin = tilesetData.margin;
                 
                 const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
                 

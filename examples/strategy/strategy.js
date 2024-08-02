@@ -1,5 +1,5 @@
 import { GameStage, CONST } from "../../src/index.js";
-import { isPointInsidePolygon, countDistance, randomFromArray } from "../../src/utils.js";
+import { isPointInsidePolygon, countDistance, randomFromArray, isPointRectIntersect } from "../../src/utils.js";
 import { GAME_UNITS, GAME_EVENTS, GOLD_MINE_GOLD_AMOUNT, TREE_STUB_INDEX, TREE_FULL_HEALTH, PEASANT_ACTIONS } from "./const.js";
 import { UnitPeasant, UnitBuilding } from "./units.js";
 
@@ -98,7 +98,8 @@ export class Strategy extends GameStage {
 		// this.personSightView = this.draw.conus(55, 250, 200, "rgba(0,0,0,1)", Math.PI/3);
 		// this.personSightView.rotation = -Math.PI/6;
 		// this.personSightView._isMask = true;
-	
+		this.navItemBack = this.draw.text(w - 200, 60, "Main menu", "18px sans-serif", "black");
+		this.navItemBack.turnOffOffset();
 		this.registerListeners();
     }
     start() {
@@ -107,11 +108,13 @@ export class Strategy extends GameStage {
 		this.#createUserInterface();
 		setTimeout(() => {
 			const [w, h] = this.stageData.canvasDimensions;
-		},100)
+		},100);
+		console.log("strategy started");
     }
 
 	stop() {
         this.unregisterListeners();
+		document.getElementById("sidebar").remove();
     }
 	
 	registerListeners() {
@@ -149,6 +152,7 @@ export class Strategy extends GameStage {
 	#createUserInterface = () => {
 		const windowWidth = document.body.offsetWidth,
 			sidebar = document.createElement("div");
+		sidebar.id = "sidebar";
 		sidebar.style.width = windowWidth + "px";
 		sidebar.style.height = "16px";
 		sidebar.style.padding = "6px";
@@ -273,6 +277,18 @@ export class Strategy extends GameStage {
 				this.#isBuildPlaceClear = true;
 			}
 		}
+
+		const isNav1Traversed = isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+
+		if (isNav1Traversed) {
+            this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
+            this.canvasHtmlElement.style.cursor = "pointer";
+        } else if (this.navItemBack.strokeStyle) {
+            this.navItemBack.strokeStyle = undefined;
+            this.canvasHtmlElement.style.cursor = "default";
+        } else {
+            this.canvasHtmlElement.style.cursor = "default";
+        }
     };
 
     #mouseClickAction = (e) => {
@@ -285,6 +301,14 @@ export class Strategy extends GameStage {
 		} else {
 			this.#processMapClick(e);
 		}
+
+		const isNav1Click = isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+		
+        if (isNav1Click) {
+            this.iSystem.stopGameStage("strategy_game");
+            this.canvasHtmlElement.style.cursor = "default";
+            this.iSystem.startGameStage("start");
+        }
     }
 
 	#processNewBuild = (key) => {

@@ -47,6 +47,10 @@ export class DrawImageObject extends DrawShapeObject {
      */
     #spacing = 0;
     /**
+     * @type {number}
+     */
+    #margin = 0;
+    /**
      * @type {Array<Array<number>>}
      */
     #vertices;
@@ -62,7 +66,7 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0, margin = 0) {
         super(CONST.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
@@ -70,6 +74,7 @@ export class DrawImageObject extends DrawShapeObject {
         this.image = image;
         this.#imageIndex = imageIndex;
         this.#spacing = spacing;
+        this.#margin = margin;
         this.#w = width;
         this.#h = height;
         this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : boundaries && boundaries.r ? this._calculateConusBoundaries(boundaries.r) : this._calculateRectVertices(width, height);
@@ -139,6 +144,14 @@ export class DrawImageObject extends DrawShapeObject {
      */
     get spacing() {
         return this.#spacing;
+    }
+
+    /**
+     * Image spacing (for tilesets.margin > 0)
+     * @type {number}
+     */
+    get margin() {
+        return this.#margin;
     }
 
     /**

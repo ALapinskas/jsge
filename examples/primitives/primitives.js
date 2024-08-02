@@ -8,6 +8,7 @@ export class Primitives extends GameStage {
         const [w, h] = this.stageData.canvasDimensions;
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black"),
         this.navItemBack.turnOffOffset();
+
         this.triangle = this.draw.polygon([{x:0, y:0}, {x:100, y:0}, {x:60, y:60}], "rgba(130,30,130,1)");
         this.rect = this.draw.rect(100, 400, 400, 200, "rgba(200,200, 200, 1");
         this.conus = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5)", 1.3 * Math.PI);
@@ -21,6 +22,7 @@ export class Primitives extends GameStage {
     }
     start() {
 		this.registerListeners();
+        console.log("primitives started");
     }
 
 	stop() {
@@ -87,7 +89,6 @@ export class Primitives extends GameStage {
             document.getElementsByTagName("canvas")[0].style.cursor = "default";
         }
     };
-
 
     #mouseClickAction = (e) => {
 		const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);

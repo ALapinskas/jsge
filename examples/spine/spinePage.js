@@ -45,6 +45,7 @@ export class SpinePage extends GameStage {
         this.changeGoblinSkinButton.style.top = "50%";
         this.changeGoblinSkinButton.innerText = "Switch goblin skin";
         this.registerEventListeners();
+        console.log("spine started");
     }
 
     stop() {

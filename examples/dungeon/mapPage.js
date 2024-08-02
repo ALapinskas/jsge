@@ -76,8 +76,7 @@ export class MapPage extends GameStage {
         this.greenLight = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5", Math.PI, 20);
         this.greenLight.setMask(this.sightView);
 
-        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black"),
-        this.navItemBack.turnOffOffset();
+        
         this.#enemies.push(monster1);
         this.#enemies.push(monster2);
         this.#enemies.push(monster3);
@@ -92,9 +91,13 @@ export class MapPage extends GameStage {
         this.defaultAudio.loop = true;
 
         this.gameOverAudio = this.audio.getAudio(this.#gameOverAudioKey);
+
+        this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "white"),
+        this.navItemBack.turnOffOffset();
     }
 
     start() {
+        console.log("dungeon started");
         this.registerEventListeners();
         this.defaultAudio.play();
         //setTimeout(() => {
@@ -229,7 +232,7 @@ export class MapPage extends GameStage {
             cursorPosX = x + xOffset,
             cursorPosY = y + yOffset,
             rad = angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
-            
+            console.log("move, x: ", e.offsetX, " y: ", e.offsetY);    
         //this.player.rotation = rad;
         this.fireRange.rotation = rad - (Math.PI/20);
 
@@ -250,7 +253,7 @@ export class MapPage extends GameStage {
         const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
     
         if (isNav1Click) {
-            this.iSystem.stopGameStage("primitives");
+            this.iSystem.stopGameStage("dungeon");
             this.iSystem.startGameStage("start");
         } else {
             const fireball = this.#createFireball();

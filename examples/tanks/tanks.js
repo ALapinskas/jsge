@@ -1,5 +1,6 @@
 import { GameStage, CONST, System, SystemSettings } from "../../src/index.js";
 import { angle_2points } from "../../src/utils.js";
+import { utils } from "../../src/index.js";
 
 export class Tanks extends GameStage {
 	#GUN_CENTER_OFFSET = 12;
@@ -27,7 +28,8 @@ export class Tanks extends GameStage {
 		// this.personSightView = this.draw.conus(55, 250, 200, "rgba(0,0,0,1)", Math.PI/3);
 		// this.personSightView.rotation = -Math.PI/6;
 		// this.personSightView._isMask = true;
-	
+		this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
+        this.navItemBack.turnOffOffset();
 		this.registerListeners();
     }
     start() {
@@ -35,7 +37,8 @@ export class Tanks extends GameStage {
 		this.registerListeners();
 		setTimeout(() => {
 			const [w, h] = this.stageData.canvasDimensions;
-		},100)
+		},100);
+		console.log("tanks started");
     }
 
 	stop() {
@@ -148,6 +151,18 @@ export class Tanks extends GameStage {
 
 		this.gun.x = newGunCenterCoordX;
 		this.gun.y = newGunCenterCoordY;
+
+		const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+    
+        if (isNav1Traversed) {
+            this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
+            document.getElementsByTagName("canvas")[0].style.cursor = "pointer";
+        } else if (this.navItemBack.strokeStyle) {
+            this.navItemBack.strokeStyle = undefined;
+            document.getElementsByTagName("canvas")[0].style.cursor = "default";
+        } else {
+            document.getElementsByTagName("canvas")[0].style.cursor = "default";
+        }
     };
 
 	#calculateGunCenterAndPos() {
@@ -165,7 +180,18 @@ export class Tanks extends GameStage {
 		console.log("fire");
 		const bullet = this.#createBullet();
         this.#bullets.push(bullet);
+
+	const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+	if (isNav1Click) {
+		this.iSystem.stopGameStage("tanks");
+		this.canvasHtmlElement.style.cursor = "default";
+		this.iSystem.startGameStage("start");
+	}
     }
+
+	
+    
+        
 
 	#createBullet = () => {
         const b = this.draw.image(this.gun.x, this.gun.y, 8, 26, "shotThin", 0, {r:4}),

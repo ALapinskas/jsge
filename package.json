@@ -1,6 +1,6 @@
 {
   "name": "jsge",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Javascript Game Engine",
   "main": "src/index.js",
   "type": "module",
@@ -24,6 +24,7 @@
     "build-dev": "webpack --mode=development",
     "build-prod": "webpack --mode=production",
     "jsdoc": "jsdoc -R ./README.md -t ./docs/templates/custom -c ./jsdoc.conf.json",
+    "r-test": "(sleep 3 && node ./tests/regression.js && taskkill /f /im node.exe) | (http-server -c-1 -p 9000)",
     "prepare-push": "npm run build-dev | npm run build-prod | npm run jsdoc"
   },
   "author": "Arturas-Alfredas Lapinskas",
@@ -37,6 +38,7 @@
     "eslint-plugin-jsdoc": "46.4.5",
     "http-server": "14.1.1",
     "jsdoc": "4.0.2",
+    "puppeteer-core": "22.15.0",
     "webpack": "5.76.0",
     "webpack-cli": "5.1.4"
   }

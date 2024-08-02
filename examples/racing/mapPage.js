@@ -42,6 +42,7 @@ export class MapPage extends GameStage {
     }
 
     start() {
+        console.log("racing started");
         this.registerEventListeners();
     }
 

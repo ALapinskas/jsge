@@ -114,16 +114,17 @@ export class DrawObjectFactory {
      * @param {number} [imageIndex = 0]
      * @param {Array<{x:Number, y:Number}> | {r:number}=} boundaries - boundaries as polygon, or circle
      * @param {number} [spacing = 0] - for tilesets.spacing > 0
+     * @param {number} [margin = 0] - for tilesets.margin > 0
      * @returns {DrawImageObject}
      */
-    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0) {
+    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0, margin = 0) {
         const image = this.#iLoader.getImage(key);
 
         if (!image) {
             Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + key);
         }
             
-        const renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing);
+        const renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing, margin);
         
         this.#addObjectToPageData(renderObject);
         return renderObject;
