@@ -148,35 +148,35 @@ export class BigMap extends GameStage {
 		this.buttonsContainer.remove();
 	}
 
-	buttonMoveClickLeft() {
+	buttonMoveClickLeft = () => {
 		this.buttonMoveClick("left");
 	}
-	buttonMoveClickRight() {
+	buttonMoveClickRight = () => {
 		this.buttonMoveClick("right");
 	}
-	buttonMoveClickTop() {
+	buttonMoveClickTop = () => {
 		this.buttonMoveClick("top");
 	}
-	buttonMoveClickBottom() {
+	buttonMoveClickBottom = () => {
 		this.buttonMoveClick("bottom");
 	}
 
-	buttonRotateClickClockwise() {
+	buttonRotateClickClockwise = () => {
 		this.buttonRotateClick("clockwise");
 	}
 
-	buttonRotateClickAnticlockwise() {
+	buttonRotateClickAnticlockwise = () => {
 		this.buttonRotateClick("anticlockwise");
 	}
 	
-	buttonMoveClick(dir) {
+	buttonMoveClick = (dir) => {
 		clearInterval(this.timer);
 		this.timer = setInterval(() => {
 			this.move(dir);
     	}, 16);
 	}
 	
-	move(dir) {
+	move = (dir) => {
 		let newX = this.person.x, 
 			newY = this.person.y;
 		switch(dir) {

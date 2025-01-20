@@ -30,9 +30,9 @@ How to run examples:
 3. visit localhost:9000
 
 API docs and tutorials: [jsge.reslc.ru](https://jsge.reslc.ru) \
-github: [https://github.com/ALapinskas/jsge](https://github.com/ALapinskas/jsge)
-issues: [https://github.com/ALapinskas/jsge/issues] (https://github.com/ALapinskas/jsge/issues)
-npm: [https://www.npmjs.com/package/jsge](https://www.npmjs.com/package/jsge)
+github: [https://github.com/ALapinskas/jsge](https://github.com/ALapinskas/jsge) \
+issues: [https://github.com/ALapinskas/jsge/issues](https://github.com/ALapinskas/jsge/issues) \
+npm: [https://www.npmjs.com/package/jsge](https://www.npmjs.com/package/jsge) \
 
 Feedback and Questions: 
-[https://discord.com/channels/1246373335202398268] (https://discord.com/channels/1246373335202398268)
+[https://discord.com/channels/1246373335202398268](https://discord.com/channels/1246373335202398268)

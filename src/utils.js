@@ -410,7 +410,7 @@ function verticesArrayToArrayNumbers(array) {
  * @param {number} radiusY
  * @param {number} [angle = 2 * Math.PI]
  * @param {number} [step = Math.PI/12] 
- * @returns {Array<number>}
+ * @returns {Array<Array<number>>}
  */
 function calculateEllipseVertices(x = 0, y = 0, radiusX, radiusY, angle = 2*Math.PI, step = Math.PI/8) {
     let ellipsePolygonCoords = [];

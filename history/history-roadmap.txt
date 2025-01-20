@@ -4,6 +4,17 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.3:
+    +: RenderLoop and RenderLoopDebug classes
+    +: Counting the number of draw calls
+    +: two stages start throws an exception
+    r: FPS count
+    r: #registeredRenderObjects moved down to WebGlEngine
+    r: _bindRenderObject() moved down to WebGlEngine
+    r: removed optional render control time
+    f: stage restart rendering issue
+    f: examples/big_map issue
+
 1.5.2:
     +: regression testing
     +: support tileset.margin property

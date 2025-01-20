@@ -1,0 +1,36 @@
+Date: November 20 2024
+Refactor render and fps counter. Add draw calls debug info / Доработать рендер и подсчет фпс. Добавить в отладку информацию по draw calls
+
+Status: Done (1.5.3)
+
+Context:
+    Сейчас v1.5.2 в подсчет fps не включена сама браузерная отрисовка, а только подготовка к рендеру, 
+    минимальную скорость рендера можно установить < 16 мс, но фактический она будет работать за 16мс, 
+    т.к. вызов render() обернут в requestAnimationFrame() и подсчет в fps данном варианте будет неверный.
+
+    Также наблюдается неправильный подсчет fps при создании большого количества спрайтов, т.е. игра подтормаживает,
+    однако счетчик fps этого не показывает.
+
+    Также хорошо бы добавить в отладку счетчик вызовов отрисовки  draw calls, чтобы в последующем снижать этот показатель.
+    
+    In v1.5.2 Actual draw is not included in fps count, only prepare for render. Min render speed can be set <16 ms, but actual
+    speed will be 16 ms, because render() call is wrapped with requestAnimationFrame(), fps count will be wrong in such case.
+
+    Wrong fps count also noticed when a lots of sprites are created, game goes slow, but fps doesn't show it.
+
+    Adding draw calls number on a render circle, also will be significant.
+
+Decision:
+    
+    Доработать рендер и подсчет fps следующим образом:
+    1. Для расчета fps использовать время получаемое по callback параметру
+    2. Убрать контролирование времени из настроек, оставить опцию для обратной совместимости
+    3. Добавить подсчет количество draw calls на render()
+
+    Improve the rendering and fps calculation as follows:
+    1. To calculate fps, use the time obtained from the callback parameter
+    2. Remove optional render control time
+    3. Add counting the number of draw calls to render()
+
+Impact:
+    No impact.

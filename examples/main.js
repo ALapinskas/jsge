@@ -65,6 +65,7 @@ function createOptionsBlock() {
     minCycleTimeInput.name = "minCycleTime";
     minCycleTimeLabel.setAttribute("for", "minCycleTime");
     minCycleTimeInput.value = SystemSettings.gameOptions.render.minCycleTime.toString();
+    minCycleTimeInput.disabled = true;
 
     minCycleTimeWrap.appendChild(minCycleTimeInput);
     minCycleTimeWrap.appendChild(minCycleTimeLabel);

@@ -1,5 +1,14 @@
 import { WARNING_CODES } from "../constants.js";
 import { Warning } from "./Exception.js";
+
+import { DrawTiledLayer } from "./2d/DrawTiledLayer.js";
+import { DrawImageObject } from "./2d/DrawImageObject.js";
+import { DrawCircleObject } from "./2d/DrawCircleObject.js";
+import { DrawConusObject } from "./2d/DrawConusObject.js";
+import { DrawLineObject } from "./2d/DrawLineObject.js";
+import { DrawPolygonObject } from "./2d/DrawPolygonObject.js";
+import { DrawRectObject } from "./2d/DrawRectObject.js";
+import { DrawTextObject } from "./2d/DrawTextObject.js";
 /**
  * A storage for stage data, such as gameObjects,
  * boundaries, worldDimensions and offset

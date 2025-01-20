@@ -1,9 +1,18 @@
 import { ERROR_CODES, CONST, WARNING_CODES } from "../../constants.js";
 import { crossProduct } from "../../utils.js";
-import { DrawTiledLayer } from "../2d/DrawTiledLayer.js";
 import { Exception, Warning } from "../Exception.js";
 import { GameStageData } from "../GameStageData.js";
 import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
+
+import { DrawTiledLayer } from "../2d/DrawTiledLayer.js";
+import { DrawCircleObject } from "../2d/DrawCircleObject.js";
+import { DrawConusObject } from "../2d/DrawConusObject.js";
+import { DrawLineObject } from "../2d/DrawLineObject.js";
+import { DrawPolygonObject } from "../2d/DrawPolygonObject.js";
+import { DrawRectObject } from "../2d/DrawRectObject.js";
+import { DrawTextObject } from "../2d/DrawTextObject.js";
+
+import AssetsManager from "../../../modules/assetsm/dist/assetsm.min.js";
 
 export class WebGlEngine {
     /**
@@ -23,6 +32,10 @@ export class WebGlEngine {
      */
     #gameOptions;
     /**
+     * @type {AssetsManager}
+     */
+    #loaderReference;
+    /**
      * @type {WebGLBuffer | null}
      */
     #positionBuffer;
@@ -40,17 +53,30 @@ export class WebGlEngine {
      */
     #webGlProgramsVarsLocations = new Map();
 
-    constructor(context, gameOptions) {
+    #registeredRenderObjects = new Map();
+
+    #loopDebug;
+
+    constructor(context, gameOptions, iLoader) {
         if (!context || !(context instanceof WebGLRenderingContext)) {
             Exception(ERROR_CODES.UNEXPECTED_INPUT_PARAMS, " context parameter should be specified and equal to WebGLRenderingContext");
         }
         
         this.#gl = context;
         this.#gameOptions = gameOptions;
+        this.#loaderReference = iLoader;
         this.#debug = gameOptions.debug.checkWebGlErrors;
         this.#MAX_TEXTURES = context.getParameter(context.MAX_TEXTURE_IMAGE_UNITS);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
+
+        this._registerObjectRender(DrawTextObject.name, this._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(DrawRectObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawPolygonObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawCircleObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawConusObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(DrawLineObject.name, this._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
     }
 
     getProgram(name) {
@@ -91,12 +117,12 @@ export class WebGlEngine {
                         worldW = tilewidth * layerCols,
                         worldH = tileheight * layerRows;
                         
-                        const polygonBondMax = layerData.polygonBoundariesLen,
-                            ellipseBondMax = layerData.ellipseBoundariesLen,
-                            pointBondMax = layerData.pointBoundariesLen; 
+                    const polygonBondMax = layerData.polygonBoundariesLen,
+                        ellipseBondMax = layerData.ellipseBoundariesLen,
+                        pointBondMax = layerData.pointBoundariesLen; 
     
                     if (maxWorldW < worldW) {
-                        maxWorldW = worldW
+                        maxWorldW = worldW;
                     }
                     if (maxWorldH < worldH) {
                         maxWorldH = worldH;
@@ -127,7 +153,7 @@ export class WebGlEngine {
             resolve(true);
         });
 
-    }
+    };
     _initWebGlAttributes = () => {
         const gl = this.#gl;
         gl.enable(gl.BLEND);
@@ -167,8 +193,13 @@ export class WebGlEngine {
         });
     };
 
+    _initDrawCallsDebug(debugObjReference) {
+        this.#loopDebug = debugObjReference;
+    }
+
     _clearView() {
         const gl = this.#gl;
+        this.#loopDebug.cleanupDrawCallsCounter();
         //cleanup buffer, is it required?
         //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.clearColor(0, 0, 0, 0);// shouldn't be gl.clearColor(0, 0, 0, 1); ?
@@ -184,6 +215,7 @@ export class WebGlEngine {
             throw new Error("Error num: " + err);
         } else {
             gl.drawArrays(primitiveType, offset, verticesNumber);
+            this.#loopDebug.incrementDrawCallsCounter();
             // set blend to default
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         }
@@ -897,6 +929,58 @@ export class WebGlEngine {
     }
 
     /**
+     * @ignore
+     * @param {string} objectClassName - object name registered to DrawObjectFactory
+     * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
+     * @param {string=} objectWebGlDrawProgram 
+     */
+    _registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
+        this.#registeredRenderObjects.set(objectClassName, {method: objectRenderMethod, webglProgramName: objectWebGlDrawProgram});
+    }
+
+    _bindRenderObject(renderObject, pageData) {
+        const name = renderObject.constructor.name,
+            registeredRenderObject = this.#registeredRenderObjects.get(name);
+        if (registeredRenderObject) {
+            const name = registeredRenderObject.webglProgramName;
+            if (name) {
+                const program = this.getProgram(name),
+                    vars = this.getProgramVarLocations(name);
+                return registeredRenderObject.method(renderObject, this.#gl, pageData, program, vars)
+                    .then((results) => this._render(results[0], results[1]));  
+            } else {
+                return registeredRenderObject.method(renderObject, this.#gl, pageData);
+            }
+        } else {
+            // a workaround for images and its extend classes drawing
+            if (renderObject.type === CONST.DRAW_TYPE.IMAGE) {
+                const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES),
+                    vars = this.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+
+                if (!renderObject.image) {
+                    const image = this.#loaderReference.getImage(renderObject.key);
+                    if (!image) {
+                        Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + renderObject.key);
+                    } else {
+                        renderObject.image = image;
+                    }
+                }
+                return this._bindImage(renderObject, this.#gl, pageData, program, vars)
+                    .then((results) => this._render(results[0], results[1]))
+                    .then(() => {
+                        if (renderObject.vertices && this.#gameOptions.debug.boundaries.drawObjectBoundaries) {
+                            return this._drawPolygon(renderObject, pageData);
+                        } else {
+                            return Promise.resolve();
+                        }
+                    });
+            } else {
+                console.warn("no registered draw object method for " + name + " skip draw");
+                return Promise.resolve();
+            }
+        }
+    }
+    /**
      * 
      * @param {DrawTiledLayer} renderLayer 
      * @param {GameStageData} pageData
@@ -967,9 +1051,9 @@ export class WebGlEngine {
                     hasAnimations = tilesetData._hasAnimations;
                     //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
-                    const hasBoundaries = tilesetData._hasBoundaries,
-                        tilesetBoundaries = tilesetData._boundaries,
-                        layerTilesetData = tilesets[i]._temp;
+                const hasBoundaries = tilesetData._hasBoundaries,
+                    tilesetBoundaries = tilesetData._boundaries,
+                    layerTilesetData = tilesets[i]._temp;
 
                 let v = layerTilesetData.vectors,
                     t = layerTilesetData.textures,

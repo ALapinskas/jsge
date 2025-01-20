@@ -1,0 +1,19 @@
+Date: January 18 2025
+No submodules installation / Установка сторонних модулей отсутствует
+
+Status: In Progress
+
+Context:
+    Модули spine и assetsm копируются вручную в папку modules.
+    
+
+Decision:
+    * Добавить файл .gitmodules
+    * Включить туда подмодули spine и assetsm
+    * Сделать установку подмодулей 
+      с помощью директивы git submodule update --init
+    * Дописать инструкции по установке в README.md
+    
+
+Impact:
+    No impact.

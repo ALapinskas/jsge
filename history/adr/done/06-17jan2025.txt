@@ -1,0 +1,30 @@
+Date: January 17 2025
+Few game stages could be started simultaneously, error stop/start the stage render / Несколько стадий могут быть запущены одновременно, ошибка остановки/запуска рендера стадии
+
+Status: Done (1.5.3)
+
+Context:
+    С помощью метода iSystem.startGameStage() может включится в работу стадия, 
+    когда другая стадия уже запущенна. Это может привести к неопределенному поведению.
+    Следует предотвращать такое поведение и выбрасывать ошибку, 
+    если несколько стадий пытаются запуститься одновременно.
+    Если выполнить iSystem.stopGameStage() и запустить другую стадии, рендер первой продолжится,
+    и будет выполняться за 0 ms, засоряя отладку, это происходит из-за того, 
+    что цикл предыдущего render может фактический не завершится, т.к #isActive, ставится в true,
+    когда новая стадия запускается.
+
+    When the sage is active, another stage could be started with iSystem.startGameStage().
+    This could case unknown behavior. This should be prevented and an error should be thrown.
+    If iSystem.stopGameStage() do, and then start another stage, render of the first one could be continued,
+    And will be done in 0 ms, wasting the debug output, this is due to previous render circle actually not done,
+    because #isActive set to true, when a new stage is started.
+
+Decision:
+    * Добавить проверку и ошибку при запуске стадии.
+    * Инкапсулировать логику цикла рендера в отдельный класс RenderLoop.
+
+    * Add a check and error when starting a stage.
+    * Encapsulate render loop logic into a separate RenderLoop class.
+
+Impact:
+    No impact.

@@ -69,7 +69,7 @@ export class ISystem {
         this.#systemAudioInterface = new ISystemAudio(this.iLoader);
         this.#systemServerConnection = systemSettings.network.enabled ? new INetwork(systemSettings) : null;
         this.#iRender = new IRender(this.systemSettings, this.iLoader, canvasContainer);
-        this.#iExtension = new IExtension(this, this.#iRender);
+        this.#iExtension = new IExtension(this);
         this.#registeredStagesReference = registeredStages;
         // broadcast render events
         this.#iRender.addEventListener(CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(CONST.EVENTS.SYSTEM.RENDER.START));
@@ -179,38 +179,44 @@ export class ISystem {
 
     /**
      * @method
-     * @param {string} screenPageName
+     * @param {string} gameStageName
      * @param {Object} [options] - options
      */
-    startGameStage = (screenPageName, options) => {
-        if (this.#registeredStagesReference.has(screenPageName)) {
-            const stage = this.#registeredStagesReference.get(screenPageName),
-                pageData = stage.stageData;
-            this.#drawObjectFactory._attachPageData(pageData);
-            if (stage.isInitiated === false) {
-                stage._init();
+    startGameStage = (gameStageName, options) => {
+        if (this.#registeredStagesReference.has(gameStageName)) {
+            if (this.#iRender._isRenderActive() === true) {
+                this.#iRender._stopRender();
+                Exception(ERROR_CODES.ANOTHER_STAGE_ACTIVE, " Can't start the stage " + gameStageName + " while, another stage is active");
+            } else {
+                const stage = this.#registeredStagesReference.get(gameStageName),
+                    pageData = stage.stageData;
+                this.#drawObjectFactory._attachPageData(pageData);
+                if (stage.isInitiated === false) {
+                    stage._init();
+                }
+                //stage._attachCanvasToContainer(this.#canvasContainer);
+                stage._start(options);
+                this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
+                this.#iRender._startRender(pageData);
             }
-            //stage._attachCanvasToContainer(this.#canvasContainer);
-            stage._start(options);
-            this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
-            this.#iRender._startRender(pageData);
+            
         } else {
-            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+            Exception(ERROR_CODES.VIEW_NOT_EXIST, "Stage " + gameStageName + " is not registered!");
         }
     };
 
     /**
      * @method
-     * @param {string} screenPageName
+     * @param {string} gameStageName
      */
-    stopGameStage = (screenPageName) => {
-        if (this.#registeredStagesReference.has(screenPageName)) {
+    stopGameStage = (gameStageName) => {
+        if (this.#registeredStagesReference.has(gameStageName)) {
             this.emit(CONST.EVENTS.SYSTEM.STOP_PAGE);
             this.drawObjectFactory._detachPageData();
             this.#iRender._stopRender();
-            this.#registeredStagesReference.get(screenPageName)._stop();
+            this.#registeredStagesReference.get(gameStageName)._stop();
         } else {
-            Exception(ERROR_CODES.VIEW_NOT_EXIST, "View " + screenPageName + " is not registered!");
+            Exception(ERROR_CODES.STAGE_NOT_EXIST, "GameStage " + gameStageName + " is not registered!");
         }
     };
 }

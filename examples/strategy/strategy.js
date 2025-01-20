@@ -34,6 +34,8 @@ export class Strategy extends GameStage {
 	#mouseX;
 	#mouseY;
 
+	#unitsCount = 0;
+
 	register() {
     	this.iLoader.addTileMap("s_map", "./strategy/strategy_map.tmj");
 		this.iLoader.addImage(GAME_UNITS.GOLD_MINE.name, "./strategy/images/MiniWorldSprites/Buildings/Wood/Resources.png");
@@ -109,6 +111,8 @@ export class Strategy extends GameStage {
 		setTimeout(() => {
 			const [w, h] = this.stageData.canvasDimensions;
 		},100);
+
+		this.#unitsCount = this.#playerUnits.length;
 		console.log("strategy started");
     }
 
@@ -210,6 +214,27 @@ export class Strategy extends GameStage {
 	
 	#pressKeyAction = (event) => {
         const code = event.code;
+		console.log("pressed: ", code);
+		if (code === "Space") {
+			
+			const townCenter = this.#playerBuildings.find((building) => building.key === GAME_UNITS.TOWN_CENTER.name);
+			const newPeasant = new UnitPeasant(0, 0, 16, 16, townCenter, this.draw, this.eventsAggregator);
+
+			let posX = 20,
+				posY = 20;
+			while(this.isObjectsCollision(townCenter.x + posX, townCenter.y + posY, newPeasant, this.#playerUnits)) {
+				posX -= 18;
+				console.log("collision shift left");
+			}
+			//console.log("no collision adding unit");
+			newPeasant.x = townCenter.x + posX;
+			newPeasant.y = townCenter.y + posY;
+			this.addRenderObject(newPeasant);
+			this.#playerUnits.push(newPeasant);
+			this.#unitsCount++;
+			newPeasant.activateMoveToTargetPoint(1500, 1500);
+			console.log("units: ", this.#unitsCount);
+		}
     };
 
     #removeKeyAction = (event) => {

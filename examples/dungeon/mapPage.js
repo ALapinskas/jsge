@@ -232,7 +232,7 @@ export class MapPage extends GameStage {
             cursorPosX = x + xOffset,
             cursorPosY = y + yOffset,
             rad = angle_2points(this.player.x, this.player.y, cursorPosX, cursorPosY);
-            console.log("move, x: ", e.offsetX, " y: ", e.offsetY);    
+            //console.log("move, x: ", e.offsetX, " y: ", e.offsetY);    
         //this.player.rotation = rad;
         this.fireRange.rotation = rad - (Math.PI/20);
 
