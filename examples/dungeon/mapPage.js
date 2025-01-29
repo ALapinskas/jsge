@@ -69,7 +69,7 @@ export class MapPage extends GameStage {
         this.addRenderObject(monster2);
         this.addRenderObject(monster3);
 
-        this.player = this.draw.image(55, 250, 16, 16, "tilemap", 84, {r: 8}, 1);
+        this.player = this.draw.image(55, 250, 16, 16, "tilemap", 84, { r: 8 }, 1);
         this.player.setMask(this.sightView);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         

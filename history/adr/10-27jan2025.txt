@@ -1,0 +1,15 @@
+Date: January 19 2025
+More debug info / Дополнительная информация в отладке
+
+Status: In Progress
+
+Context:
+    В отладке нехватает информации по отрисованным вершинам.
+
+    Debug output doesn't contain information and drawn vertices.
+    
+Decision:
+    
+
+Impact:
+    No impact.

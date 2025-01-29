@@ -199,7 +199,7 @@ export class WebGlEngine {
 
     _clearView() {
         const gl = this.#gl;
-        this.#loopDebug.cleanupDrawCallsCounter();
+        this.#loopDebug.cleanupDebugInfo();
         //cleanup buffer, is it required?
         //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.clearColor(0, 0, 0, 0);// shouldn't be gl.clearColor(0, 0, 0, 1); ?
@@ -216,6 +216,7 @@ export class WebGlEngine {
         } else {
             gl.drawArrays(primitiveType, offset, verticesNumber);
             this.#loopDebug.incrementDrawCallsCounter();
+            this.#loopDebug.verticesDraw = verticesNumber;
             // set blend to default
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         }
@@ -680,16 +681,16 @@ export class WebGlEngine {
         gl.useProgram(program);
         let renderLayerData;
         switch (this.#gameOptions.optimization) {
-        case CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
-            renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
-            break;
-        case CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
-        case CONST.OPTIMIZATION.WEB_ASSEMBLY.NATIVE_WAT:
-            renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
-            break;
-        case CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
-        default:
-            renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
+            case CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
+                renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
+                break;
+            case CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
+            case CONST.OPTIMIZATION.WEB_ASSEMBLY.NATIVE_WAT:
+                renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
+                break;
+            case CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
+            default:
+                renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
         const translation = [0, 0],
             scale = [1, 1],
@@ -1045,6 +1046,7 @@ export class WebGlEngine {
                     // sometimes canvasW/H may be bigger than world itself
                     screenRows = worldH > canvasH ? Math.ceil(canvasH / tileheight) + 1 : layerRows,
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
+                    screenCells = screenRows * screenCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
                     cellSpacing = tilesetData.spacing,
                     cellMargin = tilesetData.margin,
@@ -1055,6 +1057,9 @@ export class WebGlEngine {
                     tilesetBoundaries = tilesetData._boundaries,
                     layerTilesetData = tilesets[i]._temp;
 
+                if (layerTilesetData.cells !== screenCells) {
+                    layerTilesetData._initiateStorageData(screenCells);
+                }
                 let v = layerTilesetData.vectors,
                     t = layerTilesetData.textures,
                     filledSize = 0;
@@ -1378,9 +1383,6 @@ export class WebGlEngine {
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                tilewidth = dtwidth,
-                tileheight = dtheight,
-                [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset;
             
             let tileImagesData = [];
@@ -1406,10 +1408,6 @@ export class WebGlEngine {
                     atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
-                    worldW = tilewidth * layerCols,
-                    worldH = tileheight * layerRows,
-                    visibleCols = Math.ceil(canvasW / tilewidth),
-                    visibleRows = Math.ceil(canvasH / tileheight),
                     atlasImage = tilesetImages[i],
                     atlasWidth = atlasImage.width,
                     atlasHeight = atlasImage.height,
@@ -1424,7 +1422,6 @@ export class WebGlEngine {
                 
                 v.fill(0);
                 t.fill(0);
-
                 for (let row = 0; row < layerRows; row++) {
                     for (let col = 0; col < layerCols; col++) {
                         let tile = layerData.data[mapIndex];

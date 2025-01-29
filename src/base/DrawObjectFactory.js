@@ -162,11 +162,22 @@ export class DrawObjectFactory {
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
         const tilemap = this.#iLoader.getTileMap(tileMapKey),
-            tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)), // copy to avoid change same tilemap instance in different tiledLayers
-            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             layerData = Object.assign({}, tilemap.layers.find((layer) => layer.name === layerKey)), // copy to avoid change same tilemap instance in different tiledLayers
+            tilesetIds = Array.from(new Set(layerData.data.filter((id) => id !== 0))).sort((a, b) => a - b),
+            tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)).filter((tileset) => {
+                const tilesetStartI = tileset.firstgid,
+                    tilesetLastI = tilesetStartI + tileset.data.tilecount;
+                if (tilesetIds.find((id) => ((id >= tilesetStartI) && (id <= tilesetLastI)))) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }), // copy to avoid change same tilemap instance in different tiledLayers
+            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
-
+        //console.log(layerKey);
+        //console.log(tilesetIds);
+        //console.log(tilesets);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }

@@ -4,7 +4,7 @@ import { utils } from "../../src/index.js";
 export class BigMap extends GameStage {
 	register() {
     	this.iLoader.addImage("person", "https://cdn.glitch.global/4d482ac3-ab8e-414f-8d6e-75c6c198a844/SpritesheetGuns.png?v=1702793251346");
-    	this.iLoader.addTileMap("big_map", "./big_map/map_200.tmj");
+    	this.iLoader.addTileMap("big_map", "./big_map/map_big.tmj");
 		this.timer = null;
 		document.body.style.margin = 0;
 	}

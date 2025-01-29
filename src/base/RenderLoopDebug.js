@@ -7,6 +7,10 @@ export class RenderLoopDebug {
     /**
      * @type {number}
      */
+    #verticesNum = 0;
+    /**
+     * @type {number}
+     */
     #drawCalls = 0;
     /**
      * @type {number}
@@ -29,6 +33,10 @@ export class RenderLoopDebug {
 
     get drawCalls() {
         return this.#drawCalls;
+    }
+
+    get verticesDraw() {
+        return this.#verticesNum;
     }
 
     /**
@@ -63,6 +71,15 @@ export class RenderLoopDebug {
 
     incrementDrawCallsCounter() {
         this.#drawCalls+=1;
+    }
+
+    set verticesDraw(vertices) {
+        this.#verticesNum += vertices;
+    }
+
+    cleanupDebugInfo() {
+        this.#verticesNum = 0;
+        this.#drawCalls = 0;
     }
 
     cleanupDrawCallsCounter() {

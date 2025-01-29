@@ -138,6 +138,7 @@ export class RenderLoop {
                 console.log("current draw take: ", (currentDrawTime), " ms");
                 console.log("current render() time: ", currentRenderTime);
                 console.log("draw calls: ", this.renderLoopDebug.drawCalls);
+                console.log("vertices draw: ", this.renderLoopDebug.verticesDraw);
             } else {
                 this.renderLoopDebug.tempRCircleT = currentDrawTime;
                 this.renderLoopDebug.incrementTempRCircleTPointer();
@@ -400,7 +401,9 @@ export class RenderLoop {
             fullTime += timeStep;
         }
         console.log("FPS average for", timeLeft/1000, "sec, is ", (1000 / (fullTime / steps)).toFixed(2));
-        console.log("Last loop webgl draw calls: ", this.renderLoopDebug.drawCalls);
+        console.log("Last loop info:");
+        console.log("Webgl draw calls: ", this.renderLoopDebug.drawCalls);
+        console.log("Vertices draw: ", this.renderLoopDebug.verticesDraw);
         // cleanup
         this.renderLoopDebug.cleanupTempVars();
     }

@@ -1,11 +1,13 @@
 # Javascript Game Engine
 
-This engine was designed to simplify creating javascript game applications.
+This engine was designed to simplify creating games on javascript. \
+No external libs used for drawing, no typescript, easy to use and debug.
+![Alt text](Debug.gif?raw=true "Title")
 
 Advantages:
 * Fresh codebase, depends on latest javascript features such as classes and privacy. 
 * OPP modular structure.
-* Webgl 1 under the hood.
+* Webgl 1 under the hood. Wide browser support.
 * Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
 * Images and tiles frame animations.
 * Spine 2d skeletal animation.
@@ -15,14 +17,17 @@ What you can do with it:
 1. Draw primitives, texts, load images, audio and tilemaps with tilesets from [Tiled editor](https://www.mapeditor.org).
 2. Render everything in a sequence.
 3. Animate images, switching their frames.
-4. Animate tiles.
-5. Render tiles on top of each other using webgl blend effects.
-6. Masks from primitives.
-7. Map centering. Cutting off everything out off screen.
-8. Extract boundaries(dot/ellipse/polygon) from tiles.
-9. Custom boundaries(rect/polygon/circle) for image objects.
-10. Collision detection.
-11. Boundaries drawing as debug option.
+4. Render tiles on top of each other using webgl blend effects.
+5. Masks from primitives.
+6. Map centering. Cutting off everything out off screen.
+7. Custom boundaries(rect/polygon/circle) for image objects.
+8. Collision detection.
+9. Boundaries drawing as debug option.
+
+Tilemaps support:
+* Only json format(.tmj), not xml(.tmx)!
+* Animated tiles
+* Tiles boundaries(dot/ellipse/polygon)
 
 How to run examples:
 1. npm i

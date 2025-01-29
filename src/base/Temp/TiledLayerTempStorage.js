@@ -18,11 +18,20 @@ export class TiledLayerTempStorage {
      * @type {number}
      */
     #bufferSize = 0;
+    /**
+     * @param {number} cells 
+     **/
+    #cells = 0;
+    /**
+     * @param {number} nonEmptyCells 
+     */
+    #nonEmptyCells = 0;
     constructor(cells, nonEmptyCells) {
-        this.#bufferSize = nonEmptyCells * 12;
-        this.#vectors = new Float32Array(this.#bufferSize);
-        this.#textures = new Float32Array(this.#bufferSize);
-        this.#boundariesTempIndexes = new Int32Array(cells * 4);
+        this._initiateStorageData(cells, nonEmptyCells);
+    }
+
+    get cells() {
+        return this.#cells;
     }
 
     get vectors() {
@@ -39,5 +48,18 @@ export class TiledLayerTempStorage {
 
     get bufferSize() {
         return this.#bufferSize;
+    }
+
+    _initiateStorageData(cellsSize, emptyCells) {
+        this.#cells = cellsSize;
+        this.#nonEmptyCells = emptyCells ? emptyCells : cellsSize;
+        if (this.#nonEmptyCells > cellsSize) {
+            this.#nonEmptyCells  = cellsSize;
+        }
+        this.#bufferSize = this.#nonEmptyCells * 12;
+
+        this.#vectors = new Float32Array(this.#bufferSize);
+        this.#textures = new Float32Array(this.#bufferSize);
+        this.#boundariesTempIndexes = new Int32Array(this.#cells * 4);
     }
 }

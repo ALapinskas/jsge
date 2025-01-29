@@ -119,7 +119,7 @@ class UnitBuilding extends UnitBase {
 			return;
 		}
 
-		const duration = this.#unitBuildDuration,
+		const duration = this.#selfBuildingDuration,
 			windowWidth = document.body.offsetWidth,
 			step = this.#PROGRESS_STEP,
 			stepWidth = windowWidth / duration * 100;
@@ -146,20 +146,26 @@ class UnitBuilding extends UnitBase {
 
 	#startSelfBuilding = () => {
 		console.log("start self building");
-		const duration = this.#selfBuildingDuration;
+		const duration = this.#selfBuildingDuration,
+			windowWidth = document.body.offsetWidth,
+			step = this.#PROGRESS_STEP,
+			stepWidth = windowWidth / duration * 100;
+
+		let currentWidth = stepWidth;
+
 		this.#selfProgressTimer = setInterval(() => {
-			if (this.#unitBuildProgress < duration) {
-				this.#unitBuildProgress += step;
+			if (this.#selfBuildingProgress < duration) {
+				this.#selfBuildingProgress += step;
 				currentWidth += stepWidth;
-				this.#progressLine.style.width = currentWidth + "px";
+				//this.#progressLine.style.width = currentWidth + "px";
 				console.log("progress build");
 			} else {
 				console.log("progress done");
-				clearInterval(this.#unitProgressTimer);
-				this.#unitProgressTimer = null;
-				this.#unitBuildProgress = 0;
-				this.#progressLine.style.width = 0 + "px";
-				this.#eventsAggregator.dispatchEvent(new CustomEvent(GAME_EVENTS.PEASANT_BUILT, {detail: this}));
+				clearInterval(this.#selfProgressTimer);
+				this.#selfProgressTimer = null;
+				this.#selfBuildingProgress = 0;
+				//this.#progressLine.style.width = 0 + "px";
+				this.#eventsAggregator.dispatchEvent(new CustomEvent(GAME_EVENTS.HOUSE_BUILT, {detail: this}));
                 this.#state = BUILDING_STATE.READY;
 			}
 		}, this.#PROGRESS_STEP);

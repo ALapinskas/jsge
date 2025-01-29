@@ -13,7 +13,7 @@ export class Strategy extends GameStage {
 	#playerGoldCounter;
 	#playerWood = 0;
 	#playerWoodCounter;
-	#playerPeopleLimit = 5; // lets say town center increase limit to 5
+	#playerPeopleLimit = 5; // lets say town center increase limit to 5 and house to 3
 	#playerPeopleLimitCounter;
 	#playerUnits = [];
 	#playerBuildings = [];
@@ -651,6 +651,7 @@ export class Strategy extends GameStage {
 		this.eventsAggregator.addEventListener(GAME_EVENTS.TREE_EMPTY, this.#treeEmpty);
 		this.eventsAggregator.addEventListener(GAME_EVENTS.REQUEST_FOR_CLOSEST_TREE, this.#requestForClosestTree);
 		this.eventsAggregator.addEventListener(GAME_EVENTS.PEASANT_BUILT, this.#peasantBuilt);
+		this.eventsAggregator.addEventListener(GAME_EVENTS.HOUSE_BUILT, this.#houseBuilt);
 	}
 
 	#unregisterSystemEventsListeners() {
@@ -661,6 +662,7 @@ export class Strategy extends GameStage {
 		this.eventsAggregator.removeEventListener(GAME_EVENTS.TREE_EMPTY, this.#treeEmpty);
 		this.eventsAggregator.removeEventListener(GAME_EVENTS.REQUEST_FOR_CLOSEST_TREE, this.#requestForClosestTree);
 		this.eventsAggregator.removeEventListener(GAME_EVENTS.PEASANT_BUILT, this.#peasantBuilt);
+		this.eventsAggregator.removeEventListener(GAME_EVENTS.HOUSE_BUILT, this.#houseBuilt);
 	}
 
 	#goldMined = (e) => {
@@ -760,7 +762,7 @@ export class Strategy extends GameStage {
 
 		let posX = 20,
 			posY = 20;
-		while(this.isObjectsCollision(townCenter.x + posX, townCenter.y + posY, newPeasant, this.#playerUnits)) {
+		while (this.isObjectsCollision(townCenter.x + posX, townCenter.y + posY, newPeasant, this.#playerUnits)) {
 			posX -= 18;
 			console.log("collision shift left");
 		}
@@ -772,6 +774,27 @@ export class Strategy extends GameStage {
 
 		this.#playerPeopleLimitCounter.innerText = this.#playerUnits.length + "/" + this.#playerPeopleLimit.toString();
 		
+	}
+
+	#houseBuilt = (e) => {
+		const house = e.detail,
+			newPeasant = new UnitPeasant(0, 0, 16, 16, house, this.draw, this.eventsAggregator);
+
+		let posX = 20,
+			posY = 20;
+		while (this.isObjectsCollision(house.x + posX, house.y + posY, newPeasant, this.#playerUnits)) {
+			posX -= 18;
+			console.log("collision shift left");
+		}
+
+		newPeasant.x = house.x + posX;
+		newPeasant.y = house.y + posY;
+		this.addRenderObject(newPeasant);
+		this.#playerUnits.push(newPeasant);
+		
+		house.imageIndex = 3;
+		this.#playerPeopleLimit += 3;
+		this.#playerPeopleLimitCounter.innerText = this.#playerUnits.length + "/" + this.#playerPeopleLimit.toString();
 	}
 
 	move(dir) {
