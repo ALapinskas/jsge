@@ -1906,11 +1906,22 @@ class DrawObjectFactory {
      */
     tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
         const tilemap = this.#iLoader.getTileMap(tileMapKey),
-            tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)), // copy to avoid change same tilemap instance in different tiledLayers
-            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             layerData = Object.assign({}, tilemap.layers.find((layer) => layer.name === layerKey)), // copy to avoid change same tilemap instance in different tiledLayers
+            tilesetIds = Array.from(new Set(layerData.data.filter((id) => id !== 0))).sort((a, b) => a - b),
+            tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)).filter((tileset) => {
+                const tilesetStartI = tileset.firstgid,
+                    tilesetLastI = tilesetStartI + tileset.data.tilecount;
+                if (tilesetIds.find((id) => ((id >= tilesetStartI) && (id <= tilesetLastI)))) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }), // copy to avoid change same tilemap instance in different tiledLayers
+            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             renderObject = new _2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__.DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
-
+        //console.log(layerKey);
+        //console.log(tilesetIds);
+        //console.log(tilesets);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }
@@ -4355,6 +4366,7 @@ class RenderLoop {
                 console.log("current draw take: ", (currentDrawTime), " ms");
                 console.log("current render() time: ", currentRenderTime);
                 console.log("draw calls: ", this.renderLoopDebug.drawCalls);
+                console.log("vertices draw: ", this.renderLoopDebug.verticesDraw);
             } else {
                 this.renderLoopDebug.tempRCircleT = currentDrawTime;
                 this.renderLoopDebug.incrementTempRCircleTPointer();
@@ -4617,7 +4629,9 @@ class RenderLoop {
             fullTime += timeStep;
         }
         console.log("FPS average for", timeLeft/1000, "sec, is ", (1000 / (fullTime / steps)).toFixed(2));
-        console.log("Last loop webgl draw calls: ", this.renderLoopDebug.drawCalls);
+        console.log("Last loop info:");
+        console.log("Webgl draw calls: ", this.renderLoopDebug.drawCalls);
+        console.log("Vertices draw: ", this.renderLoopDebug.verticesDraw);
         // cleanup
         this.renderLoopDebug.cleanupTempVars();
     }
@@ -4644,6 +4658,10 @@ class RenderLoopDebug {
     /**
      * @type {number}
      */
+    #verticesNum = 0;
+    /**
+     * @type {number}
+     */
     #drawCalls = 0;
     /**
      * @type {number}
@@ -4666,6 +4684,10 @@ class RenderLoopDebug {
 
     get drawCalls() {
         return this.#drawCalls;
+    }
+
+    get verticesDraw() {
+        return this.#verticesNum;
     }
 
     /**
@@ -4700,6 +4722,15 @@ class RenderLoopDebug {
 
     incrementDrawCallsCounter() {
         this.#drawCalls+=1;
+    }
+
+    set verticesDraw(vertices) {
+        this.#verticesNum += vertices;
+    }
+
+    cleanupDebugInfo() {
+        this.#verticesNum = 0;
+        this.#drawCalls = 0;
     }
 
     cleanupDrawCallsCounter() {
@@ -4912,11 +4943,20 @@ class TiledLayerTempStorage {
      * @type {number}
      */
     #bufferSize = 0;
+    /**
+     * @param {number} cells 
+     **/
+    #cells = 0;
+    /**
+     * @param {number} nonEmptyCells 
+     */
+    #nonEmptyCells = 0;
     constructor(cells, nonEmptyCells) {
-        this.#bufferSize = nonEmptyCells * 12;
-        this.#vectors = new Float32Array(this.#bufferSize);
-        this.#textures = new Float32Array(this.#bufferSize);
-        this.#boundariesTempIndexes = new Int32Array(cells * 4);
+        this._initiateStorageData(cells, nonEmptyCells);
+    }
+
+    get cells() {
+        return this.#cells;
     }
 
     get vectors() {
@@ -4933,6 +4973,19 @@ class TiledLayerTempStorage {
 
     get bufferSize() {
         return this.#bufferSize;
+    }
+
+    _initiateStorageData(cellsSize, emptyCells) {
+        this.#cells = cellsSize;
+        this.#nonEmptyCells = emptyCells ? emptyCells : cellsSize;
+        if (this.#nonEmptyCells > cellsSize) {
+            this.#nonEmptyCells  = cellsSize;
+        }
+        this.#bufferSize = this.#nonEmptyCells * 12;
+
+        this.#vectors = new Float32Array(this.#bufferSize);
+        this.#textures = new Float32Array(this.#bufferSize);
+        this.#boundariesTempIndexes = new Int32Array(this.#cells * 4);
     }
 }
 
@@ -5335,7 +5388,7 @@ class WebGlEngine {
 
     _clearView() {
         const gl = this.#gl;
-        this.#loopDebug.cleanupDrawCallsCounter();
+        this.#loopDebug.cleanupDebugInfo();
         //cleanup buffer, is it required?
         //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.clearColor(0, 0, 0, 0);// shouldn't be gl.clearColor(0, 0, 0, 1); ?
@@ -5352,6 +5405,7 @@ class WebGlEngine {
         } else {
             gl.drawArrays(primitiveType, offset, verticesNumber);
             this.#loopDebug.incrementDrawCallsCounter();
+            this.#loopDebug.verticesDraw = verticesNumber;
             // set blend to default
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
         }
@@ -5816,16 +5870,16 @@ class WebGlEngine {
         gl.useProgram(program);
         let renderLayerData;
         switch (this.#gameOptions.optimization) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
-            renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
-            break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.NATIVE_WAT:
-            renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
-            break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
-        default:
-            renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
+                renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.WEB_ASSEMBLY.NATIVE_WAT:
+                renderLayerData = await this.#prepareRenderLayerWM(renderLayer, pageData);
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED:
+            default:
+                renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
         const translation = [0, 0],
             scale = [1, 1],
@@ -6181,6 +6235,7 @@ class WebGlEngine {
                     // sometimes canvasW/H may be bigger than world itself
                     screenRows = worldH > canvasH ? Math.ceil(canvasH / tileheight) + 1 : layerRows,
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
+                    screenCells = screenRows * screenCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
                     cellSpacing = tilesetData.spacing,
                     cellMargin = tilesetData.margin,
@@ -6191,6 +6246,9 @@ class WebGlEngine {
                     tilesetBoundaries = tilesetData._boundaries,
                     layerTilesetData = tilesets[i]._temp;
 
+                if (layerTilesetData.cells !== screenCells) {
+                    layerTilesetData._initiateStorageData(screenCells);
+                }
                 let v = layerTilesetData.vectors,
                     t = layerTilesetData.textures,
                     filledSize = 0;
@@ -6514,9 +6572,6 @@ class WebGlEngine {
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                tilewidth = dtwidth,
-                tileheight = dtheight,
-                [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset;
             
             let tileImagesData = [];
@@ -6542,10 +6597,6 @@ class WebGlEngine {
                     atlasColumns = tilesetData.columns,
                     layerCols = layerData.width,
                     layerRows = layerData.height,
-                    worldW = tilewidth * layerCols,
-                    worldH = tileheight * layerRows,
-                    visibleCols = Math.ceil(canvasW / tilewidth),
-                    visibleRows = Math.ceil(canvasH / tileheight),
                     atlasImage = tilesetImages[i],
                     atlasWidth = atlasImage.width,
                     atlasHeight = atlasImage.height,
@@ -6560,7 +6611,6 @@ class WebGlEngine {
                 
                 v.fill(0);
                 t.fill(0);
-
                 for (let row = 0; row < layerRows; row++) {
                     for (let col = 0; col < layerCols; col++) {
                         let tile = layerData.data[mapIndex];
