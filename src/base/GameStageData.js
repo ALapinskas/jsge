@@ -85,6 +85,16 @@ export class GameStageData {
      */
     #isWorldBoundariesEnabled = false;
 
+    /**
+     * @type {Array<number>}
+     */
+    #debugObjectBoundaries = [];
+    /**
+     * 
+     * @param {boolean}
+     */
+    #isDebugObjectBoundaries = false;
+
     constructor(gameOptions) {
         //this.#boundaries = new Float32Array(this.#maxBoundariesSize);
         //this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
@@ -110,6 +120,21 @@ export class GameStageData {
         this._addBoundaryLine(boundaries.x1,boundaries.y1, boundaries.x2, boundaries.y2);
     }
 
+    /**
+     * Add array of boundaries lines
+     * @param {Array<Array<number>>} boundaries 
+     * @ignore
+     */
+    _addImageDebugBoundaries(boundaries) {
+        const len = boundaries.length;
+        for (let i = 0; i < len; i++) {
+            this.#debugObjectBoundaries.push(...boundaries[i]);
+        }
+    }
+
+    _enableDebugObjectBoundaries() {
+        this.#isDebugObjectBoundaries = true;
+    }
     /**
      * Add array of boundaries lines
      * @param {Array<Array<number>>} boundaries 
@@ -171,6 +196,9 @@ export class GameStageData {
         this.#bPointer = 0;
         this.#ePointer = 0;
         this.#pPointer = 0;
+        if (this.#isDebugObjectBoundaries) {
+            this.#debugObjectBoundaries = [];
+        }
     }
 
     _initiateBoundariesData() {
@@ -360,6 +388,10 @@ export class GameStageData {
 
     getWholeWorldBoundaries() {
         return this.#wholeWorldBoundaries;
+    }
+
+    getDebugObjectBoundaries() {
+        return this.#debugObjectBoundaries;
     }
 
     /**

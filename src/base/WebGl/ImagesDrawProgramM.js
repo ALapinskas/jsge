@@ -26,4 +26,4 @@ const imgMFragmentShader = `
 const imgMUniforms = ["u_resolution", "u_image"];
 const imgMAttributes = ["a_position", "a_texCoord"];
 
-export {imgMVertexShader, imgMFragmentShader, imgMUniforms, imgMAttributes};
+export { imgMVertexShader, imgMFragmentShader, imgMUniforms, imgMAttributes };

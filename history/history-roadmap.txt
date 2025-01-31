@@ -4,6 +4,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.5:
+    +: GameStageData.#debugObjectBoundaries for debug draw image boundaries
+    r: _bindRenderObject refactored, removed workaround
+
 1.5.4:
     +: debug - vertices drawn added
     r: examples big_map 800x800 map added

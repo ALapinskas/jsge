@@ -404,6 +404,39 @@ function verticesArrayToArrayNumbers(array) {
 }
 
 /**
+ * 
+ * @param {Array<Array<number>>} arrayDots
+ * @returns {Array<Array<number>>} 
+ */
+function calculateLinesVertices(x = 0, y = 0, r, arrayDots) {
+    const len = arrayDots.length;
+    let arrayLines = Array(len),
+        arrayDotsIterator = 0;
+        
+    for (let i = 0; i < len; i++) {
+        const dot1 = arrayDots[i];
+        let dot2 = arrayDots[i+1];
+        if (!dot2) {
+            dot2 = arrayDots[0];
+        }
+        const x1 = dot1[0],
+            y1 = dot1[1],
+            x2 = dot2[0],
+            y2 = dot2[1];
+
+        const x1R = x1 * Math.cos(r) - y1 * Math.sin(r),
+            y1R = x1 * Math.sin(r) + y1 * Math.cos(r),
+            x2R = x2 * Math.cos(r) - y2 * Math.sin(r),
+            y2R = x2 * Math.sin(r) + y2 * Math.cos(r);
+        const line = [x1R + x, y1R + y, x2R + x, y2R + y];
+        
+        arrayLines[arrayDotsIterator] = line;
+        arrayDotsIterator++;
+    }
+    return arrayLines;
+}
+
+/**
  * @param {number} x
  * @param {number} y
  * @param {number} radiusX
@@ -452,4 +485,6 @@ export {
     randomFromArray,
     verticesArrayToArrayNumbers,
     countDistance,
-    calculateEllipseVertices };
+    calculateEllipseVertices,
+    calculateLinesVertices
+ };

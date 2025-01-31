@@ -187,7 +187,7 @@ export class RenderLoop {
                 if (object.hasAnimations) {
                     object._processActiveAnimations();
                 }
-                const promise = await this.#bindRenderObject(object)
+                const promise = await this.#drawRenderObject(object)
                     .catch((err) => Promise.reject(err));
                 renderObjectsPromises[i] = promise;
             }
@@ -195,16 +195,6 @@ export class RenderLoop {
                 renderObjectsPromises.push(this.#drawBoundariesWebGl()
                     .catch((err) => Promise.reject(err))); 
             }
-            //const bindResults = await Promise.allSettled(renderObjectsPromises);
-            //bindResults.forEach((result) => {
-            //    if (result.status === "rejected") {
-            //        reject(result.reason);
-            //    }
-            //});
-
-            //await this.#webGlEngine._executeImagesDraw();
-
-            //this.#postRenderActions();
         }
         const bindResults = await Promise.allSettled(renderObjectsPromises);
         bindResults.forEach((result) => {
@@ -214,8 +204,6 @@ export class RenderLoop {
                 errors.push(result.reason);
             }
         });
-
-        this.#postRenderActions();
             
         this._isCleared = false;
         if (isErrors === false) {
@@ -261,21 +249,14 @@ export class RenderLoop {
      * @param {DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer} renderObject 
      * @returns {Promise<void>}
      */
-    #bindRenderObject(renderObject) {
-        return this.#webGlEngine._bindRenderObject(renderObject, this.stageData);
+    #drawRenderObject(renderObject) {
+        return this.#webGlEngine._preRender()
+            .then(() => this.#webGlEngine._drawRenderObject(renderObject, this.stageData))
+            .then((args) => this.#webGlEngine._postRender(args));
     }
 
     #clearContext() {
         this.#webGlEngine._clearView();
-    }
-    #postRenderActions() {
-        //const images = this.stageData.getObjectsByInstance(DrawImageObject);
-        //for (let i = 0; i < images.length; i++) {
-        //    const object = images[i];
-        //    if (object.isAnimations) {
-        //        object._processActiveAnimations();
-        //    }
-        //}
     }
 
     /**
@@ -287,9 +268,11 @@ export class RenderLoop {
             const b = this.stageData.getRawBoundaries(),
                 eB = this.stageData.getEllipseBoundaries(),
                 pB = this.stageData.getPointBoundaries(),
+                bDebug = this.stageData.getDebugObjectBoundaries(),
                 len = this.stageData.boundariesLen,
                 eLen = this.stageData.ellipseBLen,
-                pLen = this.stageData.pointBLen;
+                pLen = this.stageData.pointBLen,
+                bDebugLen = this.#systemSettings.gameOptions.debug.boundaries.drawObjectBoundaries ? bDebug.length : 0;
         
             if (len)
                 this.#webGlEngine._drawLines(b, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
@@ -317,6 +300,9 @@ export class RenderLoop {
                     this.#webGlEngine._drawLines(vertices, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
                     this.renderLoopDebug.incrementDrawCallsCounter();
                 }
+            }
+            if (bDebugLen > 0) {
+                this.#webGlEngine._drawLines(bDebug, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
             }
             resolve();
         });

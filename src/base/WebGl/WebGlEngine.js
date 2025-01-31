@@ -13,6 +13,8 @@ import { DrawRectObject } from "../2d/DrawRectObject.js";
 import { DrawTextObject } from "../2d/DrawTextObject.js";
 
 import AssetsManager from "../../../modules/assetsm/dist/assetsm.min.js";
+import { DrawImageObject } from "../2d/DrawImageObject.js";
+import { utils } from "../../index.js";
 
 export class WebGlEngine {
     /**
@@ -77,6 +79,7 @@ export class WebGlEngine {
         this._registerObjectRender(DrawConusObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
         this._registerObjectRender(DrawLineObject.name, this._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(CONST.DRAW_TYPE.IMAGE, this._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
     }
 
     getProgram(name) {
@@ -197,6 +200,10 @@ export class WebGlEngine {
         this.#loopDebug = debugObjReference;
     }
 
+    /**
+     * 
+     * @returns {void}
+     */
     _clearView() {
         const gl = this.#gl;
         this.#loopDebug.cleanupDebugInfo();
@@ -207,20 +214,56 @@ export class WebGlEngine {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     }
     
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
     _render(verticesNumber, primitiveType, offset = 0) {
-        const gl = this.#gl,
-            err = this.#debug ? gl.getError() : 0;
-        if (err !== 0) {
-            console.error(err);
-            throw new Error("Error num: " + err);
-        } else {
-            gl.drawArrays(primitiveType, offset, verticesNumber);
+        this.#gl.drawArrays(primitiveType, offset, verticesNumber);
+        // set blend to default
+        return Promise.resolve(verticesNumber);
+    }
+
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
+    _preRender() {
+        return new Promise((resolve, reject) => {
+            const gl = this.#gl,
+                err = this.#debug ? gl.getError() : 0;
+            if (err !== 0) {
+                console.error(err);
+                throw new Error("Error num: " + err);
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
+    _postRender(inputData) {
+        let verticesNumber = inputData;
+
+        // A workaround for backward capability in 1.5.n
+        if (Array.isArray(verticesNumber)) {
+            const [vertices, primitiveType] = inputData;
+            
+            this.#gl.drawArrays(primitiveType, 0, vertices);
+            verticesNumber = vertices;
+        }
+
+        return new Promise((resolve, reject) => {
+            const gl = this.#gl;
+
             this.#loopDebug.incrementDrawCallsCounter();
             this.#loopDebug.verticesDraw = verticesNumber;
-            // set blend to default
+
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
-        }
-        return new Promise((resolve, reject) => {
+
             if (this.#gameOptions.debug.delayBetweenObjectRender) {
                 setTimeout(() => {
                     resolve();
@@ -403,7 +446,7 @@ export class WebGlEngine {
         } else if (renderObject._isMask) {
             gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
         }
-        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
+        return this._render(verticesNumber, gl.TRIANGLES);
     };
     _bindConus = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
@@ -467,7 +510,7 @@ export class WebGlEngine {
             gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
         }
         
-        return Promise.resolve([verticesNumber, gl.TRIANGLE_FAN]);
+        return this._render(verticesNumber, gl.TRIANGLE_FAN);
     };
 
     _bindText = (renderObject, gl, pageData, program, vars) => {
@@ -556,10 +599,19 @@ export class WebGlEngine {
         }
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         gl.depthMask(false);
-        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
+        return this._render(verticesNumber, gl.TRIANGLES);
     };
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
+        const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
+            x = renderObject.x - xOffset,
+            y = renderObject.y - yOffset;
+
+        if (renderObject.vertices && this.#gameOptions.debug.boundaries.drawObjectBoundaries) {
+            pageData._enableDebugObjectBoundaries();
+            pageData._addImageDebugBoundaries(utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
+        }
+        
         const { 
             u_translation: translationLocation,
             u_rotation: rotationRotation,
@@ -569,18 +621,22 @@ export class WebGlEngine {
             a_texCoord: texCoordLocation,
             u_image: u_imageLocation } = vars;
 
-        const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
-            x = renderObject.x - xOffset,
-            y = renderObject.y - yOffset;
-
+        if (!renderObject.image) {
+            const image = this.#loaderReference.getImage(renderObject.key);
+            if (!image) {
+                Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + renderObject.key);
+            } else {
+                renderObject.image = image;
+            }
+        }
         const atlasImage = renderObject.image,
             animationIndex = renderObject.imageIndex,
-            image_name = renderObject.key,
             shapeMaskId = renderObject._maskId,
             spacing = renderObject.spacing,
             margin = renderObject.margin,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
             scale = [1, 1];
+        
         let imageX = margin,
             imageY = margin,
             colNum = 0,
@@ -604,21 +660,21 @@ export class WebGlEngine {
             texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
             texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
         const vectors = [
-                vecX1, vecY1,
-                vecX2, vecY1,
-                vecX1, vecY2,
-                vecX1, vecY2,
-                vecX2, vecY1,
-                vecX2, vecY2
-            ],
-            textures = [
-                texX1, texY1,
-                texX2, texY1,
-                texX1, texY2,
-                texX1, texY2,
-                texX2, texY1,
-                texX2, texY2
-            ];
+            vecX1, vecY1,
+            vecX2, vecY1,
+            vecX1, vecY2,
+            vecX1, vecY2,
+            vecX2, vecY1,
+            vecX2, vecY2
+        ],
+        textures = [
+            texX1, texY1,
+            texX2, texY1,
+            texX1, texY2,
+            texX1, texY2,
+            texX2, texY1,
+            texX2, texY2
+        ];
         gl.useProgram(program);
         // set the resolution
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
@@ -665,8 +721,8 @@ export class WebGlEngine {
             gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
             //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
         }
-
-        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
+        
+        return this._render(verticesNumber, gl.TRIANGLES);
     };
 
     _bindTileImages = async(renderLayer, gl, pageData, program, vars) => {
@@ -763,7 +819,7 @@ export class WebGlEngine {
                 isTextureBind = true;
             }
         }
-        return Promise.resolve([verticesNumber, gl.TRIANGLES]);
+        return this._render(verticesNumber, gl.TRIANGLES);
     };
 
     _drawPolygon(renderObject, pageData) {
@@ -877,7 +933,7 @@ export class WebGlEngine {
         
         gl.lineWidth(lineWidth);
 
-        return Promise.resolve([0, gl.LINES]);
+        return this._render(0, gl.LINES);
     };
     
     _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
@@ -931,54 +987,26 @@ export class WebGlEngine {
 
     /**
      * @ignore
-     * @param {string} objectClassName - object name registered to DrawObjectFactory
+     * @param {string} objectType - object name registered to DrawObjectFactory | object type registered to DrawObjectFactory
      * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
      * @param {string=} objectWebGlDrawProgram 
      */
-    _registerObjectRender(objectClassName, objectRenderMethod, objectWebGlDrawProgram) {
-        this.#registeredRenderObjects.set(objectClassName, {method: objectRenderMethod, webglProgramName: objectWebGlDrawProgram});
+    _registerObjectRender(objectType, objectRenderMethod, objectWebGlDrawProgram) {
+        this.#registeredRenderObjects.set(objectType, {method: objectRenderMethod, webglProgramName: objectWebGlDrawProgram});
     }
 
-    _bindRenderObject(renderObject, pageData) {
+    _drawRenderObject(renderObject, pageData) {
         const name = renderObject.constructor.name,
-            registeredRenderObject = this.#registeredRenderObjects.get(name);
+            registeredRenderObject = this.#registeredRenderObjects.get(name) || this.#registeredRenderObjects.get(renderObject.type);
         if (registeredRenderObject) {
-            const name = registeredRenderObject.webglProgramName;
-            if (name) {
-                const program = this.getProgram(name),
-                    vars = this.getProgramVarLocations(name);
-                return registeredRenderObject.method(renderObject, this.#gl, pageData, program, vars)
-                    .then((results) => this._render(results[0], results[1]));  
-            } else {
-                return registeredRenderObject.method(renderObject, this.#gl, pageData);
-            }
-        } else {
-            // a workaround for images and its extend classes drawing
-            if (renderObject.type === CONST.DRAW_TYPE.IMAGE) {
-                const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES),
-                    vars = this.getProgramVarLocations(CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+            const name = registeredRenderObject.webglProgramName,
+                program = name ? this.getProgram(name) : null,
+                vars = name ? this.getProgramVarLocations(name) : null;
 
-                if (!renderObject.image) {
-                    const image = this.#loaderReference.getImage(renderObject.key);
-                    if (!image) {
-                        Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + renderObject.key);
-                    } else {
-                        renderObject.image = image;
-                    }
-                }
-                return this._bindImage(renderObject, this.#gl, pageData, program, vars)
-                    .then((results) => this._render(results[0], results[1]))
-                    .then(() => {
-                        if (renderObject.vertices && this.#gameOptions.debug.boundaries.drawObjectBoundaries) {
-                            return this._drawPolygon(renderObject, pageData);
-                        } else {
-                            return Promise.resolve();
-                        }
-                    });
-            } else {
-                console.warn("no registered draw object method for " + name + " skip draw");
-                return Promise.resolve();
-            }
+            return registeredRenderObject.method(renderObject, this.#gl, pageData, program, vars);
+        } else {
+            console.warn("no registered draw object method for " + name + " skip draw");
+            return Promise.resolve();
         }
     }
     /**
