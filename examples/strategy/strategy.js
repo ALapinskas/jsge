@@ -396,10 +396,11 @@ export class Strategy extends GameStage {
 			console.log("not enough houses");
 			
 		} else {
-			this.#playerGold -= costGold;
-			this.#playerWood -= costWood;
 			const townCenter = this.#playerBuildings.find((building) => building.key === GAME_UNITS.TOWN_CENTER.name);
 			if (!townCenter.isBuildingUnit) {
+				this.#playerGold -= costGold;
+				this.#playerWood -= costWood;
+				
 				townCenter.buildUnit(type);
 			} else {
 				console.log("already building");
@@ -418,6 +419,8 @@ export class Strategy extends GameStage {
 		} else if (!this.#isEnoughWood(costWood)) {
 			console.log("not enough wood");
 		} else {
+			this.#playerGold -= costGold;
+			this.#playerWood -= costWood;
 			this.#buildTemplate = this.draw.image(this.#mouseX, this.#mouseY, 16, 16, type, 9);
 			this.#buildTemplateOverlap = this.draw.rect(this.#mouseX - 8, this.#mouseY - 8, 16, 16, "rgba(0, 0, 0, 0.3");
 			this.#isBuildPlaceClear = false;
@@ -621,12 +624,6 @@ export class Strategy extends GameStage {
 							this.#playerUnits.splice(index, 1);
 
 							const type = unit.buildingType;
-							// remove resources
-							const costWood = GAME_UNITS[type].cost.w,
-								costGold = GAME_UNITS[type].cost.g;
-
-							this.#playerGold -= costGold;
-							this.#playerWood -= costWood;
 							
 							const [x, y] = unit.targetPoint;
 							const newBuilding = new UnitBuilding(x, y, 16, 16, type, 0, this.draw, this.eventsAggregator);

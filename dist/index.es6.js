@@ -4517,7 +4517,7 @@ class RenderLoop {
     #drawRenderObject(renderObject) {
         return this.#webGlEngine._preRender()
             .then(() => this.#webGlEngine._drawRenderObject(renderObject, this.stageData))
-            .then((vertices) => this.#webGlEngine._postRender(vertices));
+            .then((args) => this.#webGlEngine._postRender(args));
     }
 
     #clearContext() {
@@ -5475,7 +5475,7 @@ class WebGlEngine {
     
     /**
      * 
-     * @returns {Promise<number>}
+     * @returns {Promise<void>}
      */
     _render(verticesNumber, primitiveType, offset = 0) {
         this.#gl.drawArrays(primitiveType, offset, verticesNumber);
@@ -5504,7 +5504,17 @@ class WebGlEngine {
      * 
      * @returns {Promise<void>}
      */
-    _postRender(verticesNumber) {
+    _postRender(inputData) {
+        let verticesNumber = inputData;
+
+        // A workaround for backward capability in 1.5.n
+        if (Array.isArray(verticesNumber)) {
+            const [vertices, primitiveType] = inputData;
+            
+            this.#gl.drawArrays(primitiveType, 0, vertices);
+            verticesNumber = vertices;
+        }
+
         return new Promise((resolve, reject) => {
             const gl = this.#gl;
 

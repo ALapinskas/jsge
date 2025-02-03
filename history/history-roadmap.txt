@@ -7,6 +7,8 @@ f: fixed defects
 1.5.5:
     +: GameStageData.#debugObjectBoundaries for debug draw image boundaries
     r: _bindRenderObject refactored, removed workaround
+    f: examples strategy build unit, if already in progress resources are taken away
+    f: examples strategy build building, resources are taken after building complete
 
 1.5.4:
     +: debug - vertices drawn added
