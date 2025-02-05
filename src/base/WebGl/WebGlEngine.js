@@ -45,7 +45,14 @@ export class WebGlEngine {
      * @type {WebGLBuffer | null}
      */
     #texCoordBuffer;
-
+    /**
+     * @type {Array<number>}
+     */
+    #currentVertices = [];
+    /**
+     * @type {Array<number>}
+     */
+    #currentTextures = [];
     /**
      * @type {Map<string, WebGLProgram}
      */
@@ -216,7 +223,7 @@ export class WebGlEngine {
     
     /**
      * 
-     * @returns {Promise<void>}
+     * @returns {Promise<any>}
      */
     _render(verticesNumber, primitiveType, offset = 0) {
         this.#gl.drawArrays(primitiveType, offset, verticesNumber);
@@ -259,8 +266,10 @@ export class WebGlEngine {
         return new Promise((resolve, reject) => {
             const gl = this.#gl;
 
-            this.#loopDebug.incrementDrawCallsCounter();
-            this.#loopDebug.verticesDraw = verticesNumber;
+            if (verticesNumber !== 0) {
+                this.#loopDebug.incrementDrawCallsCounter();
+                this.#loopDebug.verticesDraw = verticesNumber;
+            }
 
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
 
@@ -536,21 +545,21 @@ export class WebGlEngine {
             vecX2 = vecX1 + boxWidth,
             vecY2 = vecY1 + boxHeight;
         const verticesBufferData = [
-                vecX1, vecY1,
-                vecX2, vecY1,
-                vecX1, vecY2,
-                vecX1, vecY2,
-                vecX2, vecY1,
-                vecX2, vecY2
-            ],
-            texturesBufferData = [
-                0, 0,
-                1, 0,
-                0, 1,
-                0, 1,
-                1, 0,
-                1, 1
-            ];
+            vecX1, vecY1,
+            vecX2, vecY1,
+            vecX1, vecY2,
+            vecX1, vecY2,
+            vecX2, vecY1,
+            vecX2, vecY2
+        ],
+        texturesBufferData = [
+            0, 0,
+            1, 0,
+            0, 1,
+            0, 1,
+            1, 0,
+            1, 1
+        ];
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -613,9 +622,6 @@ export class WebGlEngine {
         }
         
         const { 
-            u_translation: translationLocation,
-            u_rotation: rotationRotation,
-            u_scale: scaleLocation,
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
@@ -640,8 +646,8 @@ export class WebGlEngine {
         let imageX = margin,
             imageY = margin,
             colNum = 0,
-            rowNum = 0,
-            verticesNumber = 0;
+            rowNum = 0;
+
         if (animationIndex !== 0) {
             const imageColsNumber = (atlasImage.width + spacing - (2*margin)) / (renderObject.width + spacing);
             colNum = animationIndex % imageColsNumber;
@@ -649,8 +655,10 @@ export class WebGlEngine {
             imageX = colNum * renderObject.width + (colNum * spacing) + margin,
             imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
         }
+
         const posX = x - renderObject.width / 2,
             posY = y - renderObject.height / 2;
+
         const vecX1 = posX,
             vecY1 = posY,
             vecX2 = vecX1 + renderObject.width,
@@ -659,6 +667,7 @@ export class WebGlEngine {
             texY1 = 1 / atlasImage.height * imageY,
             texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
             texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
+
         const vectors = [
             vecX1, vecY1,
             vecX2, vecY1,
@@ -675,56 +684,105 @@ export class WebGlEngine {
             texX2, texY1,
             texX2, texY2
         ];
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, renderObject.rotation);
-        
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
-
-        verticesNumber += vectors.length / 2;
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-        //textures buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textures), gl.STATIC_DRAW);
-
-        gl.enableVertexAttribArray(texCoordLocation);
-        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-        let textureStorage = renderObject._textureStorage;
-        if (!textureStorage) {
-            textureStorage = new ImageTempStorage(gl.createTexture());
-            renderObject._textureStorage = textureStorage;
-        } 
-        if (textureStorage._isTextureRecalculated === true) {
-            this.#updateWebGlTexture(gl, textureStorage._texture, renderObject.image);
-            textureStorage._isTextureRecalculated = false;
+        // transform, scale and rotate should be done in js side
+        //gl.uniform2f(translationLocation, x, y);
+        //gl.uniform2f(scaleLocation, scale[0], scale[1]);
+        //gl.uniform1f(rotationRotation, renderObject.rotation);
+        //console.log("translation x: ", x, " y: ", y);
+        //console.log("scale x: ", scale[0], " y: ", scale[1]);
+        //console.log("rotation: ", renderObject.rotation);
+        // Determine could we merge next drawObject or not
+        // 1. Find next object
+        const objectIndex = pageData.renderObjects.indexOf(renderObject),
+            nextObject = pageData.renderObjects[objectIndex + 1];
+        // 2. Is it have same texture and draw program?
+        if (nextObject && this._canRenderObjectsMerge(renderObject, nextObject)) {
+            //
+            if (this.#currentVertices.length === 0) {
+                this.#currentVertices = vectors;
+                this.#currentTextures = textures;
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...vectors);
+                this.#currentTextures.push(...textures);
+                return Promise.resolve(0);
+            }
         } else {
-            this.#bindTexture(gl, textureStorage._texture);
-        }
+            
+            gl.useProgram(program);
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            // bind data and call draw
+            if (this.#currentVertices.length > 0) {
+                this.#currentVertices.push(...vectors);
+                this.#currentTextures.push(...textures);
+            } else {
+                this.#currentVertices = vectors;
+                this.#currentTextures = textures;
+            }
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
 
-        gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-        // make image transparent parts transparent
-        gl.blendFunc(blend[0], blend[1]);
-        if (shapeMaskId) {
-            gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
-            //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+            const verticesNumber = this.#currentVertices.length / 2;
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            //Tell the attribute how to get data out of positionBuffer
+            const size = 2,
+                type = gl.FLOAT, // data is 32bit floats
+                normalize = false,
+                stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                offset = 0; // start of beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+            //textures buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+            gl.enableVertexAttribArray(texCoordLocation);
+            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+            let textureStorage = renderObject._textureStorage;
+            if (!textureStorage) {
+                textureStorage = new ImageTempStorage(gl.createTexture());
+                renderObject._textureStorage = textureStorage;
+            } 
+            if (textureStorage._isTextureRecalculated === true) {
+                this.#updateWebGlTexture(gl, textureStorage._texture, renderObject.image);
+                textureStorage._isTextureRecalculated = false;
+            } else {
+                this.#bindTexture(gl, textureStorage._texture);
+            }    
+
+            gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+            // make image transparent parts transparent
+            gl.blendFunc(blend[0], blend[1]);
+            if (shapeMaskId) {
+                gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+            }
+            this.#currentVertices = [];
+            this.#currentTextures = [];
+            return this._render(verticesNumber, gl.TRIANGLES);
         }
-        
-        return this._render(verticesNumber, gl.TRIANGLES);
     };
 
+    /**
+     * 
+     * @param {*} obj1 
+     * @param {*} obj2
+     * @returns {boolean} 
+     */
+    _canRenderObjectsMerge = (obj1, obj2) => {
+        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
+            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName) && 
+            (obj1.type === obj2.type) &&
+            (obj1.image && obj2.image ? (obj1.image === obj2.image) : true)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
     _bindTileImages = async(renderLayer, gl, pageData, program, vars) => {
         const { u_translation: translationLocation,
             u_rotation: rotationRotation,
@@ -988,7 +1046,7 @@ export class WebGlEngine {
     /**
      * @ignore
      * @param {string} objectType - object name registered to DrawObjectFactory | object type registered to DrawObjectFactory
-     * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
+     * @param {function(renderObject, gl, pageData, program, vars):Promise<any>} objectRenderMethod - should be promise based returns vertices number and draw program
      * @param {string=} objectWebGlDrawProgram 
      */
     _registerObjectRender(objectType, objectRenderMethod, objectWebGlDrawProgram) {

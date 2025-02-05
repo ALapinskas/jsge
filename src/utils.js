@@ -458,6 +458,15 @@ function calculateEllipseVertices(x = 0, y = 0, radiusX, radiusY, angle = 2*Math
     return ellipsePolygonCoords;
 }
 
+/**
+ * 
+ * @param {Array<number>} mat1 
+ * @param {Array<number>} mat2 
+ */
+function mat3Multiply(mat1, mat2) {
+
+}
+
 export { 
     isMobile, 
     isSafari, 

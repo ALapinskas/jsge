@@ -13,6 +13,7 @@ export class MapPage extends GameStage {
     #keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
     #enemies = [];
     #skippedRender = 0;
+    #spriteKey = "sprite";
     tilemapKey = "dungeonGameMapTileset";
     fireImagesKey = "fireImages";
     defaultAudioKey = "default_audio_key";
@@ -31,6 +32,7 @@ export class MapPage extends GameStage {
         this.iLoader.addAudio(this.#detectedByGhostAudioKey, "./dungeon/audio/zvuk-prizraka-prividenie-24332.mp3");
         this.iLoader.addAudio(this.defaultAudioKey, "./dungeon/audio/ustrashayuschiy-nagnetayuschiy-zvuk-kapaniya-kapel-v-pustom-zabroshennom-pomeschenii.mp3");
         this.iLoader.addAudio(this.#gameOverAudioKey, "./dungeon/audio/nehvatka-vozduha-i-skoraya-konchina.mp3");
+        this.iLoader.addImage(this.#spriteKey, "./dungeon/tilemap.png");
         this.backgroundSounds = new ISystemAudio(this.iLoader);
         this.speed = 0;
         this.movingInterval = null;
@@ -58,9 +60,9 @@ export class MapPage extends GameStage {
         this.fireRange = this.draw.conus(55, 250, 120, "rgba(255, 0,0, 0.4)", Math.PI/8, 60);
         this.fireRange.setMask(this.sightView);
         
-        const monster1 = new Ghost(455, 450, 16, 16, "tilemap", 108, 1);
-        const monster2 = new Ghost(570, 410, 16, 16, "tilemap", 108, 1);
-        const monster3 = new Ghost(455, 390, 16, 16, "tilemap", 108, 1);
+        const monster1 = new Ghost(455, 450, 16, 16, this.#spriteKey, 108, 1);
+        const monster2 = new Ghost(570, 410, 16, 16, this.#spriteKey, 108, 1);
+        const monster3 = new Ghost(455, 390, 16, 16, this.#spriteKey, 108, 1);
         monster1.setMask(this.sightView);
         monster2.setMask(this.sightView);
         monster3.setMask(this.sightView);
@@ -69,7 +71,7 @@ export class MapPage extends GameStage {
         this.addRenderObject(monster2);
         this.addRenderObject(monster3);
 
-        this.player = this.draw.image(55, 250, 16, 16, "tilemap", 84, { r: 8 }, 1);
+        this.player = this.draw.image(55, 250, 16, 16, this.#spriteKey, 84, { r: 8 }, 1);
         this.player.setMask(this.sightView);
         //const sightViewVertices = this.calculateCircleVertices({x:55, y:250}, [0, 0], 2*Math.PI, 100, Math.PI/12);
         

@@ -86,9 +86,6 @@ export class IRender {
         this._registerRenderInit(
             () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes)
         );
-        this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_WITH_MERGE, imgMVertexShader, imgMFragmentShader, imgMUniforms, imgMAttributes)
-        );
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
     }
 

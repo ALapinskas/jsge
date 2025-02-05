@@ -45,8 +45,7 @@ export const CONST = {
     WEBGL: {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
-            IMAGES: "drawImages",
-            IMAGES_WITH_MERGE: "drawImagesWithMerge"
+            IMAGES: "drawImages"
         }
     },
     DRAW_TYPE: {
