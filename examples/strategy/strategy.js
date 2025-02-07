@@ -36,6 +36,7 @@ export class Strategy extends GameStage {
 
 	#unitsCount = 0;
 
+	#addUnitPosX = 0;
 	register() {
     	this.iLoader.addTileMap("s_map", "./strategy/strategy_map.tmj");
 		this.iLoader.addImage(GAME_UNITS.GOLD_MINE.name, "./strategy/images/MiniWorldSprites/Buildings/Wood/Resources.png");
@@ -214,31 +215,42 @@ export class Strategy extends GameStage {
 	
 	#pressKeyAction = (event) => {
         const code = event.code;
+		
 		console.log("pressed: ", code);
 		if (code === "Space") {
 			
 			const townCenter = this.#playerBuildings.find((building) => building.key === GAME_UNITS.TOWN_CENTER.name);
 			const newPeasant = new UnitPeasant(0, 0, 16, 16, townCenter, this.draw, this.eventsAggregator);
+			const newPeasant2 = new UnitPeasant(0, 0, 16, 16, townCenter, this.draw, this.eventsAggregator);
 
-			let posX = 20,
-				posY = 20;
+				/*
 			while(this.isObjectsCollision(townCenter.x + posX, townCenter.y + posY, newPeasant, this.#playerUnits)) {
 				posX -= 18;
 				console.log("collision shift left");
-			}
+			}*/
 			//console.log("no collision adding unit");
-			newPeasant.x = townCenter.x + posX;
-			newPeasant.y = townCenter.y + posY;
+			newPeasant.x = townCenter.x - this.#addUnitPosX;
+			newPeasant.y = townCenter.y;
+			newPeasant2.x = townCenter.x - this.#addUnitPosX;
+			newPeasant2.y = townCenter.y - 16;
 			this.addRenderObject(newPeasant);
+			this.addRenderObject(newPeasant2);
 			this.#playerUnits.push(newPeasant);
+			this.#playerUnits.push(newPeasant2);
+			this.#unitsCount++;
 			this.#unitsCount++;
 			newPeasant.activateMoveToTargetPoint(1500, 1500);
+			newPeasant2.activateMoveToTargetPoint(1500, 1500);
 			console.log("units: ", this.#unitsCount);
+			this.#addUnitPosX -= 20;
 		}
     };
 
     #removeKeyAction = (event) => {
         const code = event.code;
+		if (code === "Space") {
+			this.#addUnitPosX = 0;
+		}
     };
 
     #mouseMoveAction = (e) => {

@@ -460,11 +460,56 @@ function calculateEllipseVertices(x = 0, y = 0, radiusX, radiusY, angle = 2*Math
 
 /**
  * 
- * @param {Array<number>} mat1 
- * @param {Array<number>} mat2 
+ * @param { Array<number> } mat1 
+ * @param { Array<number> } mat2 
+ * @returns { Array<number> }
  */
 function mat3Multiply(mat1, mat2) {
+    let matResult = [];
+    for (let resultIdx = 0; resultIdx < 9; resultIdx += 3) {
+        let resultIndex = resultIdx;
+        
+        for (let i = 0; i < 3; i++) {
+            let resultVal = 0,
+                k = i;
+                
+            for (let j = 0; j < 3; j++) {
+                const mat1Val = mat1[resultIdx + j],
+                    mat2Val = mat2[k];
 
+                resultVal += (mat1Val * mat2Val);
+                k+=3;
+            }
+            matResult[resultIndex] = resultVal;
+            resultIndex++;
+        }
+    }
+    return matResult;
+}
+
+/**
+ * 
+ * @param {Array<number>} mat3 
+ * @param {Array<number>} vec3
+ * @returns {Array<number>} [x1, y1, z1]
+ */
+function mat3MultiplyVector (mat3, vec3) {
+    let result = [];
+    let resultIndex = 0;
+    for (let rowStartIdx = 0; rowStartIdx < 9; rowStartIdx += 3) {
+        let resultVal = 0;
+        const stopInt = rowStartIdx + 3;
+        let vecIdx = 0;
+        for (let rowIdx = rowStartIdx; rowIdx < stopInt; rowIdx++) {
+            const matVal = mat3[rowIdx],
+                vecVal = vec3[vecIdx];
+            resultVal += (matVal * vecVal);
+            vecIdx++;
+        }
+        result[resultIndex] = resultVal;
+        resultIndex++;
+    }
+    return result;
 }
 
 export { 
@@ -495,5 +540,7 @@ export {
     verticesArrayToArrayNumbers,
     countDistance,
     calculateEllipseVertices,
-    calculateLinesVertices
+    calculateLinesVertices,
+    mat3Multiply,
+    mat3MultiplyVector
  };

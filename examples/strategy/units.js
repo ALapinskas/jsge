@@ -386,7 +386,7 @@ class UnitPeasant extends UnitBase {
 				this.emit(ANIMATION.CARRY_RIGHT);
 			} else if (!hasGold && this.activeAnimation !== ANIMATION.MOVE_RIGHT)
 				this.emit(ANIMATION.MOVE_RIGHT);
-		} else if (direction > Math.PI/4 && direction < 3*Math.PI/4) {
+		} else if (direction >= Math.PI/4 && direction < 3*Math.PI/4) {
 			//console.log("move down");
 			if (hasGold && this.activeAnimation !== ANIMATION.CARRY_DOWN) {
 				this.emit(ANIMATION.CARRY_DOWN)
@@ -437,7 +437,7 @@ class UnitPeasant extends UnitBase {
 				//console.log("move right");
 				if (this.activeAnimation !== ANIMATION.MOVE_RIGHT)
 					this.emit(ANIMATION.MOVE_RIGHT);
-			} else if (direction > Math.PI/4 && direction < 3*Math.PI/4) {
+			} else if (direction >= Math.PI/4 && direction < 3*Math.PI/4) {
 				//console.log("move down");
 				if (this.activeAnimation !== ANIMATION.MOVE_DOWN)
 					this.emit(ANIMATION.MOVE_DOWN);

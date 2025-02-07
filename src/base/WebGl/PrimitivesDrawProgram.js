@@ -18,12 +18,6 @@ const primitivesVertexShader =  `
             0, 1, 0,
             u_translation.x, u_translation.y, 1
         );
-
-        //mat3 translationMatrix2 = mat3(
-        //    1, 0, 0,
-        //    0, 1, 0,
-        //    -u_translation.x, -u_translation.y, 1
-        //);
         
         mat3 rotationMatrix = mat3(
             c, s, 0,

@@ -621,7 +621,7 @@ export class WebGlEngine {
             pageData._addImageDebugBoundaries(utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
         }
         
-        const { 
+        const {
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
@@ -636,12 +636,12 @@ export class WebGlEngine {
             }
         }
         const atlasImage = renderObject.image,
-            animationIndex = renderObject.imageIndex,
-            shapeMaskId = renderObject._maskId,
-            spacing = renderObject.spacing,
-            margin = renderObject.margin,
-            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
-            scale = [1, 1];
+              animationIndex = renderObject.imageIndex,
+              shapeMaskId = renderObject._maskId,
+              spacing = renderObject.spacing,
+              margin = renderObject.margin,
+              blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
+              scale = [1, 1];
         
         let imageX = margin,
             imageY = margin,
@@ -650,31 +650,69 @@ export class WebGlEngine {
 
         if (animationIndex !== 0) {
             const imageColsNumber = (atlasImage.width + spacing - (2*margin)) / (renderObject.width + spacing);
-            colNum = animationIndex % imageColsNumber;
-            rowNum = Math.floor(animationIndex / imageColsNumber);
-            imageX = colNum * renderObject.width + (colNum * spacing) + margin,
-            imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
+                  colNum = animationIndex % imageColsNumber;
+                  rowNum = Math.floor(animationIndex / imageColsNumber);
+                  imageX = colNum * renderObject.width + (colNum * spacing) + margin,
+                  imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
         }
 
-        const posX = x - renderObject.width / 2,
-            posY = y - renderObject.height / 2;
+        // transform, scale and rotate should be done in js side
+        //gl.uniform2f(translationLocation, x, y);
+        //gl.uniform2f(scaleLocation, scale[0], scale[1]);
+        //gl.uniform1f(rotationRotation, renderObject.rotation);
+        // multiple matrices:
+        const c = Math.cos(renderObject.rotation),
+              s = Math.sin(renderObject.rotation),
+              translationMatrix = [
+                  1, 0, x,
+                  0, 1, y,
+                  0, 0, 1],
+              rotationMatrix = [
+                  c, -s, 0,
+                  s, c, 0,
+                  0, 0, 1
+              ],
+              scaleMatrix = [
+                  scale[0], 0, 0,
+                  0, scale[1], 0,
+                  0, 0, 1
+              ];
+        const matMult1 = utils.mat3Multiply(translationMatrix, rotationMatrix),
+              matMult2 = utils.mat3Multiply(matMult1, scaleMatrix);
+
+        const posX = 0 - renderObject.width / 2,
+              posY = 0 - renderObject.height / 2;
 
         const vecX1 = posX,
-            vecY1 = posY,
-            vecX2 = vecX1 + renderObject.width,
-            vecY2 = vecY1 + renderObject.height,
-            texX1 = 1 / atlasImage.width * imageX,
-            texY1 = 1 / atlasImage.height * imageY,
-            texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
-            texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
-
-        const vectors = [
+              vecY1 = posY,
+              vecX2 = vecX1 + renderObject.width,
+              vecY2 = vecY1 + renderObject.height,
+              texX1 = 1 / atlasImage.width * imageX,
+              texY1 = 1 / atlasImage.height * imageY,
+              texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
+              texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
+        //console.log("mat1: ", matMult1);
+        //console.log("mat2: ", matMult2);
+        const x1y1 = utils.mat3MultiplyVector(matMult2, [vecX1, vecY1, 1]),
+              x2y1 = utils.mat3MultiplyVector(matMult2, [vecX2, vecY1, 1]),
+              x1y2 = utils.mat3MultiplyVector(matMult2, [vecX1, vecY2, 1]),
+              x2y2 = utils.mat3MultiplyVector(matMult2, [vecX2, vecY2, 1]);
+        //console.log("x1y1: ", x1y1);
+        const vectorsOriginal = [
             vecX1, vecY1,
             vecX2, vecY1,
             vecX1, vecY2,
             vecX1, vecY2,
             vecX2, vecY1,
             vecX2, vecY2
+        ];
+        const vectors = [
+            x1y1[0], x1y1[1],
+            x2y1[0], x2y1[1],
+            x1y2[0], x1y2[1],
+            x1y2[0], x1y2[1],
+            x2y1[0], x2y1[1],
+            x2y2[0], x2y2[1]
         ],
         textures = [
             texX1, texY1,
@@ -684,10 +722,11 @@ export class WebGlEngine {
             texX2, texY1,
             texX2, texY2
         ];
-        // transform, scale and rotate should be done in js side
-        //gl.uniform2f(translationLocation, x, y);
-        //gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        //gl.uniform1f(rotationRotation, renderObject.rotation);
+        
+        //console.log("original: ", vectorsD);
+        //console.log("matrix mult: ", vectors);
+        
+        //vec2 position = (u_transformMat * vec3(a_position, 1)).xy;
         //console.log("translation x: ", x, " y: ", y);
         //console.log("scale x: ", scale[0], " y: ", scale[1]);
         //console.log("rotation: ", renderObject.rotation);
