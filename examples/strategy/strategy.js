@@ -223,12 +223,6 @@ export class Strategy extends GameStage {
 			const newPeasant = new UnitPeasant(0, 0, 16, 16, townCenter, this.draw, this.eventsAggregator);
 			const newPeasant2 = new UnitPeasant(0, 0, 16, 16, townCenter, this.draw, this.eventsAggregator);
 
-				/*
-			while(this.isObjectsCollision(townCenter.x + posX, townCenter.y + posY, newPeasant, this.#playerUnits)) {
-				posX -= 18;
-				console.log("collision shift left");
-			}*/
-			//console.log("no collision adding unit");
 			newPeasant.x = townCenter.x - this.#addUnitPosX;
 			newPeasant.y = townCenter.y;
 			newPeasant2.x = townCenter.x - this.#addUnitPosX;
