@@ -650,10 +650,10 @@ export class WebGlEngine {
 
         if (animationIndex !== 0) {
             const imageColsNumber = (atlasImage.width + spacing - (2*margin)) / (renderObject.width + spacing);
-                  colNum = animationIndex % imageColsNumber;
-                  rowNum = Math.floor(animationIndex / imageColsNumber);
-                  imageX = colNum * renderObject.width + (colNum * spacing) + margin,
-                  imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
+            colNum = animationIndex % imageColsNumber;
+            rowNum = Math.floor(animationIndex / imageColsNumber);
+            imageX = colNum * renderObject.width + (colNum * spacing) + margin,
+            imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
         }
 
         // transform, scale and rotate should be done in js side
@@ -735,7 +735,7 @@ export class WebGlEngine {
         const objectIndex = pageData.renderObjects.indexOf(renderObject),
             nextObject = pageData.renderObjects[objectIndex + 1];
         // 2. Is it have same texture and draw program?
-        if (nextObject && this._canRenderObjectsMerge(renderObject, nextObject)) {
+        if (nextObject && this._canImageObjectsMerge(renderObject, nextObject)) {
             //
             if (this.#currentVertices.length === 0) {
                 this.#currentVertices = vectors;
@@ -811,12 +811,12 @@ export class WebGlEngine {
      * @param {*} obj2
      * @returns {boolean} 
      */
-    _canRenderObjectsMerge = (obj1, obj2) => {
+    _canImageObjectsMerge = (obj1, obj2) => {
         const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
             registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
         if ((registeredO1.webglProgramName === registeredO2.webglProgramName) && 
             (obj1.type === obj2.type) &&
-            (obj1.image && obj2.image ? (obj1.image === obj2.image) : true)) {
+            (obj1.image === obj2.image)) {
                 return true;
         } else {
             return false;

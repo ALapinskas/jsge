@@ -561,7 +561,7 @@ export class GameStageData {
      * @ignore
      */
     _sortRenderObjectsBySortIndex() {
-        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
+        this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
     }
 
     /**

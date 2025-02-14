@@ -1,0 +1,19 @@
+Date: January 11 2025
+jsge@1.5.5
+Automatic assets uploads / Автоматическая подгрузка ассетов
+
+Status: In Progress
+
+Context:
+    Ассеты нужно сначала добавить в очередь загрузки из стадии register()
+    с помощью метода iLoader.add(), потом подгрузить их с помощью app.preloadAllData() и только после этого
+    использовать в GameStage c помощью метода iLoader.get(). 
+    Можно упростить этот процесс, автоматический погружая все файлы из папки /assets, 
+    а preloadAllData() вызывать неявно, при первом запуске GameStage. 
+    Стадию register() можно будет вообще убрать, либо сделать внутренней(internal)
+    Пропадет контроль над наименованиями ассетов.
+
+Decision:
+
+Impact:
+    No impact.

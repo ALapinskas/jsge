@@ -170,9 +170,7 @@ export class RenderLoop {
         let errors = [],
             isErrors = false,
             len = renderObjects.length,
-            renderObjectsPromises = new Array(len),
-            // for v1.5.2, each object has its own render method
-            drawCalls = len;
+            renderObjectsPromises = new Array(len);
 
         if (len !== 0) {
             //this.#checkCollisions(view.renderObjects);
@@ -207,7 +205,7 @@ export class RenderLoop {
             
         this._isCleared = false;
         if (isErrors === false) {
-            return Promise.resolve(drawCalls);
+            return Promise.resolve();
         } else {
             return Promise.reject(errors);
         }
@@ -251,7 +249,7 @@ export class RenderLoop {
      */
     #drawRenderObject(renderObject) {
         return this.#webGlEngine._preRender()
-            .then(() => this.#webGlEngine._drawRenderObject(renderObject, this.stageData))
+            .then(() => this.#isActive ? this.#webGlEngine._drawRenderObject(renderObject, this.stageData) : Promise.resolve())
             .then((args) => this.#webGlEngine._postRender(args));
     }
 

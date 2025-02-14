@@ -1380,6 +1380,7 @@ class DrawTiledLayer {
     #processData(tilesets, layerData) {
         // границы для слоя создаются одни, даже если они высчитываются с разных тайлсетов
         // поэтому суммируем и находим максимальное их количество
+        // также находим максимально возможное количество для текущего экрана
         let ellipseBLen = 0,
             pointBLen = 0,
             polygonBLen = 0;
@@ -1788,12 +1789,11 @@ class DrawObjectFactory {
     /**
      * 
      * @param {*} renderObject 
-     * @returns {Object}
+     * @returns {void}
      */
     #addObjectToPageData(renderObject) {
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex();
-        return renderObject;
     }
     /**
      * @param {number} x 
@@ -3289,7 +3289,7 @@ class GameStageData {
      * @ignore
      */
     _sortRenderObjectsBySortIndex() {
-        this.#renderObjects = this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
+        this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
     }
 
     /**
@@ -3642,9 +3642,6 @@ class IRender {
         );
         this._registerRenderInit(
             () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesAttributes)
-        );
-        this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_WITH_MERGE, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMAttributes)
         );
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
     }
@@ -4435,9 +4432,7 @@ class RenderLoop {
         let errors = [],
             isErrors = false,
             len = renderObjects.length,
-            renderObjectsPromises = new Array(len),
-            // for v1.5.2, each object has its own render method
-            drawCalls = len;
+            renderObjectsPromises = new Array(len);
 
         if (len !== 0) {
             //this.#checkCollisions(view.renderObjects);
@@ -4472,7 +4467,7 @@ class RenderLoop {
             
         this._isCleared = false;
         if (isErrors === false) {
-            return Promise.resolve(drawCalls);
+            return Promise.resolve();
         } else {
             return Promise.reject(errors);
         }
@@ -4516,7 +4511,7 @@ class RenderLoop {
      */
     #drawRenderObject(renderObject) {
         return this.#webGlEngine._preRender()
-            .then(() => this.#webGlEngine._drawRenderObject(renderObject, this.stageData))
+            .then(() => this.#isActive ? this.#webGlEngine._drawRenderObject(renderObject, this.stageData) : Promise.resolve())
             .then((args) => this.#webGlEngine._postRender(args));
     }
 
@@ -5119,10 +5114,11 @@ const imgMVertexShader =  `
     varying vec2 v_texCoord;
 
     void main(void) {
-        vec2 clipSpace = a_position / u_resolution * 2.0 - 1.0;
+        vec2 clipSpace = position / u_resolution * 2.0 - 1.0;
         gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         v_texCoord = a_texCoord;
     }`;
+
 const imgMFragmentShader = `
     precision mediump float;
 
@@ -5174,12 +5170,6 @@ const primitivesVertexShader =  `
             0, 1, 0,
             u_translation.x, u_translation.y, 1
         );
-
-        //mat3 translationMatrix2 = mat3(
-        //    1, 0, 0,
-        //    0, 1, 0,
-        //    -u_translation.x, -u_translation.y, 1
-        //);
         
         mat3 rotationMatrix = mat3(
             c, s, 0,
@@ -5304,7 +5294,14 @@ class WebGlEngine {
      * @type {WebGLBuffer | null}
      */
     #texCoordBuffer;
-
+    /**
+     * @type {Array<number>}
+     */
+    #currentVertices = [];
+    /**
+     * @type {Array<number>}
+     */
+    #currentTextures = [];
     /**
      * @type {Map<string, WebGLProgram}
      */
@@ -5475,7 +5472,7 @@ class WebGlEngine {
     
     /**
      * 
-     * @returns {Promise<void>}
+     * @returns {Promise<any>}
      */
     _render(verticesNumber, primitiveType, offset = 0) {
         this.#gl.drawArrays(primitiveType, offset, verticesNumber);
@@ -5518,8 +5515,10 @@ class WebGlEngine {
         return new Promise((resolve, reject) => {
             const gl = this.#gl;
 
-            this.#loopDebug.incrementDrawCallsCounter();
-            this.#loopDebug.verticesDraw = verticesNumber;
+            if (verticesNumber !== 0) {
+                this.#loopDebug.incrementDrawCallsCounter();
+                this.#loopDebug.verticesDraw = verticesNumber;
+            }
 
             gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
 
@@ -5795,21 +5794,21 @@ class WebGlEngine {
             vecX2 = vecX1 + boxWidth,
             vecY2 = vecY1 + boxHeight;
         const verticesBufferData = [
-                vecX1, vecY1,
-                vecX2, vecY1,
-                vecX1, vecY2,
-                vecX1, vecY2,
-                vecX2, vecY1,
-                vecX2, vecY2
-            ],
-            texturesBufferData = [
-                0, 0,
-                1, 0,
-                0, 1,
-                0, 1,
-                1, 0,
-                1, 1
-            ];
+            vecX1, vecY1,
+            vecX2, vecY1,
+            vecX1, vecY2,
+            vecX1, vecY2,
+            vecX2, vecY1,
+            vecX2, vecY2
+        ],
+        texturesBufferData = [
+            0, 0,
+            1, 0,
+            0, 1,
+            0, 1,
+            1, 0,
+            1, 1
+        ];
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -5871,10 +5870,7 @@ class WebGlEngine {
             pageData._addImageDebugBoundaries(_index_js__WEBPACK_IMPORTED_MODULE_14__.utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
         }
         
-        const { 
-            u_translation: translationLocation,
-            u_rotation: rotationRotation,
-            u_scale: scaleLocation,
+        const {
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
@@ -5889,18 +5885,18 @@ class WebGlEngine {
             }
         }
         const atlasImage = renderObject.image,
-            animationIndex = renderObject.imageIndex,
-            shapeMaskId = renderObject._maskId,
-            spacing = renderObject.spacing,
-            margin = renderObject.margin,
-            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
-            scale = [1, 1];
+              animationIndex = renderObject.imageIndex,
+              shapeMaskId = renderObject._maskId,
+              spacing = renderObject.spacing,
+              margin = renderObject.margin,
+              blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
+              scale = [1, 1];
         
         let imageX = margin,
             imageY = margin,
             colNum = 0,
-            rowNum = 0,
-            verticesNumber = 0;
+            rowNum = 0;
+
         if (animationIndex !== 0) {
             const imageColsNumber = (atlasImage.width + spacing - (2*margin)) / (renderObject.width + spacing);
             colNum = animationIndex % imageColsNumber;
@@ -5908,23 +5904,64 @@ class WebGlEngine {
             imageX = colNum * renderObject.width + (colNum * spacing) + margin,
             imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
         }
-        const posX = x - renderObject.width / 2,
-            posY = y - renderObject.height / 2;
+
+        // transform, scale and rotate should be done in js side
+        //gl.uniform2f(translationLocation, x, y);
+        //gl.uniform2f(scaleLocation, scale[0], scale[1]);
+        //gl.uniform1f(rotationRotation, renderObject.rotation);
+        // multiple matrices:
+        const c = Math.cos(renderObject.rotation),
+              s = Math.sin(renderObject.rotation),
+              translationMatrix = [
+                  1, 0, x,
+                  0, 1, y,
+                  0, 0, 1],
+              rotationMatrix = [
+                  c, -s, 0,
+                  s, c, 0,
+                  0, 0, 1
+              ],
+              scaleMatrix = [
+                  scale[0], 0, 0,
+                  0, scale[1], 0,
+                  0, 0, 1
+              ];
+        const matMult1 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(translationMatrix, rotationMatrix),
+              matMult2 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(matMult1, scaleMatrix);
+
+        const posX = 0 - renderObject.width / 2,
+              posY = 0 - renderObject.height / 2;
+
         const vecX1 = posX,
-            vecY1 = posY,
-            vecX2 = vecX1 + renderObject.width,
-            vecY2 = vecY1 + renderObject.height,
-            texX1 = 1 / atlasImage.width * imageX,
-            texY1 = 1 / atlasImage.height * imageY,
-            texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
-            texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
-        const vectors = [
+              vecY1 = posY,
+              vecX2 = vecX1 + renderObject.width,
+              vecY2 = vecY1 + renderObject.height,
+              texX1 = 1 / atlasImage.width * imageX,
+              texY1 = 1 / atlasImage.height * imageY,
+              texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
+              texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
+        //console.log("mat1: ", matMult1);
+        //console.log("mat2: ", matMult2);
+        const x1y1 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX1, vecY1, 1]),
+              x2y1 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX2, vecY1, 1]),
+              x1y2 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX1, vecY2, 1]),
+              x2y2 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX2, vecY2, 1]);
+        //console.log("x1y1: ", x1y1);
+        const vectorsOriginal = [
             vecX1, vecY1,
             vecX2, vecY1,
             vecX1, vecY2,
             vecX1, vecY2,
             vecX2, vecY1,
             vecX2, vecY2
+        ];
+        const vectors = [
+            x1y1[0], x1y1[1],
+            x2y1[0], x2y1[1],
+            x1y2[0], x1y2[1],
+            x1y2[0], x1y2[1],
+            x2y1[0], x2y1[1],
+            x2y2[0], x2y2[1]
         ],
         textures = [
             texX1, texY1,
@@ -5934,56 +5971,106 @@ class WebGlEngine {
             texX2, texY1,
             texX2, texY2
         ];
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, renderObject.rotation);
         
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
-
-        verticesNumber += vectors.length / 2;
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-        //textures buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textures), gl.STATIC_DRAW);
-
-        gl.enableVertexAttribArray(texCoordLocation);
-        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-        let textureStorage = renderObject._textureStorage;
-        if (!textureStorage) {
-            textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture());
-            renderObject._textureStorage = textureStorage;
-        } 
-        if (textureStorage._isTextureRecalculated === true) {
-            this.#updateWebGlTexture(gl, textureStorage._texture, renderObject.image);
-            textureStorage._isTextureRecalculated = false;
+        //console.log("original: ", vectorsD);
+        //console.log("matrix mult: ", vectors);
+        
+        //vec2 position = (u_transformMat * vec3(a_position, 1)).xy;
+        //console.log("translation x: ", x, " y: ", y);
+        //console.log("scale x: ", scale[0], " y: ", scale[1]);
+        //console.log("rotation: ", renderObject.rotation);
+        // Determine could we merge next drawObject or not
+        // 1. Find next object
+        const objectIndex = pageData.renderObjects.indexOf(renderObject),
+            nextObject = pageData.renderObjects[objectIndex + 1];
+        // 2. Is it have same texture and draw program?
+        if (nextObject && this._canImageObjectsMerge(renderObject, nextObject)) {
+            //
+            if (this.#currentVertices.length === 0) {
+                this.#currentVertices = vectors;
+                this.#currentTextures = textures;
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...vectors);
+                this.#currentTextures.push(...textures);
+                return Promise.resolve(0);
+            }
         } else {
-            this.#bindTexture(gl, textureStorage._texture);
-        }
+            
+            gl.useProgram(program);
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            // bind data and call draw
+            if (this.#currentVertices.length > 0) {
+                this.#currentVertices.push(...vectors);
+                this.#currentTextures.push(...textures);
+            } else {
+                this.#currentVertices = vectors;
+                this.#currentTextures = textures;
+            }
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
 
-        gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-        // make image transparent parts transparent
-        gl.blendFunc(blend[0], blend[1]);
-        if (shapeMaskId) {
-            gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
-            //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+            const verticesNumber = this.#currentVertices.length / 2;
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            //Tell the attribute how to get data out of positionBuffer
+            const size = 2,
+                type = gl.FLOAT, // data is 32bit floats
+                normalize = false,
+                stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                offset = 0; // start of beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+            //textures buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+            gl.enableVertexAttribArray(texCoordLocation);
+            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+
+            let textureStorage = renderObject._textureStorage;
+            if (!textureStorage) {
+                textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture());
+                renderObject._textureStorage = textureStorage;
+            } 
+            if (textureStorage._isTextureRecalculated === true) {
+                this.#updateWebGlTexture(gl, textureStorage._texture, renderObject.image);
+                textureStorage._isTextureRecalculated = false;
+            } else {
+                this.#bindTexture(gl, textureStorage._texture);
+            }    
+
+            gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+            // make image transparent parts transparent
+            gl.blendFunc(blend[0], blend[1]);
+            if (shapeMaskId) {
+                gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+            }
+            this.#currentVertices = [];
+            this.#currentTextures = [];
+            return this._render(verticesNumber, gl.TRIANGLES);
         }
-        
-        return this._render(verticesNumber, gl.TRIANGLES);
     };
 
+    /**
+     * 
+     * @param {*} obj1 
+     * @param {*} obj2
+     * @returns {boolean} 
+     */
+    _canImageObjectsMerge = (obj1, obj2) => {
+        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
+            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName) && 
+            (obj1.type === obj2.type) &&
+            (obj1.image === obj2.image)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
     _bindTileImages = async(renderLayer, gl, pageData, program, vars) => {
         const { u_translation: translationLocation,
             u_rotation: rotationRotation,
@@ -6247,7 +6334,7 @@ class WebGlEngine {
     /**
      * @ignore
      * @param {string} objectType - object name registered to DrawObjectFactory | object type registered to DrawObjectFactory
-     * @param {function(renderObject, gl, pageData, program, vars):Promise<any[]>} objectRenderMethod - should be promise based returns vertices number and draw program
+     * @param {function(renderObject, gl, pageData, program, vars):Promise<any>} objectRenderMethod - should be promise based returns vertices number and draw program
      * @param {string=} objectWebGlDrawProgram 
      */
     _registerObjectRender(objectType, objectRenderMethod, objectWebGlDrawProgram) {
@@ -7191,8 +7278,7 @@ const CONST = {
     WEBGL: {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
-            IMAGES: "drawImages",
-            IMAGES_WITH_MERGE: "drawImagesWithMerge"
+            IMAGES: "drawImages"
         }
     },
     DRAW_TYPE: {
@@ -7403,6 +7489,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isPointRectIntersect": () => (/* binding */ isPointRectIntersect),
 /* harmony export */   "isPolygonLineIntersect": () => (/* binding */ isPolygonLineIntersect),
 /* harmony export */   "isSafari": () => (/* binding */ isSafari),
+/* harmony export */   "mat3Multiply": () => (/* binding */ mat3Multiply),
+/* harmony export */   "mat3MultiplyVector": () => (/* binding */ mat3MultiplyVector),
 /* harmony export */   "pointToCircleDistance": () => (/* binding */ pointToCircleDistance),
 /* harmony export */   "randomFromArray": () => (/* binding */ randomFromArray),
 /* harmony export */   "verticesArrayToArrayNumbers": () => (/* binding */ verticesArrayToArrayNumbers)
@@ -7866,6 +7954,60 @@ function calculateEllipseVertices(x = 0, y = 0, radiusX, radiusY, angle = 2*Math
     }
 
     return ellipsePolygonCoords;
+}
+
+/**
+ * 
+ * @param { Array<number> } mat1 
+ * @param { Array<number> } mat2 
+ * @returns { Array<number> }
+ */
+function mat3Multiply(mat1, mat2) {
+    let matResult = [];
+    for (let resultIdx = 0; resultIdx < 9; resultIdx += 3) {
+        let resultIndex = resultIdx;
+        
+        for (let i = 0; i < 3; i++) {
+            let resultVal = 0,
+                k = i;
+                
+            for (let j = 0; j < 3; j++) {
+                const mat1Val = mat1[resultIdx + j],
+                    mat2Val = mat2[k];
+
+                resultVal += (mat1Val * mat2Val);
+                k+=3;
+            }
+            matResult[resultIndex] = resultVal;
+            resultIndex++;
+        }
+    }
+    return matResult;
+}
+
+/**
+ * 
+ * @param {Array<number>} mat3 
+ * @param {Array<number>} vec3
+ * @returns {Array<number>} [x1, y1, z1]
+ */
+function mat3MultiplyVector (mat3, vec3) {
+    let result = [];
+    let resultIndex = 0;
+    for (let rowStartIdx = 0; rowStartIdx < 9; rowStartIdx += 3) {
+        let resultVal = 0;
+        const stopInt = rowStartIdx + 3;
+        let vecIdx = 0;
+        for (let rowIdx = rowStartIdx; rowIdx < stopInt; rowIdx++) {
+            const matVal = mat3[rowIdx],
+                vecVal = vec3[vecIdx];
+            resultVal += (matVal * vecVal);
+            vecIdx++;
+        }
+        result[resultIndex] = resultVal;
+        resultIndex++;
+    }
+    return result;
 }
 
 

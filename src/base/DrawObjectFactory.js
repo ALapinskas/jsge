@@ -44,12 +44,11 @@ export class DrawObjectFactory {
     /**
      * 
      * @param {*} renderObject 
-     * @returns {Object}
+     * @returns {void}
      */
     #addObjectToPageData(renderObject) {
         this.#currentPageData._renderObject = renderObject;
         this.#currentPageData._sortRenderObjectsBySortIndex();
-        return renderObject;
     }
     /**
      * @param {number} x 
