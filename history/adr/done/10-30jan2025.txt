@@ -2,7 +2,7 @@ Date: January 30 2025
 jsge@1.5.4
 Merge draw calls / Доработать метод _bindRenderObject()
 
-Status: In Progress
+Status: Done (1.5.5)
 
 Context:
     _bindRenderObject() включается в себя части подготовки объекта
