@@ -138,7 +138,6 @@ export class GameStage {
             Warning(WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "stage.draw methods add objects to pageData, no need to call addRenderObject");
         } else {
             data._renderObject = renderObject;
-            data._sortRenderObjectsBySortIndex(); 
         }
     };
 

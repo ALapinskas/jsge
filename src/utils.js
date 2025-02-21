@@ -489,25 +489,59 @@ function mat3Multiply(mat1, mat2) {
 
 /**
  * 
- * @param {Array<number>} mat3 
- * @param {Array<number>} vec3
- * @returns {Array<number>} [x1, y1, z1]
+ * @param {Array<number>} mat3 [a, b, c,
+ *                              d. e, f,
+ *                              g, h, i]
+ * @param {Array<number>} vec3 [x1, y1]
+ * @returns {Array<number>} [a * x1 + b * y1 + c * 1,  d * x1 + e * y1 + f * 1]
  */
 function mat3MultiplyVector (mat3, vec3) {
     let result = [];
     let resultIndex = 0;
-    for (let rowStartIdx = 0; rowStartIdx < 9; rowStartIdx += 3) {
+    for (let rowStartIdx = 0; rowStartIdx < 6; rowStartIdx += 3) {
         let resultVal = 0;
         const stopInt = rowStartIdx + 3;
         let vecIdx = 0;
         for (let rowIdx = rowStartIdx; rowIdx < stopInt; rowIdx++) {
             const matVal = mat3[rowIdx],
-                vecVal = vec3[vecIdx];
+                vecVal = vec3[vecIdx] || 1; // z1 coord
             resultVal += (matVal * vecVal);
             vecIdx++;
         }
         result[resultIndex] = resultVal;
         resultIndex++;
+    }
+    return result;
+}
+
+/**
+ * 
+ * @param {Array<number>} mat3 [a, b, c,
+ *                              d. e, f,
+ *                              g, h, i]
+ * @param {Array<number>} vec3 [x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2, ...]
+ * @returns {Array<number>} [a*x1 + b*y1 + c*1, d*y1 + e*y1 + f*1, ...]
+ */
+function mat3MultiplyPosCoords (mat3, vec3) {
+    const vec3Len = vec3.length;
+    let result = [];
+    let resultIndex = 0;
+    for (let nPair = 0; nPair < vec3Len; nPair += 2) {
+        for (let rowStartIdx = 0; rowStartIdx < 6; rowStartIdx += 3) {
+            let resultVal = 0;
+            const stopInt = rowStartIdx + 3;
+            let vecIdx = nPair;
+            let iteration = 1;
+            for (let rowIdx = rowStartIdx; rowIdx < stopInt; rowIdx++) {
+                const matVal = mat3[rowIdx],
+                    vecVal = iteration === 3 ? 1 : vec3[vecIdx]; // 3: z1 = 1 coord
+                resultVal += (matVal * vecVal);
+                vecIdx++;
+                iteration++;
+            }
+            result[resultIndex] = resultVal;
+            resultIndex++;
+        }
     }
     return result;
 }
@@ -542,5 +576,6 @@ export {
     calculateEllipseVertices,
     calculateLinesVertices,
     mat3Multiply,
-    mat3MultiplyVector
+    mat3MultiplyVector,
+    mat3MultiplyPosCoords
  };

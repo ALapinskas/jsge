@@ -1793,7 +1793,6 @@ class DrawObjectFactory {
      */
     #addObjectToPageData(renderObject) {
         this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex();
     }
     /**
      * @param {number} x 
@@ -1911,7 +1910,7 @@ class DrawObjectFactory {
             tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)).filter((tileset) => {
                 const tilesetStartI = tileset.firstgid,
                     tilesetLastI = tilesetStartI + tileset.data.tilecount;
-                if (tilesetIds.find((id) => ((id >= tilesetStartI) && (id <= tilesetLastI)))) {
+                if (tilesetIds.find((id) => ((id >= tilesetStartI) && (id < tilesetLastI)))) {
                     return true;
                 } else {
                     return false;
@@ -1919,6 +1918,9 @@ class DrawObjectFactory {
             }), // copy to avoid change same tilemap instance in different tiledLayers
             tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             renderObject = new _2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__.DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+        if (tilesetImages.length > 1) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_10__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_11__.WARNING_CODES.MULTIPLE_IMAGE_TILESET, " tileset " + layerKey + " includes multiple images, it can case performance issues!");
+        }
         //console.log(layerKey);
         //console.log(tilesetIds);
         //console.log(tilesets);
@@ -2187,7 +2189,6 @@ class GameStage {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.NEW_BEHAVIOR_INTRODUCED, "stage.draw methods add objects to pageData, no need to call addRenderObject");
         } else {
             data._renderObject = renderObject;
-            data._sortRenderObjectsBySortIndex(); 
         }
     };
 
@@ -2802,7 +2803,11 @@ class GameStageData {
      * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
      */
     #renderObjects = [];
-    
+    /**
+     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
+     */
+    #pendingRenderObjects = [];
+
     /**
      * @type {boolean}
      */
@@ -3292,18 +3297,28 @@ class GameStageData {
         this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
     }
 
+    _processPendingRenderObjects() {
+        if (this.#pendingRenderObjects.length > 0) {
+            this.#renderObjects.push(...this.#pendingRenderObjects);
+            this._sortRenderObjectsBySortIndex();
+            this.#pendingRenderObjects = [];
+        }
+    }
+
     /**
      * @ignore
      */
     set _renderObject(object) {
-        this.#renderObjects.push(object);
+        this.#pendingRenderObjects.push(object);
     } 
 
     /**
      * @ignore
      */
     set _renderObjects(objects) {
-        this.#renderObjects = objects;
+        objects.forEach(object => {
+            this._renderObject = object;
+        });
     } 
 }
 
@@ -3642,6 +3657,9 @@ class IRender {
         );
         this._registerRenderInit(
             () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesAttributes)
+        );
+        this._registerRenderInit(
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMAttributes)
         );
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
     }
@@ -4074,6 +4092,7 @@ class ISystem {
                 }
                 //stage._attachCanvasToContainer(this.#canvasContainer);
                 stage._start(options);
+                pageData._processPendingRenderObjects();
                 this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.EVENTS.SYSTEM.START_PAGE);
                 this.#iRender._startRender(pageData);
             }
@@ -4467,6 +4486,7 @@ class RenderLoop {
             
         this._isCleared = false;
         if (isErrors === false) {
+            this.#stageData._processPendingRenderObjects();
             return Promise.resolve();
         } else {
             return Promise.reject(errors);
@@ -4946,11 +4966,11 @@ __webpack_require__.r(__webpack_exports__);
  */
 class TiledLayerTempStorage {
     /**
-     * @type {Float32Array}
+     * @type {Array}
      */
     #vectors;
     /**
-     * @type {Float32Array}
+     * @type {Array}
      */
     #textures;
     /**
@@ -5001,8 +5021,8 @@ class TiledLayerTempStorage {
         }
         this.#bufferSize = this.#nonEmptyCells * 12;
 
-        this.#vectors = new Float32Array(this.#bufferSize);
-        this.#textures = new Float32Array(this.#bufferSize);
+        this.#vectors = new Array(this.#bufferSize);
+        this.#textures = new Array(this.#bufferSize);
         this.#boundariesTempIndexes = new Int32Array(this.#cells * 4);
     }
 }
@@ -5114,7 +5134,7 @@ const imgMVertexShader =  `
     varying vec2 v_texCoord;
 
     void main(void) {
-        vec2 clipSpace = position / u_resolution * 2.0 - 1.0;
+        vec2 clipSpace = a_position / u_resolution * 2.0 - 1.0;
         gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         v_texCoord = a_texCoord;
     }`;
@@ -5295,15 +5315,15 @@ class WebGlEngine {
      */
     #texCoordBuffer;
     /**
-     * @type {Array<number>}
+     * @type {Array<number> | null}
      */
-    #currentVertices = [];
+    #currentVertices = null;
     /**
-     * @type {Array<number>}
+     * @type {Array<number> | null}
      */
-    #currentTextures = [];
+    #currentTextures = null;
     /**
-     * @type {Map<string, WebGLProgram}
+     * @type {Map<string, WebGLProgram>}
      */
     #registeredWebGlPrograms = new Map();
     /**
@@ -5328,14 +5348,14 @@ class WebGlEngine {
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
 
-        this._registerObjectRender(_2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__.DrawTextObject.name, this._bindText, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(_2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__.DrawTextObject.name, this._bindText, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_2d_DrawRectObject_js__WEBPACK_IMPORTED_MODULE_10__.DrawRectObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_9__.DrawPolygonObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_2d_DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_6__.DrawCircleObject.name, this._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_2d_DrawConusObject_js__WEBPACK_IMPORTED_MODULE_7__.DrawConusObject.name, this._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(_2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer.name, this._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(_2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer.name, this._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_8__.DrawLineObject.name, this._bindLine, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE, this._bindImage, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE, this._bindImage, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
 
     getProgram(name) {
@@ -5787,12 +5807,13 @@ class WebGlEngine {
             y = renderObject.y - yOffset - boxHeight,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA];
 
-        const rotation = 0,
+        const rotation = renderObject.rotation || 0,
             scale = [1, 1];
         const vecX1 = x,
             vecY1 = y,
             vecX2 = vecX1 + boxWidth,
             vecY2 = vecY1 + boxHeight;
+
         const verticesBufferData = [
             vecX1, vecY1,
             vecX2, vecY1,
@@ -5858,7 +5879,19 @@ class WebGlEngine {
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         gl.depthMask(false);
         return this._render(verticesNumber, gl.TRIANGLES);
+        
     };
+
+    _canTextBeMerged = (obj1, obj2) => {
+        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
+            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName) && 
+            (obj1.type === obj2.type)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
@@ -5926,8 +5959,7 @@ class WebGlEngine {
                   0, scale[1], 0,
                   0, 0, 1
               ];
-        const matMult1 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(translationMatrix, rotationMatrix),
-              matMult2 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(matMult1, scaleMatrix);
+        const matMultiply = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(_index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
 
         const posX = 0 - renderObject.width / 2,
               posY = 0 - renderObject.height / 2;
@@ -5942,12 +5974,8 @@ class WebGlEngine {
               texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
         //console.log("mat1: ", matMult1);
         //console.log("mat2: ", matMult2);
-        const x1y1 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX1, vecY1, 1]),
-              x2y1 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX2, vecY1, 1]),
-              x1y2 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX1, vecY2, 1]),
-              x2y2 = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyVector(matMult2, [vecX2, vecY2, 1]);
         //console.log("x1y1: ", x1y1);
-        const vectorsOriginal = [
+        const vectorsD =  [
             vecX1, vecY1,
             vecX2, vecY1,
             vecX1, vecY2,
@@ -5955,14 +5983,7 @@ class WebGlEngine {
             vecX2, vecY1,
             vecX2, vecY2
         ];
-        const vectors = [
-            x1y1[0], x1y1[1],
-            x2y1[0], x2y1[1],
-            x1y2[0], x1y2[1],
-            x1y2[0], x1y2[1],
-            x2y1[0], x2y1[1],
-            x2y2[0], x2y2[1]
-        ],
+        const vectors = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyPosCoords(matMultiply, vectorsD),
         textures = [
             texX1, texY1,
             texX2, texY1,
@@ -5972,21 +5993,17 @@ class WebGlEngine {
             texX2, texY2
         ];
         
-        //console.log("original: ", vectorsD);
-        //console.log("matrix mult: ", vectors);
-        
         //vec2 position = (u_transformMat * vec3(a_position, 1)).xy;
         //console.log("translation x: ", x, " y: ", y);
         //console.log("scale x: ", scale[0], " y: ", scale[1]);
         //console.log("rotation: ", renderObject.rotation);
         // Determine could we merge next drawObject or not
         // 1. Find next object
-        const objectIndex = pageData.renderObjects.indexOf(renderObject),
-            nextObject = pageData.renderObjects[objectIndex + 1];
+        const nextObject = this.getNextRenderObject(renderObject, pageData);
         // 2. Is it have same texture and draw program?
         if (nextObject && this._canImageObjectsMerge(renderObject, nextObject)) {
             //
-            if (this.#currentVertices.length === 0) {
+            if (this.#currentVertices === null) {
                 this.#currentVertices = vectors;
                 this.#currentTextures = textures;
                 return Promise.resolve(0);
@@ -6001,12 +6018,12 @@ class WebGlEngine {
             // set the resolution
             gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
             // bind data and call draw
-            if (this.#currentVertices.length > 0) {
-                this.#currentVertices.push(...vectors);
-                this.#currentTextures.push(...textures);
-            } else {
+            if (this.#currentVertices === null) {
                 this.#currentVertices = vectors;
                 this.#currentTextures = textures;
+            } else {
+                this.#currentVertices.push(...vectors);
+                this.#currentTextures.push(...textures);
             }
             
             gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
@@ -6048,8 +6065,8 @@ class WebGlEngine {
                 gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
                 //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
             }
-            this.#currentVertices = [];
-            this.#currentTextures = [];
+            this.#currentVertices = null;
+            this.#currentTextures = null;
             return this._render(verticesNumber, gl.TRIANGLES);
         }
     };
@@ -6095,78 +6112,152 @@ class WebGlEngine {
                 renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
         const translation = [0, 0],
-            scale = [1, 1],
-            rotation = 0,
-            drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
-            shapeMaskId = renderLayer._maskId;
+              scale = [1, 1],
+              rotation = renderLayer.rotation || 0,
+              drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
+              shapeMaskId = renderLayer._maskId;
 
-        let verticesNumber = 0,
-            isTextureBind = false;
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.enableVertexAttribArray(texCoordLocation);
-
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation,translation[0], translation[1]);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-
+        /*
+        const c = Math.cos(renderLayer.rotation || 0),
+              s = Math.sin(renderLayer.rotation || 0),
+              translationMatrix = [
+                  1, 0, translation[0],
+                  0, 1, translation[1],
+                  0, 0, 1],
+              rotationMatrix = [
+                  c, -s, 0,
+                  s, c, 0,
+                  0, 0, 1
+              ],
+              scaleMatrix = [
+                  scale[0], 0, 0,
+                  0, scale[1], 0,
+                  0, 0, 1
+              ];
+        const matMultiply = utils.mat3Multiply(utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
         for (let i = 0; i < renderLayerData.length; i++) {
-            const data = renderLayerData[i],
-                vectors = data[0],
-                textures = data[1],
-                image_name = data[2],
-                image = data[3];
-            // if layer use multiple tilesets
-            if (vectors.length > 0 && textures.length > 0) {
-                // need to have additional draw call for each new texture added
-                // probably it could be combined in one draw call if multiple textures 
-                // could be used in one draw call
-                if (isTextureBind) {
-                    await this._render(verticesNumber, gl.TRIANGLES);
-                }
-                
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, vectors, gl.STATIC_DRAW);
-
-                //Tell the attribute how to get data out of positionBuffer
-                const size = 2,
-                    type = gl.FLOAT, // data is 32bit floats
-                    normalize = false,
-                    stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                    offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
-                gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-                //textures buffer
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, textures, gl.STATIC_DRAW);
-
-                gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
-
-                let textureStorage = renderLayer._textureStorages[i];
-                
-                if (!textureStorage) {
-                    textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture(), i);
-                    renderLayer._setTextureStorage(i, textureStorage);
-                }
-                if (textureStorage._isTextureRecalculated === true) {
-                    this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
-                    textureStorage._isTextureRecalculated = false;
-                } else {
-                    //console.log("bind texture");
-                    this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
-                }
-                gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-                gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
-                verticesNumber = vectors.length / 2;
-                if (shapeMaskId) {
-                    gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
-                }
-                isTextureBind = true;
+            renderLayerData[i][0] = utils.mat3MultiplyPosCoords(matMultiply, renderLayerData[i][0]);
+        }*/
+        //console.log("mat1: ", matMult1);
+        //console.log("mat2: ", matMult2);
+        /*
+        const x1y1 = utils.mat3MultiplyVector(matMultiply, [vecX1, vecY1, 1]),
+              x2y1 = utils.mat3MultiplyVector(matMultiply, [vecX2, vecY1, 1]),
+              x1y2 = utils.mat3MultiplyVector(matMultiply, [vecX1, vecY2, 1]),
+              x2y2 = utils.mat3MultiplyVector(matMultiply, [vecX2, vecY2, 1]);
+        */
+        const nextObject = this.getNextRenderObject(renderLayer, pageData);
+              
+        if (this._canMergeNextTileObject(renderLayer, nextObject)) {
+            if (this.#currentVertices === null) {
+                this.#currentVertices = renderLayerData[0][0];
+                this.#currentTextures = renderLayerData[0][1];
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...renderLayerData[0][0]);
+                this.#currentTextures.push(...renderLayerData[0][1]);
+                return Promise.resolve(0);
             }
+        } else {
+            let verticesNumber = 0,
+                isTextureBind = false;
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            gl.enableVertexAttribArray(texCoordLocation);
+
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            //gl.uniform2f(translationLocation,translation[0], translation[1]);
+            //gl.uniform2f(scaleLocation, scale[0], scale[1]);
+            //gl.uniform1f(rotationRotation, rotation);
+            
+            for (let i = 0; i < renderLayerData.length; i++) {
+                const data = renderLayerData[i],
+                    vectors = data[0],
+                    textures = data[1],
+                    image_name = data[2],
+                    image = data[3];
+                // if layer use multiple tilesets
+                if (vectors.length > 0 && textures.length > 0) {
+                    // need to have additional draw call for each new texture added
+                    // probably it could be combined in one draw call if multiple textures 
+                    // could be used in one draw call
+                    if (isTextureBind) {
+                        this.#currentVertices = null;
+                        this.#currentTextures = null;
+                        await this._render(verticesNumber, gl.TRIANGLES);
+                    }
+
+                    if (this.#currentVertices === null) {
+                        this.#currentVertices = vectors;
+                        this.#currentTextures = textures;
+                    } else {
+                        this.#currentVertices.push(...vectors);
+                        this.#currentTextures.push(...textures);
+                    }
+                    
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+
+                    //Tell the attribute how to get data out of positionBuffer
+                    const size = 2,
+                        type = gl.FLOAT, // data is 32bit floats
+                        normalize = false,
+                        stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                        offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
+                    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+                    //textures buffer
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+                    gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
+
+                    let textureStorage = renderLayer._textureStorages[i];
+                    
+                    if (!textureStorage) {
+                        textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture(), i);
+                        renderLayer._setTextureStorage(i, textureStorage);
+                    }
+                    if (textureStorage._isTextureRecalculated === true) {
+                        this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
+                        textureStorage._isTextureRecalculated = false;
+                    } else {
+                        //console.log("bind texture");
+                        this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
+                    }
+                    gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+                    gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
+                    
+                    verticesNumber = this.#currentVertices.length / 2;
+                    if (shapeMaskId) {
+                        gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                    }
+                    isTextureBind = true;
+                }
+            }
+            this.#currentVertices = null;
+            this.#currentTextures = null;
+            renderLayerData = null;
+            return this._render(verticesNumber, gl.TRIANGLES);
         }
-        return this._render(verticesNumber, gl.TRIANGLES);
     };
+
+    /**
+     * 
+     * @param {*} obj1 
+     * @param {*} obj2 
+     * @returns {boolean}
+     */
+    _canMergeNextTileObject = (obj1, obj2) => {
+        if ((obj2 instanceof _2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer) 
+            && (obj1.tilesetImages.length === 1) 
+            && (obj2.tilesetImages.length === 1) 
+            && (obj1.tilesetImages[0] === obj2.tilesetImages[0])) {
+                return true;
+        } else {
+            return false;
+        }
+    }
 
     _drawPolygon(renderObject, pageData) {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
@@ -6438,8 +6529,10 @@ class WebGlEngine {
                     t = layerTilesetData.textures,
                     filledSize = 0;
                     
-                v.fill(0);
-                t.fill(0);
+                //v.fill(0);
+                //t.fill(0);
+                v = [];
+                t = [];
                 let boundariesRowsIndexes = layerTilesetData._bTempIndexes;
                 const fullRowCellsNum = screenCols * 4;
                 
@@ -6794,8 +6887,10 @@ class WebGlEngine {
                     t = layerTilesetData.textures,
                     filledSize = 0;
                 
-                v.fill(0);
-                t.fill(0);
+                //v.fill(0);
+                //t.fill(0);
+                v = [];
+                t = [];
                 for (let row = 0; row < layerRows; row++) {
                     for (let col = 0; col < layerCols; col++) {
                         let tile = layerData.data[mapIndex];
@@ -6957,7 +7052,7 @@ class WebGlEngine {
                 const verticesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum) : [],
                     texturesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum) : [];
                     
-                tileImagesData.push([verticesBufferData, texturesBufferData, tilesetData.name, atlasImage]);
+                tileImagesData.push([Array.from(verticesBufferData), Array.from(texturesBufferData), tilesetData.name, atlasImage]);
             }
             resolve(tileImagesData);
         });
@@ -7128,6 +7223,16 @@ class WebGlEngine {
         }
         return x + 1;
     }
+
+    getNextRenderObject = (renderObject, pageData) => {
+        const objectIndex = pageData.renderObjects.indexOf(renderObject),
+            nextObject = pageData.renderObjects[objectIndex + 1];
+        return nextObject;
+    }
+
+    #glTextureIndex = (activeTexture) => {
+        return activeTexture - 33984;
+    }
 }
 
 /***/ }),
@@ -7278,7 +7383,8 @@ const CONST = {
     WEBGL: {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
-            IMAGES: "drawImages"
+            IMAGES: "drawImages",
+            IMAGES_M: "drawImagesMerge"
         }
     },
     DRAW_TYPE: {
@@ -7338,6 +7444,7 @@ const ERROR_CODES = {
 };
 
 const WARNING_CODES =  {
+    MULTIPLE_IMAGE_TILESET: "MULTIPLE_IMAGE_TILESET",
     FILE_LOADING_ISSUE: "FILE_LOADING_ISSUE",
     ASSETS_NOT_READY: "ASSETS_NOT_READY",
     NOT_FOUND: "NOT_FOUND",
@@ -7490,6 +7597,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "isPolygonLineIntersect": () => (/* binding */ isPolygonLineIntersect),
 /* harmony export */   "isSafari": () => (/* binding */ isSafari),
 /* harmony export */   "mat3Multiply": () => (/* binding */ mat3Multiply),
+/* harmony export */   "mat3MultiplyPosCoords": () => (/* binding */ mat3MultiplyPosCoords),
 /* harmony export */   "mat3MultiplyVector": () => (/* binding */ mat3MultiplyVector),
 /* harmony export */   "pointToCircleDistance": () => (/* binding */ pointToCircleDistance),
 /* harmony export */   "randomFromArray": () => (/* binding */ randomFromArray),
@@ -7987,25 +8095,59 @@ function mat3Multiply(mat1, mat2) {
 
 /**
  * 
- * @param {Array<number>} mat3 
- * @param {Array<number>} vec3
- * @returns {Array<number>} [x1, y1, z1]
+ * @param {Array<number>} mat3 [a, b, c,
+ *                              d. e, f,
+ *                              g, h, i]
+ * @param {Array<number>} vec3 [x1, y1]
+ * @returns {Array<number>} [a * x1 + b * y1 + c * 1,  d * x1 + e * y1 + f * 1]
  */
 function mat3MultiplyVector (mat3, vec3) {
     let result = [];
     let resultIndex = 0;
-    for (let rowStartIdx = 0; rowStartIdx < 9; rowStartIdx += 3) {
+    for (let rowStartIdx = 0; rowStartIdx < 6; rowStartIdx += 3) {
         let resultVal = 0;
         const stopInt = rowStartIdx + 3;
         let vecIdx = 0;
         for (let rowIdx = rowStartIdx; rowIdx < stopInt; rowIdx++) {
             const matVal = mat3[rowIdx],
-                vecVal = vec3[vecIdx];
+                vecVal = vec3[vecIdx] || 1; // z1 coord
             resultVal += (matVal * vecVal);
             vecIdx++;
         }
         result[resultIndex] = resultVal;
         resultIndex++;
+    }
+    return result;
+}
+
+/**
+ * 
+ * @param {Array<number>} mat3 [a, b, c,
+ *                              d. e, f,
+ *                              g, h, i]
+ * @param {Array<number>} vec3 [x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2, ...]
+ * @returns {Array<number>} [a*x1 + b*y1 + c*1, d*y1 + e*y1 + f*1, ...]
+ */
+function mat3MultiplyPosCoords (mat3, vec3) {
+    const vec3Len = vec3.length;
+    let result = [];
+    let resultIndex = 0;
+    for (let nPair = 0; nPair < vec3Len; nPair += 2) {
+        for (let rowStartIdx = 0; rowStartIdx < 6; rowStartIdx += 3) {
+            let resultVal = 0;
+            const stopInt = rowStartIdx + 3;
+            let vecIdx = nPair;
+            let iteration = 1;
+            for (let rowIdx = rowStartIdx; rowIdx < stopInt; rowIdx++) {
+                const matVal = mat3[rowIdx],
+                    vecVal = iteration === 3 ? 1 : vec3[vecIdx]; // 3: z1 = 1 coord
+                resultVal += (matVal * vecVal);
+                vecIdx++;
+                iteration++;
+            }
+            result[resultIndex] = resultVal;
+            resultIndex++;
+        }
     }
     return result;
 }

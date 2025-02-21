@@ -2,7 +2,7 @@
 
 This engine was designed to simplify creating games on javascript. \
 No external libs used for drawing, no typescript, easy to use and debug. \
-![Alt text](debug.gif?raw=true "Title")
+![Alt text](Debug.gif?raw=true "Title")
 
 Advantages:
 * Fresh codebase, depends on latest javascript features such as classes and privacy. 

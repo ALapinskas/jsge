@@ -8,8 +8,8 @@ import { DrawCircleObject } from "./2d/DrawCircleObject.js";
 import { DrawTiledLayer } from "./2d/DrawTiledLayer.js";
 import { DrawShapeObject } from "./2d/DrawShapeObject.js";
 import { GameStageData } from "./GameStageData.js";
-import { Exception } from "./Exception.js";
-import { ERROR_CODES } from "../constants.js";
+import { Exception, Warning } from "./Exception.js";
+import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 
 /**
  * Creates drawObjects instances.<br>
@@ -48,7 +48,6 @@ export class DrawObjectFactory {
      */
     #addObjectToPageData(renderObject) {
         this.#currentPageData._renderObject = renderObject;
-        this.#currentPageData._sortRenderObjectsBySortIndex();
     }
     /**
      * @param {number} x 
@@ -166,7 +165,7 @@ export class DrawObjectFactory {
             tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)).filter((tileset) => {
                 const tilesetStartI = tileset.firstgid,
                     tilesetLastI = tilesetStartI + tileset.data.tilecount;
-                if (tilesetIds.find((id) => ((id >= tilesetStartI) && (id <= tilesetLastI)))) {
+                if (tilesetIds.find((id) => ((id >= tilesetStartI) && (id < tilesetLastI)))) {
                     return true;
                 } else {
                     return false;
@@ -174,6 +173,9 @@ export class DrawObjectFactory {
             }), // copy to avoid change same tilemap instance in different tiledLayers
             tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
             renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+        if (tilesetImages.length > 1) {
+            Warning(WARNING_CODES.MULTIPLE_IMAGE_TILESET, " tileset " + layerKey + " includes multiple images, it can case performance issues!");
+        }
         //console.log(layerKey);
         //console.log(tilesetIds);
         //console.log(tilesets);

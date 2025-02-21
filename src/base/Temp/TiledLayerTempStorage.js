@@ -3,11 +3,11 @@
  */
 export class TiledLayerTempStorage {
     /**
-     * @type {Float32Array}
+     * @type {Array}
      */
     #vectors;
     /**
-     * @type {Float32Array}
+     * @type {Array}
      */
     #textures;
     /**
@@ -58,8 +58,8 @@ export class TiledLayerTempStorage {
         }
         this.#bufferSize = this.#nonEmptyCells * 12;
 
-        this.#vectors = new Float32Array(this.#bufferSize);
-        this.#textures = new Float32Array(this.#bufferSize);
+        this.#vectors = new Array(this.#bufferSize);
+        this.#textures = new Array(this.#bufferSize);
         this.#boundariesTempIndexes = new Int32Array(this.#cells * 4);
     }
 }

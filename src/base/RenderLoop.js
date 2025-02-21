@@ -205,6 +205,7 @@ export class RenderLoop {
             
         this._isCleared = false;
         if (isErrors === false) {
+            this.#stageData._processPendingRenderObjects();
             return Promise.resolve();
         } else {
             return Promise.reject(errors);

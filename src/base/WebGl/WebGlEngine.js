@@ -46,15 +46,15 @@ export class WebGlEngine {
      */
     #texCoordBuffer;
     /**
-     * @type {Array<number>}
+     * @type {Array<number> | null}
      */
-    #currentVertices = [];
+    #currentVertices = null;
     /**
-     * @type {Array<number>}
+     * @type {Array<number> | null}
      */
-    #currentTextures = [];
+    #currentTextures = null;
     /**
-     * @type {Map<string, WebGLProgram}
+     * @type {Map<string, WebGLProgram>}
      */
     #registeredWebGlPrograms = new Map();
     /**
@@ -79,14 +79,14 @@ export class WebGlEngine {
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
 
-        this._registerObjectRender(DrawTextObject.name, this._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(DrawTextObject.name, this._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DrawRectObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawPolygonObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawCircleObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawConusObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DrawLineObject.name, this._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(CONST.DRAW_TYPE.IMAGE, this._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES);
+        this._registerObjectRender(CONST.DRAW_TYPE.IMAGE, this._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
 
     getProgram(name) {
@@ -538,12 +538,13 @@ export class WebGlEngine {
             y = renderObject.y - yOffset - boxHeight,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA];
 
-        const rotation = 0,
+        const rotation = renderObject.rotation || 0,
             scale = [1, 1];
         const vecX1 = x,
             vecY1 = y,
             vecX2 = vecX1 + boxWidth,
             vecY2 = vecY1 + boxHeight;
+
         const verticesBufferData = [
             vecX1, vecY1,
             vecX2, vecY1,
@@ -609,7 +610,19 @@ export class WebGlEngine {
         gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
         gl.depthMask(false);
         return this._render(verticesNumber, gl.TRIANGLES);
+        
     };
+
+    _canTextBeMerged = (obj1, obj2) => {
+        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
+            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName) && 
+            (obj1.type === obj2.type)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
@@ -677,8 +690,7 @@ export class WebGlEngine {
                   0, scale[1], 0,
                   0, 0, 1
               ];
-        const matMult1 = utils.mat3Multiply(translationMatrix, rotationMatrix),
-              matMult2 = utils.mat3Multiply(matMult1, scaleMatrix);
+        const matMultiply = utils.mat3Multiply(utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
 
         const posX = 0 - renderObject.width / 2,
               posY = 0 - renderObject.height / 2;
@@ -693,12 +705,8 @@ export class WebGlEngine {
               texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
         //console.log("mat1: ", matMult1);
         //console.log("mat2: ", matMult2);
-        const x1y1 = utils.mat3MultiplyVector(matMult2, [vecX1, vecY1, 1]),
-              x2y1 = utils.mat3MultiplyVector(matMult2, [vecX2, vecY1, 1]),
-              x1y2 = utils.mat3MultiplyVector(matMult2, [vecX1, vecY2, 1]),
-              x2y2 = utils.mat3MultiplyVector(matMult2, [vecX2, vecY2, 1]);
         //console.log("x1y1: ", x1y1);
-        const vectorsOriginal = [
+        const vectorsD =  [
             vecX1, vecY1,
             vecX2, vecY1,
             vecX1, vecY2,
@@ -706,14 +714,7 @@ export class WebGlEngine {
             vecX2, vecY1,
             vecX2, vecY2
         ];
-        const vectors = [
-            x1y1[0], x1y1[1],
-            x2y1[0], x2y1[1],
-            x1y2[0], x1y2[1],
-            x1y2[0], x1y2[1],
-            x2y1[0], x2y1[1],
-            x2y2[0], x2y2[1]
-        ],
+        const vectors = utils.mat3MultiplyPosCoords(matMultiply, vectorsD),
         textures = [
             texX1, texY1,
             texX2, texY1,
@@ -723,21 +724,17 @@ export class WebGlEngine {
             texX2, texY2
         ];
         
-        //console.log("original: ", vectorsD);
-        //console.log("matrix mult: ", vectors);
-        
         //vec2 position = (u_transformMat * vec3(a_position, 1)).xy;
         //console.log("translation x: ", x, " y: ", y);
         //console.log("scale x: ", scale[0], " y: ", scale[1]);
         //console.log("rotation: ", renderObject.rotation);
         // Determine could we merge next drawObject or not
         // 1. Find next object
-        const objectIndex = pageData.renderObjects.indexOf(renderObject),
-            nextObject = pageData.renderObjects[objectIndex + 1];
+        const nextObject = this.getNextRenderObject(renderObject, pageData);
         // 2. Is it have same texture and draw program?
         if (nextObject && this._canImageObjectsMerge(renderObject, nextObject)) {
             //
-            if (this.#currentVertices.length === 0) {
+            if (this.#currentVertices === null) {
                 this.#currentVertices = vectors;
                 this.#currentTextures = textures;
                 return Promise.resolve(0);
@@ -752,12 +749,12 @@ export class WebGlEngine {
             // set the resolution
             gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
             // bind data and call draw
-            if (this.#currentVertices.length > 0) {
-                this.#currentVertices.push(...vectors);
-                this.#currentTextures.push(...textures);
-            } else {
+            if (this.#currentVertices === null) {
                 this.#currentVertices = vectors;
                 this.#currentTextures = textures;
+            } else {
+                this.#currentVertices.push(...vectors);
+                this.#currentTextures.push(...textures);
             }
             
             gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
@@ -799,8 +796,8 @@ export class WebGlEngine {
                 gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
                 //gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
             }
-            this.#currentVertices = [];
-            this.#currentTextures = [];
+            this.#currentVertices = null;
+            this.#currentTextures = null;
             return this._render(verticesNumber, gl.TRIANGLES);
         }
     };
@@ -846,78 +843,152 @@ export class WebGlEngine {
                 renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
         const translation = [0, 0],
-            scale = [1, 1],
-            rotation = 0,
-            drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
-            shapeMaskId = renderLayer._maskId;
+              scale = [1, 1],
+              rotation = renderLayer.rotation || 0,
+              drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
+              shapeMaskId = renderLayer._maskId;
 
-        let verticesNumber = 0,
-            isTextureBind = false;
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.enableVertexAttribArray(texCoordLocation);
-
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation,translation[0], translation[1]);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-
+        /*
+        const c = Math.cos(renderLayer.rotation || 0),
+              s = Math.sin(renderLayer.rotation || 0),
+              translationMatrix = [
+                  1, 0, translation[0],
+                  0, 1, translation[1],
+                  0, 0, 1],
+              rotationMatrix = [
+                  c, -s, 0,
+                  s, c, 0,
+                  0, 0, 1
+              ],
+              scaleMatrix = [
+                  scale[0], 0, 0,
+                  0, scale[1], 0,
+                  0, 0, 1
+              ];
+        const matMultiply = utils.mat3Multiply(utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
         for (let i = 0; i < renderLayerData.length; i++) {
-            const data = renderLayerData[i],
-                vectors = data[0],
-                textures = data[1],
-                image_name = data[2],
-                image = data[3];
-            // if layer use multiple tilesets
-            if (vectors.length > 0 && textures.length > 0) {
-                // need to have additional draw call for each new texture added
-                // probably it could be combined in one draw call if multiple textures 
-                // could be used in one draw call
-                if (isTextureBind) {
-                    await this._render(verticesNumber, gl.TRIANGLES);
-                }
-                
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, vectors, gl.STATIC_DRAW);
-
-                //Tell the attribute how to get data out of positionBuffer
-                const size = 2,
-                    type = gl.FLOAT, // data is 32bit floats
-                    normalize = false,
-                    stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                    offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
-                gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-                //textures buffer
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, textures, gl.STATIC_DRAW);
-
-                gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
-
-                let textureStorage = renderLayer._textureStorages[i];
-                
-                if (!textureStorage) {
-                    textureStorage = new ImageTempStorage(gl.createTexture(), i);
-                    renderLayer._setTextureStorage(i, textureStorage);
-                }
-                if (textureStorage._isTextureRecalculated === true) {
-                    this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
-                    textureStorage._isTextureRecalculated = false;
-                } else {
-                    //console.log("bind texture");
-                    this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
-                }
-                gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-                gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
-                verticesNumber = vectors.length / 2;
-                if (shapeMaskId) {
-                    gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
-                }
-                isTextureBind = true;
+            renderLayerData[i][0] = utils.mat3MultiplyPosCoords(matMultiply, renderLayerData[i][0]);
+        }*/
+        //console.log("mat1: ", matMult1);
+        //console.log("mat2: ", matMult2);
+        /*
+        const x1y1 = utils.mat3MultiplyVector(matMultiply, [vecX1, vecY1, 1]),
+              x2y1 = utils.mat3MultiplyVector(matMultiply, [vecX2, vecY1, 1]),
+              x1y2 = utils.mat3MultiplyVector(matMultiply, [vecX1, vecY2, 1]),
+              x2y2 = utils.mat3MultiplyVector(matMultiply, [vecX2, vecY2, 1]);
+        */
+        const nextObject = this.getNextRenderObject(renderLayer, pageData);
+              
+        if (this._canMergeNextTileObject(renderLayer, nextObject)) {
+            if (this.#currentVertices === null) {
+                this.#currentVertices = renderLayerData[0][0];
+                this.#currentTextures = renderLayerData[0][1];
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...renderLayerData[0][0]);
+                this.#currentTextures.push(...renderLayerData[0][1]);
+                return Promise.resolve(0);
             }
+        } else {
+            let verticesNumber = 0,
+                isTextureBind = false;
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            gl.enableVertexAttribArray(texCoordLocation);
+
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            //gl.uniform2f(translationLocation,translation[0], translation[1]);
+            //gl.uniform2f(scaleLocation, scale[0], scale[1]);
+            //gl.uniform1f(rotationRotation, rotation);
+            
+            for (let i = 0; i < renderLayerData.length; i++) {
+                const data = renderLayerData[i],
+                    vectors = data[0],
+                    textures = data[1],
+                    image_name = data[2],
+                    image = data[3];
+                // if layer use multiple tilesets
+                if (vectors.length > 0 && textures.length > 0) {
+                    // need to have additional draw call for each new texture added
+                    // probably it could be combined in one draw call if multiple textures 
+                    // could be used in one draw call
+                    if (isTextureBind) {
+                        this.#currentVertices = null;
+                        this.#currentTextures = null;
+                        await this._render(verticesNumber, gl.TRIANGLES);
+                    }
+
+                    if (this.#currentVertices === null) {
+                        this.#currentVertices = vectors;
+                        this.#currentTextures = textures;
+                    } else {
+                        this.#currentVertices.push(...vectors);
+                        this.#currentTextures.push(...textures);
+                    }
+                    
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+
+                    //Tell the attribute how to get data out of positionBuffer
+                    const size = 2,
+                        type = gl.FLOAT, // data is 32bit floats
+                        normalize = false,
+                        stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                        offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
+                    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+                    //textures buffer
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+                    gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
+
+                    let textureStorage = renderLayer._textureStorages[i];
+                    
+                    if (!textureStorage) {
+                        textureStorage = new ImageTempStorage(gl.createTexture(), i);
+                        renderLayer._setTextureStorage(i, textureStorage);
+                    }
+                    if (textureStorage._isTextureRecalculated === true) {
+                        this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
+                        textureStorage._isTextureRecalculated = false;
+                    } else {
+                        //console.log("bind texture");
+                        this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
+                    }
+                    gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+                    gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
+                    
+                    verticesNumber = this.#currentVertices.length / 2;
+                    if (shapeMaskId) {
+                        gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                    }
+                    isTextureBind = true;
+                }
+            }
+            this.#currentVertices = null;
+            this.#currentTextures = null;
+            renderLayerData = null;
+            return this._render(verticesNumber, gl.TRIANGLES);
         }
-        return this._render(verticesNumber, gl.TRIANGLES);
     };
+
+    /**
+     * 
+     * @param {*} obj1 
+     * @param {*} obj2 
+     * @returns {boolean}
+     */
+    _canMergeNextTileObject = (obj1, obj2) => {
+        if ((obj2 instanceof DrawTiledLayer) 
+            && (obj1.tilesetImages.length === 1) 
+            && (obj2.tilesetImages.length === 1) 
+            && (obj1.tilesetImages[0] === obj2.tilesetImages[0])) {
+                return true;
+        } else {
+            return false;
+        }
+    }
 
     _drawPolygon(renderObject, pageData) {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
@@ -1189,8 +1260,10 @@ export class WebGlEngine {
                     t = layerTilesetData.textures,
                     filledSize = 0;
                     
-                v.fill(0);
-                t.fill(0);
+                //v.fill(0);
+                //t.fill(0);
+                v = [];
+                t = [];
                 let boundariesRowsIndexes = layerTilesetData._bTempIndexes;
                 const fullRowCellsNum = screenCols * 4;
                 
@@ -1545,8 +1618,10 @@ export class WebGlEngine {
                     t = layerTilesetData.textures,
                     filledSize = 0;
                 
-                v.fill(0);
-                t.fill(0);
+                //v.fill(0);
+                //t.fill(0);
+                v = [];
+                t = [];
                 for (let row = 0; row < layerRows; row++) {
                     for (let col = 0; col < layerCols; col++) {
                         let tile = layerData.data[mapIndex];
@@ -1708,7 +1783,7 @@ export class WebGlEngine {
                 const verticesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum) : [],
                     texturesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum) : [];
                     
-                tileImagesData.push([verticesBufferData, texturesBufferData, tilesetData.name, atlasImage]);
+                tileImagesData.push([Array.from(verticesBufferData), Array.from(texturesBufferData), tilesetData.name, atlasImage]);
             }
             resolve(tileImagesData);
         });
@@ -1878,5 +1953,15 @@ export class WebGlEngine {
             x = x | x >> i;
         }
         return x + 1;
+    }
+
+    getNextRenderObject = (renderObject, pageData) => {
+        const objectIndex = pageData.renderObjects.indexOf(renderObject),
+            nextObject = pageData.renderObjects[objectIndex + 1];
+        return nextObject;
+    }
+
+    #glTextureIndex = (activeTexture) => {
+        return activeTexture - 33984;
     }
 }

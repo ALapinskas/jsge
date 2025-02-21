@@ -45,7 +45,8 @@ export const CONST = {
     WEBGL: {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
-            IMAGES: "drawImages"
+            IMAGES: "drawImages",
+            IMAGES_M: "drawImagesMerge"
         }
     },
     DRAW_TYPE: {
@@ -105,6 +106,7 @@ export const ERROR_CODES = {
 };
 
 export const WARNING_CODES =  {
+    MULTIPLE_IMAGE_TILESET: "MULTIPLE_IMAGE_TILESET",
     FILE_LOADING_ISSUE: "FILE_LOADING_ISSUE",
     ASSETS_NOT_READY: "ASSETS_NOT_READY",
     NOT_FOUND: "NOT_FOUND",

@@ -1,0 +1,29 @@
+Date: January 12 2025
+jsge@1.5.5
+Adding render objects is not optimal / Добавление renderObjects не оптимально
+
+Status: Done (1.5.6)
+
+Context:
+    Adding renderObject has done with push() method and snd sort, it may be slow in some cases.
+
+    Добавление renderObject сделано методом push и последующей сортировкой, что может быть медленно.
+
+    
+Decision:
+    1. Add new array stageData.#pendingRenderObjects.
+    2. All new render objects added with _renderObject() put to new array.
+    3. Add method checking #pendingRenderObjects is not empty. 
+       And moves #pendingRenderObjects to #renderObjects with sort by index at the end.
+    4. Call this method at the start of the stage, and at the end of each render cycle.
+
+    1. Создать новый массив stageData.#pendingRenderObjects.
+    2. Все добавленные через set _renderObject() класть в новый массив.
+    3. Добавить метод, проверяющий не пустой ли #pendingRenderObjects.
+       и перекладывающий объекты из #pendingRenderObjects в #renderObjects с последующей сортировкой по индексу
+    4. Вызывать данный метод перед стартом уровня и в конце каждого цикла render().
+
+    
+
+Impact:
+    No impact.

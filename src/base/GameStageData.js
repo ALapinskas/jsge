@@ -74,7 +74,11 @@ export class GameStageData {
      * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
      */
     #renderObjects = [];
-    
+    /**
+     * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
+     */
+    #pendingRenderObjects = [];
+
     /**
      * @type {boolean}
      */
@@ -564,17 +568,27 @@ export class GameStageData {
         this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
     }
 
+    _processPendingRenderObjects() {
+        if (this.#pendingRenderObjects.length > 0) {
+            this.#renderObjects.push(...this.#pendingRenderObjects);
+            this._sortRenderObjectsBySortIndex();
+            this.#pendingRenderObjects = [];
+        }
+    }
+
     /**
      * @ignore
      */
     set _renderObject(object) {
-        this.#renderObjects.push(object);
+        this.#pendingRenderObjects.push(object);
     } 
 
     /**
      * @ignore
      */
     set _renderObjects(objects) {
-        this.#renderObjects = objects;
+        objects.forEach(object => {
+            this._renderObject = object;
+        });
     } 
 }

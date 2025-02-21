@@ -196,6 +196,7 @@ export class ISystem {
                 }
                 //stage._attachCanvasToContainer(this.#canvasContainer);
                 stage._start(options);
+                pageData._processPendingRenderObjects();
                 this.emit(CONST.EVENTS.SYSTEM.START_PAGE);
                 this.#iRender._startRender(pageData);
             }

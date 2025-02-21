@@ -4,9 +4,18 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.6:
+    +: multiple tileset images warning
+    +: mat3MultiplyPosCoords(), (transform matrix) * (pos coords)
+    r: adding renderObjects refactored according adr_note#12
+    r: merge tilesets draws according adr_note#09
+    f: tileset attach issue
+    
 1.5.5:
     +: GameStageData.#debugObjectBoundaries for debug draw image boundaries
-    +: 3x3 Matrices multiplication methods introduced
+    +: 3x3 Matrices multiplication methods
+    +: webgl ImagesDrawProgramM program
+    +: DrawImageObject draw calls merge
     r: _bindRenderObject refactored, removed workaround
     r: webgl images draw program refactored according adr_note#9
     f: examples strategy build unit, if already in progress resources are taken away
