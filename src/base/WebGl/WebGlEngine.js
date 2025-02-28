@@ -1,4 +1,4 @@
-import { ERROR_CODES, CONST, WARNING_CODES } from "../../constants.js";
+import { ERROR_CODES, CONST, DRAW_TYPE, WARNING_CODES } from "../../constants.js";
 import { crossProduct } from "../../utils.js";
 import { Exception, Warning } from "../Exception.js";
 import { GameStageData } from "../GameStageData.js";
@@ -12,8 +12,7 @@ import { DrawPolygonObject } from "../2d/DrawPolygonObject.js";
 import { DrawRectObject } from "../2d/DrawRectObject.js";
 import { DrawTextObject } from "../2d/DrawTextObject.js";
 
-import AssetsManager from "../../../modules/assetsm/dist/assetsm.min.js";
-import { DrawImageObject } from "../2d/DrawImageObject.js";
+import AssetsManager from "../../../modules/assetsm/src/AssetsManager.js";
 import { utils } from "../../index.js";
 
 export class WebGlEngine {
@@ -61,9 +60,14 @@ export class WebGlEngine {
      * @type {Map<string, Object<string, WebGLUniformLocation | number>>}
      */
     #webGlProgramsVarsLocations = new Map();
-
+    /**
+     * @type {Map<string, {method: Function, webglProgramName: string}>}
+     */
     #registeredRenderObjects = new Map();
 
+    /**
+     * @type {boolean}
+     */
     #loopDebug;
 
     constructor(context, gameOptions, iLoader) {
@@ -86,7 +90,7 @@ export class WebGlEngine {
         this._registerObjectRender(DrawConusObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DrawLineObject.name, this._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(CONST.DRAW_TYPE.IMAGE, this._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
+        this._registerObjectRender(DRAW_TYPE.IMAGE, this._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
 
     getProgram(name) {
@@ -410,20 +414,20 @@ export class WebGlEngine {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
         switch (renderObject.type) {
-        case CONST.DRAW_TYPE.RECTANGLE:
+        case DRAW_TYPE.RECTANGLE:
             this.#setSingleRectangle(renderObject.width, renderObject.height);
             verticesNumber += 6;
             break;
-        case CONST.DRAW_TYPE.TEXT:
+        case DRAW_TYPE.TEXT:
             break;
-        case CONST.DRAW_TYPE.CIRCLE: {
+        case DRAW_TYPE.CIRCLE: {
             const coords = renderObject.vertices;
             gl.bufferData(gl.ARRAY_BUFFER, 
                 new Float32Array(coords), gl.STATIC_DRAW);
             verticesNumber += coords.length / 2;
             break;
         }
-        case CONST.DRAW_TYPE.POLYGON: {
+        case DRAW_TYPE.POLYGON: {
             const triangles = this.#triangulatePolygon(renderObject.vertices);
             this.#bindPolygon(triangles);
             const len = triangles.length;
@@ -829,6 +833,9 @@ export class WebGlEngine {
             u_image: u_imageLocation } = vars;
 
         gl.useProgram(program);
+        /**
+         * @type {Array<any> | void}
+         */
         let renderLayerData;
         switch (this.#gameOptions.optimization) {
             case CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:

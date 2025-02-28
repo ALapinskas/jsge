@@ -4,6 +4,15 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.7
+    +: stageData.cleanUp() added, according adr_note@08
+    r: Assetsm added as a submodule dependency, adr_note#7
+    r: updated to assetsm@0.1.8
+    r: Readme file fixes
+    r: jsdoc tutorials fixes
+    r: jsdoc src fixes
+    f: fixed DRAW_TYPE jsdoc
+    
 1.5.6:
     +: multiple tileset images warning
     +: mat3MultiplyPosCoords(), (transform matrix) * (pos coords)

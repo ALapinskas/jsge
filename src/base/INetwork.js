@@ -2,6 +2,7 @@ import { CONST, ERROR_CODES } from "../constants.js";
 import { Exception } from "./Exception.js";
 import { Logger } from "./Logger.js";
 import { SystemEvent } from "./Events/SystemEvent.js";
+//import { Socket } from "socket.io-client";
 
 /**
  * Represents Socket connection
@@ -10,7 +11,13 @@ import { SystemEvent } from "./Events/SystemEvent.js";
  * to enable, set settings.network.enabled to true
  */
 export class INetwork extends EventTarget {
+    /**
+     * @type {Object}
+     */
     #systemSettings;
+    /**
+     * @type {Socket}
+     */
     #socket;
 
     /**

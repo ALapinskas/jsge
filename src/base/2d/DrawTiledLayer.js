@@ -32,7 +32,14 @@ export class DrawTiledLayer {
      * @type {Map<string, AnimationEvent>}
      */
     #animations = new Map();
+    /**
+     * @type {boolean}
+     */
     #isOffsetTurnedOff;
+    /**
+     * @type {boolean}
+     */
+    #isRemoved = false;
 
     /**
      * @hideconstructor
@@ -107,6 +114,13 @@ export class DrawTiledLayer {
         this.#drawBoundaries = value;
     }
 
+    get isRemoved() {
+        return this.#isRemoved;
+    }
+
+    set isRemoved(value) {
+        this.#isRemoved = value;
+    }
     /**
      * @ignore
      */

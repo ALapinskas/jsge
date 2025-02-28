@@ -1,0 +1,13 @@
+Date: February 22 2025
+jsge@1.5.6
+.tmx format support / Поддержка tilemap формата .tmx
+
+Status: In Progress
+
+Context:
+    -
+
+Decision:
+
+Impact:
+    No impact.

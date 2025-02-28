@@ -10,6 +10,7 @@ import { DrawShapeObject } from "./2d/DrawShapeObject.js";
 import { GameStageData } from "./GameStageData.js";
 import { Exception, Warning } from "./Exception.js";
 import { ERROR_CODES, WARNING_CODES } from "../constants.js";
+import AssetsManager from "../../modules/assetsm/src/AssetsManager.js";
 
 /**
  * Creates drawObjects instances.<br>

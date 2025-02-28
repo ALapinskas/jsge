@@ -39,16 +39,16 @@ export class RenderLoop {
     #fpsAverageCountTimer;
     /**
      * 
-     * @param {GameStageData} stageData 
+     * @type {GameStageData} 
      */
     #stageData;
     /**
-     * @param { WebGlEngine }
+     * @type { WebGlEngine }
      */
     #webGlEngine;
     /**
      * 
-     * @param {SystemSettings} systemSettings
+     * @type {SystemSettings}
      */
     #systemSettings;
     /**
@@ -182,7 +182,7 @@ export class RenderLoop {
                     len--;
                     continue;
                 }
-                if (object.hasAnimations) {
+                if ("hasAnimations" in object && object.hasAnimations) {
                     object._processActiveAnimations();
                 }
                 const promise = await this.#drawRenderObject(object)

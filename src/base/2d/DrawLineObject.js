@@ -1,4 +1,4 @@
-import { CONST } from "../../constants.js";
+import { DRAW_TYPE } from "../../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
@@ -16,7 +16,7 @@ export class DrawLineObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
+        super(DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
         this.#vertices = vertices;
     }
 

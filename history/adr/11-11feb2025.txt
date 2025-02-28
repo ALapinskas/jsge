@@ -1,4 +1,4 @@
-Date: January 11 2025
+Date: February 11 2025
 jsge@1.5.5
 Automatic assets uploads / Автоматическая подгрузка ассетов
 
@@ -16,4 +16,4 @@ Context:
 Decision:
 
 Impact:
-    No impact.
+    Может нарушится обратная совместимость.

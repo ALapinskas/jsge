@@ -1,16 +1,612 @@
 /******/ var __webpack_modules__ = ({
 
-/***/ "./modules/assetsm/dist/assetsm.min.js":
-/*!*********************************************!*\
-  !*** ./modules/assetsm/dist/assetsm.min.js ***!
-  \*********************************************/
+/***/ "./modules/assetsm/src/AssetsManager.js":
+/*!**********************************************!*\
+  !*** ./modules/assetsm/src/AssetsManager.js ***!
+  \**********************************************/
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ AssetsManager)
 /* harmony export */ });
-const PROGRESS_EVENT_TYPE={loadstart:"loadstart",progress:"progress",abort:"abort",error:"error",load:"load",timeout:"timeout"},ERROR_MESSAGES={LOADER_NOT_REGISTERED:" loader is not registered.",RECURSION_ERROR:"Too much recursion. Stop iteration.",NOT_CORRECT_METHOD_TYPE:"uploadMethod should be instance of Promise and return upload result value",XML_FILE_EXTENSION_INCORRECT:" AtlasXML file extension is incorrect, only .xml file supported",TILESET_FILE_EXTENSION_INCORRECT:" tileset file extension is not correct, only .tsj or .json files are supported",TILEMAP_FILE_EXTENSION_INCORRECT:" tilemap file extension is not correct, only .tmj or .json files are supported",INPUT_PARAMS_ARE_INCORRECT:" fileKey and url should be provided",ATLAS_IMAGE_LOADING_FAILED:"Error loading atlas image ",TILESET_LOADING_FAILED:"Error loading related tileset ",TILEMAP_LOADING_FAILED:"Error loading tilemap ",AUDIO_LOADING_FAILED:"Error loading audio ",IMAGE_LOADING_FAILED:"Error loading image ",XML_FORMAT_INCORRECT:" XML format is not correct."};class Loader{#e;#t;#r=new Map;#s=new Map;constructor(e,t){this.#e=e,this.#t=(e,r,...s)=>{const i=t(e,r,...s);if(i instanceof Promise)return i.then((t=>this.#i(t,e)));throw new TypeError(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE)}}#i=(e,t)=>new Promise(((r,s)=>{e||null===e||Warning("AssetsManager: uploadMethod for "+this.#e+" returns incorrect value"),this.#o(t,e),this.#a(t),r()}));#o(e,t){this.#s.set(e,t)}#a(e){this.#r.delete(e)}get filesWaitingForUpload(){return this.#r.size}get loadingQueue(){return this.#r}get uploadMethod(){return this.#t}_addFile=(e,t)=>{this.#r.has(e)&&Warning("AssetsManager: File "+this.#e+" with key "+e+" is already added"),this.#r.set(e,t)};_isFileInQueue=e=>this.#r.has(e);_getFile=e=>this.#s.get(e)}class AssetsManager{#n=5;#l=new EventTarget;#d=new Map;#E=0;constructor(){this.registerLoader("Audio",this._loadAudio),this.registerLoader("Image",this._loadImage),this.registerLoader("TileMap",this._loadTileMap),this.registerLoader("TileSet",this._loadTileSet),this.registerLoader("AtlasImageMap",this._loadAtlasImage),this.registerLoader("AtlasXML",this._loadAtlasXml)}get filesWaitingForUpload(){let e=0;return Array.from(this.#d.values()).map((t=>e+=t.filesWaitingForUpload)),e}registerLoader=(e,t=this._defaultUploadMethod)=>{this["add"+e]=(t,r,...s)=>{this.addFile(e,t,r,...s)},this["get"+e]=t=>this.getFile(e,t),this["is"+e+["InQueue"]]=t=>this.isFileInQueue(e,t);const r=this.#d.get(e)||new Loader(e,t);this.#d.set(e,r)};preload(){return this.#h(),new Promise((async(e,t)=>{this.#u().then((()=>{this.#c(),e()})).catch((e=>{t(e)}))}))}#u(e=0){return this.#R().then((t=>{if(0===this.filesWaitingForUpload)return Promise.resolve(t);if(++e>this.#n){const e=new Error(ERROR_MESSAGES.RECURSION_ERROR);return this.#g(e),Promise.reject(new Error(ERROR_MESSAGES.RECURSION_ERROR))}return this.#u(e)}))}#R(){return new Promise(((e,t)=>{let r=[];Array.from(this.#d.values()).forEach((e=>{Array.from(e.loadingQueue.entries()).forEach((t=>{const s=new Promise(((r,s)=>e.uploadMethod(t[0],...t[1]).then((e=>r(e)))));r.push(s)}))})),Promise.allSettled(r).then((r=>{for(const s of r){if("rejected"===s.status){const e=s.reason;this.#_(e)?t(e):(Warning("AssetsManager: "+e.message),this.#g(e))}e(r)}}))}))}addEventListener(e,t,...r){PROGRESS_EVENT_TYPE[e]?this.#l.addEventListener(e,t,...r):Warning("AssetsManager: Event type should be one of the ProgressEvent.type")}removeEventListener(e,t,...r){this.#l.removeEventListener(e,t,...r)}_loadAtlasXml=(e,t)=>(this.#m(t),fetch(t).then((e=>e.text())).then((e=>(new window.DOMParser).parseFromString(e,"text/xml"))).then((r=>{const s=r.documentElement||r.activeElement,i=s.attributes.getNamedItem("imagePath"),o=s.children;if(i){const r=this.#p(t);return this.addAtlasImageMap(e,r+i.value,o,r),Promise.resolve(s)}{const t=new Error(e+ERROR_MESSAGES.XML_FORMAT_INCORRECT);return this.#g(t),Promise.resolve(t)}})));_loadAtlasImage=(e,t,r,s="anonymous")=>new Promise(((e,i)=>{const o=new Image,a=new Map,n=document.createElement("canvas"),l=n.getContext("2d");o.crossOrigin=s,o.onload=()=>{const t=[];let s=[];n.width=o.width,n.height=o.height,l.drawImage(o,0,0);for(let e of r){const r=e.attributes,i=r.getNamedItem("name").value,o=i.includes(".")?i.split(".")[0]:i,a=r.getNamedItem("x").value,n=r.getNamedItem("y").value,d=r.getNamedItem("width").value,E=r.getNamedItem("height").value;t.push(createImageBitmap(l.getImageData(a,n,d,E),{premultiplyAlpha:"premultiply"})),s.push(o)}this.#S(),Promise.all(t).then((t=>{t.forEach(((e,t)=>{const r=s[t];a.set(r,e),this.addImage(r,"empty url",e)})),n.remove(),e(a)}))},o.onerror=()=>{const r=new Error(ERROR_MESSAGES.ATLAS_IMAGE_LOADING_FAILED+t);this.#g(r),e(null)},o.src=t}));_loadTileSet=(e,t,r=1,s)=>(this.#I(t),fetch(s?s+t:t).then((e=>e.json())).then((e=>{const{name:t,image:i,spacing:o,margin:a,tilewidth:n,tileheight:l}=e;return t&&i&&!this.isFileInQueue("Image",t)&&this.addImage(t,s?s+i:i),e.gid=r,Promise.resolve(e)})).catch((()=>{const e=new Error(ERROR_MESSAGES.TILESET_LOADING_FAILED+t);return this.#g(e),Promise.resolve(null)})));_defaultUploadMethod=(e,t)=>fetch(t);_loadTileMap=(e,t,r=!0)=>(this.#L(t),fetch(t).then((e=>e.json())).then((e=>{const s=this.#p(t);if(!0===r&&e.tilesets&&e.tilesets.length>0){const t=[];return e.tilesets.forEach(((e,r)=>{const{firstgid:i,source:o}=e,a=this._loadTileSet("default-"+i,o,i,s).then((e=>(this.#S(),Promise.resolve(e))));t.push(a)})),Promise.all(t).then((t=>{for(let r=0;r<t.length;r++){const s=t[r];e.tilesets[r].data=s}return Promise.resolve(e)}))}return Promise.resolve(e)})).catch((e=>(e.message.includes("JSON.parse:")&&(e=new Error(ERROR_MESSAGES.TILEMAP_LOADING_FAILED+t)),this.#g(e),Promise.resolve(null)))));_loadAudio=(e,t)=>new Promise((e=>{const r=new Audio(t);r.addEventListener("loadeddata",(()=>{this.#S(),e(r)})),r.addEventListener("error",(()=>{const r=new Error(ERROR_MESSAGES.AUDIO_LOADING_FAILED+t);this.#g(r),e(null)}))}));_loadImage=(e,t,r,s="anonymous")=>new Promise(((e,i)=>{if(r)e(r);else{const r=new Image;r.crossOrigin=s,r.onload=()=>{createImageBitmap(r,{premultiplyAlpha:"premultiply"}).then((t=>{this.#S(),e(t)}))},r.onerror=()=>{const r=new Error(ERROR_MESSAGES.IMAGE_LOADING_FAILED+t);this.#g(r),e(null)},r.src=t}}));#m(e){e.includes(".xml")||Exception(e+ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT)}#I(e){e.includes(".tsj")||e.includes(".json")||Exception(e+ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT)}#L(e){e.includes(".tmj")||e.includes(".json")||Exception(e+ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT)}#_(e){return e.message.includes(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE)||e.message.includes(ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT)||e.message.includes(ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT)||e.message.includes(ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT)||e.message.includes(ERROR_MESSAGES.INPUT_PARAMS_ARE_INCORRECT)||e.message.includes(ERROR_MESSAGES.LOADER_NOT_REGISTERED)}#p(e){let t=e.split("/"),r=t.length,s="/";return t[r-1].includes(".tmj")||t[r-1].includes(".xml")||t[r-1].includes(".json")?(t.pop(),s=t.join("/")+"/"):(t[r-2].includes(".tmj")||t[r-2].includes(".xml")||t[r-2].includes(".json"))&&(t.splice(r-2,2),s=t.join("/")+"/"),s}addFile(e,t,r,...s){const i=this.#d.get(e);i?(this.#A(t,r,e),i._addFile(t,[r,...s])):Exception(e+ERROR_MESSAGES.LOADER_NOT_REGISTERED)}isFileInQueue(e,t){const r=this.#d.get(e);if(r)return r._isFileInQueue(t);Exception("Loader for "+e+" is not registered!")}getFile(e,t){const r=this.#d.get(e);if(r)return r._getFile(t);Exception("Loader for "+e+" is not registered!")}#A(e,t,r){const s=ERROR_MESSAGES.INPUT_PARAMS_ARE_INCORRECT;e&&0!==e.trim().length||Exception("add"+r+"()"+s),t&&0!==t.trim().length||Exception("add"+r+"()"+s)}#h(){let e=this.filesWaitingForUpload;this.#l.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.loadstart,{total:e}))}#c(){this.#l.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.load))}#S(){const e=this.filesWaitingForUpload;this.#E+=1,this.#l.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.progress,{lengthComputable:!0,loaded:this.#E,total:e}))}#g(e){Warning("AssetsManger: "+e.message),this.#l.dispatchEvent(new ErrorEvent(PROGRESS_EVENT_TYPE.error,{error:e}))}}function Exception(e){throw new Error(e)}function Warning(e){console.warn(e)}
+
+const PROGRESS_EVENT_TYPE = {
+    loadstart: "loadstart", 
+    progress: "progress", 
+    abort: "abort", 
+    error: "error", 
+    load: "load", 
+    timeout: "timeout"
+}
+
+const ERROR_MESSAGES = {
+    // Critical
+    LOADER_NOT_REGISTERED: " loader is not registered.",
+    RECURSION_ERROR: "Too much recursion. Stop iteration.",
+    NOT_CORRECT_METHOD_TYPE: "uploadMethod should be instance of Promise and return upload result value",
+    XML_FILE_EXTENSION_INCORRECT: " AtlasXML file extension is incorrect, only .xml file supported",
+    TILESET_FILE_EXTENSION_INCORRECT: " tileset file extension is not correct, only .tsj or .json files are supported",
+    TILEMAP_FILE_EXTENSION_INCORRECT: " tilemap file extension is not correct, only .tmj or .json files are supported",
+    INPUT_PARAMS_ARE_INCORRECT: " fileKey and url should be provided",
+    // Non critical
+    ATLAS_IMAGE_LOADING_FAILED: "Error loading atlas image ",
+    TILESET_LOADING_FAILED: "Error loading related tileset ",
+    TILEMAP_LOADING_FAILED: "Error loading tilemap ",
+    AUDIO_LOADING_FAILED: "Error loading audio ",
+    IMAGE_LOADING_FAILED: "Error loading image ",
+    XML_FORMAT_INCORRECT: " XML format is not correct.",
+}
+
+class Loader {
+    /**
+     * @type {String}
+     */
+    #fileType;
+    /**
+     * @type { (...args: any[]) => Promise<any> | undefined }
+     */
+    #uploadMethod;
+    /**
+     * name: url
+     * @type { Map<String, String[]>}
+     */
+    #loadingQueue = new Map();
+    /**
+     * name: file
+     * @type { Map<String, any>}
+     */
+    #store = new Map();
+    /**
+     * 
+     * @param {String} name 
+     * @param {Function} uploadMethod 
+     */
+
+    constructor(name, uploadMethod) {
+        this.#fileType = name;
+        this.#uploadMethod = (key, url, ...args) => {
+            const upload = uploadMethod(key, url, ...args);
+            if (upload instanceof Promise) {
+                return upload.then((uploadResult) => this.#processUploadResult(uploadResult, key));
+            } else {
+                throw new TypeError(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE);
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {null | Object} uploadResult 
+     * @param {string} key 
+     * @returns {Promise<void>}
+     */
+    #processUploadResult = (uploadResult, key) => {
+        return new Promise((resolve,reject) => {
+            if ( !uploadResult && uploadResult !== null ) {
+                Warning("AssetsManager: uploadMethod for " + this.#fileType + " returns incorrect value");
+            }
+            this.#addUploadResultValue(key, uploadResult);
+            this.#removeUploadFromQueue(key);
+            resolve();
+        });
+    }
+
+    #addUploadResultValue(key, value) {
+        this.#store.set(key, value);
+    }
+
+    #removeUploadFromQueue(key) {
+        this.#loadingQueue.delete(key);
+    }
+
+    get filesWaitingForUpload() {
+        return this.#loadingQueue.size;
+    }
+
+    get loadingQueue() {
+        return this.#loadingQueue
+    };
+    
+    get uploadMethod() { 
+        return this.#uploadMethod;
+    }
+
+    _addFile = (key, paramsArr) => {
+        if (this.#loadingQueue.has(key)) {
+            Warning("AssetsManager: File " + this.#fileType + " with key " + key + " is already added");
+        }
+        this.#loadingQueue.set(key, paramsArr);
+    }
+
+    _isFileInQueue = (key) => {
+        return this.#loadingQueue.has(key);
+    }
+
+    _getFile = (key) => {
+        return this.#store.get(key);
+    }
+}
+
+/**
+ *  This class is used to preload 
+ *  tilemaps, tilesets, images and audio,
+ *  and easy access loaded files by keys
+ */
+class AssetsManager {
+
+    /**
+     * @type {Number}
+     */
+    #MAX_LOADING_CYCLES = 5;
+    /**
+     * @type {EventTarget}
+     */
+    #emitter = new EventTarget();
+
+    /**
+     * @type { Map<string, Loader>}
+     */
+    #registeredLoaders = new Map();
+    
+    /**
+     * @type {Number}
+     */
+    #itemsLoaded = 0;
+
+    constructor() {
+        this.registerLoader("Audio", this._loadAudio);
+        this.registerLoader("Image", this._loadImage);
+        this.registerLoader("TileMap", this._loadTileMap);
+        this.registerLoader("TileSet", this._loadTileSet);
+        this.registerLoader("AtlasImageMap", this._loadAtlasImage);
+        this.registerLoader("AtlasXML", this._loadAtlasXml);
+    }
+
+    get filesWaitingForUpload() {
+        let files = 0;
+        Array.from(this.#registeredLoaders.values()).map((fileType) => files += fileType.filesWaitingForUpload);
+        return files;
+    }
+
+    /**
+     * Register a new file type to upload. Method will dynamically add new methods.
+     * @param {String} fileTypeName
+     * @param {Function=} loadMethod loadMethod should return Promise<result>
+     * @returns {Promise | void}
+     */
+    registerLoader = (fileTypeName, loadMethod = this._defaultUploadMethod) => {
+        this["add" + fileTypeName] = (key, url, ...args) => {
+            this.addFile(fileTypeName, key, url, ...args);
+        }
+        this["get" + fileTypeName] = (key) => {
+            return this.getFile(fileTypeName, key);
+        }
+        this["is" + fileTypeName + ["InQueue"]] = (key) => {
+            return this.isFileInQueue(fileTypeName, key);
+        }
+
+        const registeredFileType = this.#registeredLoaders.get(fileTypeName) || new Loader(fileTypeName, loadMethod);
+
+        this.#registeredLoaders.set(fileTypeName, registeredFileType);
+    }
+
+    /**
+     * Execute load audio, images from tilemaps and images queues
+     * @returns {Promise<void>}
+     */
+    preload() {
+        this.#dispatchLoadingStart();
+        return new Promise(async(resolve, reject) => {
+            this.#uploadFilesRecursive().then(() => {
+                this.#dispatchLoadingFinish();
+                resolve();
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    #uploadFilesRecursive(loadCount = 0) {
+        return this.#uploadFiles().then((res) => {
+            if (this.filesWaitingForUpload === 0) {
+                return Promise.resolve(res);
+            } else {
+                loadCount++;
+                if (loadCount > this.#MAX_LOADING_CYCLES) {
+                    const err = new Error(ERROR_MESSAGES.RECURSION_ERROR);
+                    this.#dispatchLoadingError(err);
+                    return Promise.reject(new Error(ERROR_MESSAGES.RECURSION_ERROR));
+                } else {
+                    return this.#uploadFilesRecursive(loadCount);
+                }
+            }
+        });
+    }
+
+    #uploadFiles() {
+        return new Promise((resolve, reject) => {
+            let uploadPromises = [];
+            Array.from(this.#registeredLoaders.values()).forEach((fileType) => {
+                Array.from(fileType.loadingQueue.entries()).forEach((key_value) => {
+                    const p = new Promise((res, rej) => fileType.uploadMethod(key_value[0], ...key_value[1]).then((r) => res(r)));
+                    uploadPromises.push(p);
+                });
+            });
+    
+            Promise.allSettled(uploadPromises).then((results) => {
+                for (const result of results) {
+                    if (result.status === "rejected") {
+                        const error = result.reason;
+                        // incorrect method is a critical issue
+                        if (this.#isUploadErrorCritical(error)) {
+                            reject(error);
+                        } else {
+                            Warning("AssetsManager: " + error.message);
+                            this.#dispatchLoadingError(error);
+                        }
+                    }
+                }
+                resolve(results);
+            });
+        });
+    }
+
+    addEventListener(type, fn, ...args) {
+        if (!PROGRESS_EVENT_TYPE[type]) {
+            Warning("AssetsManager: Event type should be one of the ProgressEvent.type");
+        } else {
+            this.#emitter.addEventListener(type, fn, ...args);
+        }   
+    }
+
+    removeEventListener(type, fn, ...args) {
+        this.#emitter.removeEventListener(type, fn, ...args);
+    }
+
+    /**
+     * Loads image atlas xml
+     * @param {string} key
+     * @param {string} url
+     * @returns {Promise}
+     */
+    _loadAtlasXml = (key, url) => {
+        this.#checkXmlUrl(url);
+        return fetch(url)
+            .then(response => response.text())
+            .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+            .then(data => {
+                const atlas = data.documentElement || data.activeElement,
+                    atlasImagePath = atlas.attributes.getNamedItem("imagePath"),
+                    childrenNodes = atlas.children;
+
+                if (atlasImagePath) {
+                    const relativePath = this.#calculateRelativePath(url);
+
+                    this.addAtlasImageMap(key, relativePath + atlasImagePath.value, childrenNodes, relativePath);
+                    return Promise.resolve(atlas);
+                } else {
+                    const err = new Error(key + ERROR_MESSAGES.XML_FORMAT_INCORRECT);
+                    this.#dispatchLoadingError(err);
+                    return Promise.resolve(err);
+                    // return Promise.reject(err);
+                }
+            });
+    }
+
+    _loadAtlasImage = (key, url, atlasChildNodes, cors = "anonymous") => {
+        return new Promise((resolve, reject) => {
+            const img = new Image(),
+                imageAtlas = new Map(),
+                tempCanvas = document.createElement("canvas"),
+                tempCtx = tempCanvas.getContext("2d");
+            
+            img.crossOrigin = cors;
+            img.onload = () => {
+                const imageBitmapPromises = [];
+                let imageAtlasKeys = [];
+                // fix dimensions
+                tempCanvas.width = img.width;
+                tempCanvas.height = img.height;
+                tempCtx.drawImage(img, 0, 0);
+
+                for(let childNode of atlasChildNodes) {
+                    const nodeAttr = childNode.attributes,
+                        fullName = nodeAttr.getNamedItem("name").value,
+                        name = fullName.includes(".") ? fullName.split(".")[0] : fullName, // remove name ext
+                        x = nodeAttr.getNamedItem("x").value,
+                        y = nodeAttr.getNamedItem("y").value,
+                        width = nodeAttr.getNamedItem("width").value,
+                        height = nodeAttr.getNamedItem("height").value;
+                    
+                    // images are not cropped correctly in the mozilla@124.0, issue:
+                    // https://bugzilla.mozilla.org/show_bug.cgi?id=1797567
+                    // getImageData() crop them manually before 
+                    // creating imageBitmap from atlas
+                    imageBitmapPromises.push(createImageBitmap(tempCtx.getImageData(x, y, width, height), {premultiplyAlpha:"premultiply"}));
+                    imageAtlasKeys.push(name);
+                }
+                this.#dispatchCurrentLoadingProgress();
+                Promise.all(imageBitmapPromises).then((results) => {
+                    results.forEach((image, idx) => {
+                        const name = imageAtlasKeys[idx];
+                        imageAtlas.set(name, image);
+                        this.addImage(name, "empty url", image);
+                    });
+                    tempCanvas.remove();
+                    resolve(imageAtlas);
+                });
+            };
+            img.onerror = () => {
+                const err = new Error(ERROR_MESSAGES.ATLAS_IMAGE_LOADING_FAILED + url);
+                this.#dispatchLoadingError(err);
+                resolve(null);
+                //reject(err);
+            };
+            img.src = url;
+        });
+    }
+
+    /**
+     * Loads tileset
+     * @param {string} key
+     * @param {string} url 
+     * @param {number} [gid=1]
+     * @param {string=} relativePath
+     * @returns {Promise}
+     */
+    _loadTileSet = (key, url, gid=1, relativePath) => {
+        this.#checkTilesetUrl(url);
+        return fetch(relativePath ? relativePath + url : url)
+            .then((response) => response.json())
+            .then((data) => {
+                const {name, image, spacing, margin, tilewidth, tileheight} = data;
+                if (name && image && !this.isFileInQueue("Image", name)) {
+                    this.addImage(name, relativePath ? relativePath + image : image);
+                }
+                data.gid = gid;
+                return Promise.resolve(data);
+            }).catch(() => {
+                const err = new Error(ERROR_MESSAGES.TILESET_LOADING_FAILED + url);
+                this.#dispatchLoadingError(err);
+                return Promise.resolve(null);
+                //return Promise.reject(err);
+            });
+    }
+
+    _defaultUploadMethod = (key, url) => {
+        return fetch(url);
+    }
+
+    /**
+     * Loads tilemap file and related data
+     * @param {string} key 
+     * @param {string} url 
+     * @param {boolean} [attachTileSetData = true] - indicates, whenever tilesetData is attached, or will be loaded separately
+     * @returns {Promise}
+     */
+    _loadTileMap = (key, url, attachTileSetData = true) => {
+        this.#checkTilemapUrl(url);
+        return fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+                const relativePath = this.#calculateRelativePath(url);
+                
+                if (attachTileSetData === true && data.tilesets && data.tilesets.length > 0) {
+                    const tilesetPromises = [];
+                    // upload additional tileset data
+                    data.tilesets.forEach((tileset, idx) => {
+                        const { firstgid:gid, source:url } = tileset;
+                        const loadTilesetPromise = this._loadTileSet("default-" + gid, url, gid, relativePath).then((tilesetData) => {
+                            this.#dispatchCurrentLoadingProgress();
+                            return Promise.resolve(tilesetData);
+                        });
+                        tilesetPromises.push(loadTilesetPromise);
+                    });
+                    //attach additional tileset data to tilemap data
+                    return Promise.all(tilesetPromises).then((tilesetDataArray) => {
+                        for (let i = 0; i < tilesetDataArray.length; i++) {
+                            const tilesetData = tilesetDataArray[i];
+                            data.tilesets[i].data = tilesetData;
+                        }
+                        return Promise.resolve(data);
+                    });
+                } else {
+                    return Promise.resolve(data);
+                }
+            })
+            .catch((err) => {
+                if (err.message.includes("JSON.parse:")) {
+                    err = new Error(ERROR_MESSAGES.TILEMAP_LOADING_FAILED + url);
+                }
+                this.#dispatchLoadingError(err);
+                return Promise.resolve(null);
+                //return Promise.reject(err);
+            });
+    }
+
+    /**
+     * Loads audio file
+     * @param {string} key 
+     * @param {string} url 
+     * @returns {Promise}
+     */
+    _loadAudio = (key, url) => {
+        return new Promise((resolve) => {
+            const audio = new Audio(url);
+            
+            audio.addEventListener("loadeddata", () => {
+                this.#dispatchCurrentLoadingProgress();
+                resolve(audio);
+            });
+
+            audio.addEventListener("error", () => {
+                const err = new Error(ERROR_MESSAGES.AUDIO_LOADING_FAILED + url);
+                this.#dispatchLoadingError(err);
+                resolve(null);
+                //reject(err);
+            });
+        });
+    }
+
+    /**
+     * Loads image file.
+     * @param {string} key 
+     * @param {string} url
+     * @param {ImageBitmap=} image - image could be add from another source
+     * @param {string} [cors="anonymous"] // https://hacks.mozilla.org/2011/11/using-cors-to-load-webgl-textures-from-cross-domain-images
+     * @returns {Promise}
+     */
+    _loadImage = (key, url, image, cors = "anonymous") => {
+        return new Promise((resolve, reject) => {
+            if (image) {
+                resolve(image);
+            } else {
+                const img = new Image();
+                img.crossOrigin = cors;
+                img.onload = () => {
+                    // do we need a bitmap? Without creating bitmap images has not premultiplied
+                    // transparent pixels, and in some cases it creates white ages,
+                    // in other - multiply pixels with the background
+                    createImageBitmap(img, {premultiplyAlpha:"premultiply"}).then((imageBitmap) => {
+                        this.#dispatchCurrentLoadingProgress();
+                        resolve(imageBitmap);
+                    });
+                };
+                img.onerror = () => {
+                    const err = new Error(ERROR_MESSAGES.IMAGE_LOADING_FAILED + url);
+                    this.#dispatchLoadingError(err);
+                    resolve(null);
+                    // reject(err);
+                };
+                img.src = url;
+            }
+        });
+    }
+
+    #checkXmlUrl(url) {
+        if (url.includes(".xml")) {
+            return;
+        } else {
+            Exception(url + ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT);
+        }
+    }
+
+    #checkTilesetUrl(url) {
+        if (url.includes(".tsj") || url.includes(".json")) {
+            return;
+        } else {
+            Exception(url + ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT);
+        }
+    }
+
+    #checkTilemapUrl(url) {
+        if (url.includes(".tmj") || url.includes(".json")) {
+            return;
+        } else {
+            Exception(url + ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT);
+        }
+    }
+
+    #isUploadErrorCritical(error) {
+        return error.message.includes(ERROR_MESSAGES.NOT_CORRECT_METHOD_TYPE)
+            || error.message.includes(ERROR_MESSAGES.XML_FILE_EXTENSION_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.INPUT_PARAMS_ARE_INCORRECT)
+            || error.message.includes(ERROR_MESSAGES.LOADER_NOT_REGISTERED);
+    }
+
+    /**
+     * Calculate relative path for current url
+     * for example: /folder/images/map.xml -> /folder/images/
+     * @param {string} url 
+     * @returns {string}
+     */
+    #calculateRelativePath(url) {
+        let split = url.split("/"),
+        length = split.length,
+        relativePath = "/";
+        // url ends with .ext
+        if (split[length - 1].includes(".tmj") || split[length - 1].includes(".xml") || split[length - 1].includes(".json")) {
+            split.pop();
+            relativePath = split.join("/") + "/";
+        // url ends with /
+        } else if (split[length - 2].includes(".tmj") || split[length - 2].includes(".xml") || split[length - 2].includes(".json")) {
+            split.splice(length - 2, 2);
+            relativePath = split.join("/") + "/";
+        }
+        return relativePath;
+    }
+
+    addFile(fileType, fileKey, url, ...args) {
+        const loader = this.#registeredLoaders.get(fileType);
+        if (loader) {
+            this.#checkInputParams(fileKey, url, fileType);
+            loader._addFile(fileKey, [url, ...args]);
+        } else {
+            Exception(fileType + ERROR_MESSAGES.LOADER_NOT_REGISTERED);
+        }
+
+    }
+
+    isFileInQueue(fileType, fileKey) {
+        const loader = this.#registeredLoaders.get(fileType);
+        if (loader) {
+            return loader._isFileInQueue(fileKey);
+        } else {
+            Exception("Loader for " + fileType + " is not registered!");
+        }
+    }
+
+    getFile(fileType, fileKey) {
+        const loader = this.#registeredLoaders.get(fileType);
+        if (loader) {
+            return loader._getFile(fileKey);
+        } else {
+            Exception("Loader for " + fileType + " is not registered!");
+        }
+    }
+
+    #checkInputParams(fileKey, url, fileType) {
+        const errorMessage = ERROR_MESSAGES.INPUT_PARAMS_ARE_INCORRECT;
+        if (!fileKey || fileKey.trim().length === 0) {
+            Exception("add" + fileType + "()" + errorMessage);
+        }
+        if (!url || url.trim().length === 0) {
+            Exception("add" + fileType + "()" + errorMessage);
+        }
+        return;
+    }
+
+    #dispatchLoadingStart() {
+        let total = this.filesWaitingForUpload;
+        this.#emitter.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.loadstart, { total }));
+    }
+
+    #dispatchLoadingFinish() {
+        this.#emitter.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.load));
+    }
+
+    #dispatchCurrentLoadingProgress() {
+        const total = this.filesWaitingForUpload;
+        this.#itemsLoaded += 1;
+        this.#emitter.dispatchEvent(new ProgressEvent(PROGRESS_EVENT_TYPE.progress, { lengthComputable: true, loaded: this.#itemsLoaded, total }));
+    }
+
+    #dispatchLoadingError(error) {
+        Warning("AssetsManger: " + error.message);
+        this.#emitter.dispatchEvent(new ErrorEvent(PROGRESS_EVENT_TYPE.error, { error }));
+    }
+}
+
+function Exception (message) {
+    throw new Error(message);
+}
+
+function Warning (message) {
+    console.warn(message);
+}
 
 /***/ }),
 
@@ -49,7 +645,7 @@ class DrawCircleObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.
      * @hideconstructor
      */
     constructor(x, y, radius, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE, x, y, bgColor);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE, x, y, bgColor);
         this.#radius = radius;
         this.#vertices = this._interpolateConus(radius);
     }
@@ -118,7 +714,7 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
      * @hideconstructor
      */
     constructor(x, y, radius, bgColor, angle, fade = 0) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS, x, y, bgColor);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS, x, y, bgColor);
         this.#radius = radius;
         this.#angle = angle;
         this.#fade_min = fade;
@@ -252,7 +848,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
      * @hideconstructor
      */
     constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0, margin = 0) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.DRAW_TYPE.IMAGE, mapX, mapY);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();
@@ -523,7 +1119,7 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
         this.#vertices = vertices;
     }
 
@@ -570,7 +1166,7 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
         this.#vertices = this._convertVerticesArray(vertices);
     }
 
@@ -625,7 +1221,7 @@ class DrawRectObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
      * @hideconstructor
      */
     constructor(x, y, w, h, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE, x, y, bgColor);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE, x, y, bgColor);
         this.#w = w;
         this.#h = h;
         this.#vertices = this._calculateRectVertices(w,h);
@@ -685,8 +1281,7 @@ class DrawShapeObject {
     #y;
     #bg;
     /**
-     * @type {string}
-     * @enum {CONST.DRAW_TYPE}
+     * @type {DRAW_TYPE}
      */
     #type;
     /**
@@ -752,8 +1347,7 @@ class DrawShapeObject {
     }
 
     /**
-     * @type {string}
-     * @enum {CONST.DRAW_TYPE}
+     * @type {DRAW_TYPE}
      */
     get type() {
         return this.#type;
@@ -991,7 +1585,7 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
      * @hideconstructor
      */
     constructor(mapX, mapY, text, font, fillStyle) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.DRAW_TYPE.TEXT, mapX, mapY);
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_2__.DRAW_TYPE.TEXT, mapX, mapY);
         this.#text = text;
         this.#font = font;
         this.#fillStyle = fillStyle;
@@ -1233,7 +1827,14 @@ class DrawTiledLayer {
      * @type {Map<string, AnimationEvent>}
      */
     #animations = new Map();
+    /**
+     * @type {boolean}
+     */
     #isOffsetTurnedOff;
+    /**
+     * @type {boolean}
+     */
+    #isRemoved = false;
 
     /**
      * @hideconstructor
@@ -1308,6 +1909,13 @@ class DrawTiledLayer {
         this.#drawBoundaries = value;
     }
 
+    get isRemoved() {
+        return this.#isRemoved;
+    }
+
+    set isRemoved(value) {
+        this.#isRemoved = value;
+    }
     /**
      * @ignore
      */
@@ -1647,6 +2255,9 @@ class AnimationEvent {
      * @type {boolean}
      */
     #isRepeated;
+    /**
+     * @type {number}
+     */
     #lastAnimationTimeStamp;
     
     constructor(eventName, animationSpriteIndexes, isRepeated = false, currentSpriteIndex, isActive = false) {
@@ -1743,6 +2354,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
+/* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
+
 
 
 
@@ -2035,7 +2648,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
+/* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
 /* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
 /* harmony import */ var _2d_DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./2d/DrawCircleObject.js */ "./src/base/2d/DrawCircleObject.js");
 /* harmony import */ var _2d_DrawConusObject_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./2d/DrawConusObject.js */ "./src/base/2d/DrawConusObject.js");
@@ -2089,7 +2702,7 @@ class GameStage {
      */
     #isActive;
     /**
-     * @typedef {ISystem}
+     * @type {ISystem}
      */
     #iSystemReference;
     /**
@@ -2333,23 +2946,23 @@ class GameStage {
             vertices = drawObject.vertices,
             circleBoundaries = drawObject.circleBoundaries;
         switch(drawObjectType) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
             if (!circleBoundaries) {
                 return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
             } else {
                 return this.#isCircleToBoundariesCollision(x, y, drawObject.circleBoundaries.r);
             }
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
             break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
             break;
         default:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
         return false;
     };
@@ -2367,23 +2980,23 @@ class GameStage {
             drawObjectBoundaries = drawObject.vertices,
             circleBoundaries = drawObject.circleBoundaries;
         switch(drawObjectType) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
             if (!circleBoundaries) {
                 return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
             } else {
                 return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
             }
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
             break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE:
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
             break;
         default:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
         return false;
     };
@@ -2398,16 +3011,16 @@ class GameStage {
             let coll;
             
             switch(drawMapObjectType) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
                 coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
                 break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
                 console.warn("isObjectCollision.circle check is not implemented yet!");
                 break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE:
                 console.warn("isObjectCollision.line check is not implemented, please use rect instead");
                 break;
             default:
@@ -2438,20 +3051,20 @@ class GameStage {
             let coll;
             
             switch(drawMapObjectType) {
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CONUS:
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
                 if (!circleBoundaries) {
                     coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
                 } else {
                     coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
                 }
                 break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
                 console.warn("isObjectCollision.circle check is not implemented yet!");
                 break;
-            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.LINE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE:
                 console.warn("isObjectCollision.line check is not implemented, please use rect instead");
                 break;
             default:
@@ -2745,18 +3358,50 @@ __webpack_require__.r(__webpack_exports__);
  * @hideconstructor
  */
 class GameStageData {
+    /**
+     * @type {number}
+     */
     #worldWidth;
     #worldHeight;
+    /**
+     * @type {number}
+     */
     #viewWidth;
+    /**
+     * @type {number}
+     */
     #viewHeight;
+    /**
+     * @type {number}
+     */
     #xOffset = 0;
+    /**
+     * @type {number}
+     */
     #yOffset = 0;
+    /**
+     * @type {number}
+     */
     #centerX = 0;
+    /**
+     * @type {number}
+     */
     #centerY = 0;
+    /**
+     * @type {number}
+     */
     #rotate = 0;
-
+    /**
+     * @type {number}
+     */
     #maxBoundariesSize = 0;
+    /**
+     * @type {number}
+     */
     #maxEllipseBoundSize = 0;
+    /**
+     * @type {number}
+     */
     #maxPointBSize = 0;
     /**
      * Points to next empty cell
@@ -2824,7 +3469,7 @@ class GameStageData {
     #debugObjectBoundaries = [];
     /**
      * 
-     * @param {boolean}
+     * @type {boolean}
      */
     #isDebugObjectBoundaries = false;
 
@@ -3066,6 +3711,37 @@ class GameStageData {
     }
 
     /**
+     * @ignore
+     */
+    _sortRenderObjectsBySortIndex() {
+        this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
+    }
+
+    _processPendingRenderObjects() {
+        if (this.#pendingRenderObjects.length > 0) {
+            this.#renderObjects.push(...this.#pendingRenderObjects);
+            this._sortRenderObjectsBySortIndex();
+            this.#pendingRenderObjects = [];
+        }
+    }
+
+    /**
+     * @ignore
+     */
+    set _renderObject(object) {
+        this.#pendingRenderObjects.push(object);
+    } 
+
+    /**
+     * @ignore
+     */
+    set _renderObjects(objects) {
+        objects.forEach(object => {
+            this._renderObject = object;
+        });
+    } 
+
+    /**
      * current screen boundaries, 
      * this method is for backward capability with jsge@1.4.4
      * recommended to use getRawBoundaries()
@@ -3291,35 +3967,14 @@ class GameStageData {
     }
 
     /**
-     * @ignore
+     * Used to remove all render objects,
+     * Designed for restart the stage
      */
-    _sortRenderObjectsBySortIndex() {
-        this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
+    cleanUp() {
+        this.#renderObjects = [];
+        this.#pendingRenderObjects = [];
+        this._clearBoundaries();
     }
-
-    _processPendingRenderObjects() {
-        if (this.#pendingRenderObjects.length > 0) {
-            this.#renderObjects.push(...this.#pendingRenderObjects);
-            this._sortRenderObjectsBySortIndex();
-            this.#pendingRenderObjects = [];
-        }
-    }
-
-    /**
-     * @ignore
-     */
-    set _renderObject(object) {
-        this.#pendingRenderObjects.push(object);
-    } 
-
-    /**
-     * @ignore
-     */
-    set _renderObjects(objects) {
-        objects.forEach(object => {
-            this._renderObject = object;
-        });
-    } 
 }
 
 /***/ }),
@@ -3415,6 +4070,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+//import { Socket } from "socket.io-client";
 
 /**
  * Represents Socket connection
@@ -3423,7 +4079,13 @@ __webpack_require__.r(__webpack_exports__);
  * to enable, set settings.network.enabled to true
  */
 class INetwork extends EventTarget {
+    /**
+     * @type {Object}
+     */
     #systemSettings;
+    /**
+     * @type {Socket}
+     */
     #socket;
 
     /**
@@ -3566,10 +4228,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _WebGl_WebGlEngine_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./WebGl/WebGlEngine.js */ "./src/base/WebGl/WebGlEngine.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
 /* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
-/* harmony import */ var _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgram.js */ "./src/base/WebGl/ImagesDrawProgram.js");
-/* harmony import */ var _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgram.js */ "./src/base/WebGl/PrimitivesDrawProgram.js");
-/* harmony import */ var _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgramM.js */ "./src/base/WebGl/ImagesDrawProgramM.js");
-/* harmony import */ var _RenderLoop_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./RenderLoop.js */ "./src/base/RenderLoop.js");
+/* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
+/* harmony import */ var _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgram.js */ "./src/base/WebGl/ImagesDrawProgram.js");
+/* harmony import */ var _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgram.js */ "./src/base/WebGl/PrimitivesDrawProgram.js");
+/* harmony import */ var _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgramM.js */ "./src/base/WebGl/ImagesDrawProgramM.js");
+/* harmony import */ var _RenderLoop_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./RenderLoop.js */ "./src/base/RenderLoop.js");
+
 
 
 
@@ -3653,13 +4317,13 @@ class IRender {
 
         this._registerRenderInit(this.fixCanvasSize);
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_5__.imgVertexShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_5__.imgFragmentShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_5__.imgUniforms, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_5__.imgAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgVertexShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgFragmentShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgUniforms, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgAttributes)
         );
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.primitivesAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesAttributes)
         );
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMAttributes)
         );
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
     }
@@ -3822,7 +4486,7 @@ class IRender {
         switch (this.systemSettings.gameOptions.library) {
         case _constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LIBRARY.WEBGL:
             await this.#prepareViews();
-            this.#renderLoopInstance = new _RenderLoop_js__WEBPACK_IMPORTED_MODULE_8__.RenderLoop(this.systemSettings, stageData, this._webGlEngine());
+            this.#renderLoopInstance = new _RenderLoop_js__WEBPACK_IMPORTED_MODULE_9__.RenderLoop(this.systemSettings, stageData, this._webGlEngine());
             // delegate render loop events
             this.#renderLoopInstance.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.START));
             this.#renderLoopInstance.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.END));
@@ -3889,7 +4553,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _INetwork_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./INetwork.js */ "./src/base/INetwork.js");
 /* harmony import */ var _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystemAudio.js */ "./src/base/ISystemAudio.js");
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
+/* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
 /* harmony import */ var _DrawObjectFactory_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./DrawObjectFactory.js */ "./src/base/DrawObjectFactory.js");
 /* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
 /* harmony import */ var _IRender_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./IRender.js */ "./src/base/IRender.js");
@@ -3934,7 +4598,7 @@ class ISystem {
     /**
      * @type {AssetsManager}
      */
-    #iLoader = new _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_5__["default"]();
+    #iLoader = new _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_5__["default"]();
     /**
      * @type {IRender}
      */
@@ -4130,7 +4794,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "ISystemAudio": () => (/* binding */ ISystemAudio)
 /* harmony export */ });
-/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
+/* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
 
@@ -4320,16 +4984,16 @@ class RenderLoop {
     #fpsAverageCountTimer;
     /**
      * 
-     * @param {GameStageData} stageData 
+     * @type {GameStageData} 
      */
     #stageData;
     /**
-     * @param { WebGlEngine }
+     * @type { WebGlEngine }
      */
     #webGlEngine;
     /**
      * 
-     * @param {SystemSettings} systemSettings
+     * @type {SystemSettings}
      */
     #systemSettings;
     /**
@@ -4463,7 +5127,7 @@ class RenderLoop {
                     len--;
                     continue;
                 }
-                if (object.hasAnimations) {
+                if ("hasAnimations" in object && object.hasAnimations) {
                     object._processActiveAnimations();
                 }
                 const promise = await this.#drawRenderObject(object)
@@ -5264,10 +5928,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../2d/DrawPolygonObject.js */ "./src/base/2d/DrawPolygonObject.js");
 /* harmony import */ var _2d_DrawRectObject_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../2d/DrawRectObject.js */ "./src/base/2d/DrawRectObject.js");
 /* harmony import */ var _2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../2d/DrawTextObject.js */ "./src/base/2d/DrawTextObject.js");
-/* harmony import */ var _modules_assetsm_dist_assetsm_min_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../../modules/assetsm/dist/assetsm.min.js */ "./modules/assetsm/dist/assetsm.min.js");
-/* harmony import */ var _2d_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../2d/DrawImageObject.js */ "./src/base/2d/DrawImageObject.js");
-/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../../index.js */ "./src/index.js");
-
+/* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../../index.js */ "./src/index.js");
 
 
 
@@ -5330,9 +5992,14 @@ class WebGlEngine {
      * @type {Map<string, Object<string, WebGLUniformLocation | number>>}
      */
     #webGlProgramsVarsLocations = new Map();
-
+    /**
+     * @type {Map<string, {method: Function, webglProgramName: string}>}
+     */
     #registeredRenderObjects = new Map();
 
+    /**
+     * @type {boolean}
+     */
     #loopDebug;
 
     constructor(context, gameOptions, iLoader) {
@@ -5355,7 +6022,7 @@ class WebGlEngine {
         this._registerObjectRender(_2d_DrawConusObject_js__WEBPACK_IMPORTED_MODULE_7__.DrawConusObject.name, this._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer.name, this._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_8__.DrawLineObject.name, this._bindLine, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.IMAGE, this._bindImage, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
+        this._registerObjectRender(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE, this._bindImage, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
 
     getProgram(name) {
@@ -5679,20 +6346,20 @@ class WebGlEngine {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
 
         switch (renderObject.type) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.RECTANGLE:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
             this.#setSingleRectangle(renderObject.width, renderObject.height);
             verticesNumber += 6;
             break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.TEXT:
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
             break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.CIRCLE: {
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE: {
             const coords = renderObject.vertices;
             gl.bufferData(gl.ARRAY_BUFFER, 
                 new Float32Array(coords), gl.STATIC_DRAW);
             verticesNumber += coords.length / 2;
             break;
         }
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.DRAW_TYPE.POLYGON: {
+        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON: {
             const triangles = this.#triangulatePolygon(renderObject.vertices);
             this.#bindPolygon(triangles);
             const len = triangles.length;
@@ -5900,7 +6567,7 @@ class WebGlEngine {
 
         if (renderObject.vertices && this.#gameOptions.debug.boundaries.drawObjectBoundaries) {
             pageData._enableDebugObjectBoundaries();
-            pageData._addImageDebugBoundaries(_index_js__WEBPACK_IMPORTED_MODULE_14__.utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
+            pageData._addImageDebugBoundaries(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
         }
         
         const {
@@ -5959,7 +6626,7 @@ class WebGlEngine {
                   0, scale[1], 0,
                   0, 0, 1
               ];
-        const matMultiply = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(_index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
+        const matMultiply = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
 
         const posX = 0 - renderObject.width / 2,
               posY = 0 - renderObject.height / 2;
@@ -5983,7 +6650,7 @@ class WebGlEngine {
             vecX2, vecY1,
             vecX2, vecY2
         ];
-        const vectors = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.mat3MultiplyPosCoords(matMultiply, vectorsD),
+        const vectors = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3MultiplyPosCoords(matMultiply, vectorsD),
         textures = [
             texX1, texY1,
             texX2, texY1,
@@ -6098,6 +6765,9 @@ class WebGlEngine {
             u_image: u_imageLocation } = vars;
 
         gl.useProgram(program);
+        /**
+         * @type {Array<any> | void}
+         */
         let renderLayerData;
         switch (this.#gameOptions.optimization) {
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
@@ -7333,6 +8003,7 @@ class SystemSettings {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "CONST": () => (/* binding */ CONST),
+/* harmony export */   "DRAW_TYPE": () => (/* binding */ DRAW_TYPE),
 /* harmony export */   "ERROR_CODES": () => (/* binding */ ERROR_CODES),
 /* harmony export */   "WARNING_CODES": () => (/* binding */ WARNING_CODES)
 /* harmony export */ });
@@ -7387,15 +8058,6 @@ const CONST = {
             IMAGES_M: "drawImagesMerge"
         }
     },
-    DRAW_TYPE: {
-        RECTANGLE: "rect",
-        CONUS: "conus",
-        CIRCLE: "circle",
-        POLYGON: "polygon",
-        LINE: "line",
-        TEXT: "text",
-        IMAGE: "image"
-    },
     LAYERS: {
         DEFAULT: "default-view-layer",
         BOUNDARIES: "boundaries-view-layer"
@@ -7418,6 +8080,16 @@ const CONST = {
             NATIVE_WAT: "WASM"
         }
     }
+};
+/** @enum {string} */
+const DRAW_TYPE = {
+    RECTANGLE: "rect",
+    CONUS: "conus",
+    CIRCLE: "circle",
+    POLYGON: "polygon",
+    LINE: "line",
+    TEXT: "text",
+    IMAGE: "image"
 };
 
 const ERROR_CODES = {
@@ -7550,6 +8222,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./configs.js */ "./src/configs.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./utils.js */ "./src/utils.js");
+
 
 
 

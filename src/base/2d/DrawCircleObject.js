@@ -1,4 +1,4 @@
-import { CONST } from "../../constants.js";
+import { DRAW_TYPE } from "../../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
@@ -21,7 +21,7 @@ export class DrawCircleObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(x, y, radius, bgColor) {
-        super(CONST.DRAW_TYPE.CIRCLE, x, y, bgColor);
+        super(DRAW_TYPE.CIRCLE, x, y, bgColor);
         this.#radius = radius;
         this.#vertices = this._interpolateConus(radius);
     }

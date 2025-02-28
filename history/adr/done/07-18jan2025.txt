@@ -1,7 +1,7 @@
 Date: January 18 2025
 No submodules installation / Установка сторонних модулей отсутствует
 
-Status: In Progress
+Status: Done (1.5.7)
 
 Context:
     Модули spine и assetsm копируются вручную в папку modules.

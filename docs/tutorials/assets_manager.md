@@ -1,8 +1,7 @@
-Assets Manager is an [external module]{@link https://github.com/ALapinskas/assetsm}
+The Assets Manager is an [external module]{@link https://github.com/ALapinskas/assetsm}
 
-It is used to load and hold game assets such as\
-tilmaps(.tmg files)*, images and audio*.\
-To attach data use in the [register() method]{@tutorial stages_lifecycle}:
+It is used to load and hold game assets such as tilmaps(.tmg files), images and audio.  
+To attach data use in the [GameStage.register()]{@tutorial stages_lifecycle}:
 ```
 register() {
     stage.iLoader.addAudio(key, url)
@@ -14,8 +13,8 @@ then call
 ```
 app.preloadAllData()
 ```
-after [preloadAllData()]{@link System#preloadAllData} promise will be resolved,
-data will be available with on [init() and start() stages]{@tutorial stages_lifecycle}
+after [preloadAllData()]{@link System#preloadAllData} promise is resolved,  
+the data will be available during the [GameStage.init() and GameStage.start() stages]{@tutorial stages_lifecycle}
 ```
 start() {
     const audio = stage.iLoader.getAudio(key)
@@ -24,19 +23,18 @@ start() {
     ...
 }
 ```
-
-*be careful with loading tilemaps and attached tilesets and images, everything should be in the same folder or subfolder. \
-Or you can manage tilesets loading separately, passing false as 3d parameter to addTileMap and then \
-adding addTileSet() calls:
+*\*be careful with loading tilemaps and attached tilesets and images, everything should be in the same folder or subfolder.*  
+  
+Alternatively, you can manage tileset loading separately by passing `false` as the third parameter to `addTileMap`, and then adding `addTileSet()` calls:
 ```
     stage.iLoader.addTileMap(key, url, false);
     stage.iLoader.addTileSet(key, url, gui1);
     stage.iLoader.addTileSet(key, url, gui2);
 ```
-*added audio files is better to register in the AudioInterface, {@tutorial how_to_add_and_use_audio}
+*It is better to register added audio files in the AudioInterface. See {@tutorial how_to_add_and_use_audio}
 
 ### AtlasXML
-From jsge@1.3.0 iLoader supports AtlasXML files:
+Starting from jsge@1.3.0, iLoader supports AtlasXML files:
 ```
 register() {
     stage.iLoader.addAtlasXML(key, url);

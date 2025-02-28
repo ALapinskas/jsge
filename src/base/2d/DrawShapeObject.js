@@ -1,4 +1,4 @@
-import { CONST } from "../../constants.js";
+import { DRAW_TYPE } from "../../constants.js";
 import { utils } from "../../index.js";
 
 /**
@@ -9,8 +9,7 @@ export class DrawShapeObject {
     #y;
     #bg;
     /**
-     * @type {string}
-     * @enum {CONST.DRAW_TYPE}
+     * @type {DRAW_TYPE}
      */
     #type;
     /**
@@ -76,8 +75,7 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {string}
-     * @enum {CONST.DRAW_TYPE}
+     * @type {DRAW_TYPE}
      */
     get type() {
         return this.#type;

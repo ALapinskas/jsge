@@ -1,7 +1,7 @@
-import { CONST, ERROR_CODES, WARNING_CODES } from "../constants.js";
+import { DRAW_TYPE, ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { GameStageData } from "./GameStageData.js";
 import { Exception, Warning } from "./Exception.js";
-import AssetsManager from "../../modules/assetsm/dist/assetsm.min.js";
+import AssetsManager from "../../modules/assetsm/src/AssetsManager.js";
 import { DrawObjectFactory } from "./DrawObjectFactory.js";
 import { DrawCircleObject } from "./2d/DrawCircleObject.js";
 import { DrawConusObject } from "./2d/DrawConusObject.js";
@@ -38,7 +38,7 @@ export class GameStage {
      */
     #isActive;
     /**
-     * @typedef {ISystem}
+     * @type {ISystem}
      */
     #iSystemReference;
     /**
@@ -282,23 +282,23 @@ export class GameStage {
             vertices = drawObject.vertices,
             circleBoundaries = drawObject.circleBoundaries;
         switch(drawObjectType) {
-        case CONST.DRAW_TYPE.TEXT:
-        case CONST.DRAW_TYPE.RECTANGLE:
-        case CONST.DRAW_TYPE.CONUS:
-        case CONST.DRAW_TYPE.IMAGE:
+        case DRAW_TYPE.TEXT:
+        case DRAW_TYPE.RECTANGLE:
+        case DRAW_TYPE.CONUS:
+        case DRAW_TYPE.IMAGE:
             if (!circleBoundaries) {
                 return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
             } else {
                 return this.#isCircleToBoundariesCollision(x, y, drawObject.circleBoundaries.r);
             }
-        case CONST.DRAW_TYPE.CIRCLE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+        case DRAW_TYPE.CIRCLE:
+            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
             break;
-        case CONST.DRAW_TYPE.LINE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+        case DRAW_TYPE.LINE:
+            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
             break;
         default:
-            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+            Warning(WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
         return false;
     };
@@ -316,23 +316,23 @@ export class GameStage {
             drawObjectBoundaries = drawObject.vertices,
             circleBoundaries = drawObject.circleBoundaries;
         switch(drawObjectType) {
-        case CONST.DRAW_TYPE.TEXT:
-        case CONST.DRAW_TYPE.RECTANGLE:
-        case CONST.DRAW_TYPE.CONUS:
-        case CONST.DRAW_TYPE.IMAGE:
+        case DRAW_TYPE.TEXT:
+        case DRAW_TYPE.RECTANGLE:
+        case DRAW_TYPE.CONUS:
+        case DRAW_TYPE.IMAGE:
             if (!circleBoundaries) {
                 return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
             } else {
                 return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
             }
-        case CONST.DRAW_TYPE.CIRCLE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+        case DRAW_TYPE.CIRCLE:
+            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
             break;
-        case CONST.DRAW_TYPE.LINE:
-            Warning(CONST.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+        case DRAW_TYPE.LINE:
+            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
             break;
         default:
-            Warning(CONST.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+            Warning(WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
         return false;
     };
@@ -347,16 +347,16 @@ export class GameStage {
             let coll;
             
             switch(drawMapObjectType) {
-            case CONST.DRAW_TYPE.TEXT:
-            case CONST.DRAW_TYPE.RECTANGLE:
-            case CONST.DRAW_TYPE.CONUS:
-            case CONST.DRAW_TYPE.IMAGE:
+            case DRAW_TYPE.TEXT:
+            case DRAW_TYPE.RECTANGLE:
+            case DRAW_TYPE.CONUS:
+            case DRAW_TYPE.IMAGE:
                 coll = this.#isPolygonToPolygonCollision(x, y, polygonVertices, polygonRotation, mapObject);
                 break;
-            case CONST.DRAW_TYPE.CIRCLE:
+            case DRAW_TYPE.CIRCLE:
                 console.warn("isObjectCollision.circle check is not implemented yet!");
                 break;
-            case CONST.DRAW_TYPE.LINE:
+            case DRAW_TYPE.LINE:
                 console.warn("isObjectCollision.line check is not implemented, please use rect instead");
                 break;
             default:
@@ -387,20 +387,20 @@ export class GameStage {
             let coll;
             
             switch(drawMapObjectType) {
-            case CONST.DRAW_TYPE.TEXT:
-            case CONST.DRAW_TYPE.RECTANGLE:
-            case CONST.DRAW_TYPE.CONUS:
-            case CONST.DRAW_TYPE.IMAGE:
+            case DRAW_TYPE.TEXT:
+            case DRAW_TYPE.RECTANGLE:
+            case DRAW_TYPE.CONUS:
+            case DRAW_TYPE.IMAGE:
                 if (!circleBoundaries) {
                     coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
                 } else {
                     coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
                 }
                 break;
-            case CONST.DRAW_TYPE.CIRCLE:
+            case DRAW_TYPE.CIRCLE:
                 console.warn("isObjectCollision.circle check is not implemented yet!");
                 break;
-            case CONST.DRAW_TYPE.LINE:
+            case DRAW_TYPE.LINE:
                 console.warn("isObjectCollision.line check is not implemented, please use rect instead");
                 break;
             default:

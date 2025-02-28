@@ -1,4 +1,4 @@
-import { CONST } from "../../constants.js";
+import { DRAW_TYPE } from "../../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
@@ -15,7 +15,7 @@ export class DrawPolygonObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(CONST.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
+        super(DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
         this.#vertices = this._convertVerticesArray(vertices);
     }
 

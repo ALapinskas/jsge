@@ -1,6 +1,6 @@
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { Rectangle } from "./Primitives.js";
-import { CONST, ERROR_CODES } from "../../constants.js";
+import { DRAW_TYPE, ERROR_CODES } from "../../constants.js";
 import { Exception } from "../Exception.js";
 import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
 
@@ -30,7 +30,7 @@ export class DrawTextObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(mapX, mapY, text, font, fillStyle) {
-        super(CONST.DRAW_TYPE.TEXT, mapX, mapY);
+        super(DRAW_TYPE.TEXT, mapX, mapY);
         this.#text = text;
         this.#font = font;
         this.#fillStyle = fillStyle;

@@ -1,4 +1,4 @@
-import AssetsManager from  "../../modules/assetsm/dist/assetsm.min.js";
+import AssetsManager from  "../../modules/assetsm/src/AssetsManager.js";
 import { WARNING_CODES } from "../constants.js";
 import { Warning } from "./Exception.js";
 

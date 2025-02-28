@@ -16,18 +16,50 @@ import { DrawTextObject } from "./2d/DrawTextObject.js";
  * @hideconstructor
  */
 export class GameStageData {
+    /**
+     * @type {number}
+     */
     #worldWidth;
     #worldHeight;
+    /**
+     * @type {number}
+     */
     #viewWidth;
+    /**
+     * @type {number}
+     */
     #viewHeight;
+    /**
+     * @type {number}
+     */
     #xOffset = 0;
+    /**
+     * @type {number}
+     */
     #yOffset = 0;
+    /**
+     * @type {number}
+     */
     #centerX = 0;
+    /**
+     * @type {number}
+     */
     #centerY = 0;
+    /**
+     * @type {number}
+     */
     #rotate = 0;
-
+    /**
+     * @type {number}
+     */
     #maxBoundariesSize = 0;
+    /**
+     * @type {number}
+     */
     #maxEllipseBoundSize = 0;
+    /**
+     * @type {number}
+     */
     #maxPointBSize = 0;
     /**
      * Points to next empty cell
@@ -95,7 +127,7 @@ export class GameStageData {
     #debugObjectBoundaries = [];
     /**
      * 
-     * @param {boolean}
+     * @type {boolean}
      */
     #isDebugObjectBoundaries = false;
 
@@ -337,6 +369,37 @@ export class GameStageData {
     }
 
     /**
+     * @ignore
+     */
+    _sortRenderObjectsBySortIndex() {
+        this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
+    }
+
+    _processPendingRenderObjects() {
+        if (this.#pendingRenderObjects.length > 0) {
+            this.#renderObjects.push(...this.#pendingRenderObjects);
+            this._sortRenderObjectsBySortIndex();
+            this.#pendingRenderObjects = [];
+        }
+    }
+
+    /**
+     * @ignore
+     */
+    set _renderObject(object) {
+        this.#pendingRenderObjects.push(object);
+    } 
+
+    /**
+     * @ignore
+     */
+    set _renderObjects(objects) {
+        objects.forEach(object => {
+            this._renderObject = object;
+        });
+    } 
+
+    /**
      * current screen boundaries, 
      * this method is for backward capability with jsge@1.4.4
      * recommended to use getRawBoundaries()
@@ -562,33 +625,12 @@ export class GameStageData {
     }
 
     /**
-     * @ignore
+     * Used to remove all render objects,
+     * Designed for restart the stage
      */
-    _sortRenderObjectsBySortIndex() {
-        this.#renderObjects.sort((obj1, obj2) => obj1.sortIndex - obj2.sortIndex);
+    cleanUp() {
+        this.#renderObjects = [];
+        this.#pendingRenderObjects = [];
+        this._clearBoundaries();
     }
-
-    _processPendingRenderObjects() {
-        if (this.#pendingRenderObjects.length > 0) {
-            this.#renderObjects.push(...this.#pendingRenderObjects);
-            this._sortRenderObjectsBySortIndex();
-            this.#pendingRenderObjects = [];
-        }
-    }
-
-    /**
-     * @ignore
-     */
-    set _renderObject(object) {
-        this.#pendingRenderObjects.push(object);
-    } 
-
-    /**
-     * @ignore
-     */
-    set _renderObjects(objects) {
-        objects.forEach(object => {
-            this._renderObject = object;
-        });
-    } 
 }

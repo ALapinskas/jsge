@@ -1,4 +1,4 @@
-In order to add a file, use stage.iLoader.addAudio() in the [register method]{@tutorial stages_lifecycle}:
+To add a file, use `stage.iLoader.addAudio()` in the [GameStage.register()]{@tutorial stages_lifecycle}:
 ```
 register() {
     this.iLoader.addAudio("audio_key", "./audio.mp3");
@@ -6,37 +6,38 @@ register() {
 }
 ```
 ## Using AudioInterface:
-AudioInterface is a control center for all audio tracks, \
-default AudioInterface is available via stage.audio, \
-you could add any other audio interfaces with 
+The AudioInterface serves as a control center for all audio tracks.  
+The default AudioInterface is available via `stage.audio`.  
+You can add any other audio interfaces with:
 ```
 this.music = new AudioInterface(this.iLoader);
 ```
 ### How to use tracks with AudioInterface
-1. first, register the added and loaded audio file in [the init, or start method]{@tutorial stages_lifecycle}:
+1. First, register the added and loaded audio file in [the GameStage.init(), or GameStage.start()]{@tutorial stages_lifecycle}:
 ```
 stage.audio.registerAudio("audio_key");
 ```
-2. then get the audio track:
+2. Then get the audio track:
 ```
 const track = stage.audio.getAudio("audio_key");
 ```
-3. to play, or pause use:
+3. To play or pause the track, use:
 ```
 track.play();
 track.pause();
 ```
-4. In order to loop the audio track, set track.loop parameter to true:
+4. To loop the audio track, set the `track.loop` parameter to `true`:
 ```
 const audioTrack = this.audio.getAudio("audio_key");
 audioTrack.loop = true;
 audioTrack.play();
 ```
-5. If you want to take a copy of the track use getAudioCloned():
+5. If you want to take a copy of the track, use `getAudioCloned()`:
 ```
 this.audio.getAudioCloned("audio_key").play();
 ```
-6. In order to control the volume, set audio.volume from 0 to 1(this will affect only on registered tracks):
+6. In order to control the volume,  
+set `audio.volume` from 0 to 1(this will affect only on registered tracks):
 ```
 this.audio.volume = 0.5;
 ```

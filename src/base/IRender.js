@@ -3,6 +3,7 @@ import { ERROR_CODES, WARNING_CODES } from "../constants.js";
 import { WebGlEngine } from "./WebGl/WebGlEngine.js";
 import { SystemSettings } from "../configs.js";
 import { GameStageData } from "./GameStageData.js";
+import AssetsManager from "../../modules/assetsm/src/AssetsManager.js";
 //import { calculateBufferData } from "../wa/release.js";
 import { CONST } from "../constants.js";
 import { imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes } from "./WebGl/ImagesDrawProgram.js";

@@ -40,6 +40,19 @@ export class MapPage extends GameStage {
     }
 
     init() {
+        this.audio.registerAudio(this.fireballCastKey);
+        this.audio.registerAudio(this.#fireballDestroyAudioKey);
+        this.audio.registerAudio(this.#detectedByGhostAudioKey);
+        this.audio.registerAudio(this.#gameOverAudioKey);
+        this.backgroundSounds.registerAudio(this.defaultAudioKey);
+        this.backgroundSounds.volume = .5;
+        this.defaultAudio = this.backgroundSounds.getAudio(this.defaultAudioKey);
+        this.defaultAudio.loop = true;
+
+        this.gameOverAudio = this.audio.getAudio(this.#gameOverAudioKey);
+    }
+
+    start() {
         const [w, h] = this.stageData.canvasDimensions;
 
         this.draw.tiledLayer("background", this.tilemapKey);
@@ -78,27 +91,13 @@ export class MapPage extends GameStage {
         this.greenLight = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5", Math.PI, 20);
         this.greenLight.setMask(this.sightView);
 
-        
         this.#enemies.push(monster1);
         this.#enemies.push(monster2);
         this.#enemies.push(monster3);
 
-        this.audio.registerAudio(this.fireballCastKey);
-        this.audio.registerAudio(this.#fireballDestroyAudioKey);
-        this.audio.registerAudio(this.#detectedByGhostAudioKey);
-        this.audio.registerAudio(this.#gameOverAudioKey);
-        this.backgroundSounds.registerAudio(this.defaultAudioKey);
-        this.backgroundSounds.volume = .5;
-        this.defaultAudio = this.backgroundSounds.getAudio(this.defaultAudioKey);
-        this.defaultAudio.loop = true;
-
-        this.gameOverAudio = this.audio.getAudio(this.#gameOverAudioKey);
-
         this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "white"),
         this.navItemBack.turnOffOffset();
-    }
 
-    start() {
         console.log("dungeon started");
         this.registerEventListeners();
         this.defaultAudio.play();
@@ -111,6 +110,7 @@ export class MapPage extends GameStage {
     }
 
     stop() {
+        this.stageData.cleanUp();
         this.unregisterEventListeners();
         this.defaultAudio.pause();
     }

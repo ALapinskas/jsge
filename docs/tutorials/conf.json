@@ -1,6 +1,6 @@
 {
     "quick_start": {
-        "title": "Quick start"
+        "title": "Quick Start"
     },
     "assets_manager": {
         "title": "Assets Manager"
@@ -12,15 +12,15 @@
         "title": "Application Scheme"
     },
     "how_to_load_and_use_tilemaps": {
-        "title": "How to load and use tilemaps"
+        "title": "How to Load and Use Tilemaps"
     },
     "how_to_do_animations": {
-        "title": "How create animations"
+        "title": "How to Create Animations"
     },
     "how_to_add_and_use_audio": {
         "title": "How to add and use audio"
     },
     "spine_animations": {
-        "title": "How to add spine animations"
+        "title": "How to Add Spine Animations"
     }
 }

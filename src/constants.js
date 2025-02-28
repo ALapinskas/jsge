@@ -49,15 +49,6 @@ export const CONST = {
             IMAGES_M: "drawImagesMerge"
         }
     },
-    DRAW_TYPE: {
-        RECTANGLE: "rect",
-        CONUS: "conus",
-        CIRCLE: "circle",
-        POLYGON: "polygon",
-        LINE: "line",
-        TEXT: "text",
-        IMAGE: "image"
-    },
     LAYERS: {
         DEFAULT: "default-view-layer",
         BOUNDARIES: "boundaries-view-layer"
@@ -80,6 +71,16 @@ export const CONST = {
             NATIVE_WAT: "WASM"
         }
     }
+};
+/** @enum {string} */
+export const DRAW_TYPE = {
+    RECTANGLE: "rect",
+    CONUS: "conus",
+    CIRCLE: "circle",
+    POLYGON: "polygon",
+    LINE: "line",
+    TEXT: "text",
+    IMAGE: "image"
 };
 
 export const ERROR_CODES = {

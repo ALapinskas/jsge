@@ -1,0 +1,3 @@
+[submodule "modules/assetsm"]
+	path = modules/assetsm
+	url = https://github.com/ALapinskas/assetsm

@@ -1,14 +1,13 @@
-Tilemaps(.tmg files) is a good way to draw and organize the system levels, they could be created by Tiled editor. 
-Loading them is now the same as the other objects:
+Tilemaps (.tmg files) are a great way to draw and organize system levels, and they can be created using the Tiled editor. Loading them is similar to loading other objects:  
 1. [Add and load a tilemap]{@tutorial assets_manager}
-2. Create a draw object in the init() or start() [stage]{@tutorial stages_lifecycle}:
-```
-init() {
-    this.tiledLayer = this.draw.tiledLayer("tilemap_layer_key", "tilemap_key", setBoundaries, shapeMask);
-    ...
-}
-```
-This will render the tilemap layer on your canvas.
+2. Create a draw object in the [GameStage.init() or GameStage.start()]{@tutorial stages_lifecycle}:
+   ```
+   init() {
+      this.tiledLayer = this.draw.tiledLayer("tilemap_layer_key", "tilemap_key", setBoundaries, shapeMask);
+      ...
+   }
+   ```
+   This will render the tilemap layer on your canvas.
 
 ### Live example
 <p class="codepen" data-height="500" data-default-tab="js,result" data-slug-hash="VwgNRxN" data-user="yaalfred" style="height: 500px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid; margin: 1em 0; padding: 1em;">
@@ -18,27 +17,26 @@ This will render the tilemap layer on your canvas.
 </p>
 <script async src="https://cpwebassets.codepen.io/assets/embed/ei.js"></script>
 <br />
-<br />
 
 ## Extracting boundaries:
 For example, you have a walls layer:
 <img src="tiled_boundaries.png">
-And you want that tiles to be unreachable by the player, or to detect the collision happens. To do that pass true as 3 parameter, for extracting boundaries from the tilemap layer :
+And you want that tiles to be unreachable by the player, or to detect collisions, pass `true` as the third parameter to extract boundaries from the tilemap layer:
 ```
  this.draw.tiledLayer("tilemap_layer_key", "tilemap_key", true, shapeMask);
 ```
-* This boundaries could be then retrieved:
+These boundaries can then be retrieved using:
 ```
 this.stageData.getBoundaries()
 ```
-* Also, [stage.isBoundariesCollision()]{@link GameStage#isBoundariesCollision} method will use this boundaries for collisions calculations. For example the code below will move fireball only if no collision will happen:
+* Additionally, the [stage.isBoundariesCollision()]{@link GameStage#isBoundariesCollision} method will use these boundaries for collision calculations. For example, the code below will move the fireball only if no collision occurs:
 ```
 if (!stage.isBoundariesCollision(newCoordX, newCoordY, fireball)) {
     fireball.x = newCoordX;
     fireball.y = newCoordY;
 }
 ```
-* To debug boundaries you can enable an option:
+To debug boundaries, you can enable the following options:
 ```
 SystemSettings.gameOptions.debug.boundaries.drawLayerBoundaries = true;
 SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
@@ -50,10 +48,12 @@ SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
   on <a href="https://codepen.io">CodePen</a>.</span>
 </p>
 <script async src="https://cpwebassets.codepen.io/assets/embed/ei.js"></script>
+<br />
 
 ### Boundaries and animations
-From jsge@1.4.0 added support: 
-- [Tiled object collisions(boundaries)]{@link https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-collision-editor} - different boundaries shapes: polygons, ellipses, dots
-- [Tiled animations]{@link https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-animation-editor}
+Starting from jsge@1.4.0, support for the following features has been added:
 
-Engine will process them automatically when tiledLayer is created.
+- [Tiled object collisions(boundaries)]{@link https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-collision-editor} with different boundaries shapes: polygons, ellipses, dots.
+- [Tiled animations]{@link https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-animation-editor}.
+
+The engine will process these features automatically when the `tiledLayer` is created.

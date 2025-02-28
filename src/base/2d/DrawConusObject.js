@@ -1,4 +1,4 @@
-import { CONST } from "../../constants.js";
+import { DRAW_TYPE } from "../../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 
 /**
@@ -28,7 +28,7 @@ export class DrawConusObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(x, y, radius, bgColor, angle, fade = 0) {
-        super(CONST.DRAW_TYPE.CONUS, x, y, bgColor);
+        super(DRAW_TYPE.CONUS, x, y, bgColor);
         this.#radius = radius;
         this.#angle = angle;
         this.#fade_min = fade;

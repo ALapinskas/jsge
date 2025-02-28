@@ -1,5 +1,5 @@
 import { AnimationEvent } from "../AnimationEvent.js";
-import { CONST, ERROR_CODES } from "../../constants.js";
+import { DRAW_TYPE, ERROR_CODES } from "../../constants.js";
 import { DrawShapeObject } from "./DrawShapeObject.js";
 import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
 import { Exception, Warning } from "../Exception.js";
@@ -67,7 +67,7 @@ export class DrawImageObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0, margin = 0) {
-        super(CONST.DRAW_TYPE.IMAGE, mapX, mapY);
+        super(DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
         this.#animations = new Map();

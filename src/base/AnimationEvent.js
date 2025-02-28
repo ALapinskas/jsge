@@ -22,6 +22,9 @@ export class AnimationEvent {
      * @type {boolean}
      */
     #isRepeated;
+    /**
+     * @type {number}
+     */
     #lastAnimationTimeStamp;
     
     constructor(eventName, animationSpriteIndexes, isRepeated = false, currentSpriteIndex, isActive = false) {

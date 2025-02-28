@@ -1,25 +1,25 @@
 # Javascript Game Engine
 
 This engine was designed to simplify creating games on javascript. \
-No external libs used for drawing, no typescript, easy to use and debug. \
+No external libraries are used for drawing, no TypeScript, and it is easy to use and debug. \
 ![Alt text](Debug.gif?raw=true "Title")
 
 Advantages:
-* Fresh codebase, depends on latest javascript features such as classes and privacy. 
+* Fresh codebase that leverages the latest JavaScript features such as classes and privacy. 
 * OPP modular structure.
-* Webgl 1 under the hood. Wide browser support.
+* Webgl 1 under the hood, ensuring wide browser support.
 * Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
 * Tilemaps with tilesets support from [Tiled editor](https://www.mapeditor.org).
 * Unlimited size tilesets. 800x800 cells, with 16x16 pixels [example] (https://codepen.io/yaalfred/pen/zYegGGb)
-* Sprites and tiles frame animations.
+* Frame animations for sprites and tiles.
 * Spine 2d skeletal animation as a plugin.
-* Tiles and objects collisions.
-* Boundaries drawing as debug option 
+* Collisions for tiles and objects.
+* Boundary drawing as a debug option.
 ![Boundaries draw](boundaries_draw.png?raw=true "Boundaries draw")
 
 Tilemaps support:
-* Only json format(.tmj), not xml(.tmx)!
-* Animated tiles
+* Only JSON format (.tmj) is supported, not XML (.tmx)!
+* Animated tiles.
 * Tiles boundaries(dot/ellipse/polygon)
 
 How to run examples:
