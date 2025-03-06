@@ -1,0 +1,13 @@
+Date: March 5 2025
+jsge@1.5.7
+Show assets loading errors / Показывать ошибки загрузки ассетов
+
+Status: In Progress
+
+Context:
+    -
+
+Decision:
+
+Impact:
+    No impact.

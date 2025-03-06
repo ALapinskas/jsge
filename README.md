@@ -5,9 +5,8 @@ No external libraries are used for drawing, no TypeScript, and it is easy to use
 ![Alt text](Debug.gif?raw=true "Title")
 
 Advantages:
-* Fresh codebase that leverages the latest JavaScript features such as classes and privacy. 
 * OPP modular structure.
-* Webgl 1 under the hood, ensuring wide browser support.
+* Webgl 1 under the hood, wide browser support.
 * Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
 * Tilemaps with tilesets support from [Tiled editor](https://www.mapeditor.org).
 * Unlimited size tilesets. 800x800 cells, with 16x16 pixels [example] (https://codepen.io/yaalfred/pen/zYegGGb)

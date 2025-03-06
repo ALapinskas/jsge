@@ -22,5 +22,8 @@
     },
     "spine_animations": {
         "title": "How to Add Spine Animations"
+    },
+    "common_issues": {
+        "title": "Common issues"
     }
 }

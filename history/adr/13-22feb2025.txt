@@ -1,6 +1,6 @@
 Date: February 22 2025
 jsge@1.5.6
-.tmx format support / Поддержка tilemap формата .tmx
+.tmx and tsx format support / Поддержка tilemap формата .tmx и tileset формата .tsx
 
 Status: In Progress
 

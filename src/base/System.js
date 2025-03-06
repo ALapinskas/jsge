@@ -15,7 +15,7 @@ const loadingPageName = "loadingPage";
  */
 export class System {
     /**
-     * @type {Map<string, GameStage>}
+     * @type {Map<string, Object>}
      */
     #registeredStages;
     /**
@@ -39,29 +39,25 @@ export class System {
 
         this.#iSystem = new ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
 
-        this.registerStage(loadingPageName, LoadingStage);
-
-        this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
-        this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
-        this.#iSystem.iLoader.addEventListener("load", this.#loadComplete);
+        this.#addPreloadStage();
     }
 
     /**
-     * @type {ISystem}
+     * @returns {ISystem}
      */
     get iSystem() {
         return this.#iSystem;
     }
-
+    
     /**
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {GameStage} stage
+     * @param {Object} extendedGameStage - extended GameStage class(not an instance!)
      */
-    registerStage(screenPageName, stage) {
+    registerStage(screenPageName, extendedGameStage) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
-            const stageInstance = new stage();
+            const stageInstance = new extendedGameStage();
             stageInstance._register(screenPageName, this.iSystem);
             this.#registeredStages.set(screenPageName, stageInstance);
         } else {
@@ -77,8 +73,16 @@ export class System {
         return this.#iSystem.iLoader.preload();
     }
 
+    #addPreloadStage() {
+        this.registerStage(loadingPageName, LoadingStage);
+
+        this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
+        this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
+        this.#iSystem.iLoader.addEventListener("load", this.#loadComplete);
+    }
+
     #loadStart = (event) => {
-        this.#iSystem.startGameStage(loadingPageName, {total: event.total});
+        this.#iSystem.startGameStage(loadingPageName, { total: event.total });
     };
 
     #loadProgress = (event) => {

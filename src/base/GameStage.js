@@ -23,6 +23,7 @@ import { Vector } from "./2d/Primitives.js";
  * 
  * @see {@link System} instances of this class holds by the System class
  * @hideconstructor
+ * @abstract
  */
 export class GameStage {
     /**
@@ -102,14 +103,14 @@ export class GameStage {
 
     /**
      * @tutorial assets_manager
-     * @type {AssetsManager}
+     * @returns {AssetsManager}
      */
     get iLoader() {
         return this.#iSystemReference.iLoader;
     }
 
     /**
-     * @type {DrawObjectFactory}
+     * @returns {DrawObjectFactory}
      */
     get draw() {
         return this.#iSystemReference.drawObjectFactory;
@@ -143,7 +144,7 @@ export class GameStage {
 
     /**
      * Determines if this stage render is Active or not
-     * @type {boolean}
+     * @returns {boolean}
      */
     get isActive() {
         return this.#isActive;
@@ -151,7 +152,7 @@ export class GameStage {
 
     /**
      * Determines if this stage is initialized or not
-     * @type {boolean}
+     * @returns {boolean}
      */
     get isInitiated() {
         return this.#isInitiated;
@@ -159,35 +160,35 @@ export class GameStage {
 
     /**
      * Current stage name
-     * @type {string}
+     * @returns {string}
      */
     get name () {
         return this.#name;
     }
 
     /**
-     * @type {GameStageData}
+     * @returns {GameStageData}
      */
     get stageData() {
         return this.#stageData;
     }
 
     /**
-     * @type {SystemSettings}
+     * @returns {SystemSettings}
      */
     get systemSettings() {
         return this.#iSystemReference.systemSettings;
     }
 
     /**
-     * @type {ISystemAudio}
+     * @returns {ISystemAudio}
      */
     get audio() {
         return this.#iSystemReference.audio;
     }
 
     /**
-     * @type {ISystem}
+     * @returns {ISystem}
      */
     get iSystem() {
         return this.#iSystemReference;

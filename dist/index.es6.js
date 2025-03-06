@@ -2687,6 +2687,7 @@ __webpack_require__.r(__webpack_exports__);
  * 
  * @see {@link System} instances of this class holds by the System class
  * @hideconstructor
+ * @abstract
  */
 class GameStage {
     /**
@@ -2766,14 +2767,14 @@ class GameStage {
 
     /**
      * @tutorial assets_manager
-     * @type {AssetsManager}
+     * @returns {AssetsManager}
      */
     get iLoader() {
         return this.#iSystemReference.iLoader;
     }
 
     /**
-     * @type {DrawObjectFactory}
+     * @returns {DrawObjectFactory}
      */
     get draw() {
         return this.#iSystemReference.drawObjectFactory;
@@ -2807,7 +2808,7 @@ class GameStage {
 
     /**
      * Determines if this stage render is Active or not
-     * @type {boolean}
+     * @returns {boolean}
      */
     get isActive() {
         return this.#isActive;
@@ -2815,7 +2816,7 @@ class GameStage {
 
     /**
      * Determines if this stage is initialized or not
-     * @type {boolean}
+     * @returns {boolean}
      */
     get isInitiated() {
         return this.#isInitiated;
@@ -2823,35 +2824,35 @@ class GameStage {
 
     /**
      * Current stage name
-     * @type {string}
+     * @returns {string}
      */
     get name () {
         return this.#name;
     }
 
     /**
-     * @type {GameStageData}
+     * @returns {GameStageData}
      */
     get stageData() {
         return this.#stageData;
     }
 
     /**
-     * @type {SystemSettings}
+     * @returns {SystemSettings}
      */
     get systemSettings() {
         return this.#iSystemReference.systemSettings;
     }
 
     /**
-     * @type {ISystemAudio}
+     * @returns {ISystemAudio}
      */
     get audio() {
         return this.#iSystemReference.audio;
     }
 
     /**
-     * @type {ISystem}
+     * @returns {ISystem}
      */
     get iSystem() {
         return this.#iSystemReference;
@@ -3811,7 +3812,7 @@ class GameStageData {
     }
     /**
      * Current canvas dimensions
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get canvasDimensions() {
         return [this.#viewWidth, this.#viewHeight];
@@ -3819,7 +3820,7 @@ class GameStageData {
 
     /**
      * Current game world dimensions
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get worldDimensions() {
         return [this.#worldWidth, this.#worldHeight];
@@ -3827,7 +3828,7 @@ class GameStageData {
     
     /**
      * Current word x/y offset
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get worldOffset() {
         return [this.#xOffset, this.#yOffset];
@@ -3835,14 +3836,14 @@ class GameStageData {
 
     /**
      * Current focus point
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get mapCenter() {
         return [this.#centerX, this.#centerY];
     }
 
     /**
-     * @type {number}
+     * @returns {number}
      */
     get mapRotate() {
         return this.#rotate;
@@ -3850,7 +3851,7 @@ class GameStageData {
 
     /**
      * Tiled polygon and Tiled layer boundaries length
-     * @type {number}
+     * @returns {number}
      */
     get boundariesLen() {
         return this.#bPointer;
@@ -3858,7 +3859,7 @@ class GameStageData {
 
     /**
      * Tiled ellipse boundaries length
-     * @type {number}
+     * @returns {number}
      */
     get ellipseBLen() {
         return this.#ePointer;
@@ -3866,7 +3867,7 @@ class GameStageData {
 
     /**
      * Tiled point length
-     * @type {number}
+     * @returns {number}
      */
     get pointBLen() {
         return this.#pPointer;
@@ -4610,7 +4611,7 @@ class ISystem {
     
     #modules = new Map();
     /**
-     * @type {Map<string, GameStage>}
+     * @type {Map<string, Object>}
      */
     #registeredStagesReference;
     /**
@@ -4668,42 +4669,42 @@ class ISystem {
     };
     
     /**
-     * @type { INetwork | null }
+     * @returns { INetwork | null }
      */
     get iNetwork () {
         return this.#systemServerConnection;
     }
 
     /**
-     * @type { SystemSettings }
+     * @returns { SystemSettings }
      */
     get systemSettings() {
         return this.#systemSettings;
     }
 
     /**
-     * @type { ISystemAudio }
+     * @returns { ISystemAudio }
      */
     get audio() {
         return this.#systemAudioInterface;
     }
 
     /**
-     * @type {AssetsManager}
+     * @returns {AssetsManager}
      */
     get iLoader() {
         return this.#iLoader;
     }
 
     /**
-     * @type {IRender}
+     * @returns {IRender}
      */
     get iRender() {
         return this.#iRender;
     }
 
     /**
-     * @type {DrawObjectFactory}
+     * @returns {DrawObjectFactory}
      */
     get drawObjectFactory() {
         return this.#drawObjectFactory;
@@ -4713,7 +4714,7 @@ class ISystem {
         return this.#iExtension;
     }
     /**
-     * @type {Map<string, Object>}
+     * @returns {Map<string, Object>}
      */
     get modules() {
         return this.#modules;
@@ -4868,7 +4869,7 @@ class ISystemAudio {
     /**
      * Used to set or get audio volume, 
      * value should be from 0 to 1
-     * @type {number}
+     * @returns {number}
      */
     get volume() {
         return this.#volume;
@@ -5014,14 +5015,14 @@ class RenderLoop {
     }
 
     /**
-     * @type { GameStageData }
+     * @returns { GameStageData }
      */
     get stageData() {
         return this.#stageData;
     }
 
     /**
-     * @type { RenderLoopDebug }
+     * @returns { RenderLoopDebug }
      */
     get renderLoopDebug() {
         return this.#renderLoopDebug;
@@ -5480,7 +5481,7 @@ const loadingPageName = "loadingPage";
  */
 class System {
     /**
-     * @type {Map<string, GameStage>}
+     * @type {Map<string, Object>}
      */
     #registeredStages;
     /**
@@ -5504,29 +5505,25 @@ class System {
 
         this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
 
-        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__.LoadingStage);
-
-        this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
-        this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
-        this.#iSystem.iLoader.addEventListener("load", this.#loadComplete);
+        this.#addPreloadStage();
     }
 
     /**
-     * @type {ISystem}
+     * @returns {ISystem}
      */
     get iSystem() {
         return this.#iSystem;
     }
-
+    
     /**
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {GameStage} stage
+     * @param {Object} extendedGameStage - extended GameStage class(not an instance!)
      */
-    registerStage(screenPageName, stage) {
+    registerStage(screenPageName, extendedGameStage) {
         if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
-            const stageInstance = new stage();
+            const stageInstance = new extendedGameStage();
             stageInstance._register(screenPageName, this.iSystem);
             this.#registeredStages.set(screenPageName, stageInstance);
         } else {
@@ -5542,8 +5539,16 @@ class System {
         return this.#iSystem.iLoader.preload();
     }
 
+    #addPreloadStage() {
+        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__.LoadingStage);
+
+        this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
+        this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
+        this.#iSystem.iLoader.addEventListener("load", this.#loadComplete);
+    }
+
     #loadStart = (event) => {
-        this.#iSystem.startGameStage(loadingPageName, {total: event.total});
+        this.#iSystem.startGameStage(loadingPageName, { total: event.total });
     };
 
     #loadProgress = (event) => {
@@ -6766,9 +6771,9 @@ class WebGlEngine {
 
         gl.useProgram(program);
         /**
-         * @type {Array<any> | void}
+         * @type {Array<any> | null}
          */
-        let renderLayerData;
+        let renderLayerData = null;
         switch (this.#gameOptions.optimization) {
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
                 renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
@@ -6830,7 +6835,8 @@ class WebGlEngine {
             }
         } else {
             let verticesNumber = 0,
-                isTextureBind = false;
+                isTextureBind = false,
+                renderLayerDataLen = renderLayerData.length;
             gl.enableVertexAttribArray(positionAttributeLocation);
             gl.enableVertexAttribArray(texCoordLocation);
 
@@ -6839,74 +6845,125 @@ class WebGlEngine {
             //gl.uniform2f(translationLocation,translation[0], translation[1]);
             //gl.uniform2f(scaleLocation, scale[0], scale[1]);
             //gl.uniform1f(rotationRotation, rotation);
-            
-            for (let i = 0; i < renderLayerData.length; i++) {
-                const data = renderLayerData[i],
+
+            // MULTIPLE_IMAGE_TILESET drawing, no merging possible
+            if (renderLayerDataLen > 1) {
+                for (let i = 0; i < renderLayerDataLen; i++) {
+                    const data = renderLayerData[i],
+                        vectors = data[0],
+                        textures = data[1],
+                        image_name = data[2],
+                        image = data[3];
+                    // if layer use multiple tilesets
+                    // the issue is: when we add some layer data to the temp arrays, and then
+                    // process empty layer, it actually skips the draw with this check
+                    if (vectors.length > 0 && textures.length > 0) {
+                        // need to have additional draw call for each new texture added
+                        // probably it could be combined in one draw call if multiple textures 
+                        // could be used in one draw call
+                        if (isTextureBind) {
+                            await this._render(verticesNumber, gl.TRIANGLES);
+                        }
+                        
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
+    
+                        //Tell the attribute how to get data out of positionBuffer
+                        const size = 2,
+                            type = gl.FLOAT, // data is 32bit floats
+                            normalize = false,
+                            stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                            offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
+                        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+    
+                        //textures buffer
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textures), gl.STATIC_DRAW);
+    
+                        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
+    
+                        let textureStorage = renderLayer._textureStorages[i];
+                        
+                        if (!textureStorage) {
+                            textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture(), i);
+                            renderLayer._setTextureStorage(i, textureStorage);
+                        }
+                        if (textureStorage._isTextureRecalculated === true) {
+                            this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
+                            textureStorage._isTextureRecalculated = false;
+                        } else {
+                            //console.log("bind texture");
+                            this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
+                        }
+                        gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+                        gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
+                        
+                        verticesNumber = vectors.length / 2;
+                        if (shapeMaskId) {
+                            gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                        }
+                        isTextureBind = true;
+                    }
+                }
+            // Single image tileset draw, with merging
+            } else {
+                const data = renderLayerData[0],
                     vectors = data[0],
                     textures = data[1],
                     image_name = data[2],
                     image = data[3];
                 // if layer use multiple tilesets
-                if (vectors.length > 0 && textures.length > 0) {
-                    // need to have additional draw call for each new texture added
-                    // probably it could be combined in one draw call if multiple textures 
-                    // could be used in one draw call
-                    if (isTextureBind) {
-                        this.#currentVertices = null;
-                        this.#currentTextures = null;
-                        await this._render(verticesNumber, gl.TRIANGLES);
-                    }
-
-                    if (this.#currentVertices === null) {
-                        this.#currentVertices = vectors;
-                        this.#currentTextures = textures;
-                    } else {
-                        this.#currentVertices.push(...vectors);
-                        this.#currentTextures.push(...textures);
-                    }
-                    
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
-
-                    //Tell the attribute how to get data out of positionBuffer
-                    const size = 2,
-                        type = gl.FLOAT, // data is 32bit floats
-                        normalize = false,
-                        stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                        offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
-                    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-                    //textures buffer
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
-
-                    gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
-
-                    let textureStorage = renderLayer._textureStorages[i];
-                    
-                    if (!textureStorage) {
-                        textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture(), i);
-                        renderLayer._setTextureStorage(i, textureStorage);
-                    }
-                    if (textureStorage._isTextureRecalculated === true) {
-                        this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
-                        textureStorage._isTextureRecalculated = false;
-                    } else {
-                        //console.log("bind texture");
-                        this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
-                    }
-                    gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-                    gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
-                    
-                    verticesNumber = this.#currentVertices.length / 2;
-                    if (shapeMaskId) {
-                        gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
-                    }
-                    isTextureBind = true;
+                // the issue is: when we add some layer data to the temp arrays, and then
+                // process empty layer, it actually skips the draw with this check
+                if (this.#currentVertices === null) {
+                    this.#currentVertices = vectors;
+                    this.#currentTextures = textures;
+                } else {
+                    this.#currentVertices.push(...vectors);
+                    this.#currentTextures.push(...textures);
                 }
+                
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+
+                //Tell the attribute how to get data out of positionBuffer
+                const size = 2,
+                    type = gl.FLOAT, // data is 32bit floats
+                    normalize = false,
+                    stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                    offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
+                gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+                //textures buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+                gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
+
+                let textureStorage = renderLayer._textureStorages[0];
+                
+                if (!textureStorage) {
+                    textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture(), 0);
+                    renderLayer._setTextureStorage(0, textureStorage);
+                }
+                if (textureStorage._isTextureRecalculated === true) {
+                    this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
+                    textureStorage._isTextureRecalculated = false;
+                } else {
+                    //console.log("bind texture");
+                    this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
+                }
+                gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+                gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
+                
+                verticesNumber = this.#currentVertices.length / 2;
+                if (shapeMaskId) {
+                    gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                }
+                this.#currentVertices = null;
+                this.#currentTextures = null;
             }
-            this.#currentVertices = null;
-            this.#currentTextures = null;
+            
             renderLayerData = null;
             return this._render(verticesNumber, gl.TRIANGLES);
         }

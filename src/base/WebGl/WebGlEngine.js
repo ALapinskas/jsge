@@ -834,9 +834,9 @@ export class WebGlEngine {
 
         gl.useProgram(program);
         /**
-         * @type {Array<any> | void}
+         * @type {Array<any> | null}
          */
-        let renderLayerData;
+        let renderLayerData = null;
         switch (this.#gameOptions.optimization) {
             case CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED:
                 renderLayerData = await this.#prepareRenderLayerOld(renderLayer, pageData);
@@ -898,7 +898,8 @@ export class WebGlEngine {
             }
         } else {
             let verticesNumber = 0,
-                isTextureBind = false;
+                isTextureBind = false,
+                renderLayerDataLen = renderLayerData.length;
             gl.enableVertexAttribArray(positionAttributeLocation);
             gl.enableVertexAttribArray(texCoordLocation);
 
@@ -907,74 +908,125 @@ export class WebGlEngine {
             //gl.uniform2f(translationLocation,translation[0], translation[1]);
             //gl.uniform2f(scaleLocation, scale[0], scale[1]);
             //gl.uniform1f(rotationRotation, rotation);
-            
-            for (let i = 0; i < renderLayerData.length; i++) {
-                const data = renderLayerData[i],
+
+            // MULTIPLE_IMAGE_TILESET drawing, no merging possible
+            if (renderLayerDataLen > 1) {
+                for (let i = 0; i < renderLayerDataLen; i++) {
+                    const data = renderLayerData[i],
+                        vectors = data[0],
+                        textures = data[1],
+                        image_name = data[2],
+                        image = data[3];
+                    // if layer use multiple tilesets
+                    // the issue is: when we add some layer data to the temp arrays, and then
+                    // process empty layer, it actually skips the draw with this check
+                    if (vectors.length > 0 && textures.length > 0) {
+                        // need to have additional draw call for each new texture added
+                        // probably it could be combined in one draw call if multiple textures 
+                        // could be used in one draw call
+                        if (isTextureBind) {
+                            await this._render(verticesNumber, gl.TRIANGLES);
+                        }
+                        
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vectors), gl.STATIC_DRAW);
+    
+                        //Tell the attribute how to get data out of positionBuffer
+                        const size = 2,
+                            type = gl.FLOAT, // data is 32bit floats
+                            normalize = false,
+                            stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                            offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
+                        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+    
+                        //textures buffer
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+                        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textures), gl.STATIC_DRAW);
+    
+                        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
+    
+                        let textureStorage = renderLayer._textureStorages[i];
+                        
+                        if (!textureStorage) {
+                            textureStorage = new ImageTempStorage(gl.createTexture(), i);
+                            renderLayer._setTextureStorage(i, textureStorage);
+                        }
+                        if (textureStorage._isTextureRecalculated === true) {
+                            this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
+                            textureStorage._isTextureRecalculated = false;
+                        } else {
+                            //console.log("bind texture");
+                            this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
+                        }
+                        gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+                        gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
+                        
+                        verticesNumber = vectors.length / 2;
+                        if (shapeMaskId) {
+                            gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                        }
+                        isTextureBind = true;
+                    }
+                }
+            // Single image tileset draw, with merging
+            } else {
+                const data = renderLayerData[0],
                     vectors = data[0],
                     textures = data[1],
                     image_name = data[2],
                     image = data[3];
                 // if layer use multiple tilesets
-                if (vectors.length > 0 && textures.length > 0) {
-                    // need to have additional draw call for each new texture added
-                    // probably it could be combined in one draw call if multiple textures 
-                    // could be used in one draw call
-                    if (isTextureBind) {
-                        this.#currentVertices = null;
-                        this.#currentTextures = null;
-                        await this._render(verticesNumber, gl.TRIANGLES);
-                    }
-
-                    if (this.#currentVertices === null) {
-                        this.#currentVertices = vectors;
-                        this.#currentTextures = textures;
-                    } else {
-                        this.#currentVertices.push(...vectors);
-                        this.#currentTextures.push(...textures);
-                    }
-                    
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
-
-                    //Tell the attribute how to get data out of positionBuffer
-                    const size = 2,
-                        type = gl.FLOAT, // data is 32bit floats
-                        normalize = false,
-                        stride = 0, // move forward size * sizeof(type) each iteration to get next position
-                        offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
-                    gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-                    //textures buffer
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
-
-                    gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
-
-                    let textureStorage = renderLayer._textureStorages[i];
-                    
-                    if (!textureStorage) {
-                        textureStorage = new ImageTempStorage(gl.createTexture(), i);
-                        renderLayer._setTextureStorage(i, textureStorage);
-                    }
-                    if (textureStorage._isTextureRecalculated === true) {
-                        this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
-                        textureStorage._isTextureRecalculated = false;
-                    } else {
-                        //console.log("bind texture");
-                        this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
-                    }
-                    gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-                    gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
-                    
-                    verticesNumber = this.#currentVertices.length / 2;
-                    if (shapeMaskId) {
-                        gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
-                    }
-                    isTextureBind = true;
+                // the issue is: when we add some layer data to the temp arrays, and then
+                // process empty layer, it actually skips the draw with this check
+                if (this.#currentVertices === null) {
+                    this.#currentVertices = vectors;
+                    this.#currentTextures = textures;
+                } else {
+                    this.#currentVertices.push(...vectors);
+                    this.#currentTextures.push(...textures);
                 }
+                
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+
+                //Tell the attribute how to get data out of positionBuffer
+                const size = 2,
+                    type = gl.FLOAT, // data is 32bit floats
+                    normalize = false,
+                    stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                    offset = 0;  // verticesNumber * 4; // start of beginning of the buffer
+                gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+                //textures buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+                gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, offset);
+
+                let textureStorage = renderLayer._textureStorages[0];
+                
+                if (!textureStorage) {
+                    textureStorage = new ImageTempStorage(gl.createTexture(), 0);
+                    renderLayer._setTextureStorage(0, textureStorage);
+                }
+                if (textureStorage._isTextureRecalculated === true) {
+                    this.#updateWebGlTexture(gl, textureStorage._texture, image, textureStorage._textureIndex);
+                    textureStorage._isTextureRecalculated = false;
+                } else {
+                    //console.log("bind texture");
+                    this.#bindTexture(gl, textureStorage._texture, textureStorage._textureIndex);
+                }
+                gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
+                gl.blendFunc(gl[drawMask[0]], gl[drawMask[1]]);
+                
+                verticesNumber = this.#currentVertices.length / 2;
+                if (shapeMaskId) {
+                    gl.stencilFunc(gl.EQUAL, shapeMaskId, 0xFF);
+                }
+                this.#currentVertices = null;
+                this.#currentTextures = null;
             }
-            this.#currentVertices = null;
-            this.#currentTextures = null;
+            
             renderLayerData = null;
             return this._render(verticesNumber, gl.TRIANGLES);
         }

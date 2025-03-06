@@ -69,7 +69,7 @@ export class ISystemAudio {
     /**
      * Used to set or get audio volume, 
      * value should be from 0 to 1
-     * @type {number}
+     * @returns {number}
      */
     get volume() {
         return this.#volume;

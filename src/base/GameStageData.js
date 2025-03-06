@@ -469,7 +469,7 @@ export class GameStageData {
     }
     /**
      * Current canvas dimensions
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get canvasDimensions() {
         return [this.#viewWidth, this.#viewHeight];
@@ -477,7 +477,7 @@ export class GameStageData {
 
     /**
      * Current game world dimensions
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get worldDimensions() {
         return [this.#worldWidth, this.#worldHeight];
@@ -485,7 +485,7 @@ export class GameStageData {
     
     /**
      * Current word x/y offset
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get worldOffset() {
         return [this.#xOffset, this.#yOffset];
@@ -493,14 +493,14 @@ export class GameStageData {
 
     /**
      * Current focus point
-     * @type {Array<number>}
+     * @returns {Array<number>}
      */
     get mapCenter() {
         return [this.#centerX, this.#centerY];
     }
 
     /**
-     * @type {number}
+     * @returns {number}
      */
     get mapRotate() {
         return this.#rotate;
@@ -508,7 +508,7 @@ export class GameStageData {
 
     /**
      * Tiled polygon and Tiled layer boundaries length
-     * @type {number}
+     * @returns {number}
      */
     get boundariesLen() {
         return this.#bPointer;
@@ -516,7 +516,7 @@ export class GameStageData {
 
     /**
      * Tiled ellipse boundaries length
-     * @type {number}
+     * @returns {number}
      */
     get ellipseBLen() {
         return this.#ePointer;
@@ -524,7 +524,7 @@ export class GameStageData {
 
     /**
      * Tiled point length
-     * @type {number}
+     * @returns {number}
      */
     get pointBLen() {
         return this.#pPointer;

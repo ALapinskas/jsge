@@ -69,14 +69,14 @@ export class RenderLoop {
     }
 
     /**
-     * @type { GameStageData }
+     * @returns { GameStageData }
      */
     get stageData() {
         return this.#stageData;
     }
 
     /**
-     * @type { RenderLoopDebug }
+     * @returns { RenderLoopDebug }
      */
     get renderLoopDebug() {
         return this.#renderLoopDebug;

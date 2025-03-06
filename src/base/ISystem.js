@@ -50,7 +50,7 @@ export class ISystem {
     
     #modules = new Map();
     /**
-     * @type {Map<string, GameStage>}
+     * @type {Map<string, Object>}
      */
     #registeredStagesReference;
     /**
@@ -108,42 +108,42 @@ export class ISystem {
     };
     
     /**
-     * @type { INetwork | null }
+     * @returns { INetwork | null }
      */
     get iNetwork () {
         return this.#systemServerConnection;
     }
 
     /**
-     * @type { SystemSettings }
+     * @returns { SystemSettings }
      */
     get systemSettings() {
         return this.#systemSettings;
     }
 
     /**
-     * @type { ISystemAudio }
+     * @returns { ISystemAudio }
      */
     get audio() {
         return this.#systemAudioInterface;
     }
 
     /**
-     * @type {AssetsManager}
+     * @returns {AssetsManager}
      */
     get iLoader() {
         return this.#iLoader;
     }
 
     /**
-     * @type {IRender}
+     * @returns {IRender}
      */
     get iRender() {
         return this.#iRender;
     }
 
     /**
-     * @type {DrawObjectFactory}
+     * @returns {DrawObjectFactory}
      */
     get drawObjectFactory() {
         return this.#drawObjectFactory;
@@ -153,7 +153,7 @@ export class ISystem {
         return this.#iExtension;
     }
     /**
-     * @type {Map<string, Object>}
+     * @returns {Map<string, Object>}
      */
     get modules() {
         return this.#modules;
