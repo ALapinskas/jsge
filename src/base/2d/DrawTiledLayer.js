@@ -198,8 +198,8 @@ export class DrawTiledLayer {
             pointBLen = 0,
             polygonBLen = 0;
         tilesets.forEach((tileset, idx) => {
-            const tiles = tileset.data.tiles,
-                name = tileset.data.name,
+            const tiles = tileset.tiles,
+                name = tileset.name,
                 firstgid = tileset.firstgid,
                 nextTileset = this.tilesets[idx + 1],
                 nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000;
@@ -216,22 +216,22 @@ export class DrawTiledLayer {
 
                         this.#animations.set(eventName, animationEvent);
                         // add additional properties
-                        if (!tileset.data._hasAnimations) {
-                            tileset.data._hasAnimations = true;
-                            tileset.data._animations = new Map();
+                        if (!tileset._hasAnimations) {
+                            tileset._hasAnimations = true;
+                            tileset._animations = new Map();
                             //
-                            tileset.data._animations.set(id, animationIndexes[0][0]);
+                            tileset._animations.set(id, animationIndexes[0][0]);
                         }
                         this.#activateAnimation(animationEvent);
                     }
                     if (objectgroup && this.#setBoundaries) {
-                        if (tileset.data._hasBoundaries) {
-                            tileset.data._boundaries.set(id, objectgroup);
+                        if (tileset._hasBoundaries) {
+                            tileset._boundaries.set(id, objectgroup);
                         } else {
                             // add additional properties
-                            tileset.data._hasBoundaries = true;
-                            tileset.data._boundaries = new Map();
-                            tileset.data._boundaries.set(id, objectgroup);
+                            tileset._hasBoundaries = true;
+                            tileset._boundaries = new Map();
+                            tileset._boundaries.set(id, objectgroup);
                         }
                         objectgroup.objects.forEach((object) => {
                             if (object.ellipse) {
@@ -296,10 +296,10 @@ export class DrawTiledLayer {
 
     #switchCurrentActiveSprite = (animationEvent) => {
         const [tilesetKey, animationId] = animationEvent.name.split(this.#DELIMITER),
-            tilesetIndex = this.#tilesets.findIndex(tileset => tileset.data.name === tilesetKey),
+            tilesetIndex = this.#tilesets.findIndex(tileset => tileset.name === tilesetKey),
             tileset = this.#tilesets[tilesetIndex];
             
-        tileset.data._animations.set(parseInt(animationId), animationEvent.currentSprite);
+        tileset._animations.set(parseInt(animationId), animationEvent.currentSprite);
     };
 
     /**

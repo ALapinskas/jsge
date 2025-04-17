@@ -26,8 +26,8 @@ const ERROR_MESSAGES = {
     RECURSION_ERROR: "Too much recursion. Stop iteration.",
     NOT_CORRECT_METHOD_TYPE: "uploadMethod should be instance of Promise and return upload result value",
     XML_FILE_EXTENSION_INCORRECT: " AtlasXML file extension is incorrect, only .xml file supported",
-    TILESET_FILE_EXTENSION_INCORRECT: " tileset file extension is not correct, only .tsj or .json files are supported",
-    TILEMAP_FILE_EXTENSION_INCORRECT: " tilemap file extension is not correct, only .tmj or .json files are supported",
+    TILESET_FILE_EXTENSION_INCORRECT: " tileset file extension is not correct, only .tsj, .json, .tsx, .xml files are supported",
+    TILEMAP_FILE_EXTENSION_INCORRECT: " tilemap file extension is not correct, only .tmj, .json, .tmx, .xml files are supported",
     INPUT_PARAMS_ARE_INCORRECT: " fileKey and url should be provided",
     // Non critical
     ATLAS_IMAGE_LOADING_FAILED: "Error loading atlas image ",
@@ -38,28 +38,34 @@ const ERROR_MESSAGES = {
     XML_FORMAT_INCORRECT: " XML format is not correct.",
 }
 
+const FILE_FORMAT = {
+    JSON: "JSON",
+    XML: "XML",
+    UNKNOWN: "UNKNOWN"
+}
+
 class Loader {
     /**
-     * @type {String}
+     * @type {string}
      */
     #fileType;
     /**
-     * @type { (...args: any[]) => Promise<any> | undefined }
+     * @type { (...args: any[]) => Promise<void> }
      */
     #uploadMethod;
     /**
      * name: url
-     * @type { Map<String, String[]>}
+     * @type { Map<string, string[]>}
      */
     #loadingQueue = new Map();
     /**
      * name: file
-     * @type { Map<String, any>}
+     * @type { Map<string, any>}
      */
     #store = new Map();
     /**
      * 
-     * @param {String} name 
+     * @param {string} name 
      * @param {Function} uploadMethod 
      */
 
@@ -82,7 +88,7 @@ class Loader {
      * @returns {Promise<void>}
      */
     #processUploadResult = (uploadResult, key) => {
-        return new Promise((resolve,reject) => {
+        return new Promise((resolve, reject) => {
             if ( !uploadResult && uploadResult !== null ) {
                 Warning("AssetsManager: uploadMethod for " + this.#fileType + " returns incorrect value");
             }
@@ -92,10 +98,19 @@ class Loader {
         });
     }
 
+    /**
+     * 
+     * @param {string} key 
+     * @param {*} value 
+     */
     #addUploadResultValue(key, value) {
         this.#store.set(key, value);
     }
 
+    /**
+     * 
+     * @param {string} key 
+     */
     #removeUploadFromQueue(key) {
         this.#loadingQueue.delete(key);
     }
@@ -112,6 +127,11 @@ class Loader {
         return this.#uploadMethod;
     }
 
+    /**
+     * 
+     * @param {string} key 
+     * @param {string[]} paramsArr 
+     */
     _addFile = (key, paramsArr) => {
         if (this.#loadingQueue.has(key)) {
             Warning("AssetsManager: File " + this.#fileType + " with key " + key + " is already added");
@@ -119,10 +139,20 @@ class Loader {
         this.#loadingQueue.set(key, paramsArr);
     }
 
+    /**
+     * 
+     * @param {string} key 
+     * @returns {boolean}
+     */
     _isFileInQueue = (key) => {
         return this.#loadingQueue.has(key);
     }
 
+    /**
+     * 
+     * @param {string} key 
+     * @returns {any}
+     */
     _getFile = (key) => {
         return this.#store.get(key);
     }
@@ -136,7 +166,7 @@ class Loader {
 class AssetsManager {
 
     /**
-     * @type {Number}
+     * @type {number}
      */
     #MAX_LOADING_CYCLES = 5;
     /**
@@ -150,7 +180,7 @@ class AssetsManager {
     #registeredLoaders = new Map();
     
     /**
-     * @type {Number}
+     * @type {number}
      */
     #itemsLoaded = 0;
 
@@ -163,17 +193,20 @@ class AssetsManager {
         this.registerLoader("AtlasXML", this._loadAtlasXml);
     }
 
+    /**
+     * @returns {number}
+     */
     get filesWaitingForUpload() {
         let files = 0;
-        Array.from(this.#registeredLoaders.values()).map((fileType) => files += fileType.filesWaitingForUpload);
+        Array.from(this.#registeredLoaders.values()).map((loader) => files += loader.filesWaitingForUpload);
         return files;
     }
 
     /**
      * Register a new file type to upload. Method will dynamically add new methods.
-     * @param {String} fileTypeName
+     * @param {string} fileTypeName
      * @param {Function=} loadMethod loadMethod should return Promise<result>
-     * @returns {Promise | void}
+     * @returns {void}
      */
     registerLoader = (fileTypeName, loadMethod = this._defaultUploadMethod) => {
         this["add" + fileTypeName] = (key, url, ...args) => {
@@ -207,10 +240,15 @@ class AssetsManager {
         });
     }
 
+    /**
+     * 
+     * @param {number} loadCount 
+     * @returns {Promise<void>}
+     */
     #uploadFilesRecursive(loadCount = 0) {
-        return this.#uploadFiles().then((res) => {
+        return this.#uploadFiles().then(() => {
             if (this.filesWaitingForUpload === 0) {
-                return Promise.resolve(res);
+                return Promise.resolve();
             } else {
                 loadCount++;
                 if (loadCount > this.#MAX_LOADING_CYCLES) {
@@ -224,12 +262,18 @@ class AssetsManager {
         });
     }
 
+    /**
+     * 
+     * @returns {Promise<void>}
+     */
     #uploadFiles() {
         return new Promise((resolve, reject) => {
+            /** @type {Promise<void>[]} */
             let uploadPromises = [];
             Array.from(this.#registeredLoaders.values()).forEach((fileType) => {
                 Array.from(fileType.loadingQueue.entries()).forEach((key_value) => {
-                    const p = new Promise((res, rej) => fileType.uploadMethod(key_value[0], ...key_value[1]).then((r) => res(r)));
+                    /** @type {Promise<void>} */
+                    const p = new Promise((res, rej) => fileType.uploadMethod(key_value[0], ...key_value[1]).then(() => res()));
                     uploadPromises.push(p);
                 });
             });
@@ -247,7 +291,7 @@ class AssetsManager {
                         }
                     }
                 }
-                resolve(results);
+                resolve();
             });
         });
     }
@@ -268,7 +312,7 @@ class AssetsManager {
      * Loads image atlas xml
      * @param {string} key
      * @param {string} url
-     * @returns {Promise}
+     * @returns {Promise<HTMLElement | Error>}
      */
     _loadAtlasXml = (key, url) => {
         this.#checkXmlUrl(url);
@@ -284,11 +328,11 @@ class AssetsManager {
                     const relativePath = this.#calculateRelativePath(url);
 
                     this.addAtlasImageMap(key, relativePath + atlasImagePath.value, childrenNodes, relativePath);
-                    return Promise.resolve(atlas);
+                    return atlas;
                 } else {
                     const err = new Error(key + ERROR_MESSAGES.XML_FORMAT_INCORRECT);
                     this.#dispatchLoadingError(err);
-                    return Promise.resolve(err);
+                    return err;
                     // return Promise.reject(err);
                 }
             });
@@ -351,29 +395,213 @@ class AssetsManager {
      * Loads tileset
      * @param {string} key
      * @param {string} url 
-     * @param {number} [gid=1]
-     * @param {string=} relativePath
-     * @returns {Promise}
+     * @param {number} gid
+     * @param {string} relativePath
+     * @returns {Promise<Object>}
      */
     _loadTileSet = (key, url, gid=1, relativePath) => {
-        this.#checkTilesetUrl(url);
-        return fetch(relativePath ? relativePath + url : url)
-            .then((response) => response.json())
-            .then((data) => {
-                const {name, image, spacing, margin, tilewidth, tileheight} = data;
-                if (name && image && !this.isFileInQueue("Image", name)) {
-                    this.addImage(name, relativePath ? relativePath + image : image);
-                }
-                data.gid = gid;
-                return Promise.resolve(data);
-            }).catch(() => {
-                const err = new Error(ERROR_MESSAGES.TILESET_LOADING_FAILED + url);
-                this.#dispatchLoadingError(err);
-                return Promise.resolve(null);
-                //return Promise.reject(err);
-            });
+        const file_format = this.#checkTilesetUrl(url),
+            loadPath = relativePath ? relativePath + url : url;
+        if (file_format === FILE_FORMAT.JSON) {
+            return fetch(loadPath)
+                .then((response) => response.json())
+                .then((data) => this._processTilesetData(data, relativePath, gid, url))
+                .catch(() => {
+                    const err = new Error(ERROR_MESSAGES.TILESET_LOADING_FAILED + url);
+                    this.#dispatchLoadingError(err);
+                    return Promise.resolve(null);
+                    //return Promise.reject(err);
+                });
+        } else if (file_format === FILE_FORMAT.XML) {
+            return fetch(loadPath)
+                .then(response => response.text())
+                .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+                .then(xmlString => this._processTilesetXmlData(xmlString.documentElement))
+                .then((data) => this._processTilesetData(data, relativePath, gid, url))
+                .catch(() => {
+                    const err = new Error(ERROR_MESSAGES.TILESET_LOADING_FAILED + url);
+                    this.#dispatchLoadingError(err);
+                    return Promise.resolve(null);
+                });
+        } else {
+            return Promise.reject(loadPath + ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT);
+        }
     }
 
+    /**
+     * 
+     * @param {Object} doc 
+     * @returns {Object}
+     */
+    _processTilesetXmlData = (doc) => {
+        const tilesetData = {
+            columns: Number(doc.attributes?.columns?.value),
+            name: doc.attributes?.name?.value,
+            tilecount: Number(doc.attributes?.tilecount?.value),
+            tiledversion: doc.attributes?.tiledversion?.value,
+            tileheight: Number(doc.attributes?.tileheight?.value),
+            tilewidth: Number(doc.attributes?.tilewidth?.value),
+            version: doc.attributes?.version?.value,
+            margin: doc.attributes?.margin ? Number(doc.attributes.margin.value) : 0,
+            spacing: doc.attributes?.spacing ? Number(doc.attributes.margin.value) : 0,
+            type: doc.tagName
+        };
+        
+        this._processTilesetXmlChildData(tilesetData, doc.childNodes);
+        
+        return tilesetData;
+    }
+
+    /**
+     * 
+     * @param {any} tilesetData 
+     * @param {any} nodes
+     * @returns {void} 
+     */
+    _processTilesetXmlChildData(tilesetData, nodes) {
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i],
+                name = node.nodeName;
+                
+            if (name === "image") {
+                tilesetData.image = node?.attributes?.source?.value;
+                tilesetData.imagewidth = node?.attributes?.width ? Number(node.attributes.width.value) : 0;
+                tilesetData.imageheight = node?.attributes?.height ? Number(node.attributes.height.value) : 0;
+            } else if (name === "tileoffset") {
+                tilesetData.tileoffset = {
+                    x: Number(node.attributes.x.value),
+                    y: Number(node.attributes.y.value)
+                };
+            } else if (name === "tile") {
+                if (!tilesetData.tiles) {
+                    tilesetData.tiles = [];
+                }
+                //add boundaries / animations
+                const tile = {
+                    id: Number(node.attributes?.id?.value)
+                }
+                const childN = node.childNodes;
+                
+                for (let j = 0; j < childN.length; j++) {
+                    const child = childN[j],
+                        childName = child.nodeName;
+                    if (childName === "objectgroup") {
+                        tile.objectgroup = {
+                            type: childName
+                        }
+
+                        if (child.attributes?.id) {
+                            tile.objectgroup.id = Number(child.attributes?.id?.value);
+                        }
+                        if (child.attributes?.draworder) {
+                            tile.objectgroup.draworder = child.attributes.draworder.value;
+                        }
+                        if (child.attributes?.opacity) {
+                            tile.objectgroup.opacity = child.attributes.opacity.value;
+                        }
+                        if (child.attributes?.x && child.attributes?.y) {
+                            tile.objectgroup.x = child.attributes.x.value;
+                            tile.objectgroup.y = child.attributes.y.value;
+                        }
+
+                        tile.objectgroup.objects = [];
+
+                        const objects = child.childNodes;
+                        for (let k = 0; k < objects.length; k++) {
+                            const obj = objects[k];
+                            
+                            if (obj.nodeName === "object") {
+                                const objInc = {
+                                    id: Number(obj.attributes?.id?.value),
+                                    visible: obj.attributes.visible && obj.attributes.visible.value === "0" ? false : true,
+                                    x: Number(obj.attributes?.x?.value),
+                                    y: Number(obj.attributes?.y?.value),
+                                    rotation: obj.attributes?.rotation ? Number(obj.attributes.rotation.value) :0,
+                                };
+                                if (obj.attributes?.width) {
+                                    objInc.width = Number(obj.attributes.width.value); 
+                                }
+                                if (obj.attributes?.height) {
+                                    objInc.height = Number(obj.attributes.height.value);
+                                }
+                                
+                                const childObjects = obj.childNodes;
+                                if (childObjects && childObjects.length > 0) {
+                                    for (let n = 0; n < childObjects.length; n++) {
+                                        const childObj = childObjects[n];
+                                
+                                        if (childObj.nodeName === "ellipse") {
+                                            objInc.ellipse = true;
+                                        } else if (childObj.nodeName === "point") {
+                                            objInc.point = true;
+                                        } else if (childObj.nodeName === "polygon") {
+                                            const points = childObj.attributes?.points?.value;
+                                            if (points && points.length > 0) {
+                                                const pointsArr = points.split(" ").map((point) => {
+                                                    const [x, y] = point.split(",");
+                                                    return {x:Number(x), y:Number(y)};
+                                                });
+                                                objInc.polygon = pointsArr;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                tile.objectgroup.objects.push(objInc);
+                            }
+                        }
+                    } else if (childName === "animation") {
+                        //
+                        tile.animation = [];
+                        
+                        const frames = child.childNodes;
+                        for (let t = 0; t < frames.length; t++) {
+                            const frame = frames[t];
+
+                            if (frame.nodeName === "frame") {
+                                const frameObject = {
+                                    tileid: Number(frame.attributes?.tileid?.value),
+                                    duration: Number(frame.attributes?.duration?.value)
+                                }
+                                tile.animation.push(frameObject);
+                            }
+                        }
+                    }
+                }
+
+                tilesetData.tiles.push(tile);
+            }
+        }
+    }
+    /**
+     * 
+     * @param {Object} data 
+     * @param {string} relativePath
+     * @param {number=} gid
+     * @param {string=} source
+     * @returns {Promise<Object>}
+     */
+    _processTilesetData = (data, relativePath, gid, source) => {
+        const {name, image } = data;
+        if (name && image && !this.isFileInQueue("Image", name)) {
+            this.addImage(name, relativePath ? relativePath + image : image);
+        }
+        if (gid) {
+            data.firstgid = gid;
+        }
+        // if it is an external file
+        if (source) {
+            data.source = source;
+        }
+        return Promise.resolve(data);
+    }
+
+    /**
+     * 
+     * @param {string} key 
+     * @param {string} url 
+     * @returns {Promise<any>}
+     */
     _defaultUploadMethod = (key, url) => {
         return fetch(url);
     }
@@ -386,43 +614,156 @@ class AssetsManager {
      * @returns {Promise}
      */
     _loadTileMap = (key, url, attachTileSetData = true) => {
-        this.#checkTilemapUrl(url);
-        return fetch(url)
-            .then((response) => response.json())
-            .then((data) => {
-                const relativePath = this.#calculateRelativePath(url);
+        const file_format = this.#checkTilemapUrl(url);
+        
+        let fetchData;
+        if (file_format === FILE_FORMAT.JSON) {
+            fetchData = fetch(url)
+                .then((response) => response.json())
+                .then((data) => this._processTileMapData(data, url, attachTileSetData))
+                .catch((err) => {
+                    if (err.message.includes("JSON.parse:")) {
+                        err = new Error(ERROR_MESSAGES.TILEMAP_LOADING_FAILED + url);
+                    }
+                    this.#dispatchLoadingError(err);
+                    return Promise.resolve(null);
+                    //return Promise.reject(err);
+                });
+        } else if (FILE_FORMAT.XML) {
+            fetchData = fetch(url)
+                .then((response) => response.text())
+                .then((rawText) => this._processTileMapXML(rawText))
+                .then((tilemapData) => this._processTileMapData(tilemapData, url, attachTileSetData))
+                .catch((err) => {
+                    this.#dispatchLoadingError(err);
+                    return Promise.resolve(null);
+                    //return Promise.reject(err);
+                });
+        } else {
+            return Promise.reject(url + ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT);
+        }
+
+        return fetchData;
+    }
+
+    /**
+     * 
+     * @param {string} rawText 
+     * @returns {Object}
+     */
+    _processTileMapXML = (rawText) => {
+        const xmlDoc = new DOMParser().parseFromString(rawText, "text/xml");
                 
-                if (attachTileSetData === true && data.tilesets && data.tilesets.length > 0) {
-                    const tilesetPromises = [];
-                    // upload additional tileset data
-                    data.tilesets.forEach((tileset, idx) => {
-                        const { firstgid:gid, source:url } = tileset;
-                        const loadTilesetPromise = this._loadTileSet("default-" + gid, url, gid, relativePath).then((tilesetData) => {
+        /** @type {Object} */
+        const doc = xmlDoc.documentElement;
+        const tilemapData = {
+            type: doc.tagName,
+            width: Number(doc.attributes?.width?.value),
+            height: Number(doc.attributes?.height?.value),
+            infinite: doc.attributes.infinite && doc.attributes.infinite.value === "1" ? true : false,
+            nextlayerid: Number(doc.attributes?.nextlayerid?.value),
+            nextobjectid: Number(doc.attributes?.nextobjectid?.value),
+            orientation: doc.attributes?.orientation?.value,
+            renderorder: doc.attributes?.renderorder?.value,
+            tiledversion: doc.attributes?.tiledversion?.value,
+            tileheight: Number(doc.attributes?.tileheight?.value),
+            tilewidth: Number(doc.attributes?.tilewidth?.value),
+            version: doc.attributes?.version?.value,
+            /** @type {Array<Object>} */
+            tilesets: [],
+            /** @type {Array<Object>} */
+            layers: []
+        };
+        const nodes = xmlDoc.documentElement.childNodes;
+        for (let i = 0; i < nodes.length; i++) {
+            /** @type {Object} */
+            const node = nodes[i],
+                name = node.nodeName;
+                
+            if (name === "tileset") {
+                const tileset = {
+                    firstgid: Number(node.attributes?.firstgid?.value)
+                };
+                if (node.attributes?.source) { // external tileset (will be loaded later)
+                    tileset.source = node.attributes?.source?.value;
+                } else {
+                    // inline tileset
+                    tileset.columns = Number(node.attributes?.columns?.value);
+                    if (node.attributes?.margin) {
+                        tileset.margin = Number(node.attributes?.margin?.value);
+                    }
+                    if (node.attributes?.spacing) {
+                        tileset.spacing = node.attributes?.spacing?.value;
+                    }
+                    tileset.name = node.attributes?.name?.value;
+                    
+                    tileset.tilecount = Number(node.attributes?.tilecount?.value);
+                    tileset.tilewidth = Number(node.attributes?.tilewidth?.value);
+                    tileset.tileheight = Number(node.attributes?.tileheight?.value);
+
+                    this._processTilesetXmlChildData(tileset, node.childNodes);
+                }
+                tilemapData.tilesets.push(tileset);
+            } else if (name === "layer") {
+                const layer = {
+                    height: Number(node.attributes?.height?.value),
+                    id: Number(node.attributes?.id?.value),
+                    name: node.attributes?.name?.value,
+                    width: Number(node.attributes?.width?.value),
+                    data: node.textContent ? node.textContent.trim().split(",").map((val) => Number(val)): null
+                }
+                tilemapData.layers.push(layer);
+            }
+        }
+
+        return tilemapData;
+    }
+
+    /**
+     * 
+     * @param {any} data 
+     * @param {string} url 
+     * @param {boolean} attachTileSetData 
+     * @returns {Promise<any>}
+     */
+    _processTileMapData = (data, url, attachTileSetData) => {
+        const relativePath = this.#calculateRelativePath(url);
+        
+        if (attachTileSetData === true && data.tilesets && data.tilesets.length > 0) {
+            const tilesetPromises = [];
+            // upload additional tileset data
+            data.tilesets.forEach((tileset, idx) => {
+                const { firstgid, source } = tileset;
+                if (source) { // external tileset
+                    const loadTilesetPromise = this._loadTileSet("default-" + firstgid, source, firstgid, relativePath)
+                        .then((tilesetData) => {
                             this.#dispatchCurrentLoadingProgress();
                             return Promise.resolve(tilesetData);
                         });
-                        tilesetPromises.push(loadTilesetPromise);
-                    });
-                    //attach additional tileset data to tilemap data
-                    return Promise.all(tilesetPromises).then((tilesetDataArray) => {
-                        for (let i = 0; i < tilesetDataArray.length; i++) {
-                            const tilesetData = tilesetDataArray[i];
-                            data.tilesets[i].data = tilesetData;
-                        }
-                        return Promise.resolve(data);
-                    });
-                } else {
-                    return Promise.resolve(data);
+                    tilesetPromises.push(loadTilesetPromise);
+                } else { // inline tileset
+                    const loadTilesetPromise = this._processTilesetData(tileset, relativePath)
+                        .then((tilesetData) => {
+                            this.#dispatchCurrentLoadingProgress();
+                            return Promise.resolve(tilesetData);
+                        });
+                    tilesetPromises.push(loadTilesetPromise);
                 }
-            })
-            .catch((err) => {
-                if (err.message.includes("JSON.parse:")) {
-                    err = new Error(ERROR_MESSAGES.TILEMAP_LOADING_FAILED + url);
-                }
-                this.#dispatchLoadingError(err);
-                return Promise.resolve(null);
-                //return Promise.reject(err);
             });
+            //attach additional tileset data to tilemap data
+            return Promise.all(tilesetPromises).then((tilesetDataArray) => {
+                for (let i = 0; i < tilesetDataArray.length; i++) {
+                    const tilesetData = tilesetDataArray[i];
+                    data.tilesets[i] = tilesetData;
+                    // @depricated
+                    // save backward capability with jsge@1.5.71
+                    data.tilesets[i].data = Object.assign({}, tilesetData);
+                }
+                return Promise.resolve(data);
+            });
+        } else {
+            return Promise.resolve(data);
+        }
     }
 
     /**
@@ -494,17 +835,21 @@ class AssetsManager {
 
     #checkTilesetUrl(url) {
         if (url.includes(".tsj") || url.includes(".json")) {
-            return;
+            return FILE_FORMAT.JSON;
+        } else if (url.includes(".tsx") || url.includes(".xml")) {
+            return FILE_FORMAT.XML;
         } else {
-            Exception(url + ERROR_MESSAGES.TILESET_FILE_EXTENSION_INCORRECT);
+            return FILE_FORMAT.UNKNOWN;
         }
     }
 
     #checkTilemapUrl(url) {
         if (url.includes(".tmj") || url.includes(".json")) {
-            return;
+            return FILE_FORMAT.JSON;
+        } else if (url.includes(".tmx") || url.includes(".xml")) {
+            return FILE_FORMAT.XML;
         } else {
-            Exception(url + ERROR_MESSAGES.TILEMAP_FILE_EXTENSION_INCORRECT);
+            return FILE_FORMAT.UNKNOWN;
         }
     }
 
@@ -525,17 +870,20 @@ class AssetsManager {
      */
     #calculateRelativePath(url) {
         let split = url.split("/"),
-        length = split.length,
-        relativePath = "/";
+            length = split.length,
+            lastEl = split[length - 1],
+            //prelastEl = split[length - 2],
+            relativePath = "/";
+        
         // url ends with .ext
-        if (split[length - 1].includes(".tmj") || split[length - 1].includes(".xml") || split[length - 1].includes(".json")) {
+        if (lastEl.includes(".tmj") || lastEl.includes(".tmx") || lastEl.includes(".xml") || lastEl.includes(".json")) {
             split.pop();
             relativePath = split.join("/") + "/";
         // url ends with /
-        } else if (split[length - 2].includes(".tmj") || split[length - 2].includes(".xml") || split[length - 2].includes(".json")) {
+        }/* else if (prelastEl.includes(".tmj") || lastEl.includes(".tmx") || prelastEl.includes(".xml") || prelastEl.includes(".json")) {
             split.splice(length - 2, 2);
             relativePath = split.join("/") + "/";
-        }
+        }*/
         return relativePath;
     }
 
@@ -1993,8 +2341,8 @@ class DrawTiledLayer {
             pointBLen = 0,
             polygonBLen = 0;
         tilesets.forEach((tileset, idx) => {
-            const tiles = tileset.data.tiles,
-                name = tileset.data.name,
+            const tiles = tileset.tiles,
+                name = tileset.name,
                 firstgid = tileset.firstgid,
                 nextTileset = this.tilesets[idx + 1],
                 nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000;
@@ -2011,22 +2359,22 @@ class DrawTiledLayer {
 
                         this.#animations.set(eventName, animationEvent);
                         // add additional properties
-                        if (!tileset.data._hasAnimations) {
-                            tileset.data._hasAnimations = true;
-                            tileset.data._animations = new Map();
+                        if (!tileset._hasAnimations) {
+                            tileset._hasAnimations = true;
+                            tileset._animations = new Map();
                             //
-                            tileset.data._animations.set(id, animationIndexes[0][0]);
+                            tileset._animations.set(id, animationIndexes[0][0]);
                         }
                         this.#activateAnimation(animationEvent);
                     }
                     if (objectgroup && this.#setBoundaries) {
-                        if (tileset.data._hasBoundaries) {
-                            tileset.data._boundaries.set(id, objectgroup);
+                        if (tileset._hasBoundaries) {
+                            tileset._boundaries.set(id, objectgroup);
                         } else {
                             // add additional properties
-                            tileset.data._hasBoundaries = true;
-                            tileset.data._boundaries = new Map();
-                            tileset.data._boundaries.set(id, objectgroup);
+                            tileset._hasBoundaries = true;
+                            tileset._boundaries = new Map();
+                            tileset._boundaries.set(id, objectgroup);
                         }
                         objectgroup.objects.forEach((object) => {
                             if (object.ellipse) {
@@ -2091,10 +2439,10 @@ class DrawTiledLayer {
 
     #switchCurrentActiveSprite = (animationEvent) => {
         const [tilesetKey, animationId] = animationEvent.name.split(this.#DELIMITER),
-            tilesetIndex = this.#tilesets.findIndex(tileset => tileset.data.name === tilesetKey),
+            tilesetIndex = this.#tilesets.findIndex(tileset => tileset.name === tilesetKey),
             tileset = this.#tilesets[tilesetIndex];
             
-        tileset.data._animations.set(parseInt(animationId), animationEvent.currentSprite);
+        tileset._animations.set(parseInt(animationId), animationEvent.currentSprite);
     };
 
     /**
@@ -2392,9 +2740,6 @@ class DrawObjectFactory {
         this.#iLoader = iLoader;
     }
 
-    /**
-     * @returns {GameStageData}
-     */
     get stageData() {
         return this.#currentPageData;
     }
@@ -2522,21 +2867,20 @@ class DrawObjectFactory {
             tilesetIds = Array.from(new Set(layerData.data.filter((id) => id !== 0))).sort((a, b) => a - b),
             tilesets = tilemap.tilesets.map((tileset) => Object.assign({}, tileset)).filter((tileset) => {
                 const tilesetStartI = tileset.firstgid,
-                    tilesetLastI = tilesetStartI + tileset.data.tilecount;
+                    tilesetLastI = tilesetStartI + tileset.tilecount;
                 if (tilesetIds.find((id) => ((id >= tilesetStartI) && (id < tilesetLastI)))) {
                     return true;
                 } else {
                     return false;
                 }
             }), // copy to avoid change same tilemap instance in different tiledLayers
-            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.data.name)),
+            tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.name)),
             renderObject = new _2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__.DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
         if (tilesetImages.length > 1) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_10__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_11__.WARNING_CODES.MULTIPLE_IMAGE_TILESET, " tileset " + layerKey + " includes multiple images, it can case performance issues!");
         }
         //console.log(layerKey);
         //console.log(tilesetIds);
-        //console.log(tilesets);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }
@@ -4710,6 +5054,9 @@ class ISystem {
         return this.#drawObjectFactory;
     }
 
+    /**
+     * @returns {IExtension}
+     */
     get iExtension() {
         return this.#iExtension;
     }
@@ -6786,6 +7133,7 @@ class WebGlEngine {
             default:
                 renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
+        
         const translation = [0, 0],
               scale = [1, 1],
               rotation = renderLayer.rotation || 0,
@@ -7214,12 +7562,14 @@ class WebGlEngine {
             
             for (let i = 0; i < tilesets.length; i++) {
                 
-                const tilesetData = tilesets[i].data,
+                const tilesetData = tilesets[i],
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
                     tilesetwidth = tilesetData.tilewidth,
                     tilesetheight = tilesetData.tileheight,
+                    tileoffsetX = tilesetData.tileoffset ? tilesetData.tileoffset.x : 0,
+                    tileoffsetY = tilesetData.tileoffset ? tilesetData.tileoffset.y : 0,
                     atlasImage = tilesetImages[i],
                     //atlasWidth = atlasImage.width,
                     //atlasHeight = atlasImage.height,
@@ -7240,8 +7590,8 @@ class WebGlEngine {
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
                     screenCells = screenRows * screenCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
-                    cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin,
+                    cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
+                    cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0,
                     hasAnimations = tilesetData._hasAnimations;
                     //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
@@ -7270,8 +7620,10 @@ class WebGlEngine {
                         let tile = layerData.data[mapIndex];
 
                         if ((tile >= firstgid) && (tile < nextgid)) {
-                            const mapPosX = col * dtwidth - moduleLeft,
-                                mapPosY = row * dtheight - moduloTop;
+                            const mapPosX = col * dtwidth - moduleLeft + tileoffsetX,
+                                // this fix is used to draw items with height different that the actual tilecell height
+                                posYFix = tilesetheight - dtheight,
+                                mapPosY = row * dtheight - posYFix - moduloTop + tileoffsetY;
 
                             // actual tile index
                             tile -= firstgid;
@@ -7590,7 +7942,7 @@ class WebGlEngine {
             }
 
             for (let i = 0; i <= tilesets.length - 1; i++) {
-                const tilesetData = tilesets[i].data,
+                const tilesetData = tilesets[i],
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
@@ -7603,10 +7955,10 @@ class WebGlEngine {
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     atlasImage = tilesetImages[i],
-                    atlasWidth = atlasImage.width,
-                    atlasHeight = atlasImage.height,
-                    cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin,
+                    atlasWidth = tilesetData.imagewidth,
+                    atlasHeight = tilesetData.imageheight,
+                    cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
+                    cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0,
                     layerTilesetData = tilesets[i]._temp;
                 
                 let mapIndex = 0,
@@ -7713,12 +8065,12 @@ class WebGlEngine {
      * 
      * @param {DrawTiledLayer} renderLayer 
      * @param {GameStageData} pageData
-     * @returns {Promise<void>}
+     * @returns {Promise<Array<any>}
      */
     #prepareRenderLayerWM = (renderLayer, pageData) => {
         return new Promise((resolve, reject) => {
             const tilemap = renderLayer.tilemap,
-                tilesets = tilemap.tilesets,
+                tilesets = renderLayer.tilesets,
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
@@ -7745,7 +8097,7 @@ class WebGlEngine {
             }
             
             for (let i = 0; i < tilesets.length; i++) {
-                const tilesetData = tilesets[i].data,
+                const tilesetData = tilesets[i],
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
@@ -7763,16 +8115,16 @@ class WebGlEngine {
                     worldW = tilewidth * layerCols,
                     worldH = tileheight * layerRows,
                     atlasImage = tilesetImages[i],
-                    atlasWidth = atlasImage.width,
-                    atlasHeight = atlasImage.height,
+                    atlasWidth = tilesetData.imagewidth,
+                    atlasHeight = tilesetData.imageheight,
                     items = layerRows * layerCols,
                     dataCellSizeBytes = 4,
                     vectorCoordsItemsNum = 12,
                     texturesCoordsItemsNum = 12,
                     vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
                     texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum,
-                    cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin;
+                    cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
+                    cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0;
                 
                 const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
                 

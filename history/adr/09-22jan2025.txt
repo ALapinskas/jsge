@@ -2,7 +2,9 @@ Date: January 22 2025
 jsge@1.5.3
 Merge draw calls / Соединение вызовов отрисовки
 
-Status: In Progress
+Status: In Progress (texts)
+        Done images (1.5.5)
+        Done tilesets (1.5.6)
 
 Context:
     Каждая добавляемая в игру сущность рисуется отдельно,

@@ -1,7 +1,7 @@
 Date: January 19 2025
 Start/stop/start stage behavior / Поведение при старте/остановке/старте стадии
 
-Status: In Progress
+Status: Done (1.5.7)
 
 Context:
     При остановке и последующем старте стадии, 

@@ -149,6 +149,9 @@ export class ISystem {
         return this.#drawObjectFactory;
     }
 
+    /**
+     * @returns {IExtension}
+     */
     get iExtension() {
         return this.#iExtension;
     }

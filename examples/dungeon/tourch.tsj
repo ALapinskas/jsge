@@ -6,8 +6,13 @@
  "name":"tourch",
  "spacing":0,
  "tilecount":8,
- "tiledversion":"1.10.2",
+ "tiledversion":"1.11.2",
  "tileheight":64,
+ "tileoffset":
+    {
+     "x":-16,
+     "y":0
+    },
  "tiles":[
         {
          "animation":[

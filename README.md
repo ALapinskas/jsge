@@ -4,10 +4,10 @@ This engine was designed to simplify creating games on javascript. \
 No external libraries are used for drawing, no TypeScript, and it is easy to use and debug. \
 ![Alt text](Debug.gif?raw=true "Title")
 
-Advantages:
+### Advantages:
 * OPP modular structure.
 * Webgl 1 under the hood, wide browser support.
-* Webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
+* Masks and webgl [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc).
 * Tilemaps with tilesets support from [Tiled editor](https://www.mapeditor.org).
 * Unlimited size tilesets. 800x800 cells, with 16x16 pixels [example] (https://codepen.io/yaalfred/pen/zYegGGb)
 * Frame animations for sprites and tiles.
@@ -16,12 +16,18 @@ Advantages:
 * Boundary drawing as a debug option.
 ![Boundaries draw](boundaries_draw.png?raw=true "Boundaries draw")
 
-Tilemaps support:
-* Only JSON format (.tmj) is supported, not XML (.tmx)!
+### Tilemaps support:
+* Full file formats support: 
+    - JSON (.tmj, .json)
+    - XML (.tmx, .xml)
+    - Internal tilesets (as part of tilemap file)
+    - External JSON tilesets (.tsj, json)
+    - External XML tilesets (.tsx, .xml)
+    - Attached images load automatically
 * Animated tiles.
 * Tiles boundaries(dot/ellipse/polygon)
 
-How to run examples:
+### How to run examples:
 1. npm i
 2. npm start
 3. visit localhost:9000
@@ -29,6 +35,8 @@ How to run examples:
 API docs and tutorials: [jsge.reslc.ru](https://jsge.reslc.ru) \
 github: [https://github.com/ALapinskas/jsge](https://github.com/ALapinskas/jsge) \
 issues: [https://github.com/ALapinskas/jsge/issues](https://github.com/ALapinskas/jsge/issues) \
-npm: [https://www.npmjs.com/package/jsge](https://www.npmjs.com/package/jsge) \
-Feedback and Questions: 
-[https://discord.com/channels/1246373335202398268](https://discord.com/channels/1246373335202398268)
+npm: [https://www.npmjs.com/package/jsge](https://www.npmjs.com/package/jsge) 
+
+## Games build with jsge:
+[Guess the word](https://github.com/ALapinskas/guessword) \
+[Arcanoid](https://github.com/ALapinskas/arkanoid)

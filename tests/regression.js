@@ -4,7 +4,7 @@ const TIMEOUT = 1;
 
 (async () => {
     // Launch the browser and open a new blank page
-    const browser = await puppeteer.launch({executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: true});
+    const browser = await puppeteer.launch({executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: false});
     const page = await browser.newPage();
   
     const CHECKED = 1,

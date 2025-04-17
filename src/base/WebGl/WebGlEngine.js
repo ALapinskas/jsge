@@ -849,6 +849,7 @@ export class WebGlEngine {
             default:
                 renderLayerData = await this.#prepareRenderLayer(renderLayer, pageData);
         }
+        
         const translation = [0, 0],
               scale = [1, 1],
               rotation = renderLayer.rotation || 0,
@@ -1277,12 +1278,14 @@ export class WebGlEngine {
             
             for (let i = 0; i < tilesets.length; i++) {
                 
-                const tilesetData = tilesets[i].data,
+                const tilesetData = tilesets[i],
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
                     tilesetwidth = tilesetData.tilewidth,
                     tilesetheight = tilesetData.tileheight,
+                    tileoffsetX = tilesetData.tileoffset ? tilesetData.tileoffset.x : 0,
+                    tileoffsetY = tilesetData.tileoffset ? tilesetData.tileoffset.y : 0,
                     atlasImage = tilesetImages[i],
                     //atlasWidth = atlasImage.width,
                     //atlasHeight = atlasImage.height,
@@ -1303,8 +1306,8 @@ export class WebGlEngine {
                     screenCols = worldW > canvasW ? Math.ceil(canvasW / tilewidth) + 1 : layerCols,
                     screenCells = screenRows * screenCols,
                     skipColsRight = layerCols - screenCols - skipColsLeft,
-                    cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin,
+                    cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
+                    cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0,
                     hasAnimations = tilesetData._hasAnimations;
                     //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
@@ -1333,8 +1336,10 @@ export class WebGlEngine {
                         let tile = layerData.data[mapIndex];
 
                         if ((tile >= firstgid) && (tile < nextgid)) {
-                            const mapPosX = col * dtwidth - moduleLeft,
-                                mapPosY = row * dtheight - moduloTop;
+                            const mapPosX = col * dtwidth - moduleLeft + tileoffsetX,
+                                // this fix is used to draw items with height different that the actual tilecell height
+                                posYFix = tilesetheight - dtheight,
+                                mapPosY = row * dtheight - posYFix - moduloTop + tileoffsetY;
 
                             // actual tile index
                             tile -= firstgid;
@@ -1653,7 +1658,7 @@ export class WebGlEngine {
             }
 
             for (let i = 0; i <= tilesets.length - 1; i++) {
-                const tilesetData = tilesets[i].data,
+                const tilesetData = tilesets[i],
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
@@ -1666,10 +1671,10 @@ export class WebGlEngine {
                     layerCols = layerData.width,
                     layerRows = layerData.height,
                     atlasImage = tilesetImages[i],
-                    atlasWidth = atlasImage.width,
-                    atlasHeight = atlasImage.height,
-                    cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin,
+                    atlasWidth = tilesetData.imagewidth,
+                    atlasHeight = tilesetData.imageheight,
+                    cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
+                    cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0,
                     layerTilesetData = tilesets[i]._temp;
                 
                 let mapIndex = 0,
@@ -1776,12 +1781,12 @@ export class WebGlEngine {
      * 
      * @param {DrawTiledLayer} renderLayer 
      * @param {GameStageData} pageData
-     * @returns {Promise<void>}
+     * @returns {Promise<Array<any>}
      */
     #prepareRenderLayerWM = (renderLayer, pageData) => {
         return new Promise((resolve, reject) => {
             const tilemap = renderLayer.tilemap,
-                tilesets = tilemap.tilesets,
+                tilesets = renderLayer.tilesets,
                 tilesetImages = renderLayer.tilesetImages,
                 layerData = renderLayer.layerData,
                 { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
@@ -1808,7 +1813,7 @@ export class WebGlEngine {
             }
             
             for (let i = 0; i < tilesets.length; i++) {
-                const tilesetData = tilesets[i].data,
+                const tilesetData = tilesets[i],
                     firstgid = tilesets[i].firstgid,
                     nextTileset = tilesets[i + 1],
                     nextgid = nextTileset ? nextTileset.firstgid : 1_000_000_000, // a workaround to avoid multiple conditions
@@ -1826,16 +1831,16 @@ export class WebGlEngine {
                     worldW = tilewidth * layerCols,
                     worldH = tileheight * layerRows,
                     atlasImage = tilesetImages[i],
-                    atlasWidth = atlasImage.width,
-                    atlasHeight = atlasImage.height,
+                    atlasWidth = tilesetData.imagewidth,
+                    atlasHeight = tilesetData.imageheight,
                     items = layerRows * layerCols,
                     dataCellSizeBytes = 4,
                     vectorCoordsItemsNum = 12,
                     texturesCoordsItemsNum = 12,
                     vectorDataItemsNum = offsetDataItemsFilteredNum * vectorCoordsItemsNum,
                     texturesDataItemsNum = offsetDataItemsFilteredNum * texturesCoordsItemsNum,
-                    cellSpacing = tilesetData.spacing,
-                    cellMargin = tilesetData.margin;
+                    cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
+                    cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0;
                 
                 const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
                 

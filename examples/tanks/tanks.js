@@ -7,10 +7,10 @@ export class Tanks extends GameStage {
 	#keyPressed = { ArrowUp: false, KeyW: false, ArrowLeft: false, KeyA: false, ArrowRight: false, KeyD: false, ArrowDown: false, KeyS: false };
 	#bullets = [];
 	register() {
-    	this.iLoader.addTileMap("map", "./tanks/tanks_map.tmj");
+    	this.iLoader.addTileMap("map", "./tanks/tanks_map.tmx");
 		this.iLoader.addAtlasXML("objects", "./tanks/images/onlyObjects_default.xml");
 		this.timer = null;
-		document.body.style.margin = 0;
+		document.body.style.margin = "0px";
 	}
     init() {
 		const [w, h] = this.stageData.canvasDimensions;
