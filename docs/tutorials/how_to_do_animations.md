@@ -2,7 +2,7 @@ How to Create Animations with Sprite Indexes:
 
 1. Take an image with animations.  
    Here is an example fireball 128x16 px image, each animation step is 16x16 px:  
-![fireball](../tutorials/fireball128x16.png)
+![fireball](fireball128x16.png)
 
 2. [Add and load it to the project]{@tutorial assets_manager}:
    ```

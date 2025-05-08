@@ -310,30 +310,30 @@ export class GameStage {
      * @param {number} y 
      * @param {DrawImageObject} drawObject
      * @param {Array<DrawImageObject>} objects - objects array to check
-     * @returns {{x:number, y:number, p:number} | boolean} - the closest collision
+     * @returns {Array<Object> | boolean} - array of objects with collisions, or false if no collision happen
      */
     isObjectsCollision = (x, y, drawObject, objects) => {
         const drawObjectType = drawObject.type,
             drawObjectBoundaries = drawObject.vertices,
             circleBoundaries = drawObject.circleBoundaries;
         switch(drawObjectType) {
-        case DRAW_TYPE.TEXT:
-        case DRAW_TYPE.RECTANGLE:
-        case DRAW_TYPE.CONUS:
-        case DRAW_TYPE.IMAGE:
-            if (!circleBoundaries) {
-                return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
-            } else {
-                return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
-            }
-        case DRAW_TYPE.CIRCLE:
-            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            break;
-        case DRAW_TYPE.LINE:
-            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            break;
-        default:
-            Warning(WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+            case DRAW_TYPE.TEXT:
+            case DRAW_TYPE.RECTANGLE:
+            case DRAW_TYPE.CONUS:
+            case DRAW_TYPE.IMAGE:
+                if (!circleBoundaries) {
+                    return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+                } else {
+                    return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
+                }
+            case DRAW_TYPE.CIRCLE:
+                Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+                break;
+            case DRAW_TYPE.LINE:
+                Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+                break;
+            default:
+                Warning(WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
         return false;
     };
@@ -364,13 +364,13 @@ export class GameStage {
                 console.warn("unknown object type!");
             }
             if (coll) {
-                collisions.push(coll);
+                collisions.push(mapObject);
             }
         }
         if (collisions.length > 0) {
-            return this.#takeTheClosestCollision(collisions);
+            return collisions;
         } else {
-            return null;
+            return false;
         }
     }
 
@@ -385,36 +385,39 @@ export class GameStage {
                 drawMapObjectType = mapObject.type,
                 circleBoundaries = mapObject.circleBoundaries;
 
+            /**
+             * @type {boolean | Object}
+             */
             let coll;
             
             switch(drawMapObjectType) {
-            case DRAW_TYPE.TEXT:
-            case DRAW_TYPE.RECTANGLE:
-            case DRAW_TYPE.CONUS:
-            case DRAW_TYPE.IMAGE:
-                if (!circleBoundaries) {
-                    coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
-                } else {
-                    coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
-                }
-                break;
-            case DRAW_TYPE.CIRCLE:
-                console.warn("isObjectCollision.circle check is not implemented yet!");
-                break;
-            case DRAW_TYPE.LINE:
-                console.warn("isObjectCollision.line check is not implemented, please use rect instead");
-                break;
-            default:
-                console.warn("unknown object type!");
+                case DRAW_TYPE.TEXT:
+                case DRAW_TYPE.RECTANGLE:
+                case DRAW_TYPE.CONUS:
+                case DRAW_TYPE.IMAGE:
+                    if (!circleBoundaries) {
+                        coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
+                    } else {
+                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
+                    }
+                    break;
+                case DRAW_TYPE.CIRCLE:
+                    console.warn("isObjectCollision.circle check is not implemented yet!");
+                    break;
+                case DRAW_TYPE.LINE:
+                    console.warn("isObjectCollision.line check is not implemented, please use rect instead");
+                    break;
+                default:
+                    console.warn("unknown object type!");
             }
             if (coll) {
-                collisions.push(coll);
+                collisions.push(mapObject);
             }
         }
         if (collisions.length > 0) {
-            return this.#takeTheClosestCollision(collisions);
+            return collisions;
         } else {
-            return null;
+            return false;
         }
     }
  

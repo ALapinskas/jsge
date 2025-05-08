@@ -1,4 +1,4 @@
-Assume you want to render an image ![image](../tutorials/images.jpg)
+Assume you want to render an image ![image](images.jpg)
 ## Prepare:
 1. **Set up a web server:** jsge is a library for a web application, so you will need a web server.  
    In this tutorial, we will use a Node.js web server. First, install Node.js and npm.

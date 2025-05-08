@@ -617,17 +617,6 @@ export class WebGlEngine {
         
     };
 
-    _canTextBeMerged = (obj1, obj2) => {
-        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
-            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
-        if ((registeredO1.webglProgramName === registeredO2.webglProgramName) && 
-            (obj1.type === obj2.type)) {
-                return true;
-        } else {
-            return false;
-        }
-    }
-
     _bindImage = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -815,9 +804,40 @@ export class WebGlEngine {
     _canImageObjectsMerge = (obj1, obj2) => {
         const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
             registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
-        if ((registeredO1.webglProgramName === registeredO2.webglProgramName) && 
-            (obj1.type === obj2.type) &&
-            (obj1.image === obj2.image)) {
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName)
+            && (obj1.type === obj2.type)
+            && (obj1.image === obj2.image)
+            && (obj2.isRemoved === false)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 
+     * @param {*} obj1 
+     * @param {*} obj2 
+     * @returns {boolean}
+     */
+    _canMergeNextTileObject = (obj1, obj2) => {
+        if ((obj2 instanceof DrawTiledLayer) 
+            && (obj1.tilesetImages.length === 1) 
+            && (obj2.tilesetImages.length === 1) 
+            && (obj1.tilesetImages[0] === obj2.tilesetImages[0])
+            && (obj2.isRemoved === false)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
+
+    _canTextBeMerged = (obj1, obj2) => {
+        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
+            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName) 
+            && (obj1.type === obj2.type)
+            && (obj2.isRemoved === false)) {
                 return true;
         } else {
             return false;
@@ -1032,23 +1052,6 @@ export class WebGlEngine {
             return this._render(verticesNumber, gl.TRIANGLES);
         }
     };
-
-    /**
-     * 
-     * @param {*} obj1 
-     * @param {*} obj2 
-     * @returns {boolean}
-     */
-    _canMergeNextTileObject = (obj1, obj2) => {
-        if ((obj2 instanceof DrawTiledLayer) 
-            && (obj1.tilesetImages.length === 1) 
-            && (obj2.tilesetImages.length === 1) 
-            && (obj1.tilesetImages[0] === obj2.tilesetImages[0])) {
-                return true;
-        } else {
-            return false;
-        }
-    }
 
     _drawPolygon(renderObject, pageData) {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,

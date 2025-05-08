@@ -4,6 +4,10 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.81:
+    r: isObjectsCollision() returns Array<Object>(adr#15)
+    f: removed objects merge issue
+
 1.5.8:
     +: tileset.tileoffset property support
     r: assetsm updated to 0.2.0:  

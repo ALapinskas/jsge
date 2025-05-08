@@ -1,0 +1,14 @@
+Date: April 26 2025
+jsge@1.5.8
+isObjectsCollision() returns boolean / isObjectsCollision() возвращает boolean
+
+Status: Done (1.5.81)
+
+Context:
+    isObjectsCollision() возвращает boolean, это неудобно. 
+    Нужно возвращать объект столкновения.
+
+Decision:
+
+Impact:
+    No impact.
