@@ -3,7 +3,7 @@ name: Upload /docs/build/* to Server
 on:
   push:
     branches:
-      - master  # Change this to the branch you want to trigger the workflow
+      - master  # Change this to the branch you want to trigger the workflow 
 
 jobs:
   upload:
