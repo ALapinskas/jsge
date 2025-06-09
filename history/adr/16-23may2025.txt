@@ -1,0 +1,14 @@
+Date: May 23 2025
+jsge@1.5.81
+Configure auto-deploy with gihub actions / Настроить авто-деплой через gihub actions
+
+Status: In Progress
+
+Context:
+    * В npm
+    * docs на сервер
+
+Decision:
+
+Impact:
+    No impact.

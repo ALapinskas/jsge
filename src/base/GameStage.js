@@ -462,9 +462,6 @@ export class GameStage {
 
     #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
         const len = new Vector(circle1X, circle1Y, circle2X, circle2Y).length;
-        console.log(len);
-        console.log(circle1R);
-        console.log(circle2R);
         if ((len - (circle1R + circle2R)) > 0) {
             return false;
         } else {

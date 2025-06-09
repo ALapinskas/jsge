@@ -1,0 +1,30 @@
+name: Build, Test, Publish npm, Publish docs
+
+on:
+  push:
+    branches:
+      - main  # Change this to the branch you want to trigger the workflow
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+        
+    steps:
+    - name: Checkout code
+
+      uses: actions/checkout@main
+    - name: Install node modules
+      run: |
+        npm i
+    - name: Run build
+      run: |
+        npm run prepare-push
+    - name: Regression test
+      run: |
+        npm run pu-r-test
+    - name: Publish npm
+
+      uses: ./.github/actions/publish_npm
+    - name: Publish docs
+
+      uses: ./.github/actions/publish_docs

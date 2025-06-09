@@ -1,7 +1,7 @@
 # Javascript Game Engine
 
 This engine was designed to simplify creating games on javascript. \
-No external libraries are used for drawing, no TypeScript, and it is easy to use and debug. \
+No external libraries are used for drawing, no TypeScript, no cycle dependencies, strict OOP structure, it is easy to use and debug. \
 ![Alt text](Debug.gif?raw=true "Title")
 
 ### Advantages:
@@ -39,4 +39,5 @@ npm: [https://www.npmjs.com/package/jsge](https://www.npmjs.com/package/jsge)
 
 ## Games build with jsge:
 [Guess the word](https://github.com/ALapinskas/guessword) \
-[Arcanoid](https://github.com/ALapinskas/arkanoid)
+[Arcanoid](https://github.com/ALapinskas/arkanoid) \
+[RTS Humans vs Goblins](https://github.com/ALapinskas/gh-rts)

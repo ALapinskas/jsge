@@ -1,44 +1,44 @@
 {
-  "name": "jsge",
-  "version": "1.5.81",
-  "description": "Javascript Game Engine",
-  "main": "src/index.js",
-  "type": "module",
-  "keywords": [
-    "javascript",
-    "game",
-    "game engine",
-    "engine",
-    "top down",
-    "top-down",
-    "tiled",
-    "render",
-    "rendering",
-    "spine",
-    "animations"
-  ],
-  "scripts": {
-    "start": "http-server -c-1 -p 9000 -o /examples",
-    "eslint": "eslint src/**/*.js --fix",
-    "eslint-check": "eslint src/**/*.js",
-    "build-dev": "webpack --mode=development",
-    "build-prod": "webpack --mode=production",
-    "jsdoc": "jsdoc -R ./README.md -t ./docs/templates/custom -c ./jsdoc.conf.json",
-    "r-test": "(sleep 3 && node ./tests/regression.js && taskkill /f /im node.exe) | (http-server -c-1 -p 9000)",
-    "prepare-push": "npm run build-dev | npm run build-prod | npm run jsdoc"
-  },
-  "author": "Arturas-Alfredas Lapinskas",
-  "license": "MIT",
-  "dependencies": {
-    "socket.io-client": "4.5.4"
-  },
-  "devDependencies": {
-    "eslint": "8.36.0",
-    "eslint-plugin-jsdoc": "46.4.5",
-    "http-server": "14.1.1",
-    "jsdoc": "4.0.4",
-    "puppeteer-core": "22.15.0",
-    "webpack": "5.76.0",
-    "webpack-cli": "5.1.4"
-  }
+    "name": "jsge",
+    "version": "1.5.82",
+    "description": "Javascript Game Engine",
+    "main": "src/index.js",
+    "type": "module",
+    "keywords": [
+        "javascript",
+        "game",
+        "game engine",
+        "engine",
+        "top down",
+        "top-down",
+        "tiled",
+        "render",
+        "rendering",
+        "spine",
+        "animations"
+    ],
+    "scripts": {
+        "start": "http-server -c-1 -p 9000 -o /examples",
+        "eslint": "eslint src/**/*.js --fix",
+        "eslint-check": "eslint src/**/*.js",
+        "build-dev": "webpack --mode=development",
+        "build-prod": "webpack --mode=production",
+        "jsdoc": "jsdoc -R ./README.md -t ./docs/templates/custom -c ./jsdoc.conf.json",
+        "pu-r-test": "(sleep 3 && node ./tests/regression.js && taskkill /f /im node.exe) | (http-server -c-1 -p 9000)",
+        "prepare-push": "npm run build-dev | npm run build-prod | npm run jsdoc"
+    },
+    "author": "Arturas-Alfredas Lapinskas",
+    "license": "MIT",
+    "dependencies": {
+        "socket.io-client": "4.5.4"
+    },
+    "devDependencies": {
+        "eslint": "8.36.0",
+        "eslint-plugin-jsdoc": "46.4.5",
+        "http-server": "14.1.1",
+        "jsdoc": "4.0.4",
+        "puppeteer": "22.15.0",
+        "webpack": "5.76.0",
+        "webpack-cli": "5.1.4"
+    }
 }

@@ -192,8 +192,12 @@ export class DrawImageObject extends DrawShapeObject {
         const activeAnimation = this.#activeAnimation;
         if (activeAnimation) {
             const animationEvent = this.#animations.get(activeAnimation);
-            animationEvent.iterateAnimationIndex();
-            this.#imageIndex = animationEvent.currentSprite;
+            if (animationEvent.isActive === false) {
+                this.#activeAnimation = null;
+            } else {
+                animationEvent.iterateAnimationIndex();
+                this.#imageIndex = animationEvent.currentSprite;
+            }
         }
     }
     /**

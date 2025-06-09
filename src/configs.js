@@ -37,6 +37,7 @@ export class SystemSettings {
             
         },
         debug: {
+            preserveDrawingBuffer: false, // this option is used in testing environment
             checkWebGlErrors: false,
             debugMobileTouch: false,
             boundaries: {
