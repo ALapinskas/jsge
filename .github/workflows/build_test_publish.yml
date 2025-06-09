@@ -43,7 +43,7 @@ jobs:
           if-no-artifact-found: warn
       - name: Update modules
         run: |
-          npm update
+          npm rebuild
       - name: Regression test
         run: |
           npm run pu-r-test
