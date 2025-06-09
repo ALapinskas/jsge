@@ -3,7 +3,7 @@ name: Build, Test, Publish npm, Publish docs
 on:
   push:
     branches:
-      - main  # Change this to the branch you want to trigger the workflow
+      - github_actions  # Change this to the branch you want to trigger the workflow
 
 jobs:
   build:
