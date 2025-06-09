@@ -16,6 +16,10 @@ jobs:
     - name: Install node modules
       run: |
         npm i
+    - name: Install submodules
+      run: |
+        git submodule init
+        git submodule update
     - name: Run build
       run: |
         npm run prepare-push
