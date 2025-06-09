@@ -34,7 +34,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         console.log(`Puppeteer exited with code ${code}`);
         //server.kill('SIGQUIT');
         // Determine the command to terminate Node.js processes based on the OS
-        const command = process.platform === 'win32' ? 'taskkill /f /im node.exe' : 'pkill node';
+        /*const command = process.platform === 'win32' ? 'taskkill /f /im node.exe' : 'pkill node';
 
         exec(command, (err, stdout, stderr) => {
             if (err) {
@@ -42,7 +42,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
             } else {
                 console.log(`Terminated Puppeteer processes: ${stdout}`);
             }
-        });
+        });*/
     });
 
 })();
