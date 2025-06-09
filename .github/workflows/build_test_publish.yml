@@ -41,7 +41,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jsge-build-artifact
-          path: ./
+          path: |
+            ./node_modules  # Upload the node_modules directory
+            ./  # Optionally upload other files
       - name: List files
         run: ls -la ./  # List files in the current directory
       - name: Regression test
