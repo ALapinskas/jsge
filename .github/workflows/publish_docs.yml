@@ -1,0 +1,26 @@
+name: Upload /docs/build/* to Server
+
+on:
+  push:
+    branches:
+      - main  # Change this to the branch you want to trigger the workflow 
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.TW_DEPLOY_KEY }}" > ~/.ssh/id_ed255_tw_github
+        chmod 600 ~/.ssh/id_ed255_tw_github
+        ssh-keyscan -p 22 85.193.83.189 >> ~/.ssh/known_hosts
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.TW_DEPLOY_KEY }}
+    - name: Upload files to server
+      run: |
+        scp -i ~/.ssh/id_ed255_tw_github -r ./docs/build/* root@85.193.83.189:/var/www/clients/client0/web13/web
