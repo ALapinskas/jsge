@@ -41,19 +41,35 @@ jobs:
           name: jsge_build_artifact
           path: ./
           if-no-artifact-found: warn
-      - name: Update modules
+      - name: Fix modules
         run: |
           npm rebuild
       - name: Regression test
         run: |
           npm run pu-r-test
-  publish: 
+  publish_npm: 
     runs-on: ubuntu-latest
     needs: test
     steps:
+      - name: Retrieve saved Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jsge_build_artifact
+          path: ./
+          if-no-artifact-found: warn
       - name: Publish npm
 
         uses: ./.github/actions/publish_npm
+  publish_docs:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Retrieve saved Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jsge_build_artifact
+          path: ./docs/build
+          if-no-artifact-found: warn
       - name: Publish docs
 
         uses: ./.github/actions/publish_docs
