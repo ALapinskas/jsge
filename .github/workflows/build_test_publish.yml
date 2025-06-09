@@ -6,7 +6,7 @@ on:
       - main  # Change this to the branch you want to trigger the workflow
 
 jobs:
-  upload:
+  build:
     runs-on: ubuntu-latest
         
     steps:
@@ -19,12 +19,28 @@ jobs:
     - name: Run build
       run: |
         npm run prepare-push
+  regression:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
     - name: Regression test
       run: |
         npm run pu-r-test
+  publish_npm:
+    runs-on: ubuntu-latest
+    needs: regression
+
+    steps:
     - name: Publish npm
 
       uses: ./.github/actions/publish_npm
-    - name: Publish docs
+    
+  publish_docs:
+    runs-on: ubuntu-latest
+    needs: regression
 
-      uses: ./.github/actions/publish_docs
+    steps:
+      - name: Publish docs
+
+        uses: ./.github/actions/publish_docs
