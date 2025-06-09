@@ -24,8 +24,8 @@ jobs:
       run: |
         npm run prepare-push
     - name: Temporarily save build
-        uses: actions/upload-artifact@v2
-        with:
+      uses: actions/upload-artifact@v2
+      with:
           name: jsge-build-artifact
           path: /
   test:
