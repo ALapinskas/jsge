@@ -23,16 +23,26 @@ jobs:
     - name: Run build
       run: |
         npm run prepare-push
+    - name: Temporarily save build
+        uses: actions/upload-artifact@v2
+        with:
+          name: jsge-build-artifact
+          path: /
   test:
-    runs-on: ubuntu-latest
-    needs: build
+    runs-on: nested-${{ github.run_id }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Retrieve saved Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: jsge-build-artifact
+          path: /
       - name: Regression test
         run: |
           npm run pu-r-test
   publish: 
-    runs-on: ubuntu-latest
-    needs: test
+    runs-on: nested-${{ github.run_id }}
     steps:
       - name: Publish npm
 
