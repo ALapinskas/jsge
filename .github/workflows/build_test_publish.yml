@@ -24,13 +24,15 @@ jobs:
       run: |
         npm run prepare-push
   test:
-    runs-on: nested-${{ github.run_id }}
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Regression test
         run: |
           npm run pu-r-test
   publish: 
-    runs-on: nested-${{ github.run_id }}
+    runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Publish npm
 
