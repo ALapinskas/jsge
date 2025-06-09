@@ -41,8 +41,9 @@ jobs:
           name: jsge_build_artifact
           path: ./
           if-no-artifact-found: warn
-      - name: List files
-        run: ls -la ./  # List files in the current directory
+      - name: Update modules
+        run: |
+          npm update
       - name: Regression test
         run: |
           npm run pu-r-test
