@@ -28,7 +28,7 @@ jobs:
     - name: Temporarily save build
       uses: actions/upload-artifact@v4
       with:
-          name: jsge-build-artifact
+          name: jsge_build_artifact
           path: ./
           if-no-files-found: warn
   test:
@@ -38,11 +38,11 @@ jobs:
       - name: Retrieve saved Artifact
         uses: actions/download-artifact@v4
         with:
-          name: jsge-build-artifact
+          name: jsge_build_artifact
           path: ./
           if-no-artifact-found: warn
       - name: List files
-        run: ls -la ./node_modules  # List files in the current directory
+        run: ls -la ./  # List files in the current directory
       - name: Regression test
         run: |
           npm run pu-r-test
