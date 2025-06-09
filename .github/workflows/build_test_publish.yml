@@ -6,7 +6,7 @@ on:
       - main  # Change this to the branch you want to trigger the workflow
 
 jobs:
-  build-test-deploy:
+  build:
     runs-on: ubuntu-latest
         
     steps:
@@ -23,12 +23,18 @@ jobs:
     - name: Run build
       run: |
         npm run prepare-push
-    - name: Regression test
-      run: |
-        npm run pu-r-test
-    - name: Publish npm
+  test:
+    runs-on: nested-${{ github.run_id }}
+    steps:
+      - name: Regression test
+        run: |
+          npm run pu-r-test
+  publish: 
+    runs-on: nested-${{ github.run_id }}
+    steps:
+      - name: Publish npm
 
-      uses: ./.github/actions/publish_npm
-    - name: Publish docs
+        uses: ./.github/actions/publish_npm
+      - name: Publish docs
 
-      uses: ./.github/actions/publish_docs
+        uses: ./.github/actions/publish_docs
