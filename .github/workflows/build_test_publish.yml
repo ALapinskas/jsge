@@ -29,7 +29,7 @@ jobs:
           name: jsge-build-artifact
           path: ./
   test:
-    runs-on: nested-${{ github.run_id }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -42,7 +42,7 @@ jobs:
         run: |
           npm run pu-r-test
   publish: 
-    runs-on: nested-${{ github.run_id }}
+    runs-on: ubuntu-latest
     steps:
       - name: Publish npm
 
