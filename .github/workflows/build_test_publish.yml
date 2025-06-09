@@ -27,7 +27,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
           name: jsge-build-artifact
-          path: /
+          path: ./
   test:
     runs-on: nested-${{ github.run_id }}
     steps:
@@ -37,7 +37,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: jsge-build-artifact
-          path: /
+          path: ./
       - name: Regression test
         run: |
           npm run pu-r-test
