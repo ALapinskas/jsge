@@ -19,20 +19,6 @@ jobs:
     - name: Run build
       run: |
         npm run prepare-push
-  regression:
-    runs-on: ubuntu-latest
-    needs: build
-      
-    steps:
-    - name: Checkout code
-
-      uses: actions/checkout@main
-    - name: Install node modules
-      run: |
-        npm i
-    - name: Run build
-      run: |
-        npm run prepare-push
     - name: Regression test
       run: |
         npm run pu-r-test
