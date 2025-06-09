@@ -11,6 +11,9 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         shell: true // Use shell to execute the command
     });
 
+    server.on('close', (code) => {
+        console.log(`http-server exited with code ${code}`);
+    });
     // Sleep for 3 seconds
     await sleep(3000);
 
@@ -34,16 +37,12 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         const command = process.platform === 'win32' ? 'taskkill /f /im node.exe' : 'pkill node';
 
         exec(command, (err, stdout, stderr) => {
-        if (err) {
-            console.error(`Error terminating Puppeteer processes: ${stderr}`);
-        } else {
-            console.log(`Terminated Puppeteer processes: ${stdout}`);
-        }
+            if (err) {
+                console.error(`Error terminating Puppeteer processes: ${stderr}`);
+            } else {
+                console.log(`Terminated Puppeteer processes: ${stdout}`);
+            }
         });
-    });
-
-    server.on('close', (code) => {
-        console.log(`http-server exited with code ${code}`);
     });
 
 })();
