@@ -41,4 +41,9 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         }
         });
     });
+
+    server.on('close', (code) => {
+        console.log(`http-server exited with code ${code}`);
+    });
+
 })();
