@@ -39,7 +39,7 @@ jobs:
           name: jsge_build_artifact
           path: ./
           if-no-files-found: error
-  test:
+  regression_test:
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -57,7 +57,7 @@ jobs:
 
   publish_npm: 
     runs-on: ubuntu-latest
-    needs: test
+    needs: regression_test
     env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
@@ -95,7 +95,7 @@ jobs:
           ssh-keyscan "$REMOTE_SERVER" >> ~/.ssh/known_hosts
       - name: Clear remote docs dir
         run: |
-          ssh -i ~/"$SSH_KEY_PATH" "$REMOTE_USER"@"$REMOTE_SERVER" "rm -rf "$REMOTE_DIR/*"
+          ssh -i ~/"$SSH_KEY_PATH" "$REMOTE_USER"@"$REMOTE_SERVER" "rm -rf $REMOTE_DIR/*"
       - name: Upload files to server
         env:
           REMOTE_USER: ${{ vars.REMOTE_USER }}
