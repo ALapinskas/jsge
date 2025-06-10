@@ -47,9 +47,12 @@ jobs:
       - name: Regression test
         run: |
           npm run pu-r-test
+          
   publish_npm: 
     runs-on: ubuntu-latest
     needs: test
+    env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Retrieve saved Artifact
         uses: actions/download-artifact@v4
@@ -58,10 +61,14 @@ jobs:
           path: ./
           if-no-artifact-found: warn
       - name: Publish npm
+        run:  |
+          npm publish
 
-        uses: ./.github/actions/publish_npm
   publish_docs:
     runs-on: ubuntu-latest
+    env:
+        SSH_KEY_PATH: ${{ vars.SSH_KEY_PATH }}
+        REMOTE_SERVER: ${{ vars.REMOTE_SERVER }}
     needs: test
     steps:
       - name: Retrieve saved Artifact
@@ -70,6 +77,17 @@ jobs:
           name: jsge_build_artifact
           path: ./docs/build
           if-no-artifact-found: warn
-      - name: Publish docs
-
-        uses: ./.github/actions/publish_docs
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.TW_DEPLY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/"$SSH_KEY_PATH"
+          chmod 600 ~/"$SSH_KEY_PATH"
+          ssh-keyscan "$REMOTE_SERVER" >> ~/.ssh/known_hosts
+      - name: Upload files to server
+        env:
+          REMOTE_USER: ${{ vars.REMOTE_USER }}
+          REMOTE_DIR: ${{ vars.REMOTE_DIR }}
+        run:  |
+          scp -i ~/"$SSH_KEY_PATH" -r ./docs/build/* "$REMOTE_USER"@"$REMOTE_SERVER":/"$REMOTE_DIR"
