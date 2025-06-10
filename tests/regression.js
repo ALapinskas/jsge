@@ -175,7 +175,7 @@ const TIMEOUT = 1;
         console.log(`${response.status()} ${response.url()}`);
     }).on('requestfailed', async(request) => {
         console.log("failed --->");
-        console.log(`${request.failure().errorText} ${request.url()}`)
+        console.log(`${request.failure().errorText} ${request.url()}`);
     });
     
     // Navigate the page to a URL
