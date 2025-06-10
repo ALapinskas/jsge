@@ -4,6 +4,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.85:
+    f: fix pipeline publish docs task
+
 1.5.84:
     r: increase version
 
