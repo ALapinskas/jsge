@@ -19,10 +19,10 @@ jobs:
         current_version=$(grep '"version"' package.json | sed -E 's/.*"version": "([^"]+)".*/\1/')
     - name: Fix version in docs
       run: | 
-        sed -i 's/$[0-9]\+\.[0-9]\+\.[0-9]\+$/$current_version/' ./docs/templates/custom/tmpl/layout.tmpl
+        sed -i "s/\$[0-9]\+\.[0-9]\+\.[0-9]\+$/$current_version/" ./docs/templates/custom/tmpl/layout.tmpl
     - name: Fix version in examples
       run: | 
-        sed 's/r=[0-9]*/r='"$current_version"'/' ./examples/index.html
+        sed -i "s/r=[0-9]*/r=\"$current_version\"/" ./examples/index.html
     - name: Install node modules
       run: |
         npm i

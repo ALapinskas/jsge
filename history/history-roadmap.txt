@@ -4,25 +4,11 @@ r: code refactoring
 f: fixed defects
 
 # History
-1.5.88:
-    f: pipeline
 
-1.5.87:
-    f: pipeline
-    
-1.5.86:
-    f: build pipeline
+1.5.83 - 1.5.89:
+    +: build pipeline fixes
 
-1.5.85:
-    f: fix pipeline publish docs task, add dir cleanup
-
-1.5.84:
-    r: increase version
-
-1.5.83:
-    +: build pipeline
-
-1.5.82:
+1.5.82 - :
     f: removed console.log #isCircleToCircleCollision()
     f: ended, non repeated animation(AnimationEvent.isActive = false), continue to process with ImageDrawObject._processActiveAnimations()
     r: added npm upload through GitHub Actions
