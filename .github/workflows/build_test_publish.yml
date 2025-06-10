@@ -93,9 +93,12 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/"$SSH_KEY_PATH"
           chmod 600 ~/"$SSH_KEY_PATH"
           ssh-keyscan "$REMOTE_SERVER" >> ~/.ssh/known_hosts
+      - name: Clear remote docs dir
+        run: |
+          ssh -i ~/"$SSH_KEY_PATH" "$REMOTE_USER"@"$REMOTE_SERVER" "rm -rf "$REMOTE_DIR/*"
       - name: Upload files to server
         env:
           REMOTE_USER: ${{ vars.REMOTE_USER }}
           REMOTE_DIR: ${{ vars.REMOTE_DIR }}
         run:  |
-          scp -v -i ~/"$SSH_KEY_PATH" -r ./docs/build/* "$REMOTE_USER"@"$REMOTE_SERVER":/"$REMOTE_DIR"
+          scp -v -i ~/"$SSH_KEY_PATH" -r ./docs/build/* "$REMOTE_USER"@"$REMOTE_SERVER":"$REMOTE_DIR"
