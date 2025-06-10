@@ -78,6 +78,8 @@ jobs:
     env:
         SSH_KEY_PATH: ${{ vars.SSH_KEY_PATH }}
         REMOTE_SERVER: ${{ vars.REMOTE_SERVER }}
+        REMOTE_USER: ${{ vars.REMOTE_USER }}
+        REMOTE_DIR: ${{ vars.REMOTE_DIR }}
     needs: publish_npm
     steps:
       - name: Retrieve saved Artifact
@@ -97,8 +99,5 @@ jobs:
         run: |
           ssh -i ~/"$SSH_KEY_PATH" "$REMOTE_USER"@"$REMOTE_SERVER" "rm -rf $REMOTE_DIR/*"
       - name: Upload files to server
-        env:
-          REMOTE_USER: ${{ vars.REMOTE_USER }}
-          REMOTE_DIR: ${{ vars.REMOTE_DIR }}
         run:  |
           scp -v -i ~/"$SSH_KEY_PATH" -r ./docs/build/* "$REMOTE_USER"@"$REMOTE_SERVER":"$REMOTE_DIR"
