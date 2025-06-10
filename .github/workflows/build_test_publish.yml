@@ -48,7 +48,6 @@ jobs:
         with:
           name: jsge_build_artifact
           path: ./
-          if-no-artifact-found: error
       - name: Fix modules
         run: |
           npm rebuild
@@ -67,7 +66,6 @@ jobs:
         with:
           name: jsge_build_artifact
           path: ./
-          if-no-artifact-found: error
       - name: Log in to npm
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -87,7 +85,6 @@ jobs:
         with:
           name: jsge_build_artifact
           path: ./docs/build
-          if-no-artifact-found: error
       - name: Set up SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.TW_DEPLOY_KEY }}
@@ -101,4 +98,4 @@ jobs:
           REMOTE_USER: ${{ vars.REMOTE_USER }}
           REMOTE_DIR: ${{ vars.REMOTE_DIR }}
         run:  |
-          scp -i ~/"$SSH_KEY_PATH" -r ./* "$REMOTE_USER"@"$REMOTE_SERVER":/"$REMOTE_DIR"
+          scp -v -i ~/"$SSH_KEY_PATH" -r ./* "$REMOTE_USER"@"$REMOTE_SERVER":/"$REMOTE_DIR"
