@@ -35,7 +35,7 @@ jobs:
         npm run prepare-push
     - name: Copy images
       run: |
-        cp ./*.{jpg,png,gif} ./docs/build
+        cp ./*.{png,gif} ./docs/build
     - name: Temporarily save build
       uses: actions/upload-artifact@v4
       with:
