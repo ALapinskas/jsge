@@ -18,15 +18,16 @@ jobs:
       run: |
         # Get the current version
         current_version=$(grep '"version"' ./package.json | sed -E 's/.*"version": "([^"]+)".*/\1/') |
-        echo "current version is ${current_version}"
+        echo "current_version=${current_version}" >> $GITHUB_ENV |
+        echo "current version is ${{ env.current_version }}"
     - name: Fix version in docs
       run: | 
-        echo "current version is ${current_version}" |
+        echo "current version is ${{ env.current_version }}" |
         
-        sed -i "s/LATEST_VERSION/${current_version}/" ./docs/templates/custom/tmpl/layout.tmpl
+        sed -i "s/LATEST_VERSION/${{ env.current_version }}/" ./docs/templates/custom/tmpl/layout.tmpl
     - name: Fix version in examples
       run: | 
-        sed -i 's/r=[^"].*"/r="${current_version}"/' ./examples/index.html
+        sed -i 's/r=[^"].*"/r="${{ env.current_version }}"/' ./examples/index.html
     - name: Install node modules
       run: |
         npm i
