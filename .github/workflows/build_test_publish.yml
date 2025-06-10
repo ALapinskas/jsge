@@ -16,13 +16,13 @@ jobs:
     - name: Take version number
       run: |
         # Get the current version
-        current_version=$(jq -r '.version' package.json)
+        current_version=$(grep '"version"' package.json | sed -E 's/.*"version": "([^"]+)".*/\1/')
     - name: Fix version in docs
       run: | 
-        sed -i 's/$[0-9]\+\.[0-9]\+\.[0-9]\+$/$current_version/' docs/templates/custom/tmpl/layout.tmpl
+        sed -i 's/$[0-9]\+\.[0-9]\+\.[0-9]\+$/$current_version/' ./docs/templates/custom/tmpl/layout.tmpl
     - name: Fix version in examples
       run: | 
-        sed 's/r=[0-9]*/r='"$current_version"'/' examples/index.html
+        sed 's/r=[0-9]*/r='"$current_version"'/' ./examples/index.html
     - name: Install node modules
       run: |
         npm i
@@ -33,6 +33,9 @@ jobs:
     - name: Run build
       run: |
         npm run prepare-push
+    - name: Copy images
+      run: |
+        cp ./*.{jpg,png,gif} ./docs/build
     - name: Temporarily save build
       uses: actions/upload-artifact@v4
       with:
