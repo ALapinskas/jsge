@@ -3,7 +3,7 @@ name: Build, Test, Publish npm, Publish docs
 on:
   push:
     branches:
-      - github_actions  # Change this to the branch you want to trigger the workflow
+      - main  # Change this to the branch you want to trigger the workflow
 
 jobs:
   build:
@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: Checkout code
 
-      uses: actions/checkout@main
+      uses: actions/checkout@v4
     - name: Take version number
       run: |
         # Get the current version
@@ -80,7 +80,7 @@ jobs:
     env:
         SSH_KEY_PATH: ${{ vars.SSH_KEY_PATH }}
         REMOTE_SERVER: ${{ vars.REMOTE_SERVER }}
-    needs: test
+    needs: publish_npm
     steps:
       - name: Retrieve saved Artifact
         uses: actions/download-artifact@v4
@@ -101,4 +101,4 @@ jobs:
           REMOTE_USER: ${{ vars.REMOTE_USER }}
           REMOTE_DIR: ${{ vars.REMOTE_DIR }}
         run:  |
-          scp -i ~/"$SSH_KEY_PATH" -r ./docs/build/* "$REMOTE_USER"@"$REMOTE_SERVER":/"$REMOTE_DIR"
+          scp -i ~/"$SSH_KEY_PATH" -r ./* "$REMOTE_USER"@"$REMOTE_SERVER":/"$REMOTE_DIR"

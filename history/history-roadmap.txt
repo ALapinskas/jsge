@@ -4,10 +4,13 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.83:
+    +: build pipeline
+
 1.5.82:
     f: removed console.log #isCircleToCircleCollision()
     f: ended, non repeated animation(AnimationEvent.isActive = false), continue to process with ImageDrawObject._processActiveAnimations()
-    r: added npm upload throw GitHub Actions
+    r: added npm upload through GitHub Actions
 
 1.5.81:
     r: isObjectsCollision() returns Array<Object>(adr#15)
