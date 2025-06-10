@@ -25,7 +25,7 @@ jobs:
         sed -i "s/LATEST_VERSION/${{ env.current_version }}/" ./docs/templates/custom/tmpl/layout.tmpl
     - name: Fix version in examples
       run: | 
-        sed -i 's/r=[^"].*"/r="${{ env.current_version }}"/' ./examples/index.html
+        sed -i 's/r=[^"].*"/r=${{ env.current_version }}"/' ./examples/index.html
     - name: Install node modules
       run: |
         npm i
