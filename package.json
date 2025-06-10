@@ -1,6 +1,6 @@
 {
     "name": "jsge",
-    "version": "1.5.891",
+    "version": "1.5.892",
     "description": "Javascript Game Engine",
     "main": "src/index.js",
     "type": "module",
