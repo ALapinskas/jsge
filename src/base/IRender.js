@@ -62,10 +62,14 @@ export class IRender {
      */
     #emitter = new EventTarget();
     constructor(systemSettings, iLoader, canvasContainer) {
-        
+        const preserveDrawingBuffer = systemSettings.gameOptions.debug.preserveDrawingBuffer;
+        let contextOpt = { stencil: true };
+        if (preserveDrawingBuffer === true) {
+            contextOpt.preserveDrawingBuffer = true;
+        }
         this.#canvas = document.createElement("canvas");
         canvasContainer.appendChild(this.#canvas);
-        this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
+        this.#drawContext = this.#canvas.getContext("webgl", contextOpt);
 
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = iLoader;

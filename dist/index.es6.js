@@ -1321,8 +1321,12 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         const activeAnimation = this.#activeAnimation;
         if (activeAnimation) {
             const animationEvent = this.#animations.get(activeAnimation);
-            animationEvent.iterateAnimationIndex();
-            this.#imageIndex = animationEvent.currentSprite;
+            if (animationEvent.isActive === false) {
+                this.#activeAnimation = null;
+            } else {
+                animationEvent.iterateAnimationIndex();
+                this.#imageIndex = animationEvent.currentSprite;
+            }
         }
     }
     /**
@@ -3470,9 +3474,6 @@ class GameStage {
 
     #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
         const len = new _2d_Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(circle1X, circle1Y, circle2X, circle2Y).length;
-        console.log(len);
-        console.log(circle1R);
-        console.log(circle2R);
         if ((len - (circle1R + circle2R)) > 0) {
             return false;
         } else {
@@ -4645,10 +4646,14 @@ class IRender {
      */
     #emitter = new EventTarget();
     constructor(systemSettings, iLoader, canvasContainer) {
-        
+        const preserveDrawingBuffer = systemSettings.gameOptions.debug.preserveDrawingBuffer;
+        let contextOpt = { stencil: true };
+        if (preserveDrawingBuffer === true) {
+            contextOpt.preserveDrawingBuffer = true;
+        }
         this.#canvas = document.createElement("canvas");
         canvasContainer.appendChild(this.#canvas);
-        this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
+        this.#drawContext = this.#canvas.getContext("webgl", contextOpt);
 
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = iLoader;
@@ -8372,6 +8377,7 @@ class SystemSettings {
             
         },
         debug: {
+            preserveDrawingBuffer: false, // this option is used in testing environment
             checkWebGlErrors: false,
             debugMobileTouch: false,
             boundaries: {

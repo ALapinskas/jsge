@@ -57,6 +57,19 @@ function createOptionsBlock() {
     webGLErrorsWrap.appendChild(webGLErrorsLabel);
     optionsForm.appendChild(webGLErrorsWrap);
 
+    const preserveDrawingBufferWrap = document.createElement("div");
+    const preserveDrawingBufferLabel = document.createElement("label");
+    preserveDrawingBufferLabel.innerText = "Preserve Drawing Buffer";
+    const preserveDrawingBufferCheckbox = document.createElement("input");
+    preserveDrawingBufferCheckbox.setAttribute('type', 'checkbox');
+    preserveDrawingBufferCheckbox.name = "preserveDrawingBuffer";
+    preserveDrawingBufferCheckbox.id = "preserveDrawingBuffer";
+    preserveDrawingBufferLabel.setAttribute("for", "preserveDrawingBuffer");
+
+    preserveDrawingBufferWrap.appendChild(preserveDrawingBufferCheckbox);
+    preserveDrawingBufferWrap.appendChild(preserveDrawingBufferLabel);
+    optionsForm.appendChild(preserveDrawingBufferWrap);
+
     const minCycleTimeWrap = document.createElement("div");
     const minCycleTimeLabel = document.createElement("label");
     minCycleTimeLabel.innerText = "Min render cycle time(ms)";
@@ -172,7 +185,8 @@ const processOptionsFormData = (e) => {
     const formData = new FormData(e.target),
         minCycleTime = formData.get("minCycleTime"),
         optimization = formData.get("optimizations"),
-        showWebGlErrors = formData.get("webGLErrors");
+        showWebGlErrors = formData.get("webGLErrors"),
+        preserveDrawingBuffer = formData.get("preserveDrawingBuffer");
     
     let settings = SystemSettings;
 
@@ -182,6 +196,12 @@ const processOptionsFormData = (e) => {
         SystemSettings.gameOptions.debug.checkWebGlErrors = false;
     }
 
+    if (preserveDrawingBuffer) {
+        SystemSettings.gameOptions.debug.preserveDrawingBuffer = true;
+    } else {
+        SystemSettings.gameOptions.debug.preserveDrawingBuffer = false;
+    }
+    
     if (minCycleTime) {
         SystemSettings.gameOptions.render.minCycleTime = parseFloat(minCycleTime);
     }
