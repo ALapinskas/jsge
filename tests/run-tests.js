@@ -34,7 +34,9 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         console.log(`Puppeteer exited with code ${code}`);
         testProcess.kill('SIGTERM');
         server.kill('SIGTERM');
-        
+        if (code === 1) {
+            process.exit(1); 
+        }
         // Determine the command to terminate Node.js processes based on the OS
         // Force shutdown server on Windows
         if (process.platform === 'win32') {
