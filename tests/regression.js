@@ -17,7 +17,7 @@ const TIMEOUT = 20;
             GREY: {
                 R: 72,
                 G: 72,
-                B: 75,
+                B: 72,
                 A: 92
             },
             DARK_BROWN: {

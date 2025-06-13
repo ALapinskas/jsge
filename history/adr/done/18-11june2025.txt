@@ -2,7 +2,7 @@ Date: June 11 2025
 jsge@1.5.81
 Add pixels color check in regression testing / Добавить проверку цветового соответствия в регрессионное тестирование
 
-Status: Done(1.5.9)
+Status: Done(1.6.0)
 
 Context:
     В тестах не проверяется цветовое соответствие.
