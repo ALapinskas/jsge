@@ -57,7 +57,7 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * @type {Object | null}
      */
-    #circleBoundaries;
+    #circleCollisionShapes;
     /**
      * @type {ImageTempStorage}
      */
@@ -66,7 +66,7 @@ export class DrawImageObject extends DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0, margin = 0) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, collisionShapes, image, spacing = 0, margin = 0) {
         super(DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
@@ -77,8 +77,8 @@ export class DrawImageObject extends DrawShapeObject {
         this.#margin = margin;
         this.#w = width;
         this.#h = height;
-        this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : boundaries && boundaries.r ? this._calculateConusBoundaries(boundaries.r) : this._calculateRectVertices(width, height);
-        this.#circleBoundaries = boundaries && typeof boundaries.r !== "undefined" ? boundaries : null;
+        this.#vertices = collisionShapes && !collisionShapes.r ? this._convertVerticesArray(collisionShapes) : collisionShapes && collisionShapes.r ? this._calculateConusShapes(collisionShapes.r) : this._calculateRectVertices(width, height);
+        this.#circleCollisionShapes = collisionShapes && typeof collisionShapes.r !== "undefined" ? collisionShapes : null;
     }
 
     /**
@@ -169,20 +169,12 @@ export class DrawImageObject extends DrawShapeObject {
         return this.#activeAnimation;
     }
 
-    /**
-     * @deprecated - use .vertices instead 
-     * @type {Array<Array<number>>}
-     */
-    get boundaries() {
-        return this.#vertices;
-    }
-
     get vertices() {
         return this.#vertices;
     }
 
-    get circleBoundaries() {
-        return this.#circleBoundaries;
+    get circleCollisionShapes() {
+        return this.#circleCollisionShapes;
     }
 
     /**

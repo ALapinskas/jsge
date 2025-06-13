@@ -13,7 +13,7 @@ export class TiledLayerTempStorage {
     /**
      * @type {Int32Array}
      */
-    #boundariesTempIndexes;
+    #collisionShapesTempIndexes;
     /**
      * @type {number}
      */
@@ -42,8 +42,8 @@ export class TiledLayerTempStorage {
         return this.#textures;
     }
 
-    get _bTempIndexes() {
-        return this.#boundariesTempIndexes;
+    get _cTempIndexes() {
+        return this.#collisionShapesTempIndexes;
     }
 
     get bufferSize() {
@@ -60,6 +60,6 @@ export class TiledLayerTempStorage {
 
         this.#vectors = new Array(this.#bufferSize);
         this.#textures = new Array(this.#bufferSize);
-        this.#boundariesTempIndexes = new Int32Array(this.#cells * 4);
+        this.#collisionShapesTempIndexes = new Int32Array(this.#cells * 4);
     }
 }

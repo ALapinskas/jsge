@@ -21,8 +21,8 @@ export class DrawTiledLayer {
      */
     #textureStorages;
     #layerData;
-    #setBoundaries;
-    #drawBoundaries;
+    #setCollisionShapes;
+    #drawCollisionShapes;
     #attachedMaskId;
     /**
      * @type {number}
@@ -44,7 +44,7 @@ export class DrawTiledLayer {
     /**
      * @hideconstructor
      */
-    constructor(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries = false, shapeMask) {
+    constructor(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setCollisionShapes = false, shapeMask) {
         this.#layerKey = layerKey;
         this.#tileMapKey = tileMapKey;
         this.#tilemap = tilemap;
@@ -53,8 +53,8 @@ export class DrawTiledLayer {
         this.#tilesetImages = tilesetImages;
         this.#layerData = layerData;
         
-        this.#setBoundaries = setBoundaries;
-        this.#drawBoundaries = setBoundaries ? setBoundaries : false;
+        this.#setCollisionShapes = setCollisionShapes;
+        this.#drawCollisionShapes = setCollisionShapes ? setCollisionShapes : false;
         if (shapeMask) {
             this.setMask(shapeMask);
         }
@@ -93,25 +93,25 @@ export class DrawTiledLayer {
         return this.#layerData;
     }
     /**
-     * Should the layer borders used as boundaries, or not
+     * Should the layer borders used as collision shapes, or not
      * Can be set in GameStage.addRenderLayer() method.
      * @type {boolean}
      */
-    get setBoundaries() {
-        return this.#setBoundaries;
+    get setCollisionShapes() {
+        return this.#setCollisionShapes;
     }
 
     /**
-     * Should draw a boundaries helper, or not
+     * Should draw a collision shapes helper, or not
      * Can be set in SystemSettings.
      * @type {boolean}
      */
-    get drawBoundaries() {
-        return this.#drawBoundaries;
+    get drawCollisionShapes() {
+        return this.#drawCollisionShapes;
     }
 
-    set drawBoundaries(value) {
-        this.#drawBoundaries = value;
+    set drawCollisionShapes(value) {
+        this.#drawCollisionShapes = value;
     }
 
     get isRemoved() {
@@ -182,12 +182,12 @@ export class DrawTiledLayer {
 
     /**
      * Tilesets has a property tiles, which could contain tile animations
-     * or object boundaries, this is workaround for split this and add
+     * or object collision shapes, this is workaround for split this and add
      * additional properties for use in draw phase:
      * _hasAnimations
      * _animations - Map<id:activeSprite>
-     * _hasBoundaries
-     * _boundaries - Map<id:objectgroup>
+     * _hasCollisionShapes
+     * _collisionShapes - Map<id:objectgroup>
      * @param {*} tilesets
      */
     #processData(tilesets, layerData) {
@@ -224,14 +224,14 @@ export class DrawTiledLayer {
                         }
                         this.#activateAnimation(animationEvent);
                     }
-                    if (objectgroup && this.#setBoundaries) {
-                        if (tileset._hasBoundaries) {
-                            tileset._boundaries.set(id, objectgroup);
+                    if (objectgroup && this.#setCollisionShapes) {
+                        if (tileset._hasCollisionShapes) {
+                            tileset._collisionShapes.set(id, objectgroup);
                         } else {
                             // add additional properties
-                            tileset._hasBoundaries = true;
-                            tileset._boundaries = new Map();
-                            tileset._boundaries.set(id, objectgroup);
+                            tileset._hasCollisionShapes = true;
+                            tileset._collisionShapes = new Map();
+                            tileset._collisionShapes.set(id, objectgroup);
                         }
                         objectgroup.objects.forEach((object) => {
                             if (object.ellipse) {
@@ -255,18 +255,18 @@ export class DrawTiledLayer {
             const nonEmptyCells = layerData.data.filter((tile) => ((tile >= firstgid) && (tile < nextgid))).length,
                 cells = layerData.data.length;
 
-            if (this.#setBoundaries) {
-                polygonBLen+=(nonEmptyCells * 16); // potential boundaries also nonEmptyCells
+            if (this.#setCollisionShapes) {
+                polygonBLen+=(nonEmptyCells * 16); // potential collision shapes also nonEmptyCells
             }
             // создаем вспомогательный объект для расчетов и хранения данных отрисовки
             // help class for draw calculations
             tileset._temp = new TiledLayerTempStorage(cells, nonEmptyCells);
         });
         
-        // save boundaries max possible lengths
-        layerData.ellipseBoundariesLen = ellipseBLen;
-        layerData.pointBoundariesLen = pointBLen;
-        layerData.polygonBoundariesLen = polygonBLen;
+        // save collision shapes max possible lengths
+        layerData.ellipseCollisionShapesLen = ellipseBLen;
+        layerData.pointCollisionShapesLen = pointBLen;
+        layerData.polygonCollisionShapesLen = polygonBLen;
     }
 
     /**

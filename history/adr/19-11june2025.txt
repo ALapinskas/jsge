@@ -1,0 +1,14 @@
+Date: June 11 2025
+jsge@1.5.89
+Add scale parameter / Добавить возможность масштабирования объектов
+
+Status: In Progress
+
+Context:
+    В WebGlEngine устанавливается параметр scale = [1, 1], т.е. без масштабирования,
+    нужно добавить возможность изменять его.
+
+Decision:
+
+Impact:
+    No impact.

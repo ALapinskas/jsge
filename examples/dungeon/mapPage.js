@@ -211,7 +211,7 @@ export class MapPage extends GameStage {
             newCoordX = person.x + movementForce * Math.cos(direction),
             newCoordY = person.y + movementForce * Math.sin(direction);
         
-        if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
+        if (!this.isCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
             this.sightView.x = newCoordX;
@@ -238,7 +238,7 @@ export class MapPage extends GameStage {
         //this.player.rotation = rad;
         this.fireRange.rotation = rad - (Math.PI/20);
 
-        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
     
         if (isNav1Traversed) {
             this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -252,7 +252,7 @@ export class MapPage extends GameStage {
     };
 
     #mouseClickAction = (e) => {
-        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
     
         if (isNav1Click) {
             this.iSystem.stopGameStage("dungeon");
@@ -286,9 +286,9 @@ export class MapPage extends GameStage {
         fireball.y = newCoordY;
         fireball.rotation = this.fireRange.rotation;
         //console.log(newCoordX);
-        if (this.isBoundariesCollision(newCoordX, newCoordY, fireball) 
+        if (this.isCollision(newCoordX, newCoordY, fireball) 
         || this.isObjectsCollision(newCoordX, newCoordY, fireball, this.#enemies)) {
-            //console.log("boundaries collision happen");
+    
             this.fireballs.splice(this.fireballs.indexOf(fireball), 1);
             fireball.stopRepeatedAnimation(ANIMATION_FIREMOVE);
             fireball.emit(ANIMATION_REACHWALL);

@@ -273,33 +273,47 @@ export class GameStage {
 
     /**
      * 
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * isCollision()
      * @param {number} x 
      * @param {number} y 
      * @param {DrawImageObject} drawObject 
      * @returns {{x:number, y:number, p:number} | boolean}
      */
     isBoundariesCollision = (x, y, drawObject) => {
+        return this.isCollision(x, y, drawObject);
+    };
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawImageObject} drawObject 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
+    isCollision = (x, y, drawObject) => {
         const drawObjectType = drawObject.type,
             vertices = drawObject.vertices,
-            circleBoundaries = drawObject.circleBoundaries;
+            circleCollisionShapes = drawObject.circleCollisionShapes;
         switch(drawObjectType) {
-        case DRAW_TYPE.TEXT:
-        case DRAW_TYPE.RECTANGLE:
-        case DRAW_TYPE.CONUS:
-        case DRAW_TYPE.IMAGE:
-            if (!circleBoundaries) {
-                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
-            } else {
-                return this.#isCircleToBoundariesCollision(x, y, drawObject.circleBoundaries.r);
-            }
-        case DRAW_TYPE.CIRCLE:
-            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            break;
-        case DRAW_TYPE.LINE:
-            Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            break;
-        default:
-            Warning(WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+            case DRAW_TYPE.TEXT:
+            case DRAW_TYPE.RECTANGLE:
+            case DRAW_TYPE.CONUS:
+            case DRAW_TYPE.IMAGE:
+                if (!circleCollisionShapes) {
+                    return this.#isPolygonToCollisionShapesCollision(x, y, vertices, drawObject.rotation);
+                } else {
+                    return this.#isCircleToCollisionShapesCollision(x, y, drawObject.circleCollisionShapes.r);
+                }
+            case DRAW_TYPE.CIRCLE:
+                Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+                break;
+            case DRAW_TYPE.LINE:
+                Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+                break;
+            default:
+                Warning(WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
         return false;
     };
@@ -314,17 +328,17 @@ export class GameStage {
      */
     isObjectsCollision = (x, y, drawObject, objects) => {
         const drawObjectType = drawObject.type,
-            drawObjectBoundaries = drawObject.vertices,
-            circleBoundaries = drawObject.circleBoundaries;
+            drawObjectCollisionShapes = drawObject.vertices,
+            circleCollisionShapes = drawObject.circleCollisionShapes;
         switch(drawObjectType) {
             case DRAW_TYPE.TEXT:
             case DRAW_TYPE.RECTANGLE:
             case DRAW_TYPE.CONUS:
             case DRAW_TYPE.IMAGE:
-                if (!circleBoundaries) {
-                    return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+                if (!circleCollisionShapes) {
+                    return this.#isPolygonToObjectsCollision(x, y, drawObjectCollisionShapes, drawObject.rotation, objects);
                 } else {
-                    return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
+                    return this.#isCircleToObjectsCollision(x, y, circleCollisionShapes, objects);
                 }
             case DRAW_TYPE.CIRCLE:
                 Warning(WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
@@ -374,8 +388,8 @@ export class GameStage {
         }
     }
 
-    #isCircleToObjectsCollision(x, y, drawObjectBoundaries, objects) {
-        const radius = drawObjectBoundaries.r;
+    #isCircleToObjectsCollision(x, y, drawObjectCollisionShapes, objects) {
+        const radius = drawObjectCollisionShapes.r;
 
         const len = objects.length;
 
@@ -383,7 +397,7 @@ export class GameStage {
         for (let i = 0; i < len; i++) {
             const mapObject = objects[i],
                 drawMapObjectType = mapObject.type,
-                circleBoundaries = mapObject.circleBoundaries;
+                circleCollisionShapes = mapObject.circleCollisionShapes;
 
             /**
              * @type {boolean | Object}
@@ -395,10 +409,10 @@ export class GameStage {
                 case DRAW_TYPE.RECTANGLE:
                 case DRAW_TYPE.CONUS:
                 case DRAW_TYPE.IMAGE:
-                    if (!circleBoundaries) {
+                    if (!circleCollisionShapes) {
                         coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
                     } else {
-                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
+                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleCollisionShapes.r);
                     }
                     break;
                 case DRAW_TYPE.CIRCLE:
@@ -522,14 +536,14 @@ export class GameStage {
      * @param {number} r 
      * @returns {{x:number, y:number, p:number} | boolean}
      */
-    #isCircleToBoundariesCollision(x, y, r) {
-        const mapObjects = this.stageData.getRawBoundaries(),
-            ellipseB = this.stageData.getEllipseBoundaries(),
-            pointB = this.stageData.getPointBoundaries(),
+    #isCircleToCollisionShapesCollision(x, y, r) {
+        const mapObjects = this.stageData.getRawCollisionShapes(),
+            ellipseB = this.stageData.getEllipseCollisionShapes(),
+            pointB = this.stageData.getPointCollisionShapes(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
-            len = this.stageData.boundariesLen,
+            len = this.stageData.collisionShapesLen,
             eLen = this.stageData.ellipseBLen,
             pLen = this.stageData.pointBLen;
 
@@ -588,15 +602,15 @@ export class GameStage {
      * @param {number} rotation
      * @returns {{x:number, y:number, p:number} | boolean}
      */
-    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
-        const mapObjects = this.stageData.getRawBoundaries(),
-            ellipseB = this.stageData.getEllipseBoundaries(),
-            pointB = this.stageData.getPointBoundaries(),
+    #isPolygonToCollisionShapesCollision(x, y, polygon, rotation) {
+        const mapObjects = this.stageData.getRawCollisionShapes(),
+            ellipseB = this.stageData.getEllipseCollisionShapes(),
+            pointB = this.stageData.getPointCollisionShapes(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
-            len = this.stageData.boundariesLen,
+            len = this.stageData.collisionShapesLen,
             eLen = this.stageData.ellipseBLen,
             pLen = this.stageData.pointBLen;
 

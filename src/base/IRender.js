@@ -51,7 +51,7 @@ export class IRender {
     /**
      * @type {boolean}
      */
-    #isBoundariesPrecalculations = false;
+    #isCollisionShapesPrecalculations = false;
 
     /**
      * @type {Array<function():Promise<void>>}
@@ -62,15 +62,20 @@ export class IRender {
      */
     #emitter = new EventTarget();
     constructor(systemSettings, iLoader, canvasContainer) {
-        
+        const preserveDrawingBuffer = systemSettings.gameOptions.debug.preserveDrawingBuffer;
+        let contextOpt = { stencil: true };
+        if (preserveDrawingBuffer === true) {
+            contextOpt.preserveDrawingBuffer = true;
+        }
         this.#canvas = document.createElement("canvas");
         canvasContainer.appendChild(this.#canvas);
-        this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
+        
+        this.#drawContext = this.#canvas.getContext("webgl", contextOpt);
 
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = iLoader;
 
-        this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
+        this.#isCollisionShapesPrecalculations = this.systemSettings.gameOptions.render.collisionShapes.wholeWorldPrecalculations;
 
         this.#webGlEngine = new WebGlEngine(this.#drawContext, this.#systemSettingsReference.gameOptions, this.iLoader);
         
@@ -227,10 +232,10 @@ export class IRender {
         return Promise.resolve();
     };
 
-    _createBoundariesPrecalculations() {
+    _createCollisionShapesPrecalculations() {
         //const promises = [];
         //for (const layer of this.#renderLayers) {
-        //    promises.push(this.#layerBoundariesPrecalculation(layer).catch((err) => {
+        //    promises.push(this.#layerCollisionShapesPrecalculation(layer).catch((err) => {
         //        Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
         //    }));
         //}
@@ -279,12 +284,12 @@ export class IRender {
     #prepareViews() {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
-            const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
+            const isCollisionShapesPrecalculations = this.#isCollisionShapesPrecalculations;
             viewPromises.push(this.initiateContext(this.#currentGameStageData));
-            if (isBoundariesPrecalculations) {
-                console.warn("isBoundariesPrecalculations() is turned off");
+            if (isCollisionShapesPrecalculations) {
+                console.warn("isCollisionShapesPrecalculations() is turned off");
                 //for (const view of this.#views.values()) {
-                //viewPromises.push(this.#iRender._createBoundariesPrecalculations());
+                //viewPromises.push(this.#iRender._createCollisionShapesPrecalculations());
                 //}
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {

@@ -236,7 +236,7 @@ export class DrawShapeObject {
      * @returns {Array<Array<number>>}
      * @ignore
      */
-    _calculateConusBoundaries(radius, angle = 2*Math.PI, step = Math.PI/14) {
+    _calculateConusShapes(radius, angle = 2*Math.PI, step = Math.PI/14) {
         let conusPolygonCoords = [];
 
         for (let r = 0; r <= angle; r += step) {
@@ -251,15 +251,15 @@ export class DrawShapeObject {
 
 
     /**
-     * @param {Array<Array<number>> | Array<{x:number, y:number}>} boundaries
+     * @param {Array<Array<number>> | Array<{x:number, y:number}>} collision_shapes
      * @returns {Array<Array<number>>}
      * @ignore
      */
-    _convertVerticesArray(boundaries) {
-        if (typeof boundaries[0].x !== "undefined" && typeof boundaries[0].y !== "undefined") {
-            return utils.verticesArrayToArrayNumbers(boundaries);
+    _convertVerticesArray(collision_shapes) {
+        if (typeof collision_shapes[0].x !== "undefined" && typeof collision_shapes[0].y !== "undefined") {
+            return utils.verticesArrayToArrayNumbers(collision_shapes);
         } else {
-            return boundaries;
+            return collision_shapes;
         }
     }
 }

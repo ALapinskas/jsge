@@ -476,7 +476,7 @@ class AssetsManager {
                 if (!tilesetData.tiles) {
                     tilesetData.tiles = [];
                 }
-                //add boundaries / animations
+                
                 const tile = {
                     id: Number(node.attributes?.id?.value)
                 }
@@ -1186,7 +1186,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     /**
      * @type {Object | null}
      */
-    #circleBoundaries;
+    #circleCollisionShapes;
     /**
      * @type {ImageTempStorage}
      */
@@ -1195,7 +1195,7 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, width, height, key, imageIndex = 0, boundaries, image, spacing = 0, margin = 0) {
+    constructor(mapX, mapY, width, height, key, imageIndex = 0, collisionShapes, image, spacing = 0, margin = 0) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_1__.DRAW_TYPE.IMAGE, mapX, mapY);
         this.#key = key;
         this.#emitter = new EventTarget();
@@ -1206,8 +1206,8 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         this.#margin = margin;
         this.#w = width;
         this.#h = height;
-        this.#vertices = boundaries && !boundaries.r ? this._convertVerticesArray(boundaries) : boundaries && boundaries.r ? this._calculateConusBoundaries(boundaries.r) : this._calculateRectVertices(width, height);
-        this.#circleBoundaries = boundaries && typeof boundaries.r !== "undefined" ? boundaries : null;
+        this.#vertices = collisionShapes && !collisionShapes.r ? this._convertVerticesArray(collisionShapes) : collisionShapes && collisionShapes.r ? this._calculateConusShapes(collisionShapes.r) : this._calculateRectVertices(width, height);
+        this.#circleCollisionShapes = collisionShapes && typeof collisionShapes.r !== "undefined" ? collisionShapes : null;
     }
 
     /**
@@ -1299,7 +1299,8 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
     }
 
     /**
-     * @deprecated - use .vertices instead 
+     * @deprecated 
+     * use vertices
      * @type {Array<Array<number>>}
      */
     get boundaries() {
@@ -1310,8 +1311,8 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         return this.#vertices;
     }
 
-    get circleBoundaries() {
-        return this.#circleBoundaries;
+    get circleCollisionShapes() {
+        return this.#circleCollisionShapes;
     }
 
     /**
@@ -1321,8 +1322,12 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         const activeAnimation = this.#activeAnimation;
         if (activeAnimation) {
             const animationEvent = this.#animations.get(activeAnimation);
-            animationEvent.iterateAnimationIndex();
-            this.#imageIndex = animationEvent.currentSprite;
+            if (animationEvent.isActive === false) {
+                this.#activeAnimation = null;
+            } else {
+                animationEvent.iterateAnimationIndex();
+                this.#imageIndex = animationEvent.currentSprite;
+            }
         }
     }
     /**
@@ -1856,7 +1861,7 @@ class DrawShapeObject {
      * @returns {Array<Array<number>>}
      * @ignore
      */
-    _calculateConusBoundaries(radius, angle = 2*Math.PI, step = Math.PI/14) {
+    _calculateConusShapes(radius, angle = 2*Math.PI, step = Math.PI/14) {
         let conusPolygonCoords = [];
 
         for (let r = 0; r <= angle; r += step) {
@@ -1871,15 +1876,15 @@ class DrawShapeObject {
 
 
     /**
-     * @param {Array<Array<number>> | Array<{x:number, y:number}>} boundaries
+     * @param {Array<Array<number>> | Array<{x:number, y:number}>} collision_shapes
      * @returns {Array<Array<number>>}
      * @ignore
      */
-    _convertVerticesArray(boundaries) {
-        if (typeof boundaries[0].x !== "undefined" && typeof boundaries[0].y !== "undefined") {
-            return _index_js__WEBPACK_IMPORTED_MODULE_1__.utils.verticesArrayToArrayNumbers(boundaries);
+    _convertVerticesArray(collision_shapes) {
+        if (typeof collision_shapes[0].x !== "undefined" && typeof collision_shapes[0].y !== "undefined") {
+            return _index_js__WEBPACK_IMPORTED_MODULE_1__.utils.verticesArrayToArrayNumbers(collision_shapes);
         } else {
-            return boundaries;
+            return collision_shapes;
         }
     }
 }
@@ -1942,17 +1947,26 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * Rectangle text box.
+     * @deprecated
+     * Use collisionShapes()
      * @type {Rectangle}
      */
     get boundariesBox() {
+        return this.collisionShapes;
+    }
+
+    /**
+     * Rectangle text box.
+     * @type {Rectangle}
+     */
+    get collisionShapes() {
         const width = this.textMetrics ? Math.floor(this.textMetrics.width) : 300,
             height = this.textMetrics ? Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent): 30;
         return new _Primitives_js__WEBPACK_IMPORTED_MODULE_1__.Rectangle(this.x, this.y - height, width, height);
     }
 
     get vertices() {
-        const bb = this.boundariesBox;
+        const bb = this.collisionShapes;
         return this._calculateRectVertices(bb.width, bb.height);
     }
 
@@ -2093,8 +2107,8 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
-            const boxWidth = this.boundariesBox.width, 
-                boxHeight = this.boundariesBox.height;
+            const boxWidth = this.collisionShapes.width, 
+                boxHeight = this.collisionShapes.height;
             
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;
@@ -2164,8 +2178,8 @@ class DrawTiledLayer {
      */
     #textureStorages;
     #layerData;
-    #setBoundaries;
-    #drawBoundaries;
+    #setCollisionShapes;
+    #drawCollisionShapes;
     #attachedMaskId;
     /**
      * @type {number}
@@ -2187,7 +2201,7 @@ class DrawTiledLayer {
     /**
      * @hideconstructor
      */
-    constructor(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries = false, shapeMask) {
+    constructor(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setCollisionShapes = false, shapeMask) {
         this.#layerKey = layerKey;
         this.#tileMapKey = tileMapKey;
         this.#tilemap = tilemap;
@@ -2196,8 +2210,8 @@ class DrawTiledLayer {
         this.#tilesetImages = tilesetImages;
         this.#layerData = layerData;
         
-        this.#setBoundaries = setBoundaries;
-        this.#drawBoundaries = setBoundaries ? setBoundaries : false;
+        this.#setCollisionShapes = setCollisionShapes;
+        this.#drawCollisionShapes = setCollisionShapes ? setCollisionShapes : false;
         if (shapeMask) {
             this.setMask(shapeMask);
         }
@@ -2236,25 +2250,25 @@ class DrawTiledLayer {
         return this.#layerData;
     }
     /**
-     * Should the layer borders used as boundaries, or not
+     * Should the layer borders used as collision shapes, or not
      * Can be set in GameStage.addRenderLayer() method.
      * @type {boolean}
      */
-    get setBoundaries() {
-        return this.#setBoundaries;
+    get setCollisionShapes() {
+        return this.#setCollisionShapes;
     }
 
     /**
-     * Should draw a boundaries helper, or not
+     * Should draw a collision shapes helper, or not
      * Can be set in SystemSettings.
      * @type {boolean}
      */
-    get drawBoundaries() {
-        return this.#drawBoundaries;
+    get drawCollisionShapes() {
+        return this.#drawCollisionShapes;
     }
 
-    set drawBoundaries(value) {
-        this.#drawBoundaries = value;
+    set drawCollisionShapes(value) {
+        this.#drawCollisionShapes = value;
     }
 
     get isRemoved() {
@@ -2325,12 +2339,12 @@ class DrawTiledLayer {
 
     /**
      * Tilesets has a property tiles, which could contain tile animations
-     * or object boundaries, this is workaround for split this and add
+     * or object collision shapes, this is workaround for split this and add
      * additional properties for use in draw phase:
      * _hasAnimations
      * _animations - Map<id:activeSprite>
-     * _hasBoundaries
-     * _boundaries - Map<id:objectgroup>
+     * _hasCollisionShapes
+     * _collisionShapes - Map<id:objectgroup>
      * @param {*} tilesets
      */
     #processData(tilesets, layerData) {
@@ -2367,14 +2381,14 @@ class DrawTiledLayer {
                         }
                         this.#activateAnimation(animationEvent);
                     }
-                    if (objectgroup && this.#setBoundaries) {
-                        if (tileset._hasBoundaries) {
-                            tileset._boundaries.set(id, objectgroup);
+                    if (objectgroup && this.#setCollisionShapes) {
+                        if (tileset._hasCollisionShapes) {
+                            tileset._collisionShapes.set(id, objectgroup);
                         } else {
                             // add additional properties
-                            tileset._hasBoundaries = true;
-                            tileset._boundaries = new Map();
-                            tileset._boundaries.set(id, objectgroup);
+                            tileset._hasCollisionShapes = true;
+                            tileset._collisionShapes = new Map();
+                            tileset._collisionShapes.set(id, objectgroup);
                         }
                         objectgroup.objects.forEach((object) => {
                             if (object.ellipse) {
@@ -2398,18 +2412,18 @@ class DrawTiledLayer {
             const nonEmptyCells = layerData.data.filter((tile) => ((tile >= firstgid) && (tile < nextgid))).length,
                 cells = layerData.data.length;
 
-            if (this.#setBoundaries) {
-                polygonBLen+=(nonEmptyCells * 16); // potential boundaries also nonEmptyCells
+            if (this.#setCollisionShapes) {
+                polygonBLen+=(nonEmptyCells * 16); // potential collision shapes also nonEmptyCells
             }
             // создаем вспомогательный объект для расчетов и хранения данных отрисовки
             // help class for draw calculations
             tileset._temp = new _Temp_TiledLayerTempStorage_js__WEBPACK_IMPORTED_MODULE_3__.TiledLayerTempStorage(cells, nonEmptyCells);
         });
         
-        // save boundaries max possible lengths
-        layerData.ellipseBoundariesLen = ellipseBLen;
-        layerData.pointBoundariesLen = pointBLen;
-        layerData.polygonBoundariesLen = polygonBLen;
+        // save collision shapes max possible lengths
+        layerData.ellipseCollisionShapesLen = ellipseBLen;
+        layerData.pointCollisionShapesLen = pointBLen;
+        layerData.polygonCollisionShapesLen = polygonBLen;
     }
 
     /**
@@ -2813,19 +2827,19 @@ class DrawObjectFactory {
      * @param {number} height 
      * @param {string} key 
      * @param {number} [imageIndex = 0]
-     * @param {Array<{x:Number, y:Number}> | {r:number}=} boundaries - boundaries as polygon, or circle
+     * @param {Array<{x:Number, y:Number}> | {r:number}=} collisionShapes - collision shapes as polygon, or circle
      * @param {number} [spacing = 0] - for tilesets.spacing > 0
      * @param {number} [margin = 0] - for tilesets.margin > 0
      * @returns {DrawImageObject}
      */
-    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0, margin = 0) {
+    image(x, y, width, height, key, imageIndex = 0, collisionShapes, spacing = 0, margin = 0) {
         const image = this.#iLoader.getImage(key);
 
         if (!image) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_10__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_11__.ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + key);
         }
             
-        const renderObject = new _2d_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing, margin);
+        const renderObject = new _2d_DrawImageObject_js__WEBPACK_IMPORTED_MODULE_3__.DrawImageObject(x, y, width, height, key, imageIndex, collisionShapes, image, spacing, margin);
         
         this.#addObjectToPageData(renderObject);
         return renderObject;
@@ -2857,11 +2871,11 @@ class DrawObjectFactory {
      * 
      * @param {string} layerKey 
      * @param {string} tileMapKey 
-     * @param {boolean=} setBoundaries 
+     * @param {boolean=} setCollisionShapes 
      * @param {DrawShapeObject=} shapeMask 
      * @returns {DrawTiledLayer}
      */
-    tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
+    tiledLayer(layerKey, tileMapKey, setCollisionShapes, shapeMask) {
         const tilemap = this.#iLoader.getTileMap(tileMapKey),
             layerData = Object.assign({}, tilemap.layers.find((layer) => layer.name === layerKey)), // copy to avoid change same tilemap instance in different tiledLayers
             tilesetIds = Array.from(new Set(layerData.data.filter((id) => id !== 0))).sort((a, b) => a - b),
@@ -2875,7 +2889,7 @@ class DrawObjectFactory {
                 }
             }), // copy to avoid change same tilemap instance in different tiledLayers
             tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.name)),
-            renderObject = new _2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__.DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+            renderObject = new _2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_7__.DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setCollisionShapes, shapeMask);
         if (tilesetImages.length > 1) {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_10__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_11__.WARNING_CODES.MULTIPLE_IMAGE_TILESET, " tileset " + layerKey + " includes multiple images, it can case performance issues!");
         }
@@ -3281,33 +3295,47 @@ class GameStage {
 
     /**
      * 
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * isCollision()
      * @param {number} x 
      * @param {number} y 
      * @param {DrawImageObject} drawObject 
      * @returns {{x:number, y:number, p:number} | boolean}
      */
     isBoundariesCollision = (x, y, drawObject) => {
+        return this.isCollision(x, y, drawObject);
+    };
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {DrawImageObject} drawObject 
+     * @returns {{x:number, y:number, p:number} | boolean}
+     */
+    isCollision = (x, y, drawObject) => {
         const drawObjectType = drawObject.type,
             vertices = drawObject.vertices,
-            circleBoundaries = drawObject.circleBoundaries;
+            circleCollisionShapes = drawObject.circleCollisionShapes;
         switch(drawObjectType) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
-            if (!circleBoundaries) {
-                return this.#isPolygonToBoundariesCollision(x, y, vertices, drawObject.rotation);
-            } else {
-                return this.#isCircleToBoundariesCollision(x, y, drawObject.circleBoundaries.r);
-            }
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
-            break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
-            break;
-        default:
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
+                if (!circleCollisionShapes) {
+                    return this.#isPolygonToCollisionShapesCollision(x, y, vertices, drawObject.rotation);
+                } else {
+                    return this.#isCircleToCollisionShapesCollision(x, y, drawObject.circleCollisionShapes.r);
+                }
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.line check is not implemented yet, please use .rect instead line!");
+                break;
+            default:
+                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.UNKNOWN_DRAW_OBJECT, "unknown object type!");
         }
         return false;
     };
@@ -3322,17 +3350,17 @@ class GameStage {
      */
     isObjectsCollision = (x, y, drawObject, objects) => {
         const drawObjectType = drawObject.type,
-            drawObjectBoundaries = drawObject.vertices,
-            circleBoundaries = drawObject.circleBoundaries;
+            drawObjectCollisionShapes = drawObject.vertices,
+            circleCollisionShapes = drawObject.circleCollisionShapes;
         switch(drawObjectType) {
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
-                if (!circleBoundaries) {
-                    return this.#isPolygonToObjectsCollision(x, y, drawObjectBoundaries, drawObject.rotation, objects);
+                if (!circleCollisionShapes) {
+                    return this.#isPolygonToObjectsCollision(x, y, drawObjectCollisionShapes, drawObject.rotation, objects);
                 } else {
-                    return this.#isCircleToObjectsCollision(x, y, circleBoundaries, objects);
+                    return this.#isCircleToObjectsCollision(x, y, circleCollisionShapes, objects);
                 }
             case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
                 (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.METHOD_NOT_IMPLEMENTED, "isObjectCollision.circle check is not implemented yet!");
@@ -3382,8 +3410,8 @@ class GameStage {
         }
     }
 
-    #isCircleToObjectsCollision(x, y, drawObjectBoundaries, objects) {
-        const radius = drawObjectBoundaries.r;
+    #isCircleToObjectsCollision(x, y, drawObjectCollisionShapes, objects) {
+        const radius = drawObjectCollisionShapes.r;
 
         const len = objects.length;
 
@@ -3391,7 +3419,7 @@ class GameStage {
         for (let i = 0; i < len; i++) {
             const mapObject = objects[i],
                 drawMapObjectType = mapObject.type,
-                circleBoundaries = mapObject.circleBoundaries;
+                circleCollisionShapes = mapObject.circleCollisionShapes;
 
             /**
              * @type {boolean | Object}
@@ -3403,10 +3431,10 @@ class GameStage {
                 case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
                 case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CONUS:
                 case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE:
-                    if (!circleBoundaries) {
+                    if (!circleCollisionShapes) {
                         coll = this.#isCircleToPolygonCollision(x, y, radius, mapObject);
                     } else {
-                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleBoundaries.r);
+                        coll = this.#isCircleToCircleCollision(x, y, radius, mapObject.x, mapObject.y, circleCollisionShapes.r);
                     }
                     break;
                 case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
@@ -3470,9 +3498,6 @@ class GameStage {
 
     #isCircleToCircleCollision(circle1X, circle1Y, circle1R, circle2X, circle2Y, circle2R) {
         const len = new _2d_Primitives_js__WEBPACK_IMPORTED_MODULE_16__.Vector(circle1X, circle1Y, circle2X, circle2Y).length;
-        console.log(len);
-        console.log(circle1R);
-        console.log(circle2R);
         if ((len - (circle1R + circle2R)) > 0) {
             return false;
         } else {
@@ -3533,14 +3558,14 @@ class GameStage {
      * @param {number} r 
      * @returns {{x:number, y:number, p:number} | boolean}
      */
-    #isCircleToBoundariesCollision(x, y, r) {
-        const mapObjects = this.stageData.getRawBoundaries(),
-            ellipseB = this.stageData.getEllipseBoundaries(),
-            pointB = this.stageData.getPointBoundaries(),
+    #isCircleToCollisionShapesCollision(x, y, r) {
+        const mapObjects = this.stageData.getRawCollisionShapes(),
+            ellipseB = this.stageData.getEllipseCollisionShapes(),
+            pointB = this.stageData.getPointCollisionShapes(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
-            len = this.stageData.boundariesLen,
+            len = this.stageData.collisionShapesLen,
             eLen = this.stageData.ellipseBLen,
             pLen = this.stageData.pointBLen;
 
@@ -3599,15 +3624,15 @@ class GameStage {
      * @param {number} rotation
      * @returns {{x:number, y:number, p:number} | boolean}
      */
-    #isPolygonToBoundariesCollision(x, y, polygon, rotation) {
-        const mapObjects = this.stageData.getRawBoundaries(),
-            ellipseB = this.stageData.getEllipseBoundaries(),
-            pointB = this.stageData.getPointBoundaries(),
+    #isPolygonToCollisionShapesCollision(x, y, polygon, rotation) {
+        const mapObjects = this.stageData.getRawCollisionShapes(),
+            ellipseB = this.stageData.getEllipseCollisionShapes(),
+            pointB = this.stageData.getPointCollisionShapes(),
             [mapOffsetX, mapOffsetY] = this.stageData.worldOffset,
             xWithOffset = x - mapOffsetX,
             yWithOffset = y - mapOffsetY,
             polygonWithOffsetAndRotation = polygon.map((vertex) => (this.#calculateShiftedVertexPos(vertex, xWithOffset, yWithOffset, rotation))),
-            len = this.stageData.boundariesLen,
+            len = this.stageData.collisionShapesLen,
             eLen = this.stageData.ellipseBLen,
             pLen = this.stageData.pointBLen;
 
@@ -3701,7 +3726,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /**
  * A storage for stage data, such as gameObjects,
- * boundaries, worldDimensions and offset
+ * collision shapes, worldDimensions and offset
  * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
@@ -3742,11 +3767,11 @@ class GameStageData {
     /**
      * @type {number}
      */
-    #maxBoundariesSize = 0;
+    #maxCollisionShapesSize = 0;
     /**
      * @type {number}
      */
-    #maxEllipseBoundSize = 0;
+    #maxEllipseCollisionShapesSize = 0;
     /**
      * @type {number}
      */
@@ -3767,31 +3792,31 @@ class GameStageData {
      */
     #ePointer = 0;
     /**
-     * current screen boundaries, recalculated every render cycles
+     * current screen collision shapes, recalculated every render cycles
      * stored as floatArray, 
      * each 4 cells, represent a line with coords x1,y1,x2,y2
      * @type {Float32Array}
      */
-    #boundaries;
+    #collision_shapes;
     /**
-     * ellipse boundaries
+     * ellipse collision shapes
      * stored as floatArray, 
      * each 4 cells, represent am ellipse with cords centerX, centerY, radiusX, radiusY
      * @type {Float32Array}
      */
-    #ellipseBoundaries;
+    #ellipseCollisionShapes;
     /**
-     * point boundaries
+     * point collision shapes
      * stored as floatArray, 
      * each 2 cells, represent a point with coords x1,y1
      * @type {Float32Array}
      */
-    #pointBoundaries;
+    #pointCollisionShapes;
     /**
-     * whole world boundaries, calculated once on prepare stage
+     * whole world collision shapes, calculated once on prepare stage
      * @type {Array<Array<number>>}
      */
-    #wholeWorldBoundaries;
+    #wholeWorldCollisionShapes;
     /**
      * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
      */
@@ -3809,22 +3834,22 @@ class GameStageData {
      * @deprecated
      * @type {boolean}
      */
-    #isWorldBoundariesEnabled = false;
+    #isWorldCollisionShapesEnabled = false;
 
     /**
      * @type {Array<number>}
      */
-    #debugObjectBoundaries = [];
+    #debugObjectCollisionShapes = [];
     /**
      * 
      * @type {boolean}
      */
-    #isDebugObjectBoundaries = false;
+    #isDebugObjectCollisionShapes = false;
 
     constructor(gameOptions) {
-        //this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        //this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
-        //this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
+        //this.#collision_shapes = new Float32Array(this.#maxCollisionShapesSize);
+        //this.#ellipseCollisionShapes = new Float32Array(this.#maxCollisionShapesSize);
+        //this.#pointCollisionShapes = new Float32Array(this.#maxCollisionShapesSize);
     }
 
     /**
@@ -3839,110 +3864,110 @@ class GameStageData {
     }
 
     /**
-     * Add a Boundaries line
-     * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
+     * Add a Collision Shape line
+     * @param {{x1:number,y1:number,x2:number, y2:number}} collision_shapes 
      */
-    #addBoundaries(boundaries) {
-        this._addBoundaryLine(boundaries.x1,boundaries.y1, boundaries.x2, boundaries.y2);
+    #addCollisionShapes(collision_shapes) {
+        this._addCollisionShapeLine(collision_shapes.x1,collision_shapes.y1, collision_shapes.x2, collision_shapes.y2);
     }
 
     /**
-     * Add array of boundaries lines
-     * @param {Array<Array<number>>} boundaries 
+     * Add array of collision shapes lines
+     * @param {Array<Array<number>>} collision_shapes 
      * @ignore
      */
-    _addImageDebugBoundaries(boundaries) {
-        const len = boundaries.length;
+    _addImageDebugCollisionShapes(collision_shapes) {
+        const len = collision_shapes.length;
         for (let i = 0; i < len; i++) {
-            this.#debugObjectBoundaries.push(...boundaries[i]);
+            this.#debugObjectCollisionShapes.push(...collision_shapes[i]);
         }
     }
 
-    _enableDebugObjectBoundaries() {
-        this.#isDebugObjectBoundaries = true;
+    _enableDebugObjectCollisionShapes() {
+        this.#isDebugObjectCollisionShapes = true;
     }
     /**
-     * Add array of boundaries lines
-     * @param {Array<Array<number>>} boundaries 
+     * Add array of collision shapes lines
+     * @param {Array<Array<number>>} collision_shapes 
      * @ignore
      */
-    _addBoundariesArray(boundaries) {
-        const len = boundaries.length;
+    _addCollisionShapesArray(collision_shapes) {
+        const len = collision_shapes.length;
         for (let i = 0; i < len; i++) {
-            const boundary = boundaries[i];
-            this._addBoundaryLine(boundary[0], boundary[1], boundary[2], boundary[3]);
+            const collision_shape = collision_shapes[i];
+            this._addCollisionShapeLine(collision_shape[0], collision_shape[1], collision_shape[2], collision_shape[3]);
         }
     }
 
-    _addBoundaryLine(x1, y1, x2, y2) {
-        this.#boundaries[this.#bPointer] = x1;
+    _addCollisionShapeLine(x1, y1, x2, y2) {
+        this.#collision_shapes[this.#bPointer] = x1;
         this.#bPointer++;
-        this.#boundaries[this.#bPointer] = y1;
+        this.#collision_shapes[this.#bPointer] = y1;
         this.#bPointer++;
-        this.#boundaries[this.#bPointer] = x2;
+        this.#collision_shapes[this.#bPointer] = x2;
         this.#bPointer++;
-        this.#boundaries[this.#bPointer] = y2;
+        this.#collision_shapes[this.#bPointer] = y2;
         this.#bPointer++;
     }
 
-    _addEllipseBoundary(w, h, x, y) {
-        this.#ellipseBoundaries[this.#ePointer] = w;
+    _addEllipseCollisionShape(w, h, x, y) {
+        this.#ellipseCollisionShapes[this.#ePointer] = w;
         this.#ePointer++;
-        this.#ellipseBoundaries[this.#ePointer] = h;
+        this.#ellipseCollisionShapes[this.#ePointer] = h;
         this.#ePointer++;
-        this.#ellipseBoundaries[this.#ePointer] = x;
+        this.#ellipseCollisionShapes[this.#ePointer] = x;
         this.#ePointer++;
-        this.#ellipseBoundaries[this.#ePointer] = y;
+        this.#ellipseCollisionShapes[this.#ePointer] = y;
         this.#ePointer++;
     }
 
-    _addPointBoundary(x,y) {
-        this.#pointBoundaries[this.#pPointer] = x;
+    _addPointCollisionShape(x,y) {
+        this.#pointCollisionShapes[this.#pPointer] = x;
         this.#pPointer++;
-        this.#pointBoundaries[this.#pPointer] = y;
+        this.#pointCollisionShapes[this.#pPointer] = y;
         this.#pPointer++;
     }
 
-    _removeBoundaryLine(startPos) {
-        this.#boundaries[startPos] = 0;
-        this.#boundaries[startPos + 1] = 0;
-        this.#boundaries[startPos + 2] = 0;
-        this.#boundaries[startPos + 3] = 0;
+    _removeCollisionShapeLine(startPos) {
+        this.#collision_shapes[startPos] = 0;
+        this.#collision_shapes[startPos + 1] = 0;
+        this.#collision_shapes[startPos + 2] = 0;
+        this.#collision_shapes[startPos + 3] = 0;
     }
 
     /**
-     * Clear map boundaries
+     * Clear map collision shapes
      * @ignore
      */
-    _clearBoundaries() {
-        this.#boundaries.fill(0);
-        this.#ellipseBoundaries.fill(0);
-        this.#pointBoundaries.fill(0);
+    _clearCollisionShapes() {
+        this.#collision_shapes.fill(0);
+        this.#ellipseCollisionShapes.fill(0);
+        this.#pointCollisionShapes.fill(0);
         
         this.#bPointer = 0;
         this.#ePointer = 0;
         this.#pPointer = 0;
-        if (this.#isDebugObjectBoundaries) {
-            this.#debugObjectBoundaries = [];
+        if (this.#isDebugObjectCollisionShapes) {
+            this.#debugObjectCollisionShapes = [];
         }
     }
 
-    _initiateBoundariesData() {
-        this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#ellipseBoundaries = new Float32Array(this.#maxEllipseBoundSize);
-        this.#pointBoundaries = new Float32Array(this.#maxPointBSize);
+    _initiateCollisionShapesData() {
+        this.#collision_shapes = new Float32Array(this.#maxCollisionShapesSize);
+        this.#ellipseCollisionShapes = new Float32Array(this.#maxEllipseCollisionShapesSize);
+        this.#pointCollisionShapes = new Float32Array(this.#maxPointBSize);
     }
 
     /**
      * 
      * @param {number} bSize
-     * @param {number} eSize - ellipse boundaries size
-     * @param {number} pSize - points boundaries size
+     * @param {number} eSize - ellipse collision shapes size
+     * @param {number} pSize - points collision shapes size
      * @ignore
      */
-    _setMaxBoundariesSize(bSize, eSize = 0, pSize = 0) {
-        this.#maxBoundariesSize = bSize;
-        this.#maxEllipseBoundSize = eSize;
+    _setMaxCollisionShapesSize(bSize, eSize = 0, pSize = 0) {
+        this.#maxCollisionShapesSize = bSize;
+        this.#maxEllipseCollisionShapesSize = eSize;
         this.#maxPointBSize = pSize;
     }
 
@@ -3972,50 +3997,50 @@ class GameStageData {
      * Set map borders
      * @ignore
      */
-    _setMapBoundaries() {
+    _setMapCollisionShapes() {
         const [w, h] = [this.#worldWidth, this.#worldHeight],
             [offsetX, offsetY] = [this.#xOffset, this.#yOffset],
             wOffset = w - offsetX,
             hOffset = h -offsetY;
         if (!w || !h) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map collision shapes.");
         }
-        this.#addBoundaries({x1: 0, y1: 0, x2: wOffset, y2: 0});
-        this.#addBoundaries({x1: wOffset, y1: 0, x2: wOffset, y2: hOffset});
-        this.#addBoundaries({x1: wOffset, y1: hOffset, x2: 0, y2: hOffset});
-        this.#addBoundaries({x1: 0, y1: hOffset, x2: 0, y2: 0});
+        this.#addCollisionShapes({x1: 0, y1: 0, x2: wOffset, y2: 0});
+        this.#addCollisionShapes({x1: wOffset, y1: 0, x2: wOffset, y2: hOffset});
+        this.#addCollisionShapes({x1: wOffset, y1: hOffset, x2: 0, y2: hOffset});
+        this.#addCollisionShapes({x1: 0, y1: hOffset, x2: 0, y2: 0});
     }
 
     /**
      * @ignore
      */
-    _setWholeWorldMapBoundaries() {
+    _setWholeWorldMapCollisionShapes() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
         if (!w || !h) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map collision shapes.");
         }
-        this.#wholeWorldBoundaries.push([0, 0, w, 0]);
-        this.#wholeWorldBoundaries.push([w, 0, w, h]);
-        this.#wholeWorldBoundaries.push([w, h, 0, h]);
-        this.#wholeWorldBoundaries.push([0, h, 0, 0]);
+        this.#wholeWorldCollisionShapes.push([0, 0, w, 0]);
+        this.#wholeWorldCollisionShapes.push([w, 0, w, h]);
+        this.#wholeWorldCollisionShapes.push([w, h, 0, h]);
+        this.#wholeWorldCollisionShapes.push([0, h, 0, 0]);
     }
 
     /**
-     * Merge same boundaries
+     * Merge same collision shapes
      * !not used
      * @ignore
      * @deprecated
      */
-    _mergeBoundaries(isWholeMapBoundaries = false) {
-        const boundaries = isWholeMapBoundaries ? this.getWholeWorldBoundaries() : this.getBoundaries(),
-            boundariesSet = new Set(boundaries);
+    _mergeCollisionShapes(isWholeMapCollisionShapes = false) {
+        const collision_shapes = isWholeMapCollisionShapes ? this.getWholeWorldCollisionShapes() : this.getCollisionShapes(),
+            collisionShapesSet = new Set(collision_shapes);
 
-        for (const line of boundariesSet.values()) {
+        for (const line of collisionShapesSet.values()) {
             const lineX1 = line[0],
                 lineY1 = line[1],
                 lineX2 = line[2],
                 lineY2 = line[3];
-            for (const line2 of boundariesSet.values()) {
+            for (const line2 of collisionShapesSet.values()) {
                 const line2X1 = line2[0],
                     line2Y1 = line2[1],
                     line2X2 = line2[2],
@@ -4023,39 +4048,39 @@ class GameStageData {
                 if (lineX1 === line2X2 && lineY1 === line2Y2 &&
                     lineX2 === line2X1 && lineY2 === line2Y1) {
                     //remove double lines
-                    boundariesSet.delete(line);
-                    boundariesSet.delete(line2);
+                    collisionShapesSet.delete(line);
+                    collisionShapesSet.delete(line2);
                 }
                 if (lineX2 === line2X1 && lineY2 === line2Y1 && (lineX1 === line2X2 || lineY1 === line2Y2)) {
                     //merge lines
                     line2[0] = lineX1;
                     line2[1] = lineY1;
-                    boundariesSet.delete(line);
+                    collisionShapesSet.delete(line);
                 }
             }
         }
-        if (isWholeMapBoundaries) {
-            this.#boundaries = Array.from(boundariesSet);
+        if (isWholeMapCollisionShapes) {
+            this.#collision_shapes = Array.from(collisionShapesSet);
         } else {
-            this.#wholeWorldBoundaries = Array.from(boundariesSet);
+            this.#wholeWorldCollisionShapes = Array.from(collisionShapesSet);
         }
-        boundariesSet.clear();
+        collisionShapesSet.clear();
     }
 
     /**
      * @ignore
-     * @param {Array<Array<number>>} boundaries 
+     * @param {Array<Array<number>>} collision_shapes 
      */
-    _setWholeMapBoundaries(boundaries) {
-        this.#wholeWorldBoundaries.push(...boundaries);
+    _setWholeMapCollisionShapes(collision_shapes) {
+        this.#wholeWorldCollisionShapes.push(...collision_shapes);
     }
 
     /**
      * @deprecated
      * @ignore
      */
-    _enableMapBoundaries() {
-        this.#isWorldBoundariesEnabled = true;
+    _enableMapCollisionShapes() {
+        this.#isWorldCollisionShapesEnabled = true;
     }
 
     /**
@@ -4090,20 +4115,29 @@ class GameStageData {
     } 
 
     /**
-     * current screen boundaries, 
-     * this method is for backward capability with jsge@1.4.4
-     * recommended to use getRawBoundaries()
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getCollisionShapes()
      * @returns {Array<Array<number>>}
      */
     getBoundaries() {
-        const boundaries = this.#boundaries, 
+        return this.getCollisionShapes();
+    }
+    /**
+     * current screen collision shapes, 
+     * this method is for backward capability with jsge@1.4.4
+     * recommended to use getRawCollisionShapes()
+     * @returns {Array<Array<number>>}
+     */
+    getCollisionShapes() {
+        const collision_shapes = this.#collision_shapes, 
             len = this.#bPointer;
 
         let bTempArray = [],
             bArray = [];
         
         for (let i = 0; i < len; i++) {
-            const element = boundaries[i];
+            const element = collision_shapes[i];
             bTempArray.push(element);
             if (((i + 1) % 4) === 0) {
                 bArray.push(bTempArray);
@@ -4114,48 +4148,91 @@ class GameStageData {
     }
 
     /**
-     * current screen boundaries
-     * polygon boundaries from Tiled and Tiled boundaries layers are merged here
+     * current screen collision shapes
+     * polygon collision shapes from Tiled and Tiled collision shapes layers are merged here
      * each 4 cells, represent a line with coords x1,y1,x2,y2
      * @returns {Float32Array}
      */
+    getRawCollisionShapes() {
+        return this.#collision_shapes;
+    }
+    /**
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getRawCollisionShapes()
+     * @returns {Float32Array}
+     */
     getRawBoundaries() {
-        return this.#boundaries;
+        return this.getRawCollisionShapes();
     }
 
     /**
-     * ellipse boundaries from Tiled,
+     * ellipse collision shapes from Tiled,
      * stored as floatArray, 
      * each 4 cells, represent am ellipse with cords centerX, centerY, radiusX, radiusY
      * @returns {Float32Array}
      */
+    getEllipseCollisionShapes() {
+        return this.#ellipseCollisionShapes;
+    }
+    /**
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getEllipseCollisionShapes()
+     * @returns {Float32Array}
+     */
     getEllipseBoundaries() {
-        return this.#ellipseBoundaries;
+        return this.getEllipseCollisionShapes();
     }
 
     /**
-     * point boundaries from Tiled,
+     * point collision shapes from Tiled,
      * stored as floatArray, 
      * each 2 cells, represent a point with coords x1,y1
      * @returns {Float32Array}
      */
+    getPointCollisionShapes() {
+        return this.#pointCollisionShapes;
+    }
+    /**
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getPointCollisionShapes()
+     * @returns {Float32Array}
+     */
     getPointBoundaries() {
-        return this.#pointBoundaries;
+        return this.getPointCollisionShapes();
+    }
+    
+    getWholeWorldCollisionShapes() {
+        return this.#wholeWorldCollisionShapes;
     }
 
+    /**
+     * @deprecated
+     * getWholeWorldCollisionShapes()
+     */
     getWholeWorldBoundaries() {
-        return this.#wholeWorldBoundaries;
+        return this.getWholeWorldCollisionShapes();
     }
 
+    getDebugObjectCollisionShapes() {
+        return this.#debugObjectCollisionShapes;
+    }
+
+    /**
+     * @deprecated
+     * getDebugObjectCollisionShapes()
+     */
     getDebugObjectBoundaries() {
-        return this.#debugObjectBoundaries;
+        return this.getDebugObjectCollisionShapes();
     }
 
     /**
      * @deprecated
      */
     get isWorldBoundariesEnabled() {
-        return this.#isWorldBoundariesEnabled;
+        return this.#isWorldCollisionShapesEnabled;
     }
     /**
      * Current canvas dimensions
@@ -4197,7 +4274,9 @@ class GameStageData {
     }
 
     /**
-     * Tiled polygon and Tiled layer boundaries length
+     * Tiled polygon and Tiled layer collision shapes length
+     * @deprecated
+     * Use collisionShapesLen()
      * @returns {number}
      */
     get boundariesLen() {
@@ -4205,7 +4284,15 @@ class GameStageData {
     }
 
     /**
-     * Tiled ellipse boundaries length
+     * Tiled polygon and Tiled layer collision shapes length
+     * @returns {number}
+     */
+    get collisionShapesLen() {
+        return this.#bPointer;
+    }
+
+    /**
+     * Tiled ellipse collision shapes length
      * @returns {number}
      */
     get ellipseBLen() {
@@ -4213,7 +4300,7 @@ class GameStageData {
     }
 
     /**
-     * Tiled point length
+     * Tiled point collision shapes length
      * @returns {number}
      */
     get pointBLen() {
@@ -4321,7 +4408,7 @@ class GameStageData {
     cleanUp() {
         this.#renderObjects = [];
         this.#pendingRenderObjects = [];
-        this._clearBoundaries();
+        this._clearCollisionShapes();
     }
 }
 
@@ -4634,7 +4721,7 @@ class IRender {
     /**
      * @type {boolean}
      */
-    #isBoundariesPrecalculations = false;
+    #isCollisionShapesPrecalculations = false;
 
     /**
      * @type {Array<function():Promise<void>>}
@@ -4645,15 +4732,20 @@ class IRender {
      */
     #emitter = new EventTarget();
     constructor(systemSettings, iLoader, canvasContainer) {
-        
+        const preserveDrawingBuffer = systemSettings.gameOptions.debug.preserveDrawingBuffer;
+        let contextOpt = { stencil: true };
+        if (preserveDrawingBuffer === true) {
+            contextOpt.preserveDrawingBuffer = true;
+        }
         this.#canvas = document.createElement("canvas");
         canvasContainer.appendChild(this.#canvas);
-        this.#drawContext = this.#canvas.getContext("webgl", {stencil: true});
+        
+        this.#drawContext = this.#canvas.getContext("webgl", contextOpt);
 
         this.#systemSettingsReference = systemSettings;
         this.#loaderReference = iLoader;
 
-        this.#isBoundariesPrecalculations = this.systemSettings.gameOptions.render.boundaries.wholeWorldPrecalculations;
+        this.#isCollisionShapesPrecalculations = this.systemSettings.gameOptions.render.collisionShapes.wholeWorldPrecalculations;
 
         this.#webGlEngine = new _WebGl_WebGlEngine_js__WEBPACK_IMPORTED_MODULE_2__.WebGlEngine(this.#drawContext, this.#systemSettingsReference.gameOptions, this.iLoader);
         
@@ -4810,10 +4902,10 @@ class IRender {
         return Promise.resolve();
     };
 
-    _createBoundariesPrecalculations() {
+    _createCollisionShapesPrecalculations() {
         //const promises = [];
         //for (const layer of this.#renderLayers) {
-        //    promises.push(this.#layerBoundariesPrecalculation(layer).catch((err) => {
+        //    promises.push(this.#layerCollisionShapesPrecalculation(layer).catch((err) => {
         //        Exception(ERROR_CODES.UNHANDLED_PREPARE_EXCEPTION, err);
         //    }));
         //}
@@ -4862,12 +4954,12 @@ class IRender {
     #prepareViews() {
         return new Promise((resolve, reject) => {
             let viewPromises = [];
-            const isBoundariesPrecalculations = this.#isBoundariesPrecalculations;
+            const isCollisionShapesPrecalculations = this.#isCollisionShapesPrecalculations;
             viewPromises.push(this.initiateContext(this.#currentGameStageData));
-            if (isBoundariesPrecalculations) {
-                console.warn("isBoundariesPrecalculations() is turned off");
+            if (isCollisionShapesPrecalculations) {
+                console.warn("isCollisionShapesPrecalculations() is turned off");
                 //for (const view of this.#views.values()) {
-                //viewPromises.push(this.#iRender._createBoundariesPrecalculations());
+                //viewPromises.push(this.#iRender._createCollisionShapesPrecalculations());
                 //}
             }
             Promise.allSettled(viewPromises).then((drawingResults) => {
@@ -5421,7 +5513,7 @@ class RenderLoop {
             isCyclesTimeCalcCheckCurrent = this.#systemSettings.gameOptions.render.cyclesTimeCalc.check === _constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT;
             
         this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.EVENTS.SYSTEM.RENDER.START);
-        this.#stageData._clearBoundaries();
+        this.#stageData._clearCollisionShapes();
         this.#clearContext();
         
         this.render().then(() => {
@@ -5485,8 +5577,8 @@ class RenderLoop {
                     .catch((err) => Promise.reject(err));
                 renderObjectsPromises[i] = promise;
             }
-            if (this.#systemSettings.gameOptions.debug.boundaries.drawLayerBoundaries) {
-                renderObjectsPromises.push(this.#drawBoundariesWebGl()
+            if (this.#systemSettings.gameOptions.debug.collisionShapes.drawLayerCollisionShapes) {
+                renderObjectsPromises.push(this.#drawCollisionShapesWebGl()
                     .catch((err) => Promise.reject(err))); 
             }
         }
@@ -5558,22 +5650,22 @@ class RenderLoop {
      * 
      * @returns {Promise<void>}
      */
-    #drawBoundariesWebGl() {
+    #drawCollisionShapesWebGl() {
         return new Promise((resolve) => {
-            const b = this.stageData.getRawBoundaries(),
-                eB = this.stageData.getEllipseBoundaries(),
-                pB = this.stageData.getPointBoundaries(),
-                bDebug = this.stageData.getDebugObjectBoundaries(),
-                len = this.stageData.boundariesLen,
+            const b = this.stageData.getRawCollisionShapes(),
+                eB = this.stageData.getEllipseCollisionShapes(),
+                pB = this.stageData.getPointCollisionShapes(),
+                bDebug = this.stageData.getDebugObjectCollisionShapes(),
+                len = this.stageData.collisionShapesLen,
                 eLen = this.stageData.ellipseBLen,
                 pLen = this.stageData.pointBLen,
-                bDebugLen = this.#systemSettings.gameOptions.debug.boundaries.drawObjectBoundaries ? bDebug.length : 0;
+                bDebugLen = this.#systemSettings.gameOptions.debug.collisionShapes.drawObjectCollisionShapes ? bDebug.length : 0;
         
             if (len)
-                this.#webGlEngine._drawLines(b, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                this.#webGlEngine._drawLines(b, this.#systemSettings.gameOptions.debug.collisionShapes.color, this.#systemSettings.gameOptions.debug.collisionShapes.width);
             this.renderLoopDebug.incrementDrawCallsCounter();
             if (eLen) {
-                //draw ellipse boundaries
+                //draw ellipse collision shapes
                 for (let i = 0; i < eLen; i+=4) {
                     const x = eB[i],
                         y = eB[i+1],
@@ -5582,22 +5674,22 @@ class RenderLoop {
                         vertices = _index_js__WEBPACK_IMPORTED_MODULE_14__.utils.calculateEllipseVertices(x, y, radX, radY);
                     this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
                     this.renderLoopDebug.incrementDrawCallsCounter();
-                    //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.collisionShapes.color, this.systemSettings.gameOptions.debug.collisionShapes.width);
                 }
             }
             if (pLen) {
-                //draw point boundaries
+                //draw point collisionShapes
                 for (let i = 0; i < pLen; i+=2) {
                     const x = pB[i],
                         y = pB[i+1],
                         vertices = [x,y, x+1,y+1];
 
-                    this.#webGlEngine._drawLines(vertices, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    this.#webGlEngine._drawLines(vertices, this.#systemSettings.gameOptions.debug.collisionShapes.color, this.#systemSettings.gameOptions.debug.collisionShapes.width);
                     this.renderLoopDebug.incrementDrawCallsCounter();
                 }
             }
             if (bDebugLen > 0) {
-                this.#webGlEngine._drawLines(bDebug, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                this.#webGlEngine._drawLines(bDebug, this.#systemSettings.gameOptions.debug.collisionShapes.color, this.#systemSettings.gameOptions.debug.collisionShapes.width);
             }
             resolve();
         });
@@ -5609,67 +5701,9 @@ class RenderLoop {
      * @param {DrawTiledLayer} renderLayer 
      * @returns {Promise<void>}
      */
-    #layerBoundariesPrecalculation(renderLayer) {
+    #layerCollisionShapesPrecalculation(renderLayer) {
         return new Promise((resolve, reject) => {
-            /*
-            if (renderLayer.setBoundaries) {
-                const tilemap = this.#iLoader.getTileMap(renderLayer.tileMapKey),
-                    tilesets = tilemap.tilesets,
-                    layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
-                    { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                    tilewidth = dtwidth,
-                    tileheight = dtheight,
-                    [ settingsWorldWidth, settingsWorldHeight ] = this.stageData.worldDimensions;
-                
-                let boundaries = [];
 
-                if (!layerData) {
-                    Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
-                    reject();
-                }
-                
-                for (let i = 0; i < tilesets.length; i++) {
-                    const layerCols = layerData.width,
-                        layerRows = layerData.height,
-                        worldW = tilewidth * layerCols,
-                        worldH = tileheight * layerRows;
-
-                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                        Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                        this.stageData._setWorldDimensions(worldW, worldH);
-                    }
-                    
-                    if (renderLayer.setBoundaries && this.#systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
-                        this.stageData._setWholeWorldMapBoundaries();
-                    }
-
-                    //calculate boundaries
-                    let mapIndex = 0;
-
-                    for (let row = 0; row < layerRows; row++) {
-                        for (let col = 0; col < layerCols; col++) {
-                            let tile = layerData.data[mapIndex],
-                                mapPosX = col * tilewidth,
-                                mapPosY = row * tileheight;
-                            if (tile !== 0) {
-                                tile -= 1;
-                                
-                                boundaries.push([mapPosX, mapPosY, mapPosX + tilewidth, mapPosY]);
-                                boundaries.push([mapPosX + tilewidth, mapPosY, mapPosX + tilewidth, mapPosY + tileheight]);
-                                boundaries.push([mapPosX + tilewidth, mapPosY + tileheight, mapPosX, mapPosY + tileheight]);
-                                boundaries.push([mapPosX, mapPosY + tileheight, mapPosX, mapPosY ]);
-    
-                            }
-                            mapIndex++;
-                        }
-                    }
-                }
-                this.stageData._setWholeMapBoundaries(boundaries);
-                this.stageData._mergeBoundaries(true);
-                resolve();
-            } else {
-                resolve();
-            }*/
         });
     }
 
@@ -5810,11 +5844,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
-/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../design/LoadingStage.js */ "./src/design/LoadingStage.js");
-
+/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../design/LoadingStage.js */ "./src/design/LoadingStage.js");
 
 
 
@@ -5853,7 +5885,7 @@ class System {
             document.body.appendChild(canvasContainer);
         }
 
-        this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
+        this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_2__.ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
 
         this.#addPreloadStage();
     }
@@ -5890,7 +5922,7 @@ class System {
     }
 
     #addPreloadStage() {
-        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__.LoadingStage);
+        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_4__.LoadingStage);
 
         this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
         this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
@@ -5995,7 +6027,7 @@ class TiledLayerTempStorage {
     /**
      * @type {Int32Array}
      */
-    #boundariesTempIndexes;
+    #collisionShapesTempIndexes;
     /**
      * @type {number}
      */
@@ -6024,8 +6056,8 @@ class TiledLayerTempStorage {
         return this.#textures;
     }
 
-    get _bTempIndexes() {
-        return this.#boundariesTempIndexes;
+    get _cTempIndexes() {
+        return this.#collisionShapesTempIndexes;
     }
 
     get bufferSize() {
@@ -6042,7 +6074,7 @@ class TiledLayerTempStorage {
 
         this.#vectors = new Array(this.#bufferSize);
         this.#textures = new Array(this.#bufferSize);
-        this.#boundariesTempIndexes = new Int32Array(this.#cells * 4);
+        this.#collisionShapesTempIndexes = new Int32Array(this.#cells * 4);
     }
 }
 
@@ -6396,7 +6428,7 @@ class WebGlEngine {
             const tileLayers = stageData.getObjectsByInstance(_2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer),
                 [ settingsWorldWidth, settingsWorldHeight ] = stageData.worldDimensions;
 
-            // count max possible boundaries sizes
+            // count max possible collisionShapes sizes
             let maxBSize = 0,
                 maxESize = 0,
                 maxPSize = 0,
@@ -6404,7 +6436,7 @@ class WebGlEngine {
                 maxWorldH = 0;
 
             tileLayers.forEach(tiledLayer => {
-                const setBoundaries = tiledLayer.setBoundaries,
+                const setCollisionShapes = tiledLayer.setCollisionShapes,
                     layerData = tiledLayer.layerData,
                     tilemap = tiledLayer.tilemap,
                     tilesets = tiledLayer.tilesets,
@@ -6418,9 +6450,9 @@ class WebGlEngine {
                         worldW = tilewidth * layerCols,
                         worldH = tileheight * layerRows;
                         
-                    const polygonBondMax = layerData.polygonBoundariesLen,
-                        ellipseBondMax = layerData.ellipseBoundariesLen,
-                        pointBondMax = layerData.pointBoundariesLen; 
+                    const polygonBondMax = layerData.polygonCollisionShapesLen,
+                        ellipseBondMax = layerData.ellipseCollisionShapesLen,
+                        pointBondMax = layerData.pointCollisionShapesLen; 
     
                     if (maxWorldW < worldW) {
                         maxWorldW = worldW;
@@ -6429,12 +6461,12 @@ class WebGlEngine {
                         maxWorldH = worldH;
                     }
                     
-                    if (setBoundaries) {
+                    if (setCollisionShapes) {
                         maxBSize += polygonBondMax;
                         maxESize += ellipseBondMax;
                         maxPSize += pointBondMax;
     
-                        // boundaries cleanups every draw cycles, we need to set world boundaries again
+                        // collisionShapes cleanups every draw cycles, we need to set world collisionShapes again
                         
                     }
                 }
@@ -6445,11 +6477,11 @@ class WebGlEngine {
                 stageData._setWorldDimensions(maxWorldW, maxWorldH);
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
                 maxBSize+=16; //4 sides * 4 cords x1,y1,x2,y,2
             }
-            stageData._setMaxBoundariesSize(maxBSize, maxESize, maxPSize);
-            stageData._initiateBoundariesData();
+            stageData._setMaxCollisionShapesSize(maxBSize, maxESize, maxPSize);
+            stageData._initiateCollisionShapesData();
 
             resolve(true);
         });
@@ -6822,7 +6854,7 @@ class WebGlEngine {
             a_texCoord: texCoordLocation,
             u_image: u_imageLocation } = vars;
 
-        const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
+        const {width:boxWidth, height:boxHeight} = renderObject.collisionShapes,
             image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -6909,9 +6941,9 @@ class WebGlEngine {
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset;
 
-        if (renderObject.vertices && this.#gameOptions.debug.boundaries.drawObjectBoundaries) {
-            pageData._enableDebugObjectBoundaries();
-            pageData._addImageDebugBoundaries(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
+        if (renderObject.vertices && this.#gameOptions.debug.collisionShapes.drawObjectCollisionShapes) {
+            pageData._enableDebugObjectCollisionShapes();
+            pageData._addImageDebugCollisionShapes(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
         }
         
         const {
@@ -7346,7 +7378,7 @@ class WebGlEngine {
             y = renderObject.y - yOffset,
             rotation = renderObject.rotation || 0,
             vertices = renderObject.vertices,
-            color =  this.#gameOptions.debug.boundaries.boundariesColor;
+            color =  this.#gameOptions.debug.collisionShapes.color;
         const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
@@ -7377,7 +7409,7 @@ class WebGlEngine {
 
         const polygonVerticesNum = triangles.length;
         if (polygonVerticesNum % 3 !== 0) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "polygon boundaries vertices are not correct, skip drawing");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "polygon collision shapes vertices are not correct, skip drawing");
             return;
         }
         this.#bindPolygon(triangles);
@@ -7416,7 +7448,7 @@ class WebGlEngine {
             fillStyle = renderObject.bgColor,
             fade_min = renderObject.fade_min,
             fadeLen = renderObject.radius,
-            lineWidth = this.#gameOptions.debug.boundaries.boundariesWidth;
+            lineWidth = this.#gameOptions.debug.collisionShapes.width;
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -7553,8 +7585,8 @@ class WebGlEngine {
                 tileheight = dtheight,
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0, 0] : pageData.worldOffset,
-                boundariesCalculations = this.#gameOptions.render.boundaries.realtimeCalculations,
-                setBoundaries = renderLayer.setBoundaries,
+                collisionShapesCalculations = this.#gameOptions.render.collisionShapes.realtimeCalculations,
+                setCollisionShapes = renderLayer.setCollisionShapes,
                 tileImagesData = [];
 
             if (!layerData) {
@@ -7562,8 +7594,8 @@ class WebGlEngine {
                 reject();
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                pageData._setMapBoundaries();
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
+                pageData._setMapCollisionShapes();
             }
             
             for (let i = 0; i < tilesets.length; i++) {
@@ -7601,8 +7633,8 @@ class WebGlEngine {
                     hasAnimations = tilesetData._hasAnimations;
                     //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
-                const hasBoundaries = tilesetData._hasBoundaries,
-                    tilesetBoundaries = tilesetData._boundaries,
+                const hasCollisionShapes = tilesetData._hasCollisionShapes,
+                    tilesetCollisionShapes = tilesetData._collisionShapes,
                     layerTilesetData = tilesets[i]._temp;
 
                 if (layerTilesetData.cells !== screenCells) {
@@ -7616,7 +7648,7 @@ class WebGlEngine {
                 //t.fill(0);
                 v = [];
                 t = [];
-                let boundariesRowsIndexes = layerTilesetData._bTempIndexes;
+                let collisionShapesRowsIndexes = layerTilesetData._cTempIndexes;
                 const fullRowCellsNum = screenCols * 4;
                 
                 let mapIndex = skipRowsTop * layerCols;
@@ -7716,14 +7748,14 @@ class WebGlEngine {
 
                             filledSize++;
                         
-                            if (setBoundaries) {
-                                // if boundary is set in tilesetData
-                                let isBoundaryPreset = false;
-                                if (hasBoundaries && tilesetBoundaries.size > 0) {
-                                    const tilesetBoundary = tilesetBoundaries.get(tile);
-                                    if (tilesetBoundary) {
-                                        isBoundaryPreset = true;
-                                        const objectGroup = tilesetBoundary,
+                            if (setCollisionShapes) {
+                                // if collision shape is set in tilesetData
+                                let isCollisionShapesPreset = false;
+                                if (hasCollisionShapes && tilesetCollisionShapes.size > 0) {
+                                    const tilesetCollisionShape = tilesetCollisionShapes.get(tile);
+                                    if (tilesetCollisionShape) {
+                                        isCollisionShapesPreset = true;
+                                        const objectGroup = tilesetCollisionShape,
                                             objects = objectGroup.objects;
                                             
                                         objects.forEach((object) => {
@@ -7738,21 +7770,21 @@ class WebGlEngine {
                                                     (point, idx) => {
                                                         const next = object.polygon[idx + 1];
                                                         if (next) {
-                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
+                                                            pageData._addCollisionShapeLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
                                                         } else {
                                                             // last point -> link to the first
                                                             const first = object.polygon[0];
-                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
+                                                            pageData._addCollisionShapeLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
                                                         }
                                                     });
                                             } else if (object.point) {
                                                 // x/y coordinate
-                                                pageData._addPointBoundary(baseX, baseY);
+                                                pageData._addPointCollisionShape(baseX, baseY);
                                             } else if (object.ellipse) {
                                                 const radX = object.width / 2,
                                                     radY = object.height / 2;
                                                     
-                                                pageData._addEllipseBoundary(baseX + radX, baseY + radY, radX, radY);
+                                                pageData._addEllipseCollisionShape(baseX + radX, baseY + radY, radX, radY);
                                             } else {
                                                 // object is rect
                                                 const width = object.width,
@@ -7760,25 +7792,25 @@ class WebGlEngine {
                                                     x2 = width + baseX,
                                                     y2 = height + baseY;
 
-                                                //boundaries.push([baseX, baseY, x2, baseY]);
-                                                pageData._addBoundaryLine(baseX, baseY, x2, baseY);
+                                                //collisionShapes.push([baseX, baseY, x2, baseY]);
+                                                pageData._addCollisionShapeLine(baseX, baseY, x2, baseY);
 
-                                                //boundaries.push([x2, baseY, x2, y2]);
-                                                pageData._addBoundaryLine(x2, baseY, x2, y2);
+                                                //collisionShapes.push([x2, baseY, x2, y2]);
+                                                pageData._addCollisionShapeLine(x2, baseY, x2, y2);
 
-                                                //boundaries.push([x2, y2, baseX, y2]);
-                                                pageData._addBoundaryLine(x2, y2, baseX, y2);
+                                                //collisionShapes.push([x2, y2, baseX, y2]);
+                                                pageData._addCollisionShapeLine(x2, y2, baseX, y2);
 
-                                                //boundaries.push([baseX, y2, baseX, baseY]);
-                                                pageData._addBoundaryLine(baseX, y2, baseX, baseY);
+                                                //collisionShapes.push([baseX, y2, baseX, baseY]);
+                                                pageData._addCollisionShapeLine(baseX, y2, baseX, baseY);
                                             }
                                         });
                                     }
 
-                                // extract rect boundary for the whole tile
+                                // extract rect collsiion shape for the whole tile
                                 }
-                                if (isBoundaryPreset === false) {
-                                    const boundaries = pageData.getRawBoundaries();
+                                if (isCollisionShapesPreset === false) {
+                                    const collisionShapes = pageData.getRawCollisionShapes();
 
                                     let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
                                         bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
@@ -7788,14 +7820,14 @@ class WebGlEngine {
                                     // top cell7
                                     if (row !== 0) {
                                         const topCellFirstIndex =  (row - 1) * fullRowCellsNum + (col * 4),
-                                            bottomTopLeftFirstIndex = boundariesRowsIndexes[topCellFirstIndex + INDEX_BOTTOM_LINE];
+                                            bottomTopLeftFirstIndex = collisionShapesRowsIndexes[topCellFirstIndex + INDEX_BOTTOM_LINE];
                                         if (bottomTopLeftFirstIndex) {
                                             //remove double lines from top
-                                            const bottomTopCellX1 = boundaries[bottomTopLeftFirstIndex];
+                                            const bottomTopCellX1 = collisionShapes[bottomTopLeftFirstIndex];
                                             if (bottomTopCellX1) {
-                                                const bottomTopCellY1 = boundaries[bottomTopLeftFirstIndex + INDEX_Y1],
-                                                    bottomTopCellX2 = boundaries[bottomTopLeftFirstIndex + INDEX_X2],
-                                                    bottomTopCellY2 = boundaries[bottomTopLeftFirstIndex + INDEX_Y2],
+                                                const bottomTopCellY1 = collisionShapes[bottomTopLeftFirstIndex + INDEX_Y1],
+                                                    bottomTopCellX2 = collisionShapes[bottomTopLeftFirstIndex + INDEX_X2],
+                                                    bottomTopCellY2 = collisionShapes[bottomTopLeftFirstIndex + INDEX_Y2],
                                                     topX1 = topLine[INDEX_X1],
                                                     topY1 = topLine[INDEX_Y1],
                                                     topX2 = topLine[INDEX_X2],
@@ -7803,35 +7835,35 @@ class WebGlEngine {
                                                 
                                                 if (topX1 === bottomTopCellX2 && topY1 === bottomTopCellY2 &&
                                                     topX2 === bottomTopCellX1 && topY2 === bottomTopCellY1) {
-                                                    pageData._removeBoundaryLine(bottomTopLeftFirstIndex);
+                                                    pageData._removeCollisionShapeLine(bottomTopLeftFirstIndex);
                                                     topLine = undefined;
                                                 }
                                             }
 
                                             // merge line from top right
-                                            const rightTopRightFirstIndex = boundariesRowsIndexes[ topCellFirstIndex + INDEX_RIGHT_LINE],
-                                                rightTopCellX1 = boundaries[rightTopRightFirstIndex];
+                                            const rightTopRightFirstIndex = collisionShapesRowsIndexes[ topCellFirstIndex + INDEX_RIGHT_LINE],
+                                                rightTopCellX1 = collisionShapes[rightTopRightFirstIndex];
                                             if (rightTopCellX1) {
-                                                const rightTopCellY1 = boundaries[rightTopRightFirstIndex + INDEX_Y1],
-                                                    rightTopCellX2 = boundaries[rightTopRightFirstIndex + INDEX_X2],
-                                                    rightX1 = boundaries[rightTopRightFirstIndex + INDEX_X1],
-                                                    rightX2 = boundaries[rightTopRightFirstIndex + INDEX_X2];
+                                                const rightTopCellY1 = collisionShapes[rightTopRightFirstIndex + INDEX_Y1],
+                                                    rightTopCellX2 = collisionShapes[rightTopRightFirstIndex + INDEX_X2],
+                                                    rightX1 = collisionShapes[rightTopRightFirstIndex + INDEX_X1],
+                                                    rightX2 = collisionShapes[rightTopRightFirstIndex + INDEX_X2];
                                                 if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
-                                                    pageData._removeBoundaryLine(rightTopRightFirstIndex);
+                                                    pageData._removeCollisionShapeLine(rightTopRightFirstIndex);
                                                     rightLine[INDEX_X1] = rightTopCellX1;
                                                     rightLine[INDEX_Y1] = rightTopCellY1;
                                                 }
                                             }
                                             // merge line from top left
-                                            const leftTopRightFirstIndex =  boundariesRowsIndexes[topCellFirstIndex + INDEX_LEFT_LINE],
-                                                leftTopCellX1 = boundaries[leftTopRightFirstIndex];
+                                            const leftTopRightFirstIndex =  collisionShapesRowsIndexes[topCellFirstIndex + INDEX_LEFT_LINE],
+                                                leftTopCellX1 = collisionShapes[leftTopRightFirstIndex];
                                             if (leftTopCellX1) {
-                                                const leftTopCellX2 = boundaries[leftTopRightFirstIndex + INDEX_X2],
-                                                    leftTopCellY2 = boundaries[leftTopRightFirstIndex + INDEX_Y2],
+                                                const leftTopCellX2 = collisionShapes[leftTopRightFirstIndex + INDEX_X2],
+                                                    leftTopCellY2 = collisionShapes[leftTopRightFirstIndex + INDEX_Y2],
                                                     leftX1 = leftLine[INDEX_X1],
                                                     leftX2 = leftLine[INDEX_X2];
                                                 if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
-                                                    pageData._removeBoundaryLine(leftTopRightFirstIndex);
+                                                    pageData._removeCollisionShapeLine(leftTopRightFirstIndex);
                                                     leftLine[INDEX_X2] = leftTopCellX2;
                                                     leftLine[INDEX_Y2] = leftTopCellY2;
                                                 }
@@ -7842,16 +7874,16 @@ class WebGlEngine {
                                     if (col !== 0) {
                                         
                                         const leftCell = row * fullRowCellsNum + ((col - 1) * 4),
-                                            topLeftFirstCellIndex = boundariesRowsIndexes[leftCell];
+                                            topLeftFirstCellIndex = collisionShapesRowsIndexes[leftCell];
                                         if (topLeftFirstCellIndex) {
 
                                             //remove double lines from left
-                                            const rightLeftCellIndex = boundariesRowsIndexes[leftCell + INDEX_RIGHT_LINE],
-                                                rightLeftX1 = boundaries[rightLeftCellIndex],
+                                            const rightLeftCellIndex = collisionShapesRowsIndexes[leftCell + INDEX_RIGHT_LINE],
+                                                rightLeftX1 = collisionShapes[rightLeftCellIndex],
                                                 rightLeftCellX1 = rightLeftX1,
-                                                rightLeftCellY1 = boundaries[rightLeftCellIndex + INDEX_Y1],
-                                                rightLeftCellX2 = boundaries[rightLeftCellIndex + INDEX_X2],
-                                                rightLeftCellY2 = boundaries[rightLeftCellIndex + INDEX_Y2],
+                                                rightLeftCellY1 = collisionShapes[rightLeftCellIndex + INDEX_Y1],
+                                                rightLeftCellX2 = collisionShapes[rightLeftCellIndex + INDEX_X2],
+                                                rightLeftCellY2 = collisionShapes[rightLeftCellIndex + INDEX_Y2],
                                                 leftX1 = leftLine[INDEX_X1],
                                                 leftY1 = leftLine[INDEX_Y1],
                                                 leftX2 = leftLine[INDEX_X2],
@@ -7859,35 +7891,35 @@ class WebGlEngine {
 
                                             if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
                                                 leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
-                                                pageData._removeBoundaryLine(rightLeftCellIndex);
+                                                pageData._removeCollisionShapeLine(rightLeftCellIndex);
                                                 leftLine = undefined;
                                             }
 
                                             //merge long lines from left top
-                                            const topLeftCellX1 = boundaries[topLeftFirstCellIndex];
+                                            const topLeftCellX1 = collisionShapes[topLeftFirstCellIndex];
                                             if (topLeftCellX1 && topLine) {
-                                                const topLeftCellY1 = boundaries[topLeftFirstCellIndex + INDEX_Y1],
-                                                    topLeftCellY2 = boundaries[topLeftFirstCellIndex + INDEX_Y2],
+                                                const topLeftCellY1 = collisionShapes[topLeftFirstCellIndex + INDEX_Y1],
+                                                    topLeftCellY2 = collisionShapes[topLeftFirstCellIndex + INDEX_Y2],
                                                     topY1 = topLine[INDEX_Y1],
                                                     topY2 = topLine[INDEX_Y2];
                                                 if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
-                                                    pageData._removeBoundaryLine(topLeftFirstCellIndex);
+                                                    pageData._removeCollisionShapeLine(topLeftFirstCellIndex);
                                                     topLine[INDEX_X1] = topLeftCellX1;
                                                     topLine[INDEX_Y1] = topLeftCellY1;
                                                 }
                                             }
 
                                             // merge long lines from left bottom
-                                            const bottomLeftFirstCellIndex = boundariesRowsIndexes[leftCell + INDEX_BOTTOM_LINE],
-                                                bottomLeftCellX1 = boundaries[bottomLeftFirstCellIndex];
+                                            const bottomLeftFirstCellIndex = collisionShapesRowsIndexes[leftCell + INDEX_BOTTOM_LINE],
+                                                bottomLeftCellX1 = collisionShapes[bottomLeftFirstCellIndex];
                                             if (bottomLeftCellX1) {
-                                                const bottomLeftCellY1 = boundaries[bottomLeftFirstCellIndex + INDEX_Y1],
-                                                    bottomLeftCellX2 = boundaries[bottomLeftFirstCellIndex + INDEX_X2],
-                                                    bottomLeftCellY2 = boundaries[bottomLeftFirstCellIndex + INDEX_Y2],
+                                                const bottomLeftCellY1 = collisionShapes[bottomLeftFirstCellIndex + INDEX_Y1],
+                                                    bottomLeftCellX2 = collisionShapes[bottomLeftFirstCellIndex + INDEX_X2],
+                                                    bottomLeftCellY2 = collisionShapes[bottomLeftFirstCellIndex + INDEX_Y2],
                                                     bottomY1 = bottomLine[INDEX_Y1],
                                                     bottomY2 = bottomLine[INDEX_Y2];
                                                 if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
-                                                    pageData._removeBoundaryLine(bottomLeftFirstCellIndex);
+                                                    pageData._removeCollisionShapeLine(bottomLeftFirstCellIndex);
                                                     //opposite direction
                                                     bottomLine[INDEX_X2] = bottomLeftCellX2;
                                                     bottomLine[INDEX_Y2] = bottomLeftCellY2;
@@ -7898,16 +7930,16 @@ class WebGlEngine {
                                     }
                                     const currentCellIndex = row * fullRowCellsNum + (col * 4);
                                     if (topLine) {
-                                        pageData._addBoundaryLine(topLine[0], topLine[1], topLine[2], topLine[3]);
-                                        boundariesRowsIndexes[currentCellIndex + INDEX_TOP_LINE] = pageData.boundariesLen - 4;
+                                        pageData._addCollisionShapeLine(topLine[0], topLine[1], topLine[2], topLine[3]);
+                                        collisionShapesRowsIndexes[currentCellIndex + INDEX_TOP_LINE] = pageData.collisionShapesLen - 4;
                                     }
-                                    pageData._addBoundaryLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
-                                    boundariesRowsIndexes[currentCellIndex + INDEX_RIGHT_LINE] = pageData.boundariesLen - 4;
-                                    pageData._addBoundaryLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
-                                    boundariesRowsIndexes[currentCellIndex + INDEX_BOTTOM_LINE] = pageData.boundariesLen - 4;
+                                    pageData._addCollisionShapeLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
+                                    collisionShapesRowsIndexes[currentCellIndex + INDEX_RIGHT_LINE] = pageData.collisionShapesLen - 4;
+                                    pageData._addCollisionShapeLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
+                                    collisionShapesRowsIndexes[currentCellIndex + INDEX_BOTTOM_LINE] = pageData.collisionShapesLen - 4;
                                     if (leftLine) {
-                                        pageData._addBoundaryLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
-                                        boundariesRowsIndexes[currentCellIndex + INDEX_LEFT_LINE] = pageData.boundariesLen - 4;
+                                        pageData._addCollisionShapeLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
+                                        collisionShapesRowsIndexes[currentCellIndex + INDEX_LEFT_LINE] = pageData.collisionShapesLen - 4;
                                     }
                                     
                                 }
@@ -7917,11 +7949,11 @@ class WebGlEngine {
                     }
                     mapIndex += skipColsRight;
                 }
-                //console.log(boundariesRowsIndexes);
+                //console.log(collisionShapesRowsIndexes);
                 //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tilesetData.name, renderLayer._maskId);
                 tileImagesData.push([v, t, tilesetData.name, atlasImage]);
                 //cleanup
-                boundariesRowsIndexes.fill(0);
+                collisionShapesRowsIndexes.fill(0);
             }
             
             resolve(tileImagesData);
@@ -7943,8 +7975,8 @@ class WebGlEngine {
                 reject();
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                pageData._setMapBoundaries();
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
+                pageData._setMapCollisionShapes();
             }
 
             for (let i = 0; i <= tilesets.length - 1; i++) {
@@ -8084,7 +8116,7 @@ class WebGlEngine {
                 tileheight = dtheight,
                 offsetDataItemsFullNum = layerData.data.length,
                 offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
-                setBoundaries = false, //renderLayer.setBoundaries,
+                setCollisionShapes = false, //renderLayer.setCollisionShapes,
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions,
                 //[ canvasW, canvasH ] = this.stageData.drawDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset;
@@ -8098,8 +8130,8 @@ class WebGlEngine {
                 reject();
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                pageData._setMapBoundaries();
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
+                pageData._setMapCollisionShapes();
             }
             
             for (let i = 0; i < tilesets.length; i++) {
@@ -8132,7 +8164,7 @@ class WebGlEngine {
                     cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
                     cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0;
                 
-                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
+                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setCollisionShapes);
                 
                 const verticesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum) : [],
                     texturesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum) : [];
@@ -8364,21 +8396,32 @@ class SystemSettings {
                 check: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES,
                 averageFPStime: 10000
             },
-            boundaries: {
+            boundaries: { // depricated from 1.5.9
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,
                 wholeWorldPrecalculations: false
             },
-            
+            collisionShapes: {
+                mapCollisionShapesEnabled: true,
+                realtimeCalculations: true,
+                wholeWorldPrecalculations: false
+            },
         },
         debug: {
+            preserveDrawingBuffer: false, // testing
             checkWebGlErrors: false,
             debugMobileTouch: false,
-            boundaries: {
+            boundaries: { // depricated from 1.5.9
                 drawLayerBoundaries: false,
                 drawObjectBoundaries: false,
                 boundariesColor: "rgba(224, 12, 21, 0.6)",
                 boundariesWidth: 2
+            },
+            collisionShapes: {
+                drawLayerCollisionShapes: false,
+                drawObjectCollisionShapes: false,
+                color: "rgba(224, 12, 21, 0.6)",
+                width: 2
             },
             delayBetweenObjectRender: false, // 1 sec delay for debug proposes
         }

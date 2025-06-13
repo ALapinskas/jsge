@@ -126,7 +126,7 @@ export class MapPage extends GameStage {
             newCoordX = person.x + movementForce * Math.cos(person.rotation - Math.PI/2),
             newCoordY = person.y + movementForce * Math.sin(person.rotation - Math.PI/2);
           
-        if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
+        if (!this.isCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
             if (this.speed > 0) {
@@ -163,7 +163,7 @@ export class MapPage extends GameStage {
     };
 
     #mouseMoveAction = (e) => {
-        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
 
         if (isNav1Traversed) {
             this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -177,7 +177,7 @@ export class MapPage extends GameStage {
     }
 
     #mouseClickAction = (e) => {
-        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
     
         if (isNav1Click) {
             this.iSystem.stopGameStage("racing");

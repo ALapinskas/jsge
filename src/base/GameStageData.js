@@ -11,7 +11,7 @@ import { DrawRectObject } from "./2d/DrawRectObject.js";
 import { DrawTextObject } from "./2d/DrawTextObject.js";
 /**
  * A storage for stage data, such as gameObjects,
- * boundaries, worldDimensions and offset
+ * collision shapes, worldDimensions and offset
  * @see {@link GameStage} a part of GameStage
  * @hideconstructor
  */
@@ -52,11 +52,11 @@ export class GameStageData {
     /**
      * @type {number}
      */
-    #maxBoundariesSize = 0;
+    #maxCollisionShapesSize = 0;
     /**
      * @type {number}
      */
-    #maxEllipseBoundSize = 0;
+    #maxEllipseCollisionShapesSize = 0;
     /**
      * @type {number}
      */
@@ -77,31 +77,31 @@ export class GameStageData {
      */
     #ePointer = 0;
     /**
-     * current screen boundaries, recalculated every render cycles
+     * current screen collision shapes, recalculated every render cycles
      * stored as floatArray, 
      * each 4 cells, represent a line with coords x1,y1,x2,y2
      * @type {Float32Array}
      */
-    #boundaries;
+    #collision_shapes;
     /**
-     * ellipse boundaries
+     * ellipse collision shapes
      * stored as floatArray, 
      * each 4 cells, represent am ellipse with cords centerX, centerY, radiusX, radiusY
      * @type {Float32Array}
      */
-    #ellipseBoundaries;
+    #ellipseCollisionShapes;
     /**
-     * point boundaries
+     * point collision shapes
      * stored as floatArray, 
      * each 2 cells, represent a point with coords x1,y1
      * @type {Float32Array}
      */
-    #pointBoundaries;
+    #pointCollisionShapes;
     /**
-     * whole world boundaries, calculated once on prepare stage
+     * whole world collision shapes, calculated once on prepare stage
      * @type {Array<Array<number>>}
      */
-    #wholeWorldBoundaries;
+    #wholeWorldCollisionShapes;
     /**
      * @type {Array<DrawImageObject | DrawCircleObject | DrawConusObject | DrawLineObject | DrawPolygonObject | DrawRectObject | DrawTextObject | DrawTiledLayer>}
      */
@@ -119,22 +119,22 @@ export class GameStageData {
      * @deprecated
      * @type {boolean}
      */
-    #isWorldBoundariesEnabled = false;
+    #isWorldCollisionShapesEnabled = false;
 
     /**
      * @type {Array<number>}
      */
-    #debugObjectBoundaries = [];
+    #debugObjectCollisionShapes = [];
     /**
      * 
      * @type {boolean}
      */
-    #isDebugObjectBoundaries = false;
+    #isDebugObjectCollisionShapes = false;
 
     constructor(gameOptions) {
-        //this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        //this.#ellipseBoundaries = new Float32Array(this.#maxBoundariesSize);
-        //this.#pointBoundaries = new Float32Array(this.#maxBoundariesSize);
+        //this.#collision_shapes = new Float32Array(this.#maxCollisionShapesSize);
+        //this.#ellipseCollisionShapes = new Float32Array(this.#maxCollisionShapesSize);
+        //this.#pointCollisionShapes = new Float32Array(this.#maxCollisionShapesSize);
     }
 
     /**
@@ -149,110 +149,110 @@ export class GameStageData {
     }
 
     /**
-     * Add a Boundaries line
-     * @param {{x1:number,y1:number,x2:number, y2:number}} boundaries 
+     * Add a Collision Shape line
+     * @param {{x1:number,y1:number,x2:number, y2:number}} collision_shapes 
      */
-    #addBoundaries(boundaries) {
-        this._addBoundaryLine(boundaries.x1,boundaries.y1, boundaries.x2, boundaries.y2);
+    #addCollisionShapes(collision_shapes) {
+        this._addCollisionShapeLine(collision_shapes.x1,collision_shapes.y1, collision_shapes.x2, collision_shapes.y2);
     }
 
     /**
-     * Add array of boundaries lines
-     * @param {Array<Array<number>>} boundaries 
+     * Add array of collision shapes lines
+     * @param {Array<Array<number>>} collision_shapes 
      * @ignore
      */
-    _addImageDebugBoundaries(boundaries) {
-        const len = boundaries.length;
+    _addImageDebugCollisionShapes(collision_shapes) {
+        const len = collision_shapes.length;
         for (let i = 0; i < len; i++) {
-            this.#debugObjectBoundaries.push(...boundaries[i]);
+            this.#debugObjectCollisionShapes.push(...collision_shapes[i]);
         }
     }
 
-    _enableDebugObjectBoundaries() {
-        this.#isDebugObjectBoundaries = true;
+    _enableDebugObjectCollisionShapes() {
+        this.#isDebugObjectCollisionShapes = true;
     }
     /**
-     * Add array of boundaries lines
-     * @param {Array<Array<number>>} boundaries 
+     * Add array of collision shapes lines
+     * @param {Array<Array<number>>} collision_shapes 
      * @ignore
      */
-    _addBoundariesArray(boundaries) {
-        const len = boundaries.length;
+    _addCollisionShapesArray(collision_shapes) {
+        const len = collision_shapes.length;
         for (let i = 0; i < len; i++) {
-            const boundary = boundaries[i];
-            this._addBoundaryLine(boundary[0], boundary[1], boundary[2], boundary[3]);
+            const collision_shape = collision_shapes[i];
+            this._addCollisionShapeLine(collision_shape[0], collision_shape[1], collision_shape[2], collision_shape[3]);
         }
     }
 
-    _addBoundaryLine(x1, y1, x2, y2) {
-        this.#boundaries[this.#bPointer] = x1;
+    _addCollisionShapeLine(x1, y1, x2, y2) {
+        this.#collision_shapes[this.#bPointer] = x1;
         this.#bPointer++;
-        this.#boundaries[this.#bPointer] = y1;
+        this.#collision_shapes[this.#bPointer] = y1;
         this.#bPointer++;
-        this.#boundaries[this.#bPointer] = x2;
+        this.#collision_shapes[this.#bPointer] = x2;
         this.#bPointer++;
-        this.#boundaries[this.#bPointer] = y2;
+        this.#collision_shapes[this.#bPointer] = y2;
         this.#bPointer++;
     }
 
-    _addEllipseBoundary(w, h, x, y) {
-        this.#ellipseBoundaries[this.#ePointer] = w;
+    _addEllipseCollisionShape(w, h, x, y) {
+        this.#ellipseCollisionShapes[this.#ePointer] = w;
         this.#ePointer++;
-        this.#ellipseBoundaries[this.#ePointer] = h;
+        this.#ellipseCollisionShapes[this.#ePointer] = h;
         this.#ePointer++;
-        this.#ellipseBoundaries[this.#ePointer] = x;
+        this.#ellipseCollisionShapes[this.#ePointer] = x;
         this.#ePointer++;
-        this.#ellipseBoundaries[this.#ePointer] = y;
+        this.#ellipseCollisionShapes[this.#ePointer] = y;
         this.#ePointer++;
     }
 
-    _addPointBoundary(x,y) {
-        this.#pointBoundaries[this.#pPointer] = x;
+    _addPointCollisionShape(x,y) {
+        this.#pointCollisionShapes[this.#pPointer] = x;
         this.#pPointer++;
-        this.#pointBoundaries[this.#pPointer] = y;
+        this.#pointCollisionShapes[this.#pPointer] = y;
         this.#pPointer++;
     }
 
-    _removeBoundaryLine(startPos) {
-        this.#boundaries[startPos] = 0;
-        this.#boundaries[startPos + 1] = 0;
-        this.#boundaries[startPos + 2] = 0;
-        this.#boundaries[startPos + 3] = 0;
+    _removeCollisionShapeLine(startPos) {
+        this.#collision_shapes[startPos] = 0;
+        this.#collision_shapes[startPos + 1] = 0;
+        this.#collision_shapes[startPos + 2] = 0;
+        this.#collision_shapes[startPos + 3] = 0;
     }
 
     /**
-     * Clear map boundaries
+     * Clear map collision shapes
      * @ignore
      */
-    _clearBoundaries() {
-        this.#boundaries.fill(0);
-        this.#ellipseBoundaries.fill(0);
-        this.#pointBoundaries.fill(0);
+    _clearCollisionShapes() {
+        this.#collision_shapes.fill(0);
+        this.#ellipseCollisionShapes.fill(0);
+        this.#pointCollisionShapes.fill(0);
         
         this.#bPointer = 0;
         this.#ePointer = 0;
         this.#pPointer = 0;
-        if (this.#isDebugObjectBoundaries) {
-            this.#debugObjectBoundaries = [];
+        if (this.#isDebugObjectCollisionShapes) {
+            this.#debugObjectCollisionShapes = [];
         }
     }
 
-    _initiateBoundariesData() {
-        this.#boundaries = new Float32Array(this.#maxBoundariesSize);
-        this.#ellipseBoundaries = new Float32Array(this.#maxEllipseBoundSize);
-        this.#pointBoundaries = new Float32Array(this.#maxPointBSize);
+    _initiateCollisionShapesData() {
+        this.#collision_shapes = new Float32Array(this.#maxCollisionShapesSize);
+        this.#ellipseCollisionShapes = new Float32Array(this.#maxEllipseCollisionShapesSize);
+        this.#pointCollisionShapes = new Float32Array(this.#maxPointBSize);
     }
 
     /**
      * 
      * @param {number} bSize
-     * @param {number} eSize - ellipse boundaries size
-     * @param {number} pSize - points boundaries size
+     * @param {number} eSize - ellipse collision shapes size
+     * @param {number} pSize - points collision shapes size
      * @ignore
      */
-    _setMaxBoundariesSize(bSize, eSize = 0, pSize = 0) {
-        this.#maxBoundariesSize = bSize;
-        this.#maxEllipseBoundSize = eSize;
+    _setMaxCollisionShapesSize(bSize, eSize = 0, pSize = 0) {
+        this.#maxCollisionShapesSize = bSize;
+        this.#maxEllipseCollisionShapesSize = eSize;
         this.#maxPointBSize = pSize;
     }
 
@@ -282,50 +282,50 @@ export class GameStageData {
      * Set map borders
      * @ignore
      */
-    _setMapBoundaries() {
+    _setMapCollisionShapes() {
         const [w, h] = [this.#worldWidth, this.#worldHeight],
             [offsetX, offsetY] = [this.#xOffset, this.#yOffset],
             wOffset = w - offsetX,
             hOffset = h -offsetY;
         if (!w || !h) {
-            Warning(WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
+            Warning(WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map collision shapes.");
         }
-        this.#addBoundaries({x1: 0, y1: 0, x2: wOffset, y2: 0});
-        this.#addBoundaries({x1: wOffset, y1: 0, x2: wOffset, y2: hOffset});
-        this.#addBoundaries({x1: wOffset, y1: hOffset, x2: 0, y2: hOffset});
-        this.#addBoundaries({x1: 0, y1: hOffset, x2: 0, y2: 0});
+        this.#addCollisionShapes({x1: 0, y1: 0, x2: wOffset, y2: 0});
+        this.#addCollisionShapes({x1: wOffset, y1: 0, x2: wOffset, y2: hOffset});
+        this.#addCollisionShapes({x1: wOffset, y1: hOffset, x2: 0, y2: hOffset});
+        this.#addCollisionShapes({x1: 0, y1: hOffset, x2: 0, y2: 0});
     }
 
     /**
      * @ignore
      */
-    _setWholeWorldMapBoundaries() {
+    _setWholeWorldMapCollisionShapes() {
         const [w, h] = [this.#worldWidth, this.#worldHeight];
         if (!w || !h) {
-            Warning(WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map boundaries.");
+            Warning(WARNING_CODES.WORLD_DIMENSIONS_NOT_SET, "Can't set map collision shapes.");
         }
-        this.#wholeWorldBoundaries.push([0, 0, w, 0]);
-        this.#wholeWorldBoundaries.push([w, 0, w, h]);
-        this.#wholeWorldBoundaries.push([w, h, 0, h]);
-        this.#wholeWorldBoundaries.push([0, h, 0, 0]);
+        this.#wholeWorldCollisionShapes.push([0, 0, w, 0]);
+        this.#wholeWorldCollisionShapes.push([w, 0, w, h]);
+        this.#wholeWorldCollisionShapes.push([w, h, 0, h]);
+        this.#wholeWorldCollisionShapes.push([0, h, 0, 0]);
     }
 
     /**
-     * Merge same boundaries
+     * Merge same collision shapes
      * !not used
      * @ignore
      * @deprecated
      */
-    _mergeBoundaries(isWholeMapBoundaries = false) {
-        const boundaries = isWholeMapBoundaries ? this.getWholeWorldBoundaries() : this.getBoundaries(),
-            boundariesSet = new Set(boundaries);
+    _mergeCollisionShapes(isWholeMapCollisionShapes = false) {
+        const collision_shapes = isWholeMapCollisionShapes ? this.getWholeWorldCollisionShapes() : this.getCollisionShapes(),
+            collisionShapesSet = new Set(collision_shapes);
 
-        for (const line of boundariesSet.values()) {
+        for (const line of collisionShapesSet.values()) {
             const lineX1 = line[0],
                 lineY1 = line[1],
                 lineX2 = line[2],
                 lineY2 = line[3];
-            for (const line2 of boundariesSet.values()) {
+            for (const line2 of collisionShapesSet.values()) {
                 const line2X1 = line2[0],
                     line2Y1 = line2[1],
                     line2X2 = line2[2],
@@ -333,39 +333,39 @@ export class GameStageData {
                 if (lineX1 === line2X2 && lineY1 === line2Y2 &&
                     lineX2 === line2X1 && lineY2 === line2Y1) {
                     //remove double lines
-                    boundariesSet.delete(line);
-                    boundariesSet.delete(line2);
+                    collisionShapesSet.delete(line);
+                    collisionShapesSet.delete(line2);
                 }
                 if (lineX2 === line2X1 && lineY2 === line2Y1 && (lineX1 === line2X2 || lineY1 === line2Y2)) {
                     //merge lines
                     line2[0] = lineX1;
                     line2[1] = lineY1;
-                    boundariesSet.delete(line);
+                    collisionShapesSet.delete(line);
                 }
             }
         }
-        if (isWholeMapBoundaries) {
-            this.#boundaries = Array.from(boundariesSet);
+        if (isWholeMapCollisionShapes) {
+            this.#collision_shapes = Array.from(collisionShapesSet);
         } else {
-            this.#wholeWorldBoundaries = Array.from(boundariesSet);
+            this.#wholeWorldCollisionShapes = Array.from(collisionShapesSet);
         }
-        boundariesSet.clear();
+        collisionShapesSet.clear();
     }
 
     /**
      * @ignore
-     * @param {Array<Array<number>>} boundaries 
+     * @param {Array<Array<number>>} collision_shapes 
      */
-    _setWholeMapBoundaries(boundaries) {
-        this.#wholeWorldBoundaries.push(...boundaries);
+    _setWholeMapCollisionShapes(collision_shapes) {
+        this.#wholeWorldCollisionShapes.push(...collision_shapes);
     }
 
     /**
      * @deprecated
      * @ignore
      */
-    _enableMapBoundaries() {
-        this.#isWorldBoundariesEnabled = true;
+    _enableMapCollisionShapes() {
+        this.#isWorldCollisionShapesEnabled = true;
     }
 
     /**
@@ -400,20 +400,29 @@ export class GameStageData {
     } 
 
     /**
-     * current screen boundaries, 
-     * this method is for backward capability with jsge@1.4.4
-     * recommended to use getRawBoundaries()
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getCollisionShapes()
      * @returns {Array<Array<number>>}
      */
     getBoundaries() {
-        const boundaries = this.#boundaries, 
+        return this.getCollisionShapes();
+    }
+    /**
+     * current screen collision shapes, 
+     * this method is for backward capability with jsge@1.4.4
+     * recommended to use getRawCollisionShapes()
+     * @returns {Array<Array<number>>}
+     */
+    getCollisionShapes() {
+        const collision_shapes = this.#collision_shapes, 
             len = this.#bPointer;
 
         let bTempArray = [],
             bArray = [];
         
         for (let i = 0; i < len; i++) {
-            const element = boundaries[i];
+            const element = collision_shapes[i];
             bTempArray.push(element);
             if (((i + 1) % 4) === 0) {
                 bArray.push(bTempArray);
@@ -424,48 +433,91 @@ export class GameStageData {
     }
 
     /**
-     * current screen boundaries
-     * polygon boundaries from Tiled and Tiled boundaries layers are merged here
+     * current screen collision shapes
+     * polygon collision shapes from Tiled and Tiled collision shapes layers are merged here
      * each 4 cells, represent a line with coords x1,y1,x2,y2
      * @returns {Float32Array}
      */
+    getRawCollisionShapes() {
+        return this.#collision_shapes;
+    }
+    /**
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getRawCollisionShapes()
+     * @returns {Float32Array}
+     */
     getRawBoundaries() {
-        return this.#boundaries;
+        return this.getRawCollisionShapes();
     }
 
     /**
-     * ellipse boundaries from Tiled,
+     * ellipse collision shapes from Tiled,
      * stored as floatArray, 
      * each 4 cells, represent am ellipse with cords centerX, centerY, radiusX, radiusY
      * @returns {Float32Array}
      */
+    getEllipseCollisionShapes() {
+        return this.#ellipseCollisionShapes;
+    }
+    /**
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getEllipseCollisionShapes()
+     * @returns {Float32Array}
+     */
     getEllipseBoundaries() {
-        return this.#ellipseBoundaries;
+        return this.getEllipseCollisionShapes();
     }
 
     /**
-     * point boundaries from Tiled,
+     * point collision shapes from Tiled,
      * stored as floatArray, 
      * each 2 cells, represent a point with coords x1,y1
      * @returns {Float32Array}
      */
+    getPointCollisionShapes() {
+        return this.#pointCollisionShapes;
+    }
+    /**
+     * Backward capability with jsge before 1.5.9
+     * @deprecated
+     * getPointCollisionShapes()
+     * @returns {Float32Array}
+     */
     getPointBoundaries() {
-        return this.#pointBoundaries;
+        return this.getPointCollisionShapes();
+    }
+    
+    getWholeWorldCollisionShapes() {
+        return this.#wholeWorldCollisionShapes;
     }
 
+    /**
+     * @deprecated
+     * getWholeWorldCollisionShapes()
+     */
     getWholeWorldBoundaries() {
-        return this.#wholeWorldBoundaries;
+        return this.getWholeWorldCollisionShapes();
     }
 
+    getDebugObjectCollisionShapes() {
+        return this.#debugObjectCollisionShapes;
+    }
+
+    /**
+     * @deprecated
+     * getDebugObjectCollisionShapes()
+     */
     getDebugObjectBoundaries() {
-        return this.#debugObjectBoundaries;
+        return this.getDebugObjectCollisionShapes();
     }
 
     /**
      * @deprecated
      */
     get isWorldBoundariesEnabled() {
-        return this.#isWorldBoundariesEnabled;
+        return this.#isWorldCollisionShapesEnabled;
     }
     /**
      * Current canvas dimensions
@@ -507,7 +559,9 @@ export class GameStageData {
     }
 
     /**
-     * Tiled polygon and Tiled layer boundaries length
+     * Tiled polygon and Tiled layer collision shapes length
+     * @deprecated
+     * Use collisionShapesLen()
      * @returns {number}
      */
     get boundariesLen() {
@@ -515,7 +569,15 @@ export class GameStageData {
     }
 
     /**
-     * Tiled ellipse boundaries length
+     * Tiled polygon and Tiled layer collision shapes length
+     * @returns {number}
+     */
+    get collisionShapesLen() {
+        return this.#bPointer;
+    }
+
+    /**
+     * Tiled ellipse collision shapes length
      * @returns {number}
      */
     get ellipseBLen() {
@@ -523,7 +585,7 @@ export class GameStageData {
     }
 
     /**
-     * Tiled point length
+     * Tiled point collision shapes length
      * @returns {number}
      */
     get pointBLen() {
@@ -631,6 +693,6 @@ export class GameStageData {
     cleanUp() {
         this.#renderObjects = [];
         this.#pendingRenderObjects = [];
-        this._clearBoundaries();
+        this._clearCollisionShapes();
     }
 }

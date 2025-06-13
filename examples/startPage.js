@@ -82,15 +82,15 @@ export class StartPage extends GameStage {
 
     #mouseHoverEvent = (event) => {
         const canvas = this.canvasHtmlElement,
-            isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox),
-            isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox),
-            isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox),
-            isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox),
-            isNav5T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemBigMap.boundariesBox),
-            isNav6T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.boundariesBox),
-            isNav7T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.boundariesBox),
-            isNav8T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemStrategy.boundariesBox),
-            isNav9T = isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.boundariesBox);
+            isNav1Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.collisionShapes),
+            isNavP2PTraversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.collisionShapes),
+            isNav3Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.collisionShapes),
+            isNav4Traversed = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.collisionShapes),
+            isNav5T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemBigMap.collisionShapes),
+            isNav6T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.collisionShapes),
+            isNav7T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.collisionShapes),
+            isNav8T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemStrategy.collisionShapes),
+            isNav9T = isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.collisionShapes);
             
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -157,56 +157,56 @@ export class StartPage extends GameStage {
 
     #mouseClickEvent = (event) => {
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemDun.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(DUNGEON_GAME);
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemPir.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(PIRATES_GAME);
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemRac.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(RACING_GAME);
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemSpine.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(SPINE_PAGE);
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemBigMap.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemBigMap.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(BIG_MAP);
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(CUSTOM_WEBGL_PAGE);
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(TANKS_PAGE);
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemStrategy.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navItemStrategy.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(STRATEGY_GAME);
 
         }
 
-        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.boundariesBox)) {
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.collisionShapes)) {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(PRIMITIVES_PAGE);

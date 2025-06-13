@@ -1,4 +1,4 @@
-import { GameStage, CONST } from "../../dist/index.es6.min.js";
+import { GameStage, CONST } from "../../src/index.js";
 import SpineModuleInitialization from "../../modules/spine/dist/bundle.js";
 import { utils } from "../../src/index.js";
 
@@ -61,7 +61,7 @@ export class SpinePage extends GameStage {
     }
 
     #mouseHoverEvent = (e) => {
-        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
     
         if (isNav1Traversed) {
             this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -75,7 +75,7 @@ export class SpinePage extends GameStage {
     };
 
     #mouseClickEvent = (e) => {
-        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
     
         if (isNav1Click) {
             this.iSystem.stopGameStage("spine");

@@ -108,19 +108,19 @@ export class DrawObjectFactory {
      * @param {number} height 
      * @param {string} key 
      * @param {number} [imageIndex = 0]
-     * @param {Array<{x:Number, y:Number}> | {r:number}=} boundaries - boundaries as polygon, or circle
+     * @param {Array<{x:Number, y:Number}> | {r:number}=} collisionShapes - collision shapes as polygon, or circle
      * @param {number} [spacing = 0] - for tilesets.spacing > 0
      * @param {number} [margin = 0] - for tilesets.margin > 0
      * @returns {DrawImageObject}
      */
-    image(x, y, width, height, key, imageIndex = 0, boundaries, spacing = 0, margin = 0) {
+    image(x, y, width, height, key, imageIndex = 0, collisionShapes, spacing = 0, margin = 0) {
         const image = this.#iLoader.getImage(key);
 
         if (!image) {
             Exception(ERROR_CODES.CANT_GET_THE_IMAGE, "iLoader can't get the image with key: " + key);
         }
             
-        const renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, boundaries, image, spacing, margin);
+        const renderObject = new DrawImageObject(x, y, width, height, key, imageIndex, collisionShapes, image, spacing, margin);
         
         this.#addObjectToPageData(renderObject);
         return renderObject;
@@ -152,11 +152,11 @@ export class DrawObjectFactory {
      * 
      * @param {string} layerKey 
      * @param {string} tileMapKey 
-     * @param {boolean=} setBoundaries 
+     * @param {boolean=} setCollisionShapes 
      * @param {DrawShapeObject=} shapeMask 
      * @returns {DrawTiledLayer}
      */
-    tiledLayer(layerKey, tileMapKey, setBoundaries, shapeMask) {
+    tiledLayer(layerKey, tileMapKey, setCollisionShapes, shapeMask) {
         const tilemap = this.#iLoader.getTileMap(tileMapKey),
             layerData = Object.assign({}, tilemap.layers.find((layer) => layer.name === layerKey)), // copy to avoid change same tilemap instance in different tiledLayers
             tilesetIds = Array.from(new Set(layerData.data.filter((id) => id !== 0))).sort((a, b) => a - b),
@@ -170,7 +170,7 @@ export class DrawObjectFactory {
                 }
             }), // copy to avoid change same tilemap instance in different tiledLayers
             tilesetImages = tilesets.map((tileset) => this.#iLoader.getImage(tileset.name)),
-            renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setBoundaries, shapeMask);
+            renderObject = new DrawTiledLayer(layerKey, tileMapKey, tilemap, tilesets, tilesetImages, layerData, setCollisionShapes, shapeMask);
         if (tilesetImages.length > 1) {
             Warning(WARNING_CODES.MULTIPLE_IMAGE_TILESET, " tileset " + layerKey + " includes multiple images, it can case performance issues!");
         }

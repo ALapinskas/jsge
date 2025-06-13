@@ -96,8 +96,8 @@ export class Tanks extends GameStage {
 				newCoordX = tank.x + movementForce * Math.cos(tankDirection);
 				newCoordY = tank.y + movementForce * Math.sin(tankDirection);
 				
-				if (!this.isBoundariesCollision(newCoordX, newCoordY, tank)
-					&& !this.isBoundariesCollision(newCoordX, newCoordY, this.gun)) {
+				if (!this.isCollision(newCoordX, newCoordY, tank)
+					&& !this.isCollision(newCoordX, newCoordY, this.gun)) {
 					tank.x = newCoordX;
 					tank.y = newCoordY;
 					this.#calculateGunCenterAndPos();
@@ -108,7 +108,7 @@ export class Tanks extends GameStage {
 				newCoordX = tank.x + movementForce * Math.cos(tankDirection + Math.PI);
 				newCoordY = tank.y + movementForce * Math.sin(tankDirection + Math.PI);
 				
-				if (!this.isBoundariesCollision(newCoordX, newCoordY, tank)) {
+				if (!this.isCollision(newCoordX, newCoordY, tank)) {
 					tank.x = newCoordX;
 					tank.y = newCoordY;
 					this.#calculateGunCenterAndPos();
@@ -152,7 +152,7 @@ export class Tanks extends GameStage {
 		this.gun.x = newGunCenterCoordX;
 		this.gun.y = newGunCenterCoordY;
 
-		const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+		const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
     
         if (isNav1Traversed) {
             this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -181,7 +181,7 @@ export class Tanks extends GameStage {
 		const bullet = this.#createBullet();
         this.#bullets.push(bullet);
 
-	const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+	const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
 	if (isNav1Click) {
 		this.iSystem.stopGameStage("tanks");
 		this.canvasHtmlElement.style.cursor = "default";
@@ -225,8 +225,8 @@ export class Tanks extends GameStage {
 		bullet.y = newCoordY;
 		
         //console.log(newCoordX);
-        if (this.isBoundariesCollision(newCoordX, newCoordY, bullet)) {
-            //console.log("boundaries collision happen");
+        if (this.isCollision(newCoordX, newCoordY, bullet)) {
+			
             this.#bullets.splice(this.#bullets.indexOf(bullet), 1);
 			
             setTimeout(() => {
@@ -284,7 +284,7 @@ export class Tanks extends GameStage {
 				newY = newY + 1;
 				break;
 		}
-		if (!this.isBoundariesCollision(newX, newY, this.tank)) {
+		if (!this.isCollision(newX, newY, this.tank)) {
 			this.tank.x = newX;
 			this.tank.y = newY;
 			this.gun.x = newX;

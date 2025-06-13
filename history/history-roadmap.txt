@@ -4,7 +4,16 @@ r: code refactoring
 f: fixed defects
 
 # History
-
+1.6.0:
+    +: preserveDrawingBuffer option added
+    r: regression tests updated with pixel colors checks
+    r: SystemSettings.gameOptions.render.boundaries renamed to SystemSettings.gameOptions.render.collisionShapes
+    r: SystemSettings.gameOptions.debug.boundaries renamed to SystemSettings.gameOptions.debug.collisionShapes
+    r: StageData.boundariesLen renamed to StageData.collisionShapesLen
+    r: DrawTextObject.boundariesBox renamed to DrawTextObject.collisionShapes
+    r: other "boundaries" inclusions renamed to "collisionShapes" 
+    r: drawImageObject.circleBoundaries renamed to drawImageObject.circleCollisionShapes
+    
 1.5.83 - 1.5.896:
     +: build pipeline fixes
 

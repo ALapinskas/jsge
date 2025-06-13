@@ -298,7 +298,7 @@ export class Strategy extends GameStage {
 			this.#buildTemplate.y = cursorPosY;
 			this.#buildTemplateOverlap.x = cursorPosX - this.#buildTemplateOverlap.width/2;
 			this.#buildTemplateOverlap.y = cursorPosY - this.#buildTemplateOverlap.height/2;
-			if (this.isBoundariesCollision(cursorPosX, cursorPosY, this.#buildTemplateOverlap) 
+			if (this.isCollision(cursorPosX, cursorPosY, this.#buildTemplateOverlap) 
 				|| this.isObjectsCollision(cursorPosX, cursorPosY, this.#buildTemplateOverlap, this.#playerBuildings)
 				|| this.isObjectsCollision(cursorPosX, cursorPosY, this.#buildTemplateOverlap, this.#neutralBuildings)) {
 				this.#buildTemplateOverlap.bgColor = "rgba(224, 12, 21, 0.6)";
@@ -309,7 +309,7 @@ export class Strategy extends GameStage {
 			}
 		}
 
-		const isNav1Traversed = isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+		const isNav1Traversed = isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
 
 		if (isNav1Traversed) {
             this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -333,7 +333,7 @@ export class Strategy extends GameStage {
 			this.#processMapClick(e);
 		}
 
-		const isNav1Click = isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+		const isNav1Click = isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
 		
         if (isNav1Click) {
             this.iSystem.stopGameStage("strategy_game");
@@ -459,7 +459,7 @@ export class Strategy extends GameStage {
 			clickYWithOffset = e.offsetY + offsetY;
 
 		this.#playerUnits.forEach((unit) => {
-			if (isPointInsidePolygon(clickXWithOffset - unit.x, clickYWithOffset - unit.y, unit.boundaries)) {
+			if (isPointInsidePolygon(clickXWithOffset - unit.x, clickYWithOffset - unit.y, unit.vertices)) {
 				this.#playerUnits.forEach((unit) => {
 					console.log(unit.isSelected);
 					if (unit.isSelected) {
@@ -513,7 +513,7 @@ export class Strategy extends GameStage {
 			}
 		});
 		this.#playerBuildings.forEach((building) => {
-			if (isPointInsidePolygon(clickXWithOffset - building.x, clickYWithOffset - building.y, building.boundaries)) {
+			if (isPointInsidePolygon(clickXWithOffset - building.x, clickYWithOffset - building.y, building.vertices)) {
 				this.#playerUnits.forEach((unit) => {
 					if (unit.isSelected) {
 						unit.isSelected = false;
@@ -549,7 +549,7 @@ export class Strategy extends GameStage {
 		});
 
 		this.#neutralBuildings.forEach((unit) => {
-			if (isPointInsidePolygon(clickXWithOffset - unit.x, clickYWithOffset - unit.y, unit.boundaries)) {
+			if (isPointInsidePolygon(clickXWithOffset - unit.x, clickYWithOffset - unit.y, unit.vertices)) {
 				console.log("clicked gold mine: ", unit);
 				console.log("gold amount: ", unit.goldAmount)
 				selectedNeutralBuilding = unit;
@@ -817,7 +817,7 @@ export class Strategy extends GameStage {
 				newY = newY + 1;
 				break;
 		}
-		if (!this.isBoundariesCollision(newX, newY, this.tank)) {
+		if (!this.isCollision(newX, newY, this.tank)) {
 			this.tank.x = newX;
 			this.tank.y = newY;
 			this.gun.x = newX;

@@ -39,17 +39,26 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * Rectangle text box.
+     * @deprecated
+     * Use collisionShapes()
      * @type {Rectangle}
      */
     get boundariesBox() {
+        return this.collisionShapes;
+    }
+
+    /**
+     * Rectangle text box.
+     * @type {Rectangle}
+     */
+    get collisionShapes() {
         const width = this.textMetrics ? Math.floor(this.textMetrics.width) : 300,
             height = this.textMetrics ? Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent): 30;
         return new Rectangle(this.x, this.y - height, width, height);
     }
 
     get vertices() {
-        const bb = this.boundariesBox;
+        const bb = this.collisionShapes;
         return this._calculateRectVertices(bb.width, bb.height);
     }
 
@@ -190,8 +199,8 @@ export class DrawTextObject extends DrawShapeObject {
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
-            const boxWidth = this.boundariesBox.width, 
-                boxHeight = this.boundariesBox.height;
+            const boxWidth = this.collisionShapes.width, 
+                boxHeight = this.collisionShapes.height;
             
             ctx.canvas.width = boxWidth;
             ctx.canvas.height = boxHeight;

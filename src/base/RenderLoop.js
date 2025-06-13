@@ -125,7 +125,7 @@ export class RenderLoop {
             isCyclesTimeCalcCheckCurrent = this.#systemSettings.gameOptions.render.cyclesTimeCalc.check === CONST.OPTIMIZATION.CYCLE_TIME_CALC.CURRENT;
             
         this.emit(CONST.EVENTS.SYSTEM.RENDER.START);
-        this.#stageData._clearBoundaries();
+        this.#stageData._clearCollisionShapes();
         this.#clearContext();
         
         this.render().then(() => {
@@ -189,8 +189,8 @@ export class RenderLoop {
                     .catch((err) => Promise.reject(err));
                 renderObjectsPromises[i] = promise;
             }
-            if (this.#systemSettings.gameOptions.debug.boundaries.drawLayerBoundaries) {
-                renderObjectsPromises.push(this.#drawBoundariesWebGl()
+            if (this.#systemSettings.gameOptions.debug.collisionShapes.drawLayerCollisionShapes) {
+                renderObjectsPromises.push(this.#drawCollisionShapesWebGl()
                     .catch((err) => Promise.reject(err))); 
             }
         }
@@ -262,22 +262,22 @@ export class RenderLoop {
      * 
      * @returns {Promise<void>}
      */
-    #drawBoundariesWebGl() {
+    #drawCollisionShapesWebGl() {
         return new Promise((resolve) => {
-            const b = this.stageData.getRawBoundaries(),
-                eB = this.stageData.getEllipseBoundaries(),
-                pB = this.stageData.getPointBoundaries(),
-                bDebug = this.stageData.getDebugObjectBoundaries(),
-                len = this.stageData.boundariesLen,
+            const b = this.stageData.getRawCollisionShapes(),
+                eB = this.stageData.getEllipseCollisionShapes(),
+                pB = this.stageData.getPointCollisionShapes(),
+                bDebug = this.stageData.getDebugObjectCollisionShapes(),
+                len = this.stageData.collisionShapesLen,
                 eLen = this.stageData.ellipseBLen,
                 pLen = this.stageData.pointBLen,
-                bDebugLen = this.#systemSettings.gameOptions.debug.boundaries.drawObjectBoundaries ? bDebug.length : 0;
+                bDebugLen = this.#systemSettings.gameOptions.debug.collisionShapes.drawObjectCollisionShapes ? bDebug.length : 0;
         
             if (len)
-                this.#webGlEngine._drawLines(b, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                this.#webGlEngine._drawLines(b, this.#systemSettings.gameOptions.debug.collisionShapes.color, this.#systemSettings.gameOptions.debug.collisionShapes.width);
             this.renderLoopDebug.incrementDrawCallsCounter();
             if (eLen) {
-                //draw ellipse boundaries
+                //draw ellipse collision shapes
                 for (let i = 0; i < eLen; i+=4) {
                     const x = eB[i],
                         y = eB[i+1],
@@ -286,22 +286,22 @@ export class RenderLoop {
                         vertices = utils.calculateEllipseVertices(x, y, radX, radY);
                     this.#webGlEngine._drawPolygon({x: 0, y: 0, vertices, isOffsetTurnedOff: true}, this.stageData);
                     this.renderLoopDebug.incrementDrawCallsCounter();
-                    //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.boundaries.boundariesColor, this.systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    //this.#webGlEngine._drawLines(vertices, this.systemSettings.gameOptions.debug.collisionShapes.color, this.systemSettings.gameOptions.debug.collisionShapes.width);
                 }
             }
             if (pLen) {
-                //draw point boundaries
+                //draw point collisionShapes
                 for (let i = 0; i < pLen; i+=2) {
                     const x = pB[i],
                         y = pB[i+1],
                         vertices = [x,y, x+1,y+1];
 
-                    this.#webGlEngine._drawLines(vertices, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                    this.#webGlEngine._drawLines(vertices, this.#systemSettings.gameOptions.debug.collisionShapes.color, this.#systemSettings.gameOptions.debug.collisionShapes.width);
                     this.renderLoopDebug.incrementDrawCallsCounter();
                 }
             }
             if (bDebugLen > 0) {
-                this.#webGlEngine._drawLines(bDebug, this.#systemSettings.gameOptions.debug.boundaries.boundariesColor, this.#systemSettings.gameOptions.debug.boundaries.boundariesWidth);
+                this.#webGlEngine._drawLines(bDebug, this.#systemSettings.gameOptions.debug.collisionShapes.color, this.#systemSettings.gameOptions.debug.collisionShapes.width);
             }
             resolve();
         });
@@ -313,67 +313,9 @@ export class RenderLoop {
      * @param {DrawTiledLayer} renderLayer 
      * @returns {Promise<void>}
      */
-    #layerBoundariesPrecalculation(renderLayer) {
+    #layerCollisionShapesPrecalculation(renderLayer) {
         return new Promise((resolve, reject) => {
-            /*
-            if (renderLayer.setBoundaries) {
-                const tilemap = this.#iLoader.getTileMap(renderLayer.tileMapKey),
-                    tilesets = tilemap.tilesets,
-                    layerData = tilemap.layers.find((layer) => layer.name === renderLayer.layerKey),
-                    { tileheight:dtheight, tilewidth:dtwidth } = tilemap,
-                    tilewidth = dtwidth,
-                    tileheight = dtheight,
-                    [ settingsWorldWidth, settingsWorldHeight ] = this.stageData.worldDimensions;
-                
-                let boundaries = [];
 
-                if (!layerData) {
-                    Warning(WARNING_CODES.NOT_FOUND, "check tilemap and layers name");
-                    reject();
-                }
-                
-                for (let i = 0; i < tilesets.length; i++) {
-                    const layerCols = layerData.width,
-                        layerRows = layerData.height,
-                        worldW = tilewidth * layerCols,
-                        worldH = tileheight * layerRows;
-
-                    if (worldW !== settingsWorldWidth || worldH !== settingsWorldHeight) {
-                        Warning(WARNING_CODES.UNEXPECTED_WORLD_SIZE, " World size from tilemap is different than settings one, fixing...");
-                        this.stageData._setWorldDimensions(worldW, worldH);
-                    }
-                    
-                    if (renderLayer.setBoundaries && this.#systemSettings.gameOptions.render.boundaries.mapBoundariesEnabled) {
-                        this.stageData._setWholeWorldMapBoundaries();
-                    }
-
-                    //calculate boundaries
-                    let mapIndex = 0;
-
-                    for (let row = 0; row < layerRows; row++) {
-                        for (let col = 0; col < layerCols; col++) {
-                            let tile = layerData.data[mapIndex],
-                                mapPosX = col * tilewidth,
-                                mapPosY = row * tileheight;
-                            if (tile !== 0) {
-                                tile -= 1;
-                                
-                                boundaries.push([mapPosX, mapPosY, mapPosX + tilewidth, mapPosY]);
-                                boundaries.push([mapPosX + tilewidth, mapPosY, mapPosX + tilewidth, mapPosY + tileheight]);
-                                boundaries.push([mapPosX + tilewidth, mapPosY + tileheight, mapPosX, mapPosY + tileheight]);
-                                boundaries.push([mapPosX, mapPosY + tileheight, mapPosX, mapPosY ]);
-    
-                            }
-                            mapIndex++;
-                        }
-                    }
-                }
-                this.stageData._setWholeMapBoundaries(boundaries);
-                this.stageData._mergeBoundaries(true);
-                resolve();
-            } else {
-                resolve();
-            }*/
         });
     }
 

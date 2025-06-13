@@ -31,8 +31,8 @@ const TEST_WEBGL_PROGRAM_KEY = "test",
 //SystemSettings.gameOptions.render.minCycleTime = 0;
 //SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT;
 //SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED;
-//SystemSettings.gameOptions.debug.boundaries.drawLayerBoundaries = true;
-//SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
+//SystemSettings.gameOptions.debug.collisionShapes.drawLayerCollisionShapes = true;
+//SystemSettings.gameOptions.debug.collisionShapes.drawObjectCollisionShapes = true;
 let optionsForm = document.createElement("form");
 optionsForm.name = "options";
 optionsForm.style.display = "flex";
@@ -57,19 +57,18 @@ function createOptionsBlock() {
     webGLErrorsWrap.appendChild(webGLErrorsLabel);
     optionsForm.appendChild(webGLErrorsWrap);
 
-    const minCycleTimeWrap = document.createElement("div");
-    const minCycleTimeLabel = document.createElement("label");
-    minCycleTimeLabel.innerText = "Min render cycle time(ms)";
-    const minCycleTimeInput = document.createElement("input");
-    minCycleTimeInput.style.marginRight = "10px";
-    minCycleTimeInput.name = "minCycleTime";
-    minCycleTimeLabel.setAttribute("for", "minCycleTime");
-    minCycleTimeInput.value = SystemSettings.gameOptions.render.minCycleTime.toString();
-    minCycleTimeInput.disabled = true;
+    const preserveDrawingBufferWrap = document.createElement("div");
+    const preserveDrawingBufferLabel = document.createElement("label");
+    preserveDrawingBufferLabel.innerText = "Preserve Drawing Buffer";
+    const preserveDrawingBufferCheckbox = document.createElement("input");
+    preserveDrawingBufferCheckbox.setAttribute('type', 'checkbox');
+    preserveDrawingBufferCheckbox.name = "preserveDrawingBuffer";
+    preserveDrawingBufferCheckbox.id = "preserveDrawingBuffer";
+    preserveDrawingBufferLabel.setAttribute("for", "preserveDrawingBuffer");
 
-    minCycleTimeWrap.appendChild(minCycleTimeInput);
-    minCycleTimeWrap.appendChild(minCycleTimeLabel);
-    optionsForm.appendChild(minCycleTimeWrap);
+    preserveDrawingBufferWrap.appendChild(preserveDrawingBufferCheckbox);
+    preserveDrawingBufferWrap.appendChild(preserveDrawingBufferLabel);
+    optionsForm.appendChild(preserveDrawingBufferWrap);
     
     const optimizationLabel = document.createElement("p");
     optimizationLabel.innerText = "Render optimizations:";
@@ -118,35 +117,35 @@ function createOptionsBlock() {
     optimizationWasmWrap.appendChild(optimizationWasmLabel);
     optionsForm.appendChild(optimizationWasmWrap);
 
-    const boundariesDrawLabel = document.createElement("p");
-    boundariesDrawLabel.innerText = "Boundaries draw helper:";
-    optionsForm.appendChild(boundariesDrawLabel);
+    const collisionShapesDrawLabel = document.createElement("p");
+    collisionShapesDrawLabel.innerText = "Collision shapes draw helper:";
+    optionsForm.appendChild(collisionShapesDrawLabel);
 
-    const drawLayerBoundariesWrap = document.createElement("div");
-    const drawLayerBoundariesLabel = document.createElement("label");
-    drawLayerBoundariesLabel.innerText = "Draw layer boundaries";
-    const drawLayerBoundariesCheckbox = document.createElement("input");
-    drawLayerBoundariesCheckbox.setAttribute('type', 'checkbox');
-    drawLayerBoundariesCheckbox.name = "drawLayerB";
-    drawLayerBoundariesCheckbox.id = "drawLayerB";
-    drawLayerBoundariesLabel.setAttribute("for", "drawLayerB");
+    const drawLayerCollisionShapesWrap = document.createElement("div");
+    const drawLayerCollisionShapesLabel = document.createElement("label");
+    drawLayerCollisionShapesLabel.innerText = "Draw layer collision shapes";
+    const drawLayerCollisionShapesCheckbox = document.createElement("input");
+    drawLayerCollisionShapesCheckbox.setAttribute('type', 'checkbox');
+    drawLayerCollisionShapesCheckbox.name = "drawLayerB";
+    drawLayerCollisionShapesCheckbox.id = "drawLayerB";
+    drawLayerCollisionShapesLabel.setAttribute("for", "drawLayerB");
 
-    drawLayerBoundariesWrap.appendChild( drawLayerBoundariesCheckbox);
-    drawLayerBoundariesWrap.appendChild(drawLayerBoundariesLabel);
-    optionsForm.appendChild(drawLayerBoundariesWrap);
+    drawLayerCollisionShapesWrap.appendChild( drawLayerCollisionShapesCheckbox);
+    drawLayerCollisionShapesWrap.appendChild(drawLayerCollisionShapesLabel);
+    optionsForm.appendChild(drawLayerCollisionShapesWrap);
 
-    const drawObjectBoundariesWrap = document.createElement("div");
-    const drawObjectsBoundariesLabel = document.createElement("label");
-    drawObjectsBoundariesLabel.innerText = "Draw objects boundaries";
-    const drawObjectsBoundariesCheckbox = document.createElement("input");
-    drawObjectsBoundariesCheckbox.setAttribute('type', 'checkbox');
-    drawObjectsBoundariesCheckbox.name = "drawObjectB";
-    drawObjectsBoundariesCheckbox.id = "drawObjectB";
-    drawObjectsBoundariesLabel.setAttribute("for", "drawObjectB");
+    const drawObjectCollisionShapesWrap = document.createElement("div");
+    const drawObjectsCollisionShapesLabel = document.createElement("label");
+    drawObjectsCollisionShapesLabel.innerText = "Draw objects collision shapes";
+    const drawObjectsCollisionShapesCheckbox = document.createElement("input");
+    drawObjectsCollisionShapesCheckbox.setAttribute('type', 'checkbox');
+    drawObjectsCollisionShapesCheckbox.name = "drawObjectB";
+    drawObjectsCollisionShapesCheckbox.id = "drawObjectB";
+    drawObjectsCollisionShapesLabel.setAttribute("for", "drawObjectB");
 
-    drawObjectBoundariesWrap.appendChild(drawObjectsBoundariesCheckbox);
-    drawObjectBoundariesWrap.appendChild(drawObjectsBoundariesLabel);
-    optionsForm.appendChild(drawObjectBoundariesWrap);
+    drawObjectCollisionShapesWrap.appendChild(drawObjectsCollisionShapesCheckbox);
+    drawObjectCollisionShapesWrap.appendChild(drawObjectsCollisionShapesLabel);
+    optionsForm.appendChild(drawObjectCollisionShapesWrap);
 
     const applyOptionsBtn = document.createElement("button");
     applyOptionsBtn.innerText = "Start JsGE examples";
@@ -172,7 +171,8 @@ const processOptionsFormData = (e) => {
     const formData = new FormData(e.target),
         minCycleTime = formData.get("minCycleTime"),
         optimization = formData.get("optimizations"),
-        showWebGlErrors = formData.get("webGLErrors");
+        showWebGlErrors = formData.get("webGLErrors"),
+        preserveDrawingBuffer = formData.get("preserveDrawingBuffer");
     
     let settings = SystemSettings;
 
@@ -182,6 +182,12 @@ const processOptionsFormData = (e) => {
         SystemSettings.gameOptions.debug.checkWebGlErrors = false;
     }
 
+    if (preserveDrawingBuffer) {
+        SystemSettings.gameOptions.debug.preserveDrawingBuffer = true;
+    } else {
+        SystemSettings.gameOptions.debug.preserveDrawingBuffer = false;
+    }
+    
     if (minCycleTime) {
         SystemSettings.gameOptions.render.minCycleTime = parseFloat(minCycleTime);
     }
@@ -191,15 +197,15 @@ const processOptionsFormData = (e) => {
     }
 
     if (formData.get("drawLayerB")) {
-        settings.gameOptions.debug.boundaries.drawLayerBoundaries = true;
+        settings.gameOptions.debug.collisionShapes.drawLayerCollisionShapes = true;
     } else {
-        settings.gameOptions.debug.boundaries.drawLayerBoundaries = false;
+        settings.gameOptions.debug.collisionShapes.drawLayerCollisionShapes = false;
     }
 
     if (formData.get("drawObjectB")) {
-        settings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
+        settings.gameOptions.debug.collisionShapes.drawObjectCollisionShapes = true;
     } else {
-        settings.gameOptions.debug.boundaries.drawObjectBoundaries = false;
+        settings.gameOptions.debug.collisionShapes.drawObjectCollisionShapes = false;
     }
 
     runApp(settings);

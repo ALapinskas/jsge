@@ -25,7 +25,7 @@ class DrawSpineObject {
      * @type {number}
      */
     #sortIndex = 0;
-    constructor(mapX, mapY, key, imageIndex = 0, boundaries, skeleton) {
+    constructor(mapX, mapY, key, imageIndex = 0, collisionShapes, skeleton) {
         this.#skeleton = skeleton;
         this.#skeleton.x = mapX;
         this.#skeleton.y = mapY;
@@ -206,12 +206,12 @@ export default class SpineModuleInitialization {
     #registerDrawObjects(systemInterface) {
         const loader = systemInterface.iLoader,
             context = systemInterface.iRender.drawContext;
-        const spine = (x, y, dataKey, atlasKey, imageIndex, boundaries) => {
+        const spine = (x, y, dataKey, atlasKey, imageIndex, collisionShapes) => {
             const skeleton = this.#createSkeleton(dataKey, atlasKey, loader, context);
             if (!skeleton || !(skeleton instanceof Skeleton)) {
                 throw new Error(SPINE_ERROR + ERROR_MESSAGES.SKELETON_ERROR);
             } else {
-                const renderObject = new DrawSpineObject(x, y, dataKey, imageIndex, boundaries, skeleton);
+                const renderObject = new DrawSpineObject(x, y, dataKey, imageIndex, collisionShapes, skeleton);
                 return renderObject;
             }
         },

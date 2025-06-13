@@ -109,7 +109,7 @@ export class WebGlEngine {
             const tileLayers = stageData.getObjectsByInstance(DrawTiledLayer),
                 [ settingsWorldWidth, settingsWorldHeight ] = stageData.worldDimensions;
 
-            // count max possible boundaries sizes
+            // count max possible collisionShapes sizes
             let maxBSize = 0,
                 maxESize = 0,
                 maxPSize = 0,
@@ -117,7 +117,7 @@ export class WebGlEngine {
                 maxWorldH = 0;
 
             tileLayers.forEach(tiledLayer => {
-                const setBoundaries = tiledLayer.setBoundaries,
+                const setCollisionShapes = tiledLayer.setCollisionShapes,
                     layerData = tiledLayer.layerData,
                     tilemap = tiledLayer.tilemap,
                     tilesets = tiledLayer.tilesets,
@@ -131,9 +131,9 @@ export class WebGlEngine {
                         worldW = tilewidth * layerCols,
                         worldH = tileheight * layerRows;
                         
-                    const polygonBondMax = layerData.polygonBoundariesLen,
-                        ellipseBondMax = layerData.ellipseBoundariesLen,
-                        pointBondMax = layerData.pointBoundariesLen; 
+                    const polygonBondMax = layerData.polygonCollisionShapesLen,
+                        ellipseBondMax = layerData.ellipseCollisionShapesLen,
+                        pointBondMax = layerData.pointCollisionShapesLen; 
     
                     if (maxWorldW < worldW) {
                         maxWorldW = worldW;
@@ -142,12 +142,12 @@ export class WebGlEngine {
                         maxWorldH = worldH;
                     }
                     
-                    if (setBoundaries) {
+                    if (setCollisionShapes) {
                         maxBSize += polygonBondMax;
                         maxESize += ellipseBondMax;
                         maxPSize += pointBondMax;
     
-                        // boundaries cleanups every draw cycles, we need to set world boundaries again
+                        // collisionShapes cleanups every draw cycles, we need to set world collisionShapes again
                         
                     }
                 }
@@ -158,11 +158,11 @@ export class WebGlEngine {
                 stageData._setWorldDimensions(maxWorldW, maxWorldH);
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
                 maxBSize+=16; //4 sides * 4 cords x1,y1,x2,y,2
             }
-            stageData._setMaxBoundariesSize(maxBSize, maxESize, maxPSize);
-            stageData._initiateBoundariesData();
+            stageData._setMaxCollisionShapesSize(maxBSize, maxESize, maxPSize);
+            stageData._initiateCollisionShapesData();
 
             resolve(true);
         });
@@ -535,7 +535,7 @@ export class WebGlEngine {
             a_texCoord: texCoordLocation,
             u_image: u_imageLocation } = vars;
 
-        const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
+        const {width:boxWidth, height:boxHeight} = renderObject.collisionShapes,
             image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -622,9 +622,9 @@ export class WebGlEngine {
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset;
 
-        if (renderObject.vertices && this.#gameOptions.debug.boundaries.drawObjectBoundaries) {
-            pageData._enableDebugObjectBoundaries();
-            pageData._addImageDebugBoundaries(utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
+        if (renderObject.vertices && this.#gameOptions.debug.collisionShapes.drawObjectCollisionShapes) {
+            pageData._enableDebugObjectCollisionShapes();
+            pageData._addImageDebugCollisionShapes(utils.calculateLinesVertices(x, y, renderObject.rotation, renderObject.vertices));
         }
         
         const {
@@ -1059,7 +1059,7 @@ export class WebGlEngine {
             y = renderObject.y - yOffset,
             rotation = renderObject.rotation || 0,
             vertices = renderObject.vertices,
-            color =  this.#gameOptions.debug.boundaries.boundariesColor;
+            color =  this.#gameOptions.debug.collisionShapes.color;
         const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         const { u_translation: translationLocation,
                 u_rotation: rotationRotation,
@@ -1090,7 +1090,7 @@ export class WebGlEngine {
 
         const polygonVerticesNum = triangles.length;
         if (polygonVerticesNum % 3 !== 0) {
-            Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "polygon boundaries vertices are not correct, skip drawing");
+            Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, "polygon collision shapes vertices are not correct, skip drawing");
             return;
         }
         this.#bindPolygon(triangles);
@@ -1129,7 +1129,7 @@ export class WebGlEngine {
             fillStyle = renderObject.bgColor,
             fade_min = renderObject.fade_min,
             fadeLen = renderObject.radius,
-            lineWidth = this.#gameOptions.debug.boundaries.boundariesWidth;
+            lineWidth = this.#gameOptions.debug.collisionShapes.width;
         let verticesNumber = 0;
 
         gl.useProgram(program);
@@ -1266,8 +1266,8 @@ export class WebGlEngine {
                 tileheight = dtheight,
                 [ canvasW, canvasH ] = pageData.canvasDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0, 0] : pageData.worldOffset,
-                boundariesCalculations = this.#gameOptions.render.boundaries.realtimeCalculations,
-                setBoundaries = renderLayer.setBoundaries,
+                collisionShapesCalculations = this.#gameOptions.render.collisionShapes.realtimeCalculations,
+                setCollisionShapes = renderLayer.setCollisionShapes,
                 tileImagesData = [];
 
             if (!layerData) {
@@ -1275,8 +1275,8 @@ export class WebGlEngine {
                 reject();
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                pageData._setMapBoundaries();
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
+                pageData._setMapCollisionShapes();
             }
             
             for (let i = 0; i < tilesets.length; i++) {
@@ -1314,8 +1314,8 @@ export class WebGlEngine {
                     hasAnimations = tilesetData._hasAnimations;
                     //console.log("non empty: ", layerData.nonEmptyCells);
                     // additional property which is set in DrawTiledLayer
-                const hasBoundaries = tilesetData._hasBoundaries,
-                    tilesetBoundaries = tilesetData._boundaries,
+                const hasCollisionShapes = tilesetData._hasCollisionShapes,
+                    tilesetCollisionShapes = tilesetData._collisionShapes,
                     layerTilesetData = tilesets[i]._temp;
 
                 if (layerTilesetData.cells !== screenCells) {
@@ -1329,7 +1329,7 @@ export class WebGlEngine {
                 //t.fill(0);
                 v = [];
                 t = [];
-                let boundariesRowsIndexes = layerTilesetData._bTempIndexes;
+                let collisionShapesRowsIndexes = layerTilesetData._cTempIndexes;
                 const fullRowCellsNum = screenCols * 4;
                 
                 let mapIndex = skipRowsTop * layerCols;
@@ -1429,14 +1429,14 @@ export class WebGlEngine {
 
                             filledSize++;
                         
-                            if (setBoundaries) {
-                                // if boundary is set in tilesetData
-                                let isBoundaryPreset = false;
-                                if (hasBoundaries && tilesetBoundaries.size > 0) {
-                                    const tilesetBoundary = tilesetBoundaries.get(tile);
-                                    if (tilesetBoundary) {
-                                        isBoundaryPreset = true;
-                                        const objectGroup = tilesetBoundary,
+                            if (setCollisionShapes) {
+                                // if collision shape is set in tilesetData
+                                let isCollisionShapesPreset = false;
+                                if (hasCollisionShapes && tilesetCollisionShapes.size > 0) {
+                                    const tilesetCollisionShape = tilesetCollisionShapes.get(tile);
+                                    if (tilesetCollisionShape) {
+                                        isCollisionShapesPreset = true;
+                                        const objectGroup = tilesetCollisionShape,
                                             objects = objectGroup.objects;
                                             
                                         objects.forEach((object) => {
@@ -1451,21 +1451,21 @@ export class WebGlEngine {
                                                     (point, idx) => {
                                                         const next = object.polygon[idx + 1];
                                                         if (next) {
-                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
+                                                            pageData._addCollisionShapeLine(point.x + baseX, point.y + baseY, next.x + baseX, next.y + baseY);
                                                         } else {
                                                             // last point -> link to the first
                                                             const first = object.polygon[0];
-                                                            pageData._addBoundaryLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
+                                                            pageData._addCollisionShapeLine(point.x + baseX, point.y + baseY, first.x + baseX, first.y + baseY);
                                                         }
                                                     });
                                             } else if (object.point) {
                                                 // x/y coordinate
-                                                pageData._addPointBoundary(baseX, baseY);
+                                                pageData._addPointCollisionShape(baseX, baseY);
                                             } else if (object.ellipse) {
                                                 const radX = object.width / 2,
                                                     radY = object.height / 2;
                                                     
-                                                pageData._addEllipseBoundary(baseX + radX, baseY + radY, radX, radY);
+                                                pageData._addEllipseCollisionShape(baseX + radX, baseY + radY, radX, radY);
                                             } else {
                                                 // object is rect
                                                 const width = object.width,
@@ -1473,25 +1473,25 @@ export class WebGlEngine {
                                                     x2 = width + baseX,
                                                     y2 = height + baseY;
 
-                                                //boundaries.push([baseX, baseY, x2, baseY]);
-                                                pageData._addBoundaryLine(baseX, baseY, x2, baseY);
+                                                //collisionShapes.push([baseX, baseY, x2, baseY]);
+                                                pageData._addCollisionShapeLine(baseX, baseY, x2, baseY);
 
-                                                //boundaries.push([x2, baseY, x2, y2]);
-                                                pageData._addBoundaryLine(x2, baseY, x2, y2);
+                                                //collisionShapes.push([x2, baseY, x2, y2]);
+                                                pageData._addCollisionShapeLine(x2, baseY, x2, y2);
 
-                                                //boundaries.push([x2, y2, baseX, y2]);
-                                                pageData._addBoundaryLine(x2, y2, baseX, y2);
+                                                //collisionShapes.push([x2, y2, baseX, y2]);
+                                                pageData._addCollisionShapeLine(x2, y2, baseX, y2);
 
-                                                //boundaries.push([baseX, y2, baseX, baseY]);
-                                                pageData._addBoundaryLine(baseX, y2, baseX, baseY);
+                                                //collisionShapes.push([baseX, y2, baseX, baseY]);
+                                                pageData._addCollisionShapeLine(baseX, y2, baseX, baseY);
                                             }
                                         });
                                     }
 
-                                // extract rect boundary for the whole tile
+                                // extract rect collsiion shape for the whole tile
                                 }
-                                if (isBoundaryPreset === false) {
-                                    const boundaries = pageData.getRawBoundaries();
+                                if (isCollisionShapesPreset === false) {
+                                    const collisionShapes = pageData.getRawCollisionShapes();
 
                                     let rightLine = [ mapPosX + tilesetwidth, mapPosY, mapPosX + tilesetwidth, mapPosY + tilesetheight ],
                                         bottomLine = [ mapPosX + tilesetwidth, mapPosY + tilesetheight, mapPosX, mapPosY + tilesetheight ],
@@ -1501,14 +1501,14 @@ export class WebGlEngine {
                                     // top cell7
                                     if (row !== 0) {
                                         const topCellFirstIndex =  (row - 1) * fullRowCellsNum + (col * 4),
-                                            bottomTopLeftFirstIndex = boundariesRowsIndexes[topCellFirstIndex + INDEX_BOTTOM_LINE];
+                                            bottomTopLeftFirstIndex = collisionShapesRowsIndexes[topCellFirstIndex + INDEX_BOTTOM_LINE];
                                         if (bottomTopLeftFirstIndex) {
                                             //remove double lines from top
-                                            const bottomTopCellX1 = boundaries[bottomTopLeftFirstIndex];
+                                            const bottomTopCellX1 = collisionShapes[bottomTopLeftFirstIndex];
                                             if (bottomTopCellX1) {
-                                                const bottomTopCellY1 = boundaries[bottomTopLeftFirstIndex + INDEX_Y1],
-                                                    bottomTopCellX2 = boundaries[bottomTopLeftFirstIndex + INDEX_X2],
-                                                    bottomTopCellY2 = boundaries[bottomTopLeftFirstIndex + INDEX_Y2],
+                                                const bottomTopCellY1 = collisionShapes[bottomTopLeftFirstIndex + INDEX_Y1],
+                                                    bottomTopCellX2 = collisionShapes[bottomTopLeftFirstIndex + INDEX_X2],
+                                                    bottomTopCellY2 = collisionShapes[bottomTopLeftFirstIndex + INDEX_Y2],
                                                     topX1 = topLine[INDEX_X1],
                                                     topY1 = topLine[INDEX_Y1],
                                                     topX2 = topLine[INDEX_X2],
@@ -1516,35 +1516,35 @@ export class WebGlEngine {
                                                 
                                                 if (topX1 === bottomTopCellX2 && topY1 === bottomTopCellY2 &&
                                                     topX2 === bottomTopCellX1 && topY2 === bottomTopCellY1) {
-                                                    pageData._removeBoundaryLine(bottomTopLeftFirstIndex);
+                                                    pageData._removeCollisionShapeLine(bottomTopLeftFirstIndex);
                                                     topLine = undefined;
                                                 }
                                             }
 
                                             // merge line from top right
-                                            const rightTopRightFirstIndex = boundariesRowsIndexes[ topCellFirstIndex + INDEX_RIGHT_LINE],
-                                                rightTopCellX1 = boundaries[rightTopRightFirstIndex];
+                                            const rightTopRightFirstIndex = collisionShapesRowsIndexes[ topCellFirstIndex + INDEX_RIGHT_LINE],
+                                                rightTopCellX1 = collisionShapes[rightTopRightFirstIndex];
                                             if (rightTopCellX1) {
-                                                const rightTopCellY1 = boundaries[rightTopRightFirstIndex + INDEX_Y1],
-                                                    rightTopCellX2 = boundaries[rightTopRightFirstIndex + INDEX_X2],
-                                                    rightX1 = boundaries[rightTopRightFirstIndex + INDEX_X1],
-                                                    rightX2 = boundaries[rightTopRightFirstIndex + INDEX_X2];
+                                                const rightTopCellY1 = collisionShapes[rightTopRightFirstIndex + INDEX_Y1],
+                                                    rightTopCellX2 = collisionShapes[rightTopRightFirstIndex + INDEX_X2],
+                                                    rightX1 = collisionShapes[rightTopRightFirstIndex + INDEX_X1],
+                                                    rightX2 = collisionShapes[rightTopRightFirstIndex + INDEX_X2];
                                                 if (rightTopCellX1 === rightX2 && rightTopCellX2 === rightX1) {
-                                                    pageData._removeBoundaryLine(rightTopRightFirstIndex);
+                                                    pageData._removeCollisionShapeLine(rightTopRightFirstIndex);
                                                     rightLine[INDEX_X1] = rightTopCellX1;
                                                     rightLine[INDEX_Y1] = rightTopCellY1;
                                                 }
                                             }
                                             // merge line from top left
-                                            const leftTopRightFirstIndex =  boundariesRowsIndexes[topCellFirstIndex + INDEX_LEFT_LINE],
-                                                leftTopCellX1 = boundaries[leftTopRightFirstIndex];
+                                            const leftTopRightFirstIndex =  collisionShapesRowsIndexes[topCellFirstIndex + INDEX_LEFT_LINE],
+                                                leftTopCellX1 = collisionShapes[leftTopRightFirstIndex];
                                             if (leftTopCellX1) {
-                                                const leftTopCellX2 = boundaries[leftTopRightFirstIndex + INDEX_X2],
-                                                    leftTopCellY2 = boundaries[leftTopRightFirstIndex + INDEX_Y2],
+                                                const leftTopCellX2 = collisionShapes[leftTopRightFirstIndex + INDEX_X2],
+                                                    leftTopCellY2 = collisionShapes[leftTopRightFirstIndex + INDEX_Y2],
                                                     leftX1 = leftLine[INDEX_X1],
                                                     leftX2 = leftLine[INDEX_X2];
                                                 if (leftTopCellX1 === leftX2 && leftTopCellX2 === leftX1) {
-                                                    pageData._removeBoundaryLine(leftTopRightFirstIndex);
+                                                    pageData._removeCollisionShapeLine(leftTopRightFirstIndex);
                                                     leftLine[INDEX_X2] = leftTopCellX2;
                                                     leftLine[INDEX_Y2] = leftTopCellY2;
                                                 }
@@ -1555,16 +1555,16 @@ export class WebGlEngine {
                                     if (col !== 0) {
                                         
                                         const leftCell = row * fullRowCellsNum + ((col - 1) * 4),
-                                            topLeftFirstCellIndex = boundariesRowsIndexes[leftCell];
+                                            topLeftFirstCellIndex = collisionShapesRowsIndexes[leftCell];
                                         if (topLeftFirstCellIndex) {
 
                                             //remove double lines from left
-                                            const rightLeftCellIndex = boundariesRowsIndexes[leftCell + INDEX_RIGHT_LINE],
-                                                rightLeftX1 = boundaries[rightLeftCellIndex],
+                                            const rightLeftCellIndex = collisionShapesRowsIndexes[leftCell + INDEX_RIGHT_LINE],
+                                                rightLeftX1 = collisionShapes[rightLeftCellIndex],
                                                 rightLeftCellX1 = rightLeftX1,
-                                                rightLeftCellY1 = boundaries[rightLeftCellIndex + INDEX_Y1],
-                                                rightLeftCellX2 = boundaries[rightLeftCellIndex + INDEX_X2],
-                                                rightLeftCellY2 = boundaries[rightLeftCellIndex + INDEX_Y2],
+                                                rightLeftCellY1 = collisionShapes[rightLeftCellIndex + INDEX_Y1],
+                                                rightLeftCellX2 = collisionShapes[rightLeftCellIndex + INDEX_X2],
+                                                rightLeftCellY2 = collisionShapes[rightLeftCellIndex + INDEX_Y2],
                                                 leftX1 = leftLine[INDEX_X1],
                                                 leftY1 = leftLine[INDEX_Y1],
                                                 leftX2 = leftLine[INDEX_X2],
@@ -1572,35 +1572,35 @@ export class WebGlEngine {
 
                                             if (leftX1 === rightLeftCellX2 && leftY1 === rightLeftCellY2 &&
                                                 leftX2 === rightLeftCellX1 && leftY2 === rightLeftCellY1) {
-                                                pageData._removeBoundaryLine(rightLeftCellIndex);
+                                                pageData._removeCollisionShapeLine(rightLeftCellIndex);
                                                 leftLine = undefined;
                                             }
 
                                             //merge long lines from left top
-                                            const topLeftCellX1 = boundaries[topLeftFirstCellIndex];
+                                            const topLeftCellX1 = collisionShapes[topLeftFirstCellIndex];
                                             if (topLeftCellX1 && topLine) {
-                                                const topLeftCellY1 = boundaries[topLeftFirstCellIndex + INDEX_Y1],
-                                                    topLeftCellY2 = boundaries[topLeftFirstCellIndex + INDEX_Y2],
+                                                const topLeftCellY1 = collisionShapes[topLeftFirstCellIndex + INDEX_Y1],
+                                                    topLeftCellY2 = collisionShapes[topLeftFirstCellIndex + INDEX_Y2],
                                                     topY1 = topLine[INDEX_Y1],
                                                     topY2 = topLine[INDEX_Y2];
                                                 if (topLeftCellY1 === topY2 && topLeftCellY2 === topY1 ) {
-                                                    pageData._removeBoundaryLine(topLeftFirstCellIndex);
+                                                    pageData._removeCollisionShapeLine(topLeftFirstCellIndex);
                                                     topLine[INDEX_X1] = topLeftCellX1;
                                                     topLine[INDEX_Y1] = topLeftCellY1;
                                                 }
                                             }
 
                                             // merge long lines from left bottom
-                                            const bottomLeftFirstCellIndex = boundariesRowsIndexes[leftCell + INDEX_BOTTOM_LINE],
-                                                bottomLeftCellX1 = boundaries[bottomLeftFirstCellIndex];
+                                            const bottomLeftFirstCellIndex = collisionShapesRowsIndexes[leftCell + INDEX_BOTTOM_LINE],
+                                                bottomLeftCellX1 = collisionShapes[bottomLeftFirstCellIndex];
                                             if (bottomLeftCellX1) {
-                                                const bottomLeftCellY1 = boundaries[bottomLeftFirstCellIndex + INDEX_Y1],
-                                                    bottomLeftCellX2 = boundaries[bottomLeftFirstCellIndex + INDEX_X2],
-                                                    bottomLeftCellY2 = boundaries[bottomLeftFirstCellIndex + INDEX_Y2],
+                                                const bottomLeftCellY1 = collisionShapes[bottomLeftFirstCellIndex + INDEX_Y1],
+                                                    bottomLeftCellX2 = collisionShapes[bottomLeftFirstCellIndex + INDEX_X2],
+                                                    bottomLeftCellY2 = collisionShapes[bottomLeftFirstCellIndex + INDEX_Y2],
                                                     bottomY1 = bottomLine[INDEX_Y1],
                                                     bottomY2 = bottomLine[INDEX_Y2];
                                                 if (bottomLeftCellY1 === bottomY2 && bottomLeftCellY2 === bottomY1 ) {
-                                                    pageData._removeBoundaryLine(bottomLeftFirstCellIndex);
+                                                    pageData._removeCollisionShapeLine(bottomLeftFirstCellIndex);
                                                     //opposite direction
                                                     bottomLine[INDEX_X2] = bottomLeftCellX2;
                                                     bottomLine[INDEX_Y2] = bottomLeftCellY2;
@@ -1611,16 +1611,16 @@ export class WebGlEngine {
                                     }
                                     const currentCellIndex = row * fullRowCellsNum + (col * 4);
                                     if (topLine) {
-                                        pageData._addBoundaryLine(topLine[0], topLine[1], topLine[2], topLine[3]);
-                                        boundariesRowsIndexes[currentCellIndex + INDEX_TOP_LINE] = pageData.boundariesLen - 4;
+                                        pageData._addCollisionShapeLine(topLine[0], topLine[1], topLine[2], topLine[3]);
+                                        collisionShapesRowsIndexes[currentCellIndex + INDEX_TOP_LINE] = pageData.collisionShapesLen - 4;
                                     }
-                                    pageData._addBoundaryLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
-                                    boundariesRowsIndexes[currentCellIndex + INDEX_RIGHT_LINE] = pageData.boundariesLen - 4;
-                                    pageData._addBoundaryLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
-                                    boundariesRowsIndexes[currentCellIndex + INDEX_BOTTOM_LINE] = pageData.boundariesLen - 4;
+                                    pageData._addCollisionShapeLine(rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
+                                    collisionShapesRowsIndexes[currentCellIndex + INDEX_RIGHT_LINE] = pageData.collisionShapesLen - 4;
+                                    pageData._addCollisionShapeLine(bottomLine[0], bottomLine[1], bottomLine[2], bottomLine[3]);
+                                    collisionShapesRowsIndexes[currentCellIndex + INDEX_BOTTOM_LINE] = pageData.collisionShapesLen - 4;
                                     if (leftLine) {
-                                        pageData._addBoundaryLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
-                                        boundariesRowsIndexes[currentCellIndex + INDEX_LEFT_LINE] = pageData.boundariesLen - 4;
+                                        pageData._addCollisionShapeLine(leftLine[0], leftLine[1], leftLine[2], leftLine[3]);
+                                        collisionShapesRowsIndexes[currentCellIndex + INDEX_LEFT_LINE] = pageData.collisionShapesLen - 4;
                                     }
                                     
                                 }
@@ -1630,11 +1630,11 @@ export class WebGlEngine {
                     }
                     mapIndex += skipColsRight;
                 }
-                //console.log(boundariesRowsIndexes);
+                //console.log(collisionShapesRowsIndexes);
                 //this.#bindTileImages(verticesBufferData, texturesBufferData, atlasImage, tilesetData.name, renderLayer._maskId);
                 tileImagesData.push([v, t, tilesetData.name, atlasImage]);
                 //cleanup
-                boundariesRowsIndexes.fill(0);
+                collisionShapesRowsIndexes.fill(0);
             }
             
             resolve(tileImagesData);
@@ -1656,8 +1656,8 @@ export class WebGlEngine {
                 reject();
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                pageData._setMapBoundaries();
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
+                pageData._setMapCollisionShapes();
             }
 
             for (let i = 0; i <= tilesets.length - 1; i++) {
@@ -1797,7 +1797,7 @@ export class WebGlEngine {
                 tileheight = dtheight,
                 offsetDataItemsFullNum = layerData.data.length,
                 offsetDataItemsFilteredNum = layerData.data.filter((item) => item !== 0).length,
-                setBoundaries = false, //renderLayer.setBoundaries,
+                setCollisionShapes = false, //renderLayer.setCollisionShapes,
                 [ settingsWorldWidth, settingsWorldHeight ] = pageData.worldDimensions,
                 //[ canvasW, canvasH ] = this.stageData.drawDimensions,
                 [ xOffset, yOffset ] = renderLayer.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset;
@@ -1811,8 +1811,8 @@ export class WebGlEngine {
                 reject();
             }
 
-            if (this.#gameOptions.render.boundaries.mapBoundariesEnabled) {
-                pageData._setMapBoundaries();
+            if (this.#gameOptions.render.collisionShapes.mapCollisionShapesEnabled) {
+                pageData._setMapCollisionShapes();
             }
             
             for (let i = 0; i < tilesets.length; i++) {
@@ -1845,7 +1845,7 @@ export class WebGlEngine {
                     cellSpacing = typeof tilesetData.spacing === "number" ? tilesetData.spacing : 0,
                     cellMargin = typeof tilesetData.margin === "number" ? tilesetData.margin : 0;
                 
-                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setBoundaries);
+                const itemsProcessed = this.calculateBufferData(dataCellSizeBytes, offsetDataItemsFullNum, vectorDataItemsNum, layerRows, layerCols, dtwidth, dtheight, tilesetwidth, tilesetheight, atlasColumns, atlasWidth, atlasHeight, xOffset, yOffset, firstgid, nextgid, cellSpacing, setCollisionShapes);
                 
                 const verticesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(offsetDataItemsFullNum, vectorDataItemsNum + offsetDataItemsFullNum) : [],
                     texturesBufferData = itemsProcessed > 0 ? this.layerDataFloat32.slice(vectorDataItemsNum + offsetDataItemsFullNum, vectorDataItemsNum + texturesDataItemsNum + offsetDataItemsFullNum) : [];

@@ -174,7 +174,7 @@ export class MapPage extends GameStage {
         person.isMoving = true;
         person.isAiming = false;
         
-        if (!this.isBoundariesCollision(newCoordX, newCoordY, person)) {
+        if (!this.isCollision(newCoordX, newCoordY, person)) {
             person.x = newCoordX; 
             person.y = newCoordY;
             this.stageData.centerCameraPosition(newCoordX, newCoordY);
@@ -207,7 +207,7 @@ export class MapPage extends GameStage {
             
             this.player.rotation = rad - Math.PI/2;
 
-        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Traversed = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
         
         if (isNav1Traversed) {
             this.navItemBack.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -221,7 +221,7 @@ export class MapPage extends GameStage {
     };
 
     #mouseClickAction = (e) => {
-        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.boundariesBox);
+        const isNav1Click = utils.isPointRectIntersect(e.offsetX, e.offsetY, this.navItemBack.collisionShapes);
     
         if (isNav1Click) {
             this.iSystem.stopGameStage("pirates");

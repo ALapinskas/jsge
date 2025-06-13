@@ -45,6 +45,7 @@ jobs:
           name: jsge_build_artifact
           path: ./
           if-no-files-found: error
+          retention-days: 1
   regression_test:
     runs-on: ubuntu-latest
     needs: build

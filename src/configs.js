@@ -29,22 +29,32 @@ export class SystemSettings {
                 check: CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES,
                 averageFPStime: 10000
             },
-            boundaries: {
+            boundaries: { // depricated from 1.5.9
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,
                 wholeWorldPrecalculations: false
             },
-            
+            collisionShapes: {
+                mapCollisionShapesEnabled: true,
+                realtimeCalculations: true,
+                wholeWorldPrecalculations: false
+            },
         },
         debug: {
-            preserveDrawingBuffer: false, // this option is used in testing environment
+            preserveDrawingBuffer: false, // testing
             checkWebGlErrors: false,
             debugMobileTouch: false,
-            boundaries: {
+            boundaries: { // depricated from 1.5.9
                 drawLayerBoundaries: false,
                 drawObjectBoundaries: false,
                 boundariesColor: "rgba(224, 12, 21, 0.6)",
                 boundariesWidth: 2
+            },
+            collisionShapes: {
+                drawLayerCollisionShapes: false,
+                drawObjectCollisionShapes: false,
+                color: "rgba(224, 12, 21, 0.6)",
+                width: 2
             },
             delayBetweenObjectRender: false, // 1 sec delay for debug proposes
         }
