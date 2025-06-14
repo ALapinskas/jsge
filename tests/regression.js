@@ -4,7 +4,11 @@ const TIMEOUT = 20;
 
 (async () => {
     // Launch the browser and open a new blank page
-    const browser = await puppeteer.launch({/*executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",*/ headless: "shell", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']});
+    const browser = await puppeteer.launch({/*executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",*/ headless: "shell", args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--disable-gpu' // without this option, pixels colors(spine test 2) for headless: true and headless: "shell" are a bit different
+    ]});
     const page = await browser.newPage();
   
     const CHECKED = 1,
