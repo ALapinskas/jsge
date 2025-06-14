@@ -1,0 +1,14 @@
+Date: June 14 2025
+jsge@1.5.896
+Rename boundaries to collision shapes / Переименовать boundaries в collision shapes
+
+Status: In progress
+
+Context:
+    Collision shapes(грани коллизий) более корректно, чем boundaries(границы)
+
+Decision:
+    
+
+Impact:
+    Возможно будет нарушена обратная совместимость.

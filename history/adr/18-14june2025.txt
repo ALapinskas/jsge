@@ -1,0 +1,15 @@
+Date: June 14 2025
+jsge@1.5.896
+Add test workflow / Добавить тестовый workflow
+
+Status: Done(1.5.897)
+
+Context:
+    
+
+Decision:
+    Для проверки работы тестов на сервере, добавить тестовый workflow,
+    без сборки и публикации
+
+Impact:
+    No impact.

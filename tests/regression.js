@@ -4,7 +4,7 @@ const TIMEOUT = 1;
 
 (async () => {
     // Launch the browser and open a new blank page
-    const browser = await puppeteer.launch({/*executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",*/ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    const browser = await puppeteer.launch({/*executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",*/ headless: "shell", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']});
     const page = await browser.newPage();
   
     const CHECKED = 1,
@@ -14,157 +14,107 @@ const TIMEOUT = 1;
     //await page.screenshot({path: 'screenshot.png'});
     page.on('console', async (message) => {
         console.log(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`);
-        if (message.text().includes("start started")) {
-            console.log("looks like navigation page works, continue testing");
-            // page loads, start testing
-            const firstUnchecked = checked.findIndex((item) => item === UNCHECKED);
-            console.log(firstUnchecked);
-            if (firstUnchecked === -1) {
-                console.log("all test successfully done, closing");
-                await page.removeAllListeners();
-                await page.close();
-                await browser.close();
-                return;
-            }
-            switch (firstUnchecked) {
-                case 0:
-                    setTimeout(async() => {
-                        console.log("nav to dungeon");
+        setTimeout(async() => {
+            if (message.text().includes("start started")) {
+                console.log("looks like navigation page works, continue testing");
+                // page loads, start testing
+                const firstUnchecked = checked.findIndex((item) => item === UNCHECKED);
+                console.log(firstUnchecked);
+                if (firstUnchecked === -1) {
+                    console.log("all test successfully done, closing");
+                    await page.removeAllListeners();
+                    //await page.close();
+                    await browser.close();
+                    return;
+                }
+                switch (firstUnchecked) {
+                    case 0:
                         checked[0] = CHECKED;
-                        await page.mouse.click(527, 419); // click first menu item
-                    }, TIMEOUT);
-                    break;
-                case 1: 
-                    setTimeout(async() => {
-                        console.log("nav to pirates");
+                            await page.mouse.click(527, 419);
+                        break;
+                    case 1: 
                         checked[1] = CHECKED;
-                        await page.mouse.click(527, 453); // click first menu item
-                    }, TIMEOUT);
-                    break;
-                case 2: 
-                    setTimeout(async() => {
+                        await page.mouse.click(527, 453);
+                        break;
+                    case 2: 
                         checked[2] = CHECKED;
-                        await page.mouse.click(527, 482); // click first menu item
-                    }, TIMEOUT);
-                    break;
-                case 3: 
-                    setTimeout(async() => {
+                        await page.mouse.click(527, 482);
+                        break;
+                    case 3: 
                         checked[3] = CHECKED;
-                        await page.mouse.click(527, 510); // click first menu item
-                    }, TIMEOUT);
-                    break;
-                case 4: 
-                    setTimeout(async() => {
+                        await page.mouse.click(527, 510);
+                        break;
+                    case 4: 
                         checked[4] = CHECKED;
                         await page.mouse.click(527, 540);
-                    }, TIMEOUT);
-                    break;
-                case 5: 
-                    setTimeout(async() => {
+                        break;
+                    case 5: 
                         checked[5] = CHECKED;
                         await page.mouse.click(527, 570);
-                    }, TIMEOUT);
-                    break;
-                case 6: 
-                    setTimeout(async() => {
+                        break;
+                    case 6: 
                         checked[6] = CHECKED;
                         await page.mouse.click(527, 600);
-                    }, TIMEOUT);
-                    break;
-                case 7: 
-                    setTimeout(async() => {
+                        break;
+                    case 7: 
                         checked[7] = CHECKED;
                         await page.mouse.click(527, 630);
-                    }, TIMEOUT);
-                    break;
-                case 8: 
-                    setTimeout(async() => {
+                        break;
+                    case 8: 
                         checked[8] = CHECKED;
                         await page.mouse.click(527, 660);
-                    }, TIMEOUT);
-                    break;
-                case 9: 
-                    setTimeout(async() => {
+                        break;
+                    case 9: 
                         checked[9] = CHECKED;
                         await page.mouse.click(527, 690);
-                    }, TIMEOUT);
-                    break;
-                default:
-                    console.log("no more check");
-                    break;
+                        break;
+                    default:
+                        console.log("no more check");
+                        break;
+                }
+                // page.screenshot({path: 'screenshot1.png'});
+                // 906/22
             }
-            // page.screenshot({path: 'screenshot1.png'});
-            // 906/22
-        }
-        if (message.text().includes("dungeon started")) {
-            console.log("looks like dungeon page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
-                await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
+            if (message.text().includes("dungeon started")) {
+                
+                await page.mouse.click(906, 22);
+            }
             
-            // page.screenshot({path: 'screenshot1.png'});
-            // 906/22
-        }
-        
-        if (message.text().includes("pirates started")) {
-            console.log("looks like pirates page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
+            if (message.text().includes("pirates started")) {
+                await page.mouse.click(906, 22);
+            }
+            if (message.text().includes("racing started")) {
+                
+                await page.mouse.click(906, 22);
+            }
+            if (message.text().includes("spine started")) {
+                
+                await page.mouse.click(906, 22);
+            }
+            if (message.text().includes("big_map started")) {
+                
+                await page.mouse.click(906, 22);
+            }
+            if (message.text().includes("strategy started")) {
+                // page loads, start testing
+                await page.mouse.click(906, 54);
+            }
+            if (message.text().includes("custom_webgl started")) {
+                console.log("looks like custom webgl page works, continue testing");
+                // page loads, start testing
                 await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
-            // page.screenshot({path: 'screenshot1.png'});
-            // 906/22
-        }
-        if (message.text().includes("racing started")) {
-            console.log("looks like racing page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
+            }
+            if (message.text().includes("tanks started")) {
+                console.log("looks like tanks page works, continue testing");
+                // page loads, start testing
                 await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
-        }
-        if (message.text().includes("spine started")) {
-            console.log("looks like spine page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
+            }
+            if (message.text().includes("primitives started")) {
+                console.log("looks like primitives page works, continue testing");
+                // page loads, start testing
                 await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
-        }
-        if (message.text().includes("big_map started")) {
-            console.log("looks like big_map page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
-                await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
-        }
-        if (message.text().includes("strategy started")) {
-            console.log("looks like strategy page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
-                await page.mouse.click(906, 54); // click first menu item
-            }, TIMEOUT);
-        }
-        if (message.text().includes("custom_webgl started")) {
-            console.log("looks like custom webgl page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
-                await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
-        }
-        if (message.text().includes("tanks started")) {
-            console.log("looks like tanks page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
-                await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
-        }
-        if (message.text().includes("primitives started")) {
-            console.log("looks like primitives page works, continue testing");
-            // page loads, start testing
-            setTimeout(async() => {
-                await page.mouse.click(906, 22); // click first menu item
-            }, TIMEOUT);
-        }
+            }
+        }, TIMEOUT);
     })
     .on('pageerror', async({ message }) => {
         console.error("error on page ---> ", checked.findIndex((item) => item === UNCHECKED));

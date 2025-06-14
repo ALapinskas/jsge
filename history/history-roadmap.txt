@@ -4,6 +4,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.897:
+    +: test workflow
+    r: regression test: process.exit(1), headless: "shell", --disable-gpu
 
 1.5.83 - 1.5.896:
     +: build pipeline fixes

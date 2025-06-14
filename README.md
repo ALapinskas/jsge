@@ -28,9 +28,10 @@ No external libraries are used for drawing, no TypeScript, no cycle dependencies
 * Tiles boundaries(dot/ellipse/polygon)
 
 ### How to run examples:
-1. npm i
-2. npm start
-3. visit localhost:9000
+1. git submodule update --init
+2. npm i
+3. npm start
+4. visit localhost:9000
 
 API docs and tutorials: [jsge.reslc.ru](https://jsge.reslc.ru) \
 github: [https://github.com/ALapinskas/jsge](https://github.com/ALapinskas/jsge) \
