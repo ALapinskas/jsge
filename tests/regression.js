@@ -17,7 +17,7 @@ const TIMEOUT = 20;
             GREY: {
                 R: 72,
                 G: 72,
-                B: 75,
+                B: 72,
                 A: 92
             },
             DARK_BROWN: {
@@ -64,9 +64,9 @@ const TIMEOUT = 20;
                 A: 255
             },
             SPEAR_GREY: {
-                R: 131, 
-                G: 133, 
-                B: 137, 
+                R: 132, //131, 
+                G: 134, //133, 
+                B: 138, //137, 
                 A: 255
             },
             HIDDEN_BROWN: {

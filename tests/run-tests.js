@@ -38,15 +38,17 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
             process.exit(1);
         }
         // Determine the command to terminate Node.js processes based on the OS
-        /*const command = process.platform === 'win32' ? 'taskkill /f /im node.exe' : 'pkill node';
-        
-        exec(command, (err, stdout, stderr) => {
-            if (err) {
-                console.error(`Error terminating Puppeteer processes: ${stderr}`);
-            } else {
-                console.log(`Terminated Puppeteer processes: ${stdout}`);
-            }
-        });*/
+        if (process.platform === 'win32') {
+            const command = process.platform === 'win32' ? 'taskkill /f /im node.exe' : 'pkill node';
+            
+            exec(command, (err, stdout, stderr) => {
+                if (err) {
+                    console.error(`Error terminating Puppeteer processes: ${stderr}`);
+                } else {
+                    console.log(`Terminated Puppeteer processes: ${stdout}`);
+                }
+            });
+        }
     });
 
 })();
