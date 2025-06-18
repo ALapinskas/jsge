@@ -19,10 +19,6 @@ export const CONST = {
                 END: "end"
             }
         },
-        GAME: {
-            BOUNDARIES_COLLISION: "BOUNDARIES_COLLISION",
-            OBJECTS_COLLISION: "OBJECTS_COLLISION"
-        },
         WEBSOCKET: {
             SERVER_CLIENT: {
                 CONNECTION_STATUS_CHANGED: "CONNECTION_STATUS_CHANGED",
@@ -45,13 +41,10 @@ export const CONST = {
     WEBGL: {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
+            PRIMITIVES_M: "drawPrimitivesMerge",
             IMAGES: "drawImages",
             IMAGES_M: "drawImagesMerge"
         }
-    },
-    LAYERS: {
-        DEFAULT: "default-view-layer",
-        BOUNDARIES: "boundaries-view-layer"
     },
     GAME_OPTIONS: {},
     LIBRARY: {

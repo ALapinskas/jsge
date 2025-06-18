@@ -7,8 +7,10 @@ import AssetsManager from "../../modules/assetsm/src/AssetsManager.js";
 //import { calculateBufferData } from "../wa/release.js";
 import { CONST } from "../constants.js";
 import { imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes } from "./WebGl/ImagesDrawProgram.js";
-import { primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes } from "./WebGl/PrimitivesDrawProgram.js";
 import { imgMVertexShader, imgMFragmentShader, imgMUniforms, imgMAttributes } from "./WebGl/ImagesDrawProgramM.js";
+import { primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes } from "./WebGl/PrimitivesDrawProgram.js";
+import { primitivesMVertexShader, primitivesMFragmentShader, primitivesMUniforms, primitivesMAttributes } from "./WebGl/PrimitivesDrawProgramM.js";
+
 import { RenderLoop } from "./RenderLoop.js";
 
 /**
@@ -89,11 +91,15 @@ export class IRender {
             () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES, imgVertexShader, imgFragmentShader, imgUniforms, imgAttributes)
         );
         this._registerRenderInit(
+            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, imgMVertexShader, imgMFragmentShader, imgMUniforms, imgMAttributes)
+        );
+        this._registerRenderInit(
             () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, primitivesVertexShader, primitivesFragmentShader, primitivesUniforms, primitivesAttributes)
         );
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, imgMVertexShader, imgMFragmentShader, imgMUniforms, imgMAttributes)
+            () => this._registerAndCompileWebGlProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M, primitivesMVertexShader, primitivesMFragmentShader, primitivesMUniforms, primitivesMAttributes)
         );
+        
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
     }
 

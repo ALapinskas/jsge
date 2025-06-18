@@ -25,6 +25,10 @@ export class WebGlEngine {
      */
     #MAX_TEXTURES;
     /**
+     * @type {number}
+     */
+    #MAX_TEXTURE_SIZE;
+    /**
      * @type {boolean}
      */
     #debug;
@@ -80,16 +84,17 @@ export class WebGlEngine {
         this.#loaderReference = iLoader;
         this.#debug = gameOptions.debug.checkWebGlErrors;
         this.#MAX_TEXTURES = context.getParameter(context.MAX_TEXTURE_IMAGE_UNITS);
+        this.#MAX_TEXTURE_SIZE = context.getParameter(context.MAX_TEXTURE_SIZE);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
 
         this._registerObjectRender(DrawTextObject.name, this._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
-        this._registerObjectRender(DrawRectObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawPolygonObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawRectObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
+        this._registerObjectRender(DrawPolygonObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
         this._registerObjectRender(DrawCircleObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawConusObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DrawLineObject.name, this._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DRAW_TYPE.IMAGE, this._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
 
@@ -241,11 +246,13 @@ export class WebGlEngine {
      */
     _preRender() {
         return new Promise((resolve, reject) => {
-            const gl = this.#gl,
-                err = this.#debug ? gl.getError() : 0;
-            if (err !== 0) {
-                console.error(err);
-                throw new Error("Error num: " + err);
+            const gl = this.#gl;
+            if (this.#debug) {
+                const err = this.#debug ? gl.getError() : 0;
+                if (err !== 0) {
+                    console.error(err);
+                    throw new Error("Error num: " + err);
+                }
             } else {
                 resolve();
             }
@@ -388,79 +395,120 @@ export class WebGlEngine {
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
             scale = [1, 1],
-            rotation = renderObject.rotation,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             { 
-                u_translation: translationLocation,
-                u_rotation: rotationRotation,
-                u_scale: scaleLocation,
                 u_resolution: resolutionUniformLocation,
                 u_color: colorUniformLocation,
                 a_position: positionAttributeLocation,
                 u_fade_min: fadeMinLocation
             } = vars;
             
-        let verticesNumber = 0;
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-        gl.uniform1f(fadeMinLocation, 0);
-        
-        gl.enableVertexAttribArray(positionAttributeLocation);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+        let vertices = [];
 
         switch (renderObject.type) {
-        case DRAW_TYPE.RECTANGLE:
-            this.#setSingleRectangle(renderObject.width, renderObject.height);
-            verticesNumber += 6;
-            break;
-        case DRAW_TYPE.TEXT:
-            break;
-        case DRAW_TYPE.CIRCLE: {
-            const coords = renderObject.vertices;
-            gl.bufferData(gl.ARRAY_BUFFER, 
-                new Float32Array(coords), gl.STATIC_DRAW);
-            verticesNumber += coords.length / 2;
-            break;
+            case DRAW_TYPE.RECTANGLE:
+                const x1 = 0,
+                    x2 = 0 + renderObject.width,
+                    y1 = 0,
+                    y2 = 0 + renderObject.height;
+                vertices = [
+                    x1, y1,
+                    x2, y1,
+                    x1, y2,
+                    x1, y2,
+                    x2, y1,
+                    x2, y2];
+                break;
+            case DRAW_TYPE.CIRCLE:
+                const coords = renderObject.vertices;
+                vertices = coords;
+                break;
+            case DRAW_TYPE.POLYGON:
+                const triangles = this.#triangulatePolygon(renderObject.vertices);
+                const len = triangles.length;
+                vertices = triangles;
+                if (len % 3 !== 0) {
+                    Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
+                    return Promise.reject();
+                }
+                break;
         }
-        case DRAW_TYPE.POLYGON: {
-            const triangles = this.#triangulatePolygon(renderObject.vertices);
-            this.#bindPolygon(triangles);
-            const len = triangles.length;
-            if (len % 3 !== 0) {
-                Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
-                return Promise.reject();
-            }
-            verticesNumber += len / 2;
-            break;
-        }
-        }
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+        
+        const c = Math.cos(renderObject.rotation),
+              s = Math.sin(renderObject.rotation),
+              translationMatrix = [
+                  1, 0, x,
+                  0, 1, y,
+                  0, 0, 1],
+              rotationMatrix = [
+                  c, -s, 0,
+                  s, c, 0,
+                  0, 0, 1
+              ],
+              scaleMatrix = [
+                  scale[0], 0, 0,
+                  0, scale[1], 0,
+                  0, 0, 1
+              ];
+        const matMultiply = utils.mat3Multiply(utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
 
-        const colorArray = this.#rgbaToArray(renderObject.bgColor);
-        gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
-        if (blend) {
-            gl.blendFunc(blend[0], blend[1]);
-        }
+        const verticesMat = utils.mat3MultiplyPosCoords(matMultiply, vertices);
         
-        if (renderObject.isMaskAttached) {
-            gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
-        } else if (renderObject._isMask) {
-            gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+        const nextObject = this.getNextRenderObject(renderObject, pageData);
+        // 2. Is it have same texture and draw program?
+        if (nextObject && this._canPrimitivesObjectsMerge(renderObject, nextObject)) {
+            //
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...verticesMat);
+                return Promise.resolve(0);
+            }
+        } else {
+            gl.useProgram(program);
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            
+            gl.uniform1f(fadeMinLocation, 0);
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+            } else {
+                this.#currentVertices.push(...verticesMat);
+            }
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+
+            gl.bufferData(gl.ARRAY_BUFFER, 
+                        new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+
+            //Tell the attribute how to get data out of positionBuffer
+            const size = 2,
+                type = gl.FLOAT, // data is 32bit floats
+                normalize = false,
+                stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                offset = 0; // start of beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+            const colorArray = this.#rgbaToArray(renderObject.bgColor);
+            gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
+            
+            if (blend) {
+                gl.blendFunc(blend[0], blend[1]);
+            }
+            
+            if (renderObject.isMaskAttached) {
+                gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
+            } else if (renderObject._isMask) {
+                gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+            }
+            const verticesNumber = this.#currentVertices.length / 2;
+            this.#currentVertices = null;
+            return this._render(verticesNumber, gl.TRIANGLES);
         }
-        return this._render(verticesNumber, gl.TRIANGLES);
     };
+
     _bindConus = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -699,7 +747,7 @@ export class WebGlEngine {
         //console.log("mat1: ", matMult1);
         //console.log("mat2: ", matMult2);
         //console.log("x1y1: ", x1y1);
-        const vectorsD =  [
+        const verticesD =  [
             vecX1, vecY1,
             vecX2, vecY1,
             vecX1, vecY2,
@@ -707,7 +755,7 @@ export class WebGlEngine {
             vecX2, vecY1,
             vecX2, vecY2
         ];
-        const vectors = utils.mat3MultiplyPosCoords(matMultiply, vectorsD),
+        const verticesMat = utils.mat3MultiplyPosCoords(matMultiply, verticesD),
         textures = [
             texX1, texY1,
             texX2, texY1,
@@ -728,11 +776,11 @@ export class WebGlEngine {
         if (nextObject && this._canImageObjectsMerge(renderObject, nextObject)) {
             //
             if (this.#currentVertices === null) {
-                this.#currentVertices = vectors;
+                this.#currentVertices = verticesMat;
                 this.#currentTextures = textures;
                 return Promise.resolve(0);
             } else {
-                this.#currentVertices.push(...vectors);
+                this.#currentVertices.push(...verticesMat);
                 this.#currentTextures.push(...textures);
                 return Promise.resolve(0);
             }
@@ -743,10 +791,10 @@ export class WebGlEngine {
             gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
             // bind data and call draw
             if (this.#currentVertices === null) {
-                this.#currentVertices = vectors;
+                this.#currentVertices = verticesMat;
                 this.#currentTextures = textures;
             } else {
-                this.#currentVertices.push(...vectors);
+                this.#currentVertices.push(...verticesMat);
                 this.#currentTextures.push(...textures);
             }
             
@@ -807,6 +855,20 @@ export class WebGlEngine {
         if ((registeredO1.webglProgramName === registeredO2.webglProgramName)
             && (obj1.type === obj2.type)
             && (obj1.image === obj2.image)
+            && (obj2.isRemoved === false)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
+
+    _canPrimitivesObjectsMerge = (obj1, obj2) => {
+        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
+            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
+
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName)
+            // colors match
+            && (obj1.bgColor === obj2.bgColor)
             && (obj2.isRemoved === false)) {
                 return true;
         } else {

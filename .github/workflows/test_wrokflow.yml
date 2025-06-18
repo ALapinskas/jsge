@@ -1,4 +1,4 @@
-name: Build, Test, Publish npm, Publish docs
+name: Test workflow. Build -> Regression test
 
 on:
   push:

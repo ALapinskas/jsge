@@ -27,12 +27,6 @@ const START_PAGE_NAME = "start",
 const TEST_WEBGL_PROGRAM_KEY = "test",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
     
-// Test different optimizations
-//SystemSettings.gameOptions.render.minCycleTime = 0;
-//SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.WEB_ASSEMBLY.ASSEMBLY_SCRIPT;
-//SystemSettings.gameOptions.optimization = CONST.OPTIMIZATION.NATIVE_JS.NOT_OPTIMIZED;
-//SystemSettings.gameOptions.debug.boundaries.drawLayerBoundaries = true;
-//SystemSettings.gameOptions.debug.boundaries.drawObjectBoundaries = true;
 let optionsForm = document.createElement("form");
 optionsForm.name = "options";
 optionsForm.style.display = "flex";
@@ -69,20 +63,6 @@ function createOptionsBlock() {
     preserveDrawingBufferWrap.appendChild(preserveDrawingBufferCheckbox);
     preserveDrawingBufferWrap.appendChild(preserveDrawingBufferLabel);
     optionsForm.appendChild(preserveDrawingBufferWrap);
-
-    const minCycleTimeWrap = document.createElement("div");
-    const minCycleTimeLabel = document.createElement("label");
-    minCycleTimeLabel.innerText = "Min render cycle time(ms)";
-    const minCycleTimeInput = document.createElement("input");
-    minCycleTimeInput.style.marginRight = "10px";
-    minCycleTimeInput.name = "minCycleTime";
-    minCycleTimeLabel.setAttribute("for", "minCycleTime");
-    minCycleTimeInput.value = SystemSettings.gameOptions.render.minCycleTime.toString();
-    minCycleTimeInput.disabled = true;
-
-    minCycleTimeWrap.appendChild(minCycleTimeInput);
-    minCycleTimeWrap.appendChild(minCycleTimeLabel);
-    optionsForm.appendChild(minCycleTimeWrap);
     
     const optimizationLabel = document.createElement("p");
     optimizationLabel.innerText = "Render optimizations:";
@@ -183,7 +163,6 @@ function createOptionsBlock() {
 const processOptionsFormData = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target),
-        minCycleTime = formData.get("minCycleTime"),
         optimization = formData.get("optimizations"),
         showWebGlErrors = formData.get("webGLErrors"),
         preserveDrawingBuffer = formData.get("preserveDrawingBuffer");
@@ -200,10 +179,6 @@ const processOptionsFormData = (e) => {
         SystemSettings.gameOptions.debug.preserveDrawingBuffer = true;
     } else {
         SystemSettings.gameOptions.debug.preserveDrawingBuffer = false;
-    }
-    
-    if (minCycleTime) {
-        SystemSettings.gameOptions.render.minCycleTime = parseFloat(minCycleTime);
     }
 
     if (optimization !== CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED) {

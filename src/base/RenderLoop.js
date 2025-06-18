@@ -129,10 +129,7 @@ export class RenderLoop {
         this.#clearContext();
         
         this.render().then(() => {
-            const currentRenderTime = performance.now() - timeStart,
-                //r_time_less = minCycleTime - currentRenderTime,
-                wait_time = 0, // нужна ли вообще возможность контролировать время отрисовки?
-                cycleTime = currentRenderTime + wait_time;
+            const currentRenderTime = performance.now() - timeStart;
                 
             if (isCyclesTimeCalcCheckCurrent) {
                 console.log("current draw take: ", (currentDrawTime), " ms");
@@ -147,7 +144,7 @@ export class RenderLoop {
             this.emit(CONST.EVENTS.SYSTEM.RENDER.END);
 
             if (this.#isActive) {
-                setTimeout(() => requestAnimationFrame(this.#runRenderLoop), wait_time);
+                setTimeout(() => requestAnimationFrame(this.#runRenderLoop));
             }
         }).catch((errors) => {
             if (errors.forEach) {

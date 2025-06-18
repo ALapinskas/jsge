@@ -4579,9 +4579,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
 /* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
 /* harmony import */ var _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgram.js */ "./src/base/WebGl/ImagesDrawProgram.js");
-/* harmony import */ var _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgram.js */ "./src/base/WebGl/PrimitivesDrawProgram.js");
-/* harmony import */ var _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgramM.js */ "./src/base/WebGl/ImagesDrawProgramM.js");
-/* harmony import */ var _RenderLoop_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./RenderLoop.js */ "./src/base/RenderLoop.js");
+/* harmony import */ var _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgramM.js */ "./src/base/WebGl/ImagesDrawProgramM.js");
+/* harmony import */ var _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgram.js */ "./src/base/WebGl/PrimitivesDrawProgram.js");
+/* harmony import */ var _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgramM.js */ "./src/base/WebGl/PrimitivesDrawProgramM.js");
+/* harmony import */ var _RenderLoop_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./RenderLoop.js */ "./src/base/RenderLoop.js");
 
 
 
@@ -4589,6 +4590,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 //import { calculateBufferData } from "../wa/release.js";
+
+
 
 
 
@@ -4673,11 +4676,15 @@ class IRender {
             () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgVertexShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgFragmentShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgUniforms, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgAttributes)
         );
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMAttributes)
         );
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.imgMAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesAttributes)
         );
+        this._registerRenderInit(
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMVertexShader, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMFragmentShader, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMUniforms, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMAttributes)
+        );
+        
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
     }
 
@@ -4839,7 +4846,7 @@ class IRender {
         switch (this.systemSettings.gameOptions.library) {
         case _constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LIBRARY.WEBGL:
             await this.#prepareViews();
-            this.#renderLoopInstance = new _RenderLoop_js__WEBPACK_IMPORTED_MODULE_9__.RenderLoop(this.systemSettings, stageData, this._webGlEngine());
+            this.#renderLoopInstance = new _RenderLoop_js__WEBPACK_IMPORTED_MODULE_10__.RenderLoop(this.systemSettings, stageData, this._webGlEngine());
             // delegate render loop events
             this.#renderLoopInstance.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.START));
             this.#renderLoopInstance.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.END));
@@ -5430,10 +5437,7 @@ class RenderLoop {
         this.#clearContext();
         
         this.render().then(() => {
-            const currentRenderTime = performance.now() - timeStart,
-                //r_time_less = minCycleTime - currentRenderTime,
-                wait_time = 0, // нужна ли вообще возможность контролировать время отрисовки?
-                cycleTime = currentRenderTime + wait_time;
+            const currentRenderTime = performance.now() - timeStart;
                 
             if (isCyclesTimeCalcCheckCurrent) {
                 console.log("current draw take: ", (currentDrawTime), " ms");
@@ -5448,7 +5452,7 @@ class RenderLoop {
             this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_2__.CONST.EVENTS.SYSTEM.RENDER.END);
 
             if (this.#isActive) {
-                setTimeout(() => requestAnimationFrame(this.#runRenderLoop), wait_time);
+                setTimeout(() => requestAnimationFrame(this.#runRenderLoop));
             }
         }).catch((errors) => {
             if (errors.forEach) {
@@ -6266,6 +6270,62 @@ const primitivesAttributes = ["a_position"];
 
 /***/ }),
 
+/***/ "./src/base/WebGl/PrimitivesDrawProgramM.js":
+/*!**************************************************!*\
+  !*** ./src/base/WebGl/PrimitivesDrawProgramM.js ***!
+  \**************************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "primitivesMAttributes": () => (/* binding */ primitivesMAttributes),
+/* harmony export */   "primitivesMFragmentShader": () => (/* binding */ primitivesMFragmentShader),
+/* harmony export */   "primitivesMUniforms": () => (/* binding */ primitivesMUniforms),
+/* harmony export */   "primitivesMVertexShader": () => (/* binding */ primitivesMVertexShader)
+/* harmony export */ });
+const primitivesMVertexShader =  `
+    precision mediump float;
+
+    attribute vec2 a_position;
+
+    uniform vec2 u_resolution;
+
+    void main(void) {
+        vec2 clipSpace = a_position / u_resolution * 2.0 - 1.0;
+
+        gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+    }
+`;
+const primitivesMFragmentShader = `
+    precision mediump float;
+
+    uniform vec4 u_color;
+    uniform float u_fade_min; 
+    uniform float u_fade_max;
+    uniform vec2 u_resolution;
+    uniform vec2 u_translation;
+
+    void main(void) {
+        vec4 p = u_color;
+        if (u_fade_min > 0.0) {
+            vec2 fix_tr = vec2(u_translation.x, u_resolution.y - u_translation.y); 
+            float distance = distance(fix_tr.xy, gl_FragCoord.xy);
+            if (u_fade_min <= distance && distance <= u_fade_max) {
+                float percent = ((distance - u_fade_max) / (u_fade_min - u_fade_max)) * 100.0;
+                p.a = u_color.a * (percent / 100.0);
+            }
+        }
+
+        gl_FragColor = p;
+    }
+`;
+const primitivesMUniforms = ["u_resolution", "u_fade_min", "u_fade_max", "u_color"];
+const primitivesMAttributes = ["a_position"];
+
+
+
+/***/ }),
+
 /***/ "./src/base/WebGl/WebGlEngine.js":
 /*!***************************************!*\
   !*** ./src/base/WebGl/WebGlEngine.js ***!
@@ -6316,6 +6376,10 @@ class WebGlEngine {
      * @type {number}
      */
     #MAX_TEXTURES;
+    /**
+     * @type {number}
+     */
+    #MAX_TEXTURE_SIZE;
     /**
      * @type {boolean}
      */
@@ -6372,16 +6436,17 @@ class WebGlEngine {
         this.#loaderReference = iLoader;
         this.#debug = gameOptions.debug.checkWebGlErrors;
         this.#MAX_TEXTURES = context.getParameter(context.MAX_TEXTURE_IMAGE_UNITS);
+        this.#MAX_TEXTURE_SIZE = context.getParameter(context.MAX_TEXTURE_SIZE);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
 
         this._registerObjectRender(_2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__.DrawTextObject.name, this._bindText, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
-        this._registerObjectRender(_2d_DrawRectObject_js__WEBPACK_IMPORTED_MODULE_10__.DrawRectObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(_2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_9__.DrawPolygonObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(_2d_DrawRectObject_js__WEBPACK_IMPORTED_MODULE_10__.DrawRectObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
+        this._registerObjectRender(_2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_9__.DrawPolygonObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
         this._registerObjectRender(_2d_DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_6__.DrawCircleObject.name, this._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_2d_DrawConusObject_js__WEBPACK_IMPORTED_MODULE_7__.DrawConusObject.name, this._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(_2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer.name, this._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_8__.DrawLineObject.name, this._bindLine, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(_2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer.name, this._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE, this._bindImage, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
 
@@ -6533,11 +6598,13 @@ class WebGlEngine {
      */
     _preRender() {
         return new Promise((resolve, reject) => {
-            const gl = this.#gl,
-                err = this.#debug ? gl.getError() : 0;
-            if (err !== 0) {
-                console.error(err);
-                throw new Error("Error num: " + err);
+            const gl = this.#gl;
+            if (this.#debug) {
+                const err = this.#debug ? gl.getError() : 0;
+                if (err !== 0) {
+                    console.error(err);
+                    throw new Error("Error num: " + err);
+                }
             } else {
                 resolve();
             }
@@ -6680,79 +6747,120 @@ class WebGlEngine {
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
             scale = [1, 1],
-            rotation = renderObject.rotation,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             { 
-                u_translation: translationLocation,
-                u_rotation: rotationRotation,
-                u_scale: scaleLocation,
                 u_resolution: resolutionUniformLocation,
                 u_color: colorUniformLocation,
                 a_position: positionAttributeLocation,
                 u_fade_min: fadeMinLocation
             } = vars;
             
-        let verticesNumber = 0;
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-        gl.uniform1f(fadeMinLocation, 0);
-        
-        gl.enableVertexAttribArray(positionAttributeLocation);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+        let vertices = [];
 
         switch (renderObject.type) {
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
-            this.#setSingleRectangle(renderObject.width, renderObject.height);
-            verticesNumber += 6;
-            break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.TEXT:
-            break;
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE: {
-            const coords = renderObject.vertices;
-            gl.bufferData(gl.ARRAY_BUFFER, 
-                new Float32Array(coords), gl.STATIC_DRAW);
-            verticesNumber += coords.length / 2;
-            break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.RECTANGLE:
+                const x1 = 0,
+                    x2 = 0 + renderObject.width,
+                    y1 = 0,
+                    y2 = 0 + renderObject.height;
+                vertices = [
+                    x1, y1,
+                    x2, y1,
+                    x1, y2,
+                    x1, y2,
+                    x2, y1,
+                    x2, y2];
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.CIRCLE:
+                const coords = renderObject.vertices;
+                vertices = coords;
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON:
+                const triangles = this.#triangulatePolygon(renderObject.vertices);
+                const len = triangles.length;
+                vertices = triangles;
+                if (len % 3 !== 0) {
+                    (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
+                    return Promise.reject();
+                }
+                break;
         }
-        case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON: {
-            const triangles = this.#triangulatePolygon(renderObject.vertices);
-            this.#bindPolygon(triangles);
-            const len = triangles.length;
-            if (len % 3 !== 0) {
-                (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
-                return Promise.reject();
-            }
-            verticesNumber += len / 2;
-            break;
-        }
-        }
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+        
+        const c = Math.cos(renderObject.rotation),
+              s = Math.sin(renderObject.rotation),
+              translationMatrix = [
+                  1, 0, x,
+                  0, 1, y,
+                  0, 0, 1],
+              rotationMatrix = [
+                  c, -s, 0,
+                  s, c, 0,
+                  0, 0, 1
+              ],
+              scaleMatrix = [
+                  scale[0], 0, 0,
+                  0, scale[1], 0,
+                  0, 0, 1
+              ];
+        const matMultiply = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
 
-        const colorArray = this.#rgbaToArray(renderObject.bgColor);
-        gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
         
-        if (blend) {
-            gl.blendFunc(blend[0], blend[1]);
-        }
+        const verticesMat = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3MultiplyPosCoords(matMultiply, vertices);
         
-        if (renderObject.isMaskAttached) {
-            gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
-        } else if (renderObject._isMask) {
-            gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+        const nextObject = this.getNextRenderObject(renderObject, pageData);
+        // 2. Is it have same texture and draw program?
+        if (nextObject && this._canPrimitivesObjectsMerge(renderObject, nextObject)) {
+            //
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...verticesMat);
+                return Promise.resolve(0);
+            }
+        } else {
+            gl.useProgram(program);
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            
+            gl.uniform1f(fadeMinLocation, 0);
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+            } else {
+                this.#currentVertices.push(...verticesMat);
+            }
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+
+            gl.bufferData(gl.ARRAY_BUFFER, 
+                        new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+
+            //Tell the attribute how to get data out of positionBuffer
+            const size = 2,
+                type = gl.FLOAT, // data is 32bit floats
+                normalize = false,
+                stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                offset = 0; // start of beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+            const colorArray = this.#rgbaToArray(renderObject.bgColor);
+            gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
+            
+            if (blend) {
+                gl.blendFunc(blend[0], blend[1]);
+            }
+            
+            if (renderObject.isMaskAttached) {
+                gl.stencilFunc(gl.EQUAL, renderObject._maskId, 0xFF);
+            } else if (renderObject._isMask) {
+                gl.stencilFunc(gl.ALWAYS, renderObject.id, 0xFF);
+            }
+            const verticesNumber = this.#currentVertices.length / 2;
+            this.#currentVertices = null;
+            return this._render(verticesNumber, gl.TRIANGLES);
         }
-        return this._render(verticesNumber, gl.TRIANGLES);
     };
+
     _bindConus = (renderObject, gl, pageData, program, vars) => {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
@@ -6991,7 +7099,7 @@ class WebGlEngine {
         //console.log("mat1: ", matMult1);
         //console.log("mat2: ", matMult2);
         //console.log("x1y1: ", x1y1);
-        const vectorsD =  [
+        const verticesD =  [
             vecX1, vecY1,
             vecX2, vecY1,
             vecX1, vecY2,
@@ -6999,7 +7107,7 @@ class WebGlEngine {
             vecX2, vecY1,
             vecX2, vecY2
         ];
-        const vectors = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3MultiplyPosCoords(matMultiply, vectorsD),
+        const verticesMat = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3MultiplyPosCoords(matMultiply, verticesD),
         textures = [
             texX1, texY1,
             texX2, texY1,
@@ -7020,11 +7128,11 @@ class WebGlEngine {
         if (nextObject && this._canImageObjectsMerge(renderObject, nextObject)) {
             //
             if (this.#currentVertices === null) {
-                this.#currentVertices = vectors;
+                this.#currentVertices = verticesMat;
                 this.#currentTextures = textures;
                 return Promise.resolve(0);
             } else {
-                this.#currentVertices.push(...vectors);
+                this.#currentVertices.push(...verticesMat);
                 this.#currentTextures.push(...textures);
                 return Promise.resolve(0);
             }
@@ -7035,10 +7143,10 @@ class WebGlEngine {
             gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
             // bind data and call draw
             if (this.#currentVertices === null) {
-                this.#currentVertices = vectors;
+                this.#currentVertices = verticesMat;
                 this.#currentTextures = textures;
             } else {
-                this.#currentVertices.push(...vectors);
+                this.#currentVertices.push(...verticesMat);
                 this.#currentTextures.push(...textures);
             }
             
@@ -7099,6 +7207,20 @@ class WebGlEngine {
         if ((registeredO1.webglProgramName === registeredO2.webglProgramName)
             && (obj1.type === obj2.type)
             && (obj1.image === obj2.image)
+            && (obj2.isRemoved === false)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
+
+    _canPrimitivesObjectsMerge = (obj1, obj2) => {
+        const registeredO1 = this.#registeredRenderObjects.get(obj1.constructor.name) || this.#registeredRenderObjects.get(obj1.type),
+            registeredO2 = this.#registeredRenderObjects.get(obj2.constructor.name) || this.#registeredRenderObjects.get(obj2.type);
+
+        if ((registeredO1.webglProgramName === registeredO2.webglProgramName)
+            // colors match
+            && (obj1.bgColor === obj2.bgColor)
             && (obj2.isRemoved === false)) {
                 return true;
         } else {
@@ -8364,7 +8486,6 @@ class SystemSettings {
             loadingBarProgress: "rgba(128, 128, 128, 0.2)",
         },
         render: {
-            minCycleTime: 16.666, // is turned off from 1.5.3
             cyclesTimeCalc: {
                 check: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.CYCLE_TIME_CALC.AVERAGES,
                 averageFPStime: 10000
@@ -8449,10 +8570,6 @@ const CONST = {
                 END: "end"
             }
         },
-        GAME: {
-            BOUNDARIES_COLLISION: "BOUNDARIES_COLLISION",
-            OBJECTS_COLLISION: "OBJECTS_COLLISION"
-        },
         WEBSOCKET: {
             SERVER_CLIENT: {
                 CONNECTION_STATUS_CHANGED: "CONNECTION_STATUS_CHANGED",
@@ -8475,13 +8592,10 @@ const CONST = {
     WEBGL: {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
+            PRIMITIVES_M: "drawPrimitivesMerge",
             IMAGES: "drawImages",
             IMAGES_M: "drawImagesMerge"
         }
-    },
-    LAYERS: {
-        DEFAULT: "default-view-layer",
-        BOUNDARIES: "boundaries-view-layer"
     },
     GAME_OPTIONS: {},
     LIBRARY: {

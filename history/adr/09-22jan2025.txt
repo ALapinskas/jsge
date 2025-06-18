@@ -3,6 +3,7 @@ jsge@1.5.3
 Merge draw calls / Соединение вызовов отрисовки
 
 Status: In Progress (texts)
+        Done primitives (1.5.9)
         Done images (1.5.5)
         Done tilesets (1.5.6)
 

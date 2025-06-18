@@ -4,6 +4,12 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.9:
+    r: test workflow name
+    r: fixed Readme
+    r: fixed docs
+    +: primitive objects draw merge (adr#9)
+
 1.5.897:
     +: test workflow
     r: regression test: process.exit(1), headless: "shell", --disable-gpu

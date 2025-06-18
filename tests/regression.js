@@ -1,14 +1,18 @@
 import puppeteer from 'puppeteer';
 // Or import puppeteer from 'puppeteer-core';
-const TIMEOUT = 20;
+const TIMEOUT = 50;
 
 (async () => {
     // Launch the browser and open a new blank page
-    const browser = await puppeteer.launch({/*executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",*/ headless: "shell", args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox', 
-        '--disable-gpu' // without this option, pixels colors(spine test 2) for headless: true and headless: "shell" are a bit different
-    ]});
+    const browser = await puppeteer.launch({
+        /*executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",*/ 
+        headless: "shell", 
+        args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox', 
+            '--disable-gpu' // without this option, pixels colors(spine test 2) for headless: true and headless: "shell" are a bit different
+        ]
+    });
     const page = await browser.newPage();
   
     const CHECKED = 1,
@@ -300,6 +304,7 @@ const TIMEOUT = 20;
                         throw new Error("Pirates page pixels 2 doesn't match, pixels: " + pixels);
                     }
                 }, canvasHandle);
+                
                 //page.screenshot({path: 'screenshot2.png'});
                 await page.mouse.click(906, 22);
                 // 906/22
@@ -352,6 +357,7 @@ const TIMEOUT = 20;
             }
             if (message.text().includes("spine started")) {
                 checked[3] = CHECKED;
+                
                 // page loads, start testing
                 const canvasHandle = await page.$('canvas');
 
@@ -564,7 +570,7 @@ const TIMEOUT = 20;
                     const isMatch = await isColorsMatch(pixels, "TRIANGLE_PURPLE");
                     
                     if (isMatch === false) {
-                        throw new Error("Tanks page pixels doesn't match, pixels: " + pixels);
+                        throw new Error("Primitives page pixels doesn't match, pixels: " + pixels);
                     }
                     gl.readPixels(
                         380,
