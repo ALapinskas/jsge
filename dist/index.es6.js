@@ -1904,7 +1904,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Primitives_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Primitives.js */ "./src/base/2d/Primitives.js");
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../constants.js */ "./src/constants.js");
 /* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../Temp/ImageTempStorage.js */ "./src/base/Temp/ImageTempStorage.js");
+/* harmony import */ var _Temp_ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../Temp/ImageAtlasPosition.js */ "./src/base/Temp/ImageAtlasPosition.js");
 
 
 
@@ -1927,31 +1927,35 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
      * @type {HTMLCanvasElement}
      */
     #textureCanvas = document.createElement("canvas");
+    /**
+     * @type {boolean}
+     */
+    #isTextureUpdated = false;
 
     /**
-     * @type {ImageTempStorage}
+     * @type {ImageAtlasPosition}
      */
-    #textureStorage;
+    #atlasPosition;
 
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, text, font, fillStyle) {
+    constructor(mapX, mapY, text, font, fillStyle, boxWidth, boxHeight) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_2__.DRAW_TYPE.TEXT, mapX, mapY);
         this.#text = text;
         this.#font = font;
         this.#fillStyle = fillStyle;
         this.#textMetrics;
-        this.#calculateCanvasTextureAndMeasurements();
+        this.#calculateCanvasTextureAndMeasurements(boxWidth, boxHeight);
     }
 
     /**
      * Rectangle text box.
-     * @type {Rectangle}
+     * @return {Rectangle}
      */
     get boundariesBox() {
-        const width = this.textMetrics ? Math.floor(this.textMetrics.width) : 300,
-            height = this.textMetrics ? Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent): 30;
+        const width = this._atlasPos.width,
+            height = this._atlasPos.height;
         return new _Primitives_js__WEBPACK_IMPORTED_MODULE_1__.Rectangle(this.x, this.y - height, width, height);
     }
 
@@ -2065,63 +2069,70 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     set _textMetrics(value) {
         this.#textMetrics = value;
     }
-
     /**
      * @ignore
-     */
-    get _textureStorage() {
-        return this.#textureStorage;
-    }
-
-    /**
-     * @ignore
-     */
-    set _textureStorage(texture) {
-        this.#textureStorage = texture;
-    }
-
-    /**
-     * @ignore
+     * @returns {HTMLCanvasElement}
      */
     get _textureCanvas() {
         return this.#textureCanvas;
     }
 
     /**
+     * @ignore
+     * @returns {ImageAtlasPosition}
+     */
+    get _atlasPos() {
+        return this.#atlasPosition;
+    }
+
+    get _isTextureUpdated() {
+        return this.#isTextureUpdated;
+    }
+
+    _setTextureUpdated() {
+        this.#isTextureUpdated = false;
+    }
+
+    /**
      * 
      * @returns {void}
      */
-    #calculateCanvasTextureAndMeasurements() {
+    #calculateCanvasTextureAndMeasurements(atlasWidth, atlasHeight) {
         const ctx = this.#textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
         if (ctx) {
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
-            const boxWidth = this.boundariesBox.width, 
-                boxHeight = this.boundariesBox.height;
-            
-            ctx.canvas.width = boxWidth;
-            ctx.canvas.height = boxHeight;
+
+            if (this._atlasPos) {
+                atlasWidth = this._atlasPos.width;
+                atlasHeight = this._atlasPos.height;
+            } else {
+                if (!atlasWidth && !atlasHeight) {
+                    atlasWidth = Math.floor(this.textMetrics.width);
+                    atlasHeight = Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent);
+                }
+                this.#atlasPosition = new _Temp_ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_4__.ImageAtlasPosition(atlasWidth, atlasHeight);
+            }
+
+            ctx.canvas.width = atlasWidth;
+            ctx.canvas.height = atlasHeight;
             // after canvas resize, have to cleanup and set the font again
-            ctx.clearRect(0, 0, boxWidth, boxHeight);
+            ctx.clearRect(0, 0, atlasWidth, atlasHeight);
             ctx.font = this.font;
             ctx.textBaseline = "bottom";// bottom
             if (this.fillStyle) {
                 ctx.fillStyle = this.fillStyle;
-                ctx.fillText(this.text, 0, boxHeight);
+                ctx.fillText(this.text, 0, atlasHeight);
             } 
             if (this.strokeStyle) {
                 ctx.strokeStyle = this.strokeStyle;
-                ctx.strokeText(this.text, 0, boxHeight);
+                ctx.strokeText(this.text, 0, atlasHeight);
             }
-            
-            if (this.#textureStorage) {
-                this.#textureStorage._isTextureRecalculated = true;
-            }
-
+            this.#isTextureUpdated = true;
             // debug canvas
-            // this.#textureCanvas.style.position = "absolute";
-            // document.body.appendChild(this.#textureCanvas);
+            //this.#textureCanvas.style.position = "absolute";
+            //document.body.appendChild(this.#textureCanvas);
             
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_3__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
@@ -4578,11 +4589,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
 /* harmony import */ var _GameStageData_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./GameStageData.js */ "./src/base/GameStageData.js");
 /* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
-/* harmony import */ var _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgram.js */ "./src/base/WebGl/ImagesDrawProgram.js");
-/* harmony import */ var _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgramM.js */ "./src/base/WebGl/ImagesDrawProgramM.js");
-/* harmony import */ var _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgram.js */ "./src/base/WebGl/PrimitivesDrawProgram.js");
-/* harmony import */ var _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgramM.js */ "./src/base/WebGl/PrimitivesDrawProgramM.js");
-/* harmony import */ var _RenderLoop_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./RenderLoop.js */ "./src/base/RenderLoop.js");
+/* harmony import */ var _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./WebGl/ImagesDrawProgramM.js */ "./src/base/WebGl/ImagesDrawProgramM.js");
+/* harmony import */ var _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgram.js */ "./src/base/WebGl/PrimitivesDrawProgram.js");
+/* harmony import */ var _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./WebGl/PrimitivesDrawProgramM.js */ "./src/base/WebGl/PrimitivesDrawProgramM.js");
+/* harmony import */ var _RenderLoop_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./RenderLoop.js */ "./src/base/RenderLoop.js");
 
 
 
@@ -4590,8 +4600,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 //import { calculateBufferData } from "../wa/release.js";
-
-
 
 
 
@@ -4610,7 +4618,7 @@ class IRender {
      */
     #canvas;
     /**
-     * @type {WebGLRenderingContext | null}
+     * @type {RenderingContext | null}
      */
     #drawContext;
     /**
@@ -4673,16 +4681,13 @@ class IRender {
 
         this._registerRenderInit(this.fixCanvasSize);
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgVertexShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgFragmentShader, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgUniforms, _WebGl_ImagesDrawProgram_js__WEBPACK_IMPORTED_MODULE_6__.imgAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_6__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_6__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_6__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_6__.imgMAttributes)
         );
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMVertexShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMFragmentShader, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMUniforms, _WebGl_ImagesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_7__.imgMAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_7__.primitivesAttributes)
         );
         this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesVertexShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesFragmentShader, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesUniforms, _WebGl_PrimitivesDrawProgram_js__WEBPACK_IMPORTED_MODULE_8__.primitivesAttributes)
-        );
-        this._registerRenderInit(
-            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMVertexShader, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMFragmentShader, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMUniforms, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_9__.primitivesMAttributes)
+            () => this._registerAndCompileWebGlProgram(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.primitivesMVertexShader, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.primitivesMFragmentShader, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.primitivesMUniforms, _WebGl_PrimitivesDrawProgramM_js__WEBPACK_IMPORTED_MODULE_8__.primitivesMAttributes)
         );
         
         this._registerRenderInit(this.#webGlEngine._initWebGlAttributes);
@@ -4846,7 +4851,7 @@ class IRender {
         switch (this.systemSettings.gameOptions.library) {
         case _constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LIBRARY.WEBGL:
             await this.#prepareViews();
-            this.#renderLoopInstance = new _RenderLoop_js__WEBPACK_IMPORTED_MODULE_10__.RenderLoop(this.systemSettings, stageData, this._webGlEngine());
+            this.#renderLoopInstance = new _RenderLoop_js__WEBPACK_IMPORTED_MODULE_9__.RenderLoop(this.systemSettings, stageData, this._webGlEngine());
             // delegate render loop events
             this.#renderLoopInstance.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.START, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.START));
             this.#renderLoopInstance.addEventListener(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.END, () => this.emit(_constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.EVENTS.SYSTEM.RENDER.END));
@@ -4979,6 +4984,9 @@ class ISystem {
     #emitter = new EventTarget();
     /**
      * @hideconstructor
+     * @param {SystemSettings} systemSettings 
+     * @param {Map<string, Object>} registeredStages 
+     * @param {HTMLElement} canvasContainer 
      */
     constructor(systemSettings, registeredStages, canvasContainer) {
         if (!systemSettings) {
@@ -5848,12 +5856,12 @@ class System {
      */
     #iSystem;
     /**
-     * @param {SystemSettings} iSystemSettings - holds iSystem settings
+     * @param {SystemSettings} SystemSettings - holds iSystem settings
      * @param {HTMLElement | null} [canvasContainer = null] - If it is not passed, iSystem will create div element and attach it to body
      */
-    constructor(iSystemSettings, canvasContainer) {
-        if (!iSystemSettings) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "iSystemSettings should be passed to class instance");
+    constructor(SystemSettings, canvasContainer) {
+        if (!SystemSettings) {
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "SystemSettings should be passed to class instance");
         }
         this.#registeredStages = new Map();
 
@@ -5862,7 +5870,7 @@ class System {
             document.body.appendChild(canvasContainer);
         }
 
-        this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
+        this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(SystemSettings, this.#registeredStages, canvasContainer);
 
         this.#addPreloadStage();
     }
@@ -5925,6 +5933,100 @@ class System {
 
 /***/ }),
 
+/***/ "./src/base/Temp/ImageAtlasPosition.js":
+/*!*********************************************!*\
+  !*** ./src/base/Temp/ImageAtlasPosition.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "ImageAtlasPosition": () => (/* binding */ ImageAtlasPosition)
+/* harmony export */ });
+/**
+ * Support class for DrawTextObject 
+ * for store the atlas x, y, cords,
+ * and the atlas index
+ */
+class ImageAtlasPosition {
+    /**
+     * @type {number}
+     */
+    #atlasIndex;
+    /**
+     * @type {number}
+     */
+    #x;
+    /**
+     * @type {number}
+     */
+    #y;
+    /**
+     * @type {number}
+     */
+    #w;
+
+    /**
+     * @type {number}
+     */
+    #h;
+
+    /**
+     * @type {boolean}
+     */
+    #isMeasurementsSet = false;
+    /**
+     * @hideconstructor
+     **/
+    constructor(width, height) {
+        this.#w = width;
+        this.#h = height;
+    }
+    /**
+     * @returns {number}
+     */
+    get x() {
+        return this.#x;
+    }
+    /**
+     * @returns {number}
+     */
+    get y() {
+        return this.#y;
+    }
+    /**
+     * @returns {number}
+     */
+    get width() {
+        return this.#w;
+    }
+    /**
+     * @returns {number}
+     */
+    get height() {
+        return this.#h;
+    }
+    /**
+     * @returns {number}
+     */
+    get atlasIndex() {
+        return this.#atlasIndex;
+    }
+
+    get isMeasurementsSet() {
+        return this.#isMeasurementsSet;
+    }
+
+    _setMeasurements(i, x, y) {
+        this.#x = x;
+        this.#y = y;
+        this.#atlasIndex = i;
+        this.#isMeasurementsSet = true;
+    }
+}
+
+/***/ }),
+
 /***/ "./src/base/Temp/ImageTempStorage.js":
 /*!*******************************************!*\
   !*** ./src/base/Temp/ImageTempStorage.js ***!
@@ -5974,6 +6076,208 @@ class ImageTempStorage {
 
     get _textureIndex() {
         return this.#textureIndex;
+    }
+}
+
+/***/ }),
+
+/***/ "./src/base/Temp/TextAtlas.js":
+/*!************************************!*\
+  !*** ./src/base/Temp/TextAtlas.js ***!
+  \************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "TextAtlas": () => (/* binding */ TextAtlas)
+/* harmony export */ });
+/* harmony import */ var _ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ImageAtlasPosition.js */ "./src/base/Temp/ImageAtlasPosition.js");
+
+
+/**
+ * Atlas to store text images
+ */
+class TextAtlas {
+    #maxTextureSize;
+    /**
+     * @type {HTMLCanvasElement}
+     */
+    #image = document.createElement("canvas");
+    /**
+     * @type {Array<number, number>}
+     */
+    #currentPos = [0, 0];
+    /**
+     * @type {number}
+     */
+    #currentRowHeight = 0;
+    /**
+     * @type {number}
+     */
+    #currentRowIndex = 0;
+    /**
+     * @type {WebGLTexture}
+     */
+    #texture;
+    /**
+     * @type {number}
+     */
+    #textureIndex;
+    /**
+     * The atlas image size was recalculated,
+     * and needed to reattached as a webgl texture
+     * @type {boolean}
+     */
+    #isRecalculated = false;
+    /**
+     * @hideconstructor
+     */
+    constructor(maxTextureSize, texture, textureIndex) {
+        // too big texture case memory leak
+        this.#maxTextureSize = maxTextureSize;
+        this.#image.width = 0;
+        this.#image.height = 0;
+        this.#texture = texture;
+        this.#textureIndex = textureIndex;
+        //console.log("max texture: ", this.#maxTextureSize);
+    }
+
+    /**
+     * Check if increasing size of the atlas image is possible
+     * @param {number} width 
+     * @param {number} height 
+     * @returns 
+     */
+    _isAddPossible(width, height) {
+        return this.#image.width + width < this.#maxTextureSize || this.#image.height + height < this.#maxTextureSize;
+    }
+
+    /**
+     * Add new text image to the atlas image 
+     * and return its x, y,w, h atlas position coords
+     * @param {HTMLCanvasElement} imageAdd 
+     * @returns {Array<number, number>}
+     */
+    _addNewTextImage(imageAdd, boxWidth, boxHeight) {
+        let [atlasPosX, atlasPosY] = this.#currentPos;
+        let lastPosX, lastPosY;
+
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = this.#image.width;
+        tempCanvas.height = this.#image.height;
+        // write to right ->
+        if (atlasPosX + boxWidth < this.#maxTextureSize) {
+            // add to column
+            lastPosX = atlasPosX + boxWidth;
+            // if we draw atlas first time, also increase size of canvas image
+            if (lastPosX > tempCanvas.width) {
+                tempCanvas.width = lastPosX;
+            }
+            lastPosY = atlasPosY;
+            if (this.#currentRowHeight < boxHeight) {
+                this.#currentRowHeight = boxHeight;
+            }
+            if (tempCanvas.height < atlasPosY + this.#currentRowHeight) {
+                tempCanvas.height = atlasPosY + this.#currentRowHeight;
+            }
+            // adding x, y pos
+            const ctx = tempCanvas.getContext('2d');
+            if (!(atlasPosX === 0 && atlasPosY === 0)) {
+                // copy old text
+                ctx.drawImage(this.#image, 0, 0);
+            }
+            // draw text
+            ctx.drawImage(imageAdd, atlasPosX, atlasPosY);
+        // write down
+        } else if (atlasPosY + boxHeight < this.#maxTextureSize) {
+            // set x to 0;
+            atlasPosX = 0;
+            // add to row
+            this.#currentRowIndex += 1;
+
+            atlasPosY = atlasPosY + this.#currentRowHeight;
+            lastPosY = atlasPosY;
+            this.#currentRowHeight = boxHeight;
+
+            if (tempCanvas.width < this.#image.width) {
+                tempCanvas.width = this.#image.width;
+            }
+            if (lastPosY + boxHeight > tempCanvas.height) {
+                tempCanvas.height = lastPosY + boxHeight;
+            }
+            
+            lastPosX = boxWidth;
+            // adding x, y pos
+            const ctx = tempCanvas.getContext('2d');
+            // copy old text
+            ctx.drawImage(this.#image, 0, 0);
+            // draw text
+            ctx.drawImage(imageAdd, atlasPosX, atlasPosY);
+        } else {
+            //
+            throw new Error("Overflow error, _isAddingPossible() should be called first");
+        }
+        // 
+        this.#image = tempCanvas;
+        //console.log(this.#image);
+        document.body.appendChild(this.#image);
+        this._isRecalculated = true;
+        this.#currentPos = [lastPosX, lastPosY];
+        return [atlasPosX, atlasPosY];
+    }
+
+    /**
+     * Update image on atlas
+     * @param {HTMLCanvasElement} imageAdd 
+     * @param {ImageAtlasPosition} atlasPos 
+     */
+    _updateTextImage(imageAdd, atlasPos) {
+        const atlasX = atlasPos.x,
+            atlasY = atlasPos.y,
+            atlasW = atlasPos.width,
+            atlasH = atlasPos.height;
+        
+        const ctx = this.#image.getContext('2d');
+        ctx.clearRect(atlasX, atlasY, atlasW, atlasH);
+        ctx.drawImage(imageAdd, atlasX, atlasY);
+        
+        this._isRecalculated = true;
+        return [atlasX, atlasY];
+    }
+
+    get _atlasImage() {
+        return this.#image;
+    }
+    get _texture() {
+        return this.#texture;
+    }
+
+    set _texture(value) {
+        this.#texture = value;
+    }
+
+    get _textureIndex() {
+        return this.#textureIndex;
+    }
+
+    incrementIndex() {
+        this.#textureIndex++;
+    }
+
+    /**
+     * The atlas image size was recalculated,
+     * and needed to reattached as a webgl texture
+     * @returns {boolean}
+     */
+    get _isRecalculated() {
+        return this.#isRecalculated;
+    }
+
+    /**
+     * @param {boolean} val 
+     */
+    set _isRecalculated(val) {
+        this.#isRecalculated = val;
     }
 }
 
@@ -6054,88 +6358,6 @@ class TiledLayerTempStorage {
         this.#boundariesTempIndexes = new Int32Array(this.#cells * 4);
     }
 }
-
-/***/ }),
-
-/***/ "./src/base/WebGl/ImagesDrawProgram.js":
-/*!*********************************************!*\
-  !*** ./src/base/WebGl/ImagesDrawProgram.js ***!
-  \*********************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "imgAttributes": () => (/* binding */ imgAttributes),
-/* harmony export */   "imgFragmentShader": () => (/* binding */ imgFragmentShader),
-/* harmony export */   "imgUniforms": () => (/* binding */ imgUniforms),
-/* harmony export */   "imgVertexShader": () => (/* binding */ imgVertexShader)
-/* harmony export */ });
-const imgVertexShader =  `
-    attribute vec2 a_texCoord;
-
-    attribute vec2 a_position;
-
-    uniform vec2 u_translation;
-    uniform float u_rotation;
-    uniform vec2 u_scale;
-
-    uniform vec2 u_resolution;
-
-    varying vec2 v_texCoord;
-
-    void main(void) {
-        float c = cos(u_rotation);
-        float s = sin(u_rotation);
-
-        mat3 translationMatrix1 = mat3(
-            1, 0, 0,
-            0, 1, 0,
-            u_translation.x, u_translation.y, 1
-        );
-
-        mat3 translationMatrix2 = mat3(
-            1, 0, 0,
-            0, 1, 0,
-            -u_translation.x, -u_translation.y, 1
-        );
-        
-        mat3 rotationMatrix = mat3(
-            c, s, 0,
-            -s, c, 0,
-            0, 0, 1
-        );
-
-        mat3 scalingMatrix = mat3(
-            u_scale.x, 0, 0,
-            0, u_scale.y, 0,
-            0, 0, 1
-        );
-
-        mat3 matrix = translationMatrix1 * rotationMatrix * translationMatrix2 * scalingMatrix;
-    
-        vec2 position = (matrix * vec3(a_position, 1)).xy;
-
-        vec2 clipSpace = position / u_resolution * 2.0 - 1.0;
-
-        gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-        
-        v_texCoord = a_texCoord;
-    }`;
-const imgFragmentShader = `
-    precision mediump float;
-
-    uniform sampler2D u_image;
-
-    //texCoords passed in from the vertex shader
-    varying vec2 v_texCoord;
-    void main() {
-        vec4 color = texture2D(u_image, v_texCoord);
-        gl_FragColor = color;
-    }`;
-const imgUniforms = ["u_translation", "u_rotation", "u_scale", "u_resolution","u_image"];
-const imgAttributes = ["a_position", "a_texCoord"];
-
-
 
 /***/ }),
 
@@ -6350,6 +6572,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../2d/DrawTextObject.js */ "./src/base/2d/DrawTextObject.js");
 /* harmony import */ var _modules_assetsm_src_AssetsManager_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../../modules/assetsm/src/AssetsManager.js */ "./modules/assetsm/src/AssetsManager.js");
 /* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../../index.js */ "./src/index.js");
+/* harmony import */ var _Temp_TextAtlas_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../Temp/TextAtlas.js */ "./src/base/Temp/TextAtlas.js");
+
 
 
 
@@ -6409,6 +6633,14 @@ class WebGlEngine {
      */
     #currentTextures = null;
     /**
+     * @type {Array<TextAtlas>}
+     */
+    #textAtlases = [];
+    /**
+     * @type {number}
+     */
+    #currentAtlasIndex = 0;
+    /**
      * @type {Map<string, WebGLProgram>}
      */
     #registeredWebGlPrograms = new Map();
@@ -6439,6 +6671,7 @@ class WebGlEngine {
         this.#MAX_TEXTURE_SIZE = context.getParameter(context.MAX_TEXTURE_SIZE);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
+        this.#textAtlases[0] = new _Temp_TextAtlas_js__WEBPACK_IMPORTED_MODULE_14__.TextAtlas(gameOptions.render.textAtlasMaxSize, this.#gl.createTexture(), 0);
 
         this._registerObjectRender(_2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__.DrawTextObject.name, this._bindText, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_2d_DrawRectObject_js__WEBPACK_IMPORTED_MODULE_10__.DrawRectObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
@@ -6785,27 +7018,7 @@ class WebGlEngine {
                 }
                 break;
         }
-        
-        const c = Math.cos(renderObject.rotation),
-              s = Math.sin(renderObject.rotation),
-              translationMatrix = [
-                  1, 0, x,
-                  0, 1, y,
-                  0, 0, 1],
-              rotationMatrix = [
-                  c, -s, 0,
-                  s, c, 0,
-                  0, 0, 1
-              ],
-              scaleMatrix = [
-                  scale[0], 0, 0,
-                  0, scale[1], 0,
-                  0, 0, 1
-              ];
-        const matMultiply = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
-
-        
-        const verticesMat = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3MultiplyPosCoords(matMultiply, vertices);
+        const verticesMat = this.calculateTranslatedCoords(x, y, renderObject.rotation, scale, vertices);
         
         const nextObject = this.getNextRenderObject(renderObject, pageData);
         // 2. Is it have same texture and draw program?
@@ -6926,95 +7139,146 @@ class WebGlEngine {
         return this._render(verticesNumber, gl.TRIANGLE_FAN);
     };
 
+    /**
+     * 
+     * @param {DrawTextObject} renderObject 
+     * @param {*} gl 
+     * @param {*} pageData 
+     * @param {*} program 
+     * @param {*} vars 
+     * @returns 
+     */
     _bindText = (renderObject, gl, pageData, program, vars) => {
-        const { u_translation: translationLocation,
-            u_rotation: rotationRotation,
-            u_scale: scaleLocation,
+        const { 
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
             u_image: u_imageLocation } = vars;
 
         const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
-            image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset - boxHeight,
-            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA];
-
-        const rotation = renderObject.rotation || 0,
-            scale = [1, 1];
-        const vecX1 = x,
-            vecY1 = y,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
+            rotation = renderObject.rotation || 0,
+            scale = [1, 1],
+            vecX1 = 0,
+            vecY1 = 0,
             vecX2 = vecX1 + boxWidth,
-            vecY2 = vecY1 + boxHeight;
+            vecY2 = vecY1 + boxHeight,
+            verticesBufferData = [
+                vecX1, vecY1,
+                vecX2, vecY1,
+                vecX1, vecY2,
+                vecX1, vecY2,
+                vecX2, vecY1,
+                vecX2, vecY2
+            ],
+            atlasPosition = renderObject._atlasPos;
 
-        const verticesBufferData = [
-            vecX1, vecY1,
-            vecX2, vecY1,
-            vecX1, vecY2,
-            vecX1, vecY2,
-            vecX2, vecY1,
-            vecX2, vecY2
-        ],
-        texturesBufferData = [
-            0, 0,
-            1, 0,
-            0, 1,
-            0, 1,
-            1, 0,
-            1, 1
-        ];
-        let verticesNumber = 0;
+        // x, y, width, height
+        let texturesCoords = [0, 0, 1, 1],
+            currentAtlasIndex = typeof atlasPosition.atlasIndex !== "undefined" ? atlasPosition.atlasIndex : this.#currentAtlasIndex,
+            currentAtlas = this.#textAtlases[currentAtlasIndex],
+            atlasW = boxWidth, 
+            atlasH = boxHeight,
+            atlasX, atlasY;
 
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-        
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticesBufferData), gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+        if (atlasPosition.isMeasurementsSet === true) {
+            const atlasPos = renderObject._atlasPos;
+            // if we only change the texture - replace it with the new one
+            if (renderObject._isTextureUpdated === true) {
+                currentAtlas._updateTextImage(renderObject._textureCanvas, renderObject._atlasPos);
+                renderObject._setTextureUpdated();
+            }
 
-        //textures buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texturesBufferData), gl.STATIC_DRAW);
-
-        gl.enableVertexAttribArray(texCoordLocation);
-        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-        
-        verticesNumber += 6;
-        // remove box
-        // fix text edges
-        gl.blendFunc(blend[0], blend[1]);
-        //
-        //var currentTexture = gl.getParameter(gl.TEXTURE_BINDING_2D);
-        
-        let textureStorage = renderObject._textureStorage;
-        if (!textureStorage) {
-            //const activeTexture = gl.getParameter(gl.ACTIVE_TEXTURE);
-            textureStorage = new _Temp_ImageTempStorage_js__WEBPACK_IMPORTED_MODULE_4__.ImageTempStorage(gl.createTexture());
-            renderObject._textureStorage = textureStorage;
-        }
-        if (textureStorage._isTextureRecalculated === true) {
-            this.#updateTextWebGlTexture(gl, textureStorage._texture, renderObject._textureCanvas);
-            textureStorage._isTextureRecalculated = false;
+            atlasX = atlasPos.x;
+            atlasY = atlasPos.y;
+            texturesCoords = [ atlasX, atlasY, atlasW, atlasH ];
+        // calculate and set atlas pos
         } else {
-            this.#bindTexture(gl, textureStorage._texture);
+            if (currentAtlas._isAddPossible(boxWidth, boxHeight)) {
+                [atlasX, atlasY] = currentAtlas._addNewTextImage(renderObject._textureCanvas, boxWidth, boxHeight);
+            } else {
+                // is current atlas is full, 
+                // create a new one
+                currentAtlas = new _Temp_TextAtlas_js__WEBPACK_IMPORTED_MODULE_14__.TextAtlas(this.#MAX_TEXTURE_SIZE, gl.createTexture(), currentAtlasIndex);
+                [atlasX, atlasY] = currentAtlas._addNewTextImage(renderObject._textureCanvas, boxWidth, boxHeight);
+                this.#currentAtlasIndex = currentAtlasIndex;
+                this.#textAtlases[currentAtlasIndex] = currentAtlas;
+            }
+            // set new atlas pos
+            atlasPosition._setMeasurements(currentAtlasIndex, atlasX, atlasY);
+
+            texturesCoords = [ atlasX, atlasY, atlasW, atlasH ];
         }
-        gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-        gl.depthMask(false);
-        return this._render(verticesNumber, gl.TRIANGLES);
-        
+    
+        const verticesMat = this.calculateTranslatedCoords(x, y, rotation, scale, verticesBufferData);
+        const texturesBufferData = this.calculateTextureCoords(currentAtlas._atlasImage, texturesCoords[0], texturesCoords[1], texturesCoords[2], texturesCoords[3]);
+
+        const nextObject = this.getNextRenderObject(renderObject, pageData);
+        // 2. Is it have same texture and no texture reattach needed?
+        if ((currentAtlas._isRecalculated === false) 
+            && nextObject 
+            && nextObject instanceof _2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__.DrawTextObject
+            && this._canTextObjectsMerge(renderObject, nextObject)) {
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+                this.#currentTextures = texturesBufferData;
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...verticesMat);
+                this.#currentTextures.push(...texturesBufferData);
+                return Promise.resolve(0);
+            }
+        } else {
+            gl.useProgram(program);
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+                this.#currentTextures = texturesBufferData;
+            } else {
+                this.#currentVertices.push(...verticesMat);
+                this.#currentTextures.push(...texturesBufferData);
+            }
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            //Tell the attribute how to get data out of positionBuffer
+            const size = 2,
+                type = gl.FLOAT, // data is 32bit floats
+                normalize = false,
+                stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                offset = 0; // start of beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+            //textures buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+            gl.enableVertexAttribArray(texCoordLocation);
+            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+            
+            const verticesNumber = this.#currentVertices.length / 2;
+            
+            gl.blendFunc(blend[0], blend[1]);
+            
+            if (currentAtlas._isRecalculated) {
+                this.#updateWebGlTexture(gl, currentAtlas._texture, currentAtlas._atlasImage, currentAtlas._textureIndex);
+                currentAtlas._isRecalculated = false;
+            } else {
+                this.#bindTexture(gl, currentAtlas._texture);
+            }
+            
+            gl.uniform1i(u_imageLocation, currentAtlas._textureIndex);
+            gl.depthMask(false);
+            
+            this.#currentVertices = null;
+            this.#currentTextures = null;
+            return this._render(verticesNumber, gl.TRIANGLES);
+        }
     };
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
@@ -7062,43 +7326,11 @@ class WebGlEngine {
             imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
         }
 
-        // transform, scale and rotate should be done in js side
-        //gl.uniform2f(translationLocation, x, y);
-        //gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        //gl.uniform1f(rotationRotation, renderObject.rotation);
-        // multiple matrices:
-        const c = Math.cos(renderObject.rotation),
-              s = Math.sin(renderObject.rotation),
-              translationMatrix = [
-                  1, 0, x,
-                  0, 1, y,
-                  0, 0, 1],
-              rotationMatrix = [
-                  c, -s, 0,
-                  s, c, 0,
-                  0, 0, 1
-              ],
-              scaleMatrix = [
-                  scale[0], 0, 0,
-                  0, scale[1], 0,
-                  0, 0, 1
-              ];
-        const matMultiply = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
-
-        const posX = 0 - renderObject.width / 2,
-              posY = 0 - renderObject.height / 2;
-
-        const vecX1 = posX,
-              vecY1 = posY,
+        const vecX1 = 0 - renderObject.width / 2,
+              vecY1 = 0 - renderObject.height / 2,
               vecX2 = vecX1 + renderObject.width,
-              vecY2 = vecY1 + renderObject.height,
-              texX1 = 1 / atlasImage.width * imageX,
-              texY1 = 1 / atlasImage.height * imageY,
-              texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
-              texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
-        //console.log("mat1: ", matMult1);
-        //console.log("mat2: ", matMult2);
-        //console.log("x1y1: ", x1y1);
+              vecY2 = vecY1 + renderObject.height;
+        
         const verticesD =  [
             vecX1, vecY1,
             vecX2, vecY1,
@@ -7107,20 +7339,9 @@ class WebGlEngine {
             vecX2, vecY1,
             vecX2, vecY2
         ];
-        const verticesMat = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3MultiplyPosCoords(matMultiply, verticesD),
-        textures = [
-            texX1, texY1,
-            texX2, texY1,
-            texX1, texY2,
-            texX1, texY2,
-            texX2, texY1,
-            texX2, texY2
-        ];
+        const verticesMat = this.calculateTranslatedCoords(x, y, renderObject.rotation, scale, verticesD),
+            textures = this.calculateTextureCoords(atlasImage, imageX, imageY, renderObject.width, renderObject.height);
         
-        //vec2 position = (u_transformMat * vec3(a_position, 1)).xy;
-        //console.log("translation x: ", x, " y: ", y);
-        //console.log("scale x: ", scale[0], " y: ", scale[1]);
-        //console.log("rotation: ", renderObject.rotation);
         // Determine could we merge next drawObject or not
         // 1. Find next object
         const nextObject = this.getNextRenderObject(renderObject, pageData);
@@ -7207,6 +7428,23 @@ class WebGlEngine {
         if ((registeredO1.webglProgramName === registeredO2.webglProgramName)
             && (obj1.type === obj2.type)
             && (obj1.image === obj2.image)
+            && (obj2.isRemoved === false)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 
+     * @param {DrawTextObject} obj1 
+     * @param {DrawTextObject} obj2
+     * @returns {boolean} 
+     */
+    _canTextObjectsMerge = (obj1, obj2) => {
+        if ((obj2._atlasPos)
+            && (obj1._atlasPos.atlasIndex === obj2._atlasPos.atlasIndex)
+            && (obj2._atlasPos.isMeasurementsSet === true)
             && (obj2.isRemoved === false)) {
                 return true;
         } else {
@@ -7777,10 +8015,7 @@ class WebGlEngine {
                                 vecY1 = mapPosY,
                                 vecX2 = mapPosX + tilesetwidth,
                                 vecY2 = mapPosY + tilesetheight,
-                                texX1 = (1 / atlasWidth) * atlasPosX,
-                                texY1 = (1 / atlasHeight) * atlasPosY,
-                                texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
-                                texY2 = texY1 + (1 / atlasHeight * tilesetheight);
+                                [texX1, texY1, texX2, texY2] = this.normalizeCoords(atlasWidth, atlasHeight, atlasPosX, atlasPosY, tilesetwidth, tilesetheight);
 
                             // 0 vecX1
                             v[filledSize] = vecX1;
@@ -8118,10 +8353,7 @@ class WebGlEngine {
                                 vecY1 = row * dtheight - yOffset,
                                 vecX2 = vecX1 + tilesetwidth,
                                 vecY2 = vecY1 + tilesetheight,
-                                texX1 = 1 / atlasWidth * atlasPosX,
-                                texY1 = 1 / atlasHeight * atlasPosY,
-                                texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
-                                texY2 = texY1 + (1 / atlasHeight * tilesetheight);
+                                [texX1, texY1, texX2, texY2] = this.normalizeCoords(atlasWidth, atlasHeight, atlasPosX, atlasPosY, tilesetwidth, tilesetheight);
                              
                             // 0 vecX1
                             v[filledSize] = vecX1;
@@ -8368,21 +8600,6 @@ class WebGlEngine {
             new Float32Array(vertices),
             this.#gl.STATIC_DRAW);
     }
-
-    #setSingleRectangle(width, height) {
-        const x1 = 0,
-            x2 = 0 + width,
-            y1 = 0,
-            y2 = 0 + height;
-        this.#gl.bufferData(this.#gl.ARRAY_BUFFER, 
-            new Float32Array([
-                x1, y1,
-                x2, y1,
-                x1, y2,
-                x1, y2,
-                x2, y1,
-                x2, y2]), this.#gl.STATIC_DRAW);
-    }
     /*------------------------------------
      * End of Predefined Drawing programs
      -------------------------------------*/
@@ -8424,6 +8641,9 @@ class WebGlEngine {
      * End Textures
     --------------------------------------*/
 
+    /*------------------------------------
+     * Help Methods
+    --------------------------------------*/
     isPowerOfTwo(value) {
         return (value & (value - 1)) === 0;
     }
@@ -8442,9 +8662,80 @@ class WebGlEngine {
         return nextObject;
     }
 
+    /**
+     * 
+     * @param {number} atlasWidth 
+     * @param {number} atlasHeight 
+     * @param {number} posX 
+     * @param {number} posY 
+     * @param {number} imageWidth 
+     * @param {number} imageHeight 
+     * @returns {Array<number, number, number, number>}
+     */
+    normalizeCoords(atlasWidth, atlasHeight, posX, posY, imageWidth, imageHeight) {
+        const atlasNormWidth = 1 / atlasWidth,
+            atlasNormHeight = 1 / atlasHeight;
+
+        const texX1 = atlasNormWidth * posX,
+            texY1 = atlasNormHeight * posY,
+            texX2 = texX1 + (atlasNormWidth * imageWidth),
+            texY2 = texY1 + (atlasNormHeight * imageHeight);
+
+        return [texX1, texY1, texX2, texY2];
+    }
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} rotation 
+     * @param {Array<number, number>} scale 
+     * @param {Array<number>} vertices 
+     */
+    calculateTranslatedCoords = (x, y, rotation, scale, vertices) => {
+        const c = Math.cos(rotation),
+              s = Math.sin(rotation),
+              translationM = [1, 0, x, 0, 1, y, 0, 0, 1],
+              rotationM = [c, -s, 0, s, c, 0, 0, 0, 1],
+              scaleM = [scale[0], 0, 0, 0, scale[1], 0, 0, 0, 1];
+
+        const matMultiply = _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(_index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3Multiply(translationM, rotationM), scaleM);
+        return _index_js__WEBPACK_IMPORTED_MODULE_13__.utils.mat3MultiplyPosCoords(matMultiply, vertices);
+    }
+
+    /**
+     * 
+     * @param {HTMLImageElement | HTMLCanvasElement} atlasImage 
+     * @param {number} imageX 
+     * @param {number} imageY 
+     * @param {number} imageWidth 
+     * @param {number} imageHight 
+     * @returns {Array<number>}
+     */
+    calculateTextureCoords = (atlasImage, imageX, imageY, imageWidth, imageHight) => {
+        const [ texX1, texY1, texX2, texY2 ] = this.normalizeCoords(atlasImage.width, atlasImage.height, imageX, imageY, imageWidth, imageHight);
+
+        return [
+            texX1, texY1,
+            texX2, texY1,
+            texX1, texY2,
+            texX1, texY2,
+            texX2, texY1,
+            texX2, texY2
+        ];
+    }
+
     #glTextureIndex = (activeTexture) => {
         return activeTexture - 33984;
     }
+
+    get maxTexture() {
+        return this.#MAX_TEXTURE_SIZE;
+    }
+
+    /*------------------------------------
+     * End Help Methods
+    --------------------------------------*/
 }
 
 /***/ }),
@@ -8462,19 +8753,112 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./constants.js */ "./src/constants.js");
 
 /**
- * Settings object, should be passed as a parameter to System.constructor().
+ * @namespace SystemSettings
  */
-class SystemSettings {
-    /**
-     * @hideconstructor
-     */
-    constructor(){}
-    /**
-     * DEBUG/PRODUCTION, for debug mode system Logger will show debug information in the console
-     */
-    static mode = _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.MODE.DEBUG;
+/**
+ * Default SystemSettings
+ * @typedef {Object} DefaultSettings
+ * @property {String} mode - DEBUG/PRODUCTION, debug mode system Logger will show debug information in the console
+ * @property {gameOptions} gameOptions
+ * @property {network} network - network settings
+ * @property {canvasMaxSize} canvasMaxSize
+ * @property {worldSize} worldSize
+ * @property {string} defaultCanvasKey
+ * @property {Object} customSettings - any custom settings
+ * @memberof SystemSettings
+ */
+/**
+ * @typedef {Object} gameOptions
+ * @property {String} library
+ * @property {render} render
+ * @property {debug} debug
+ * @property {String} optimization
+ * @property {String} optimizationWASMUrl
+ * @property {String} optimizationAssemblyUrl
+ * @property {loadingScreen} loadingScreen
+ * @memberof SystemSettings
+ */
+/**
+ * @typedef {Object} loadingScreen
+ * @property {String} backgroundColor
+ * @property {String} loadingBarBg
+ * @property {String} loadingBarProgress
+ * @memberof SystemSettings
+ */
+/**
+ * @typedef {Object} network
+ * @property {boolean} enabled - disabled by default
+ * @property {String} address - server address
+ * @property {number} gatherRoomsInfoInterval
+ * @memberof SystemSettings
+ */
+/**
+ * @typedef {Object} canvasMaxSize
+ * @property {number} width
+ * @property {number} height
+ * @memberof SystemSettings
+ */
+/**
+ * @typedef {Object} worldSize
+ * @property {number} width
+ * @property {number} height
+ * @memberof SystemSettings
+ */
+/**
+ * render Settings
+ * @typedef {Object} render
+ * @property {cyclesTimeCalc} cyclesTimeCalc - DEBUG/PRODUCTION, debug mode system Logger will show debug information in the console
+ * @property {boundaries} boundaries
+ * @property {number} textAtlasMaxSize
+ */
 
-    static gameOptions = {
+/**
+ * cycles time calc
+ * @typedef {Object} cyclesTimeCalc
+ * @property {String} check
+ * @property {Number} averageFPStime
+ * @memberof SystemSettings
+ */
+
+/**
+ * boundaries (collision shapes)
+ * @typedef {Object} boundaries
+ * @property {boolean} mapBoundariesEnabled
+ * @property {boolean} realtimeCalculations
+ * @property {boolean} wholeWorldPrecalculations
+ * @memberof SystemSettings
+ */
+
+/**
+ * debug Settings
+ * @typedef {Object} debug
+ * @property {boolean} preserveDrawingBuffer
+ * @property {boolean} checkWebGlErrors
+ * @property {boolean} debugMobileTouch
+ * @property {debugBoundaries} boundaries
+ * @property {boolean} delayBetweenObjectRender
+ */
+
+/**
+ * debug boundaries
+ * @typedef {Object} debugBoundaries
+ * @property {boolean} drawLayerBoundaries
+ * @property {boolean} drawObjectBoundaries
+ * @property {string} boundariesColor
+ * @property {Number} boundariesWidth
+ */
+/**
+ * Settings object, should be passed as a parameter to System.constructor().
+ * @type {DefaultSettings}
+ * @memberof SystemSettings
+ */
+const SystemSettings = {
+    mode: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.MODE.DEBUG,
+
+    /**
+     * game options
+     */
+    gameOptions: {
         // no other variants only WEBGL for now
         library: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.LIBRARY.WEBGL,
         optimization: _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED,
@@ -8495,7 +8879,7 @@ class SystemSettings {
                 realtimeCalculations: true,
                 wholeWorldPrecalculations: false
             },
-            
+            textAtlasMaxSize: 500 // pixels.
         },
         debug: {
             preserveDrawingBuffer: false, // this option is used in testing environment
@@ -8509,30 +8893,43 @@ class SystemSettings {
             },
             delayBetweenObjectRender: false, // 1 sec delay for debug proposes
         }
-    };
+    },
     
-
-    static network = {
+    /**
+     * network options
+     */
+    network: {
         // disable INetwork by default
         enabled: false,
         address: "https://gameserver.reslc.ru:9009",
         gatherRoomsInfoInterval: 5000
-    };
+    },
 
-    static canvasMaxSize = {
+    canvasMaxSize: {
         width: 1800,
         height: 1800
-    };
+    },
 
-    static worldSize = {
+    /**
+     * world size
+     */
+    worldSize: {
         width: 960,
         height: 960
-    };
+    },
 
-    static defaultCanvasKey = "default";
+    /**
+     * default canvas key
+     */
+    defaultCanvasKey: "default",
 
-    static customSettings = {};
+    /**
+     * custom options
+     */
+    customSettings: {}
 }
+
+
 
 /***/ }),
 
@@ -8549,12 +8946,130 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "ERROR_CODES": () => (/* binding */ ERROR_CODES),
 /* harmony export */   "WARNING_CODES": () => (/* binding */ WARNING_CODES)
 /* harmony export */ });
+/**
+ * @namespace CONSTANTS
+ */
+/**
+ * @typedef {Object} CONST
+ * @property {MODE} MODE
+ * @property {Object} AUDIO
+ * @property {CONNECTION_STATUS} CONNECTION_STATUS
+ * @property {EVENTS} EVENTS
+ * @property {WEBGL} WEBGL
+ * @property {Object} GAME_OPTIONS
+ * @property {LIBRARY} LIBRARY
+ * @property {OPTIMIZATION} OPTIMIZATION
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} MODE
+ * @property {String} DEBUG
+ * @property {String} PRODUCTION
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} CONNECTION_STATUS
+ * @property {String} DISCONNECTED
+ * @property {String} CONNECTED
+ * @property {String} CONNECTION_LOST
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} EVENTS
+ * @property {SYSTEM} SYSTEM
+ * @property {WEBSOCKET} WEBSOCKET
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} SYSTEM
+ * @property {String} START_PAGE
+ * @property {String} STOP_PAGE
+ * @property {RENDER} RENDER
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} RENDER
+ * @property {String} START - Start render loop
+ * @property {String} END - End render loop
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} WEBSOCKET
+ * @property {SERVER_CLIENT} SERVER_CLIENT
+ * @property {CLIENT_SERVER} CLIENT_SERVER
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} SERVER_CLIENT
+ * @property {String} CONNECTION_STATUS_CHANGED
+ * @property {String} ROOMS_INFO
+ * @property {String} CREATED
+ * @property {String} JOINED
+ * @property {String} FULL
+ * @property {String} DISCONNECTED
+ * @property {String} SERVER_MESSAGE
+ * @property {String} RESTARTED
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} CLIENT_SERVER
+ * @property {String} ROOMS_INFO_REQUEST
+ * @property {String} CREATE_OR_JOIN
+ * @property {String} RESTART_REQUEST
+ * @property {String} CLIENT_MESSAGE
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} WEBGL
+ * @property {DRAW_PROGRAMS} DRAW_PROGRAMS
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} DRAW_PROGRAMS
+ * @property {String} PRIMITIVES
+ * @property {String} PRIMITIVES_M
+ * @property {String} IMAGES_M
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} OPTIMIZATION
+ * @property {CYCLE_TIME_CALC} CYCLE_TIME_CALC
+ * @property {NATIVE_JS} NATIVE_JS
+ * @property {WEB_ASSEMBLY} WEB_ASSEMBLY
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} CYCLE_TIME_CALC
+ * @property {String} AVERAGES
+ * @property {String} CURRENT
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} NATIVE_JS
+ * @property {String} NOT_OPTIMIZED
+ * @property {String} OPTIMIZED
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} WEB_ASSEMBLY
+ * @property {String} ASSEMBLY_SCRIPT
+ * @property {String} NATIVE_WAT
+ * @memberof CONSTANTS
+ */
+/**
+ * @typedef {Object} LIBRARY
+ * @property {String} WEBGL
+ * @memberof CONSTANTS
+ */
+/**
+ * Constants variables
+ * @type {CONST}
+ **/
 const CONST = {
     MODE: {
         DEBUG: "DEBUG",
         PRODUCTION: "PRODUCTION"
     },
-    SCREENS: {},
     AUDIO: {},
     CONNECTION_STATUS: {
         DISCONNECTED: "disconnected",
@@ -8593,7 +9108,6 @@ const CONST = {
         DRAW_PROGRAMS: {
             PRIMITIVES: "drawPrimitives",
             PRIMITIVES_M: "drawPrimitivesMerge",
-            IMAGES: "drawImages",
             IMAGES_M: "drawImagesMerge"
         }
     },

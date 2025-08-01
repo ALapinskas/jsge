@@ -4,6 +4,15 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.10:
+    +: texts test page
+    +: TextAtlas, ImageAtlasPosition introduced (adr#09)
+    +: gameOptions.render.textAtlasMaxSize option introduced
+    r: add texts draw calls merge (adr#09)
+    r: add types for SystemSettings, CONST
+    r: removed ImagesDrawProgram
+    r: WebGlEngine._bindText() matrices calculations added
+
 1.5.9:
     r: test workflow name
     r: fixed Readme

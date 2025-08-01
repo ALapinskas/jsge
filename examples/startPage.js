@@ -15,7 +15,8 @@ const START_PAGE_NAME = "start",
     STRATEGY_GAME = "strategy_game",
     CUSTOM_WEBGL_PAGE = "custom_webgl",
     TANKS_PAGE = "tanks",
-    PRIMITIVES_PAGE = "primitives";
+    PRIMITIVES_PAGE = "primitives",
+    TEXTS_PAGE = "texts"
 
 const SPINE = {
     SpineTexture: "spineTexture",
@@ -57,6 +58,7 @@ export class StartPage extends GameStage {
         this.navItemTestCustomWebGl = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 100, "Custom WebGl program", "20px sans-serif", "black");
         this.navTanksGame = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 130, "Tanks game", "20px sans-serif", "black");
         this.navPrimitivesGame = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 160, "Primitives draw", "20px sans-serif", "black");
+        this.navTextsPage = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 190, "Texts page", "20px sans-serif", "black");
     
         //this.#createOptionsBlock();
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
@@ -90,7 +92,8 @@ export class StartPage extends GameStage {
             isNav6T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemTestCustomWebGl.boundariesBox),
             isNav7T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.boundariesBox),
             isNav8T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemStrategy.boundariesBox),
-            isNav9T = isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.boundariesBox);
+            isNav9T = isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.boundariesBox),
+            isNav10T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTextsPage.boundariesBox);
             
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -146,7 +149,13 @@ export class StartPage extends GameStage {
             this.navPrimitivesGame.strokeStyle = undefined;
         }
 
-        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed || isNav5T || isNav6T || isNav7T || isNav8T || isNav9T) {
+        if (isNav10T) {
+            this.navTextsPage.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        } else if (this.navTextsPage.strokeStyle) {
+            this.navTextsPage.strokeStyle = undefined;
+        }
+
+        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed || isNav5T || isNav6T || isNav7T || isNav8T || isNav9T || isNav10T) {
             canvas.style.cursor = "pointer";
         } else {
             canvas.style.cursor = "default";
@@ -211,6 +220,12 @@ export class StartPage extends GameStage {
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(PRIMITIVES_PAGE);
 
+        }
+
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.navTextsPage.boundariesBox)) {
+            this.#menuClickMediaElement.play();
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(TEXTS_PAGE);
         }
     };
 

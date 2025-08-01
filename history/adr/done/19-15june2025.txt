@@ -2,7 +2,7 @@ Date: June 14 2025
 jsge@1.5.896
 Rename boundaries to collision shapes / Переименовать boundaries в collision shapes
 
-Status: In progress
+Status: Reject(Backward capability will be lost, benefits are not so clear)
 
 Context:
     Collision shapes(грани коллизий) более корректно, чем boundaries(границы)

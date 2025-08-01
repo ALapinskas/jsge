@@ -2,7 +2,7 @@ import { DrawShapeObject } from "./DrawShapeObject.js";
 import { Rectangle } from "./Primitives.js";
 import { DRAW_TYPE, ERROR_CODES } from "../../constants.js";
 import { Exception } from "../Exception.js";
-import { ImageTempStorage } from "../Temp/ImageTempStorage.js";
+import { ImageAtlasPosition } from "../Temp/ImageAtlasPosition.js";
 
 /**
  * @extends DrawShapeObject
@@ -20,31 +20,35 @@ export class DrawTextObject extends DrawShapeObject {
      * @type {HTMLCanvasElement}
      */
     #textureCanvas = document.createElement("canvas");
+    /**
+     * @type {boolean}
+     */
+    #isTextureUpdated = false;
 
     /**
-     * @type {ImageTempStorage}
+     * @type {ImageAtlasPosition}
      */
-    #textureStorage;
+    #atlasPosition;
 
     /**
      * @hideconstructor
      */
-    constructor(mapX, mapY, text, font, fillStyle) {
+    constructor(mapX, mapY, text, font, fillStyle, boxWidth, boxHeight) {
         super(DRAW_TYPE.TEXT, mapX, mapY);
         this.#text = text;
         this.#font = font;
         this.#fillStyle = fillStyle;
         this.#textMetrics;
-        this.#calculateCanvasTextureAndMeasurements();
+        this.#calculateCanvasTextureAndMeasurements(boxWidth, boxHeight);
     }
 
     /**
      * Rectangle text box.
-     * @type {Rectangle}
+     * @return {Rectangle}
      */
     get boundariesBox() {
-        const width = this.textMetrics ? Math.floor(this.textMetrics.width) : 300,
-            height = this.textMetrics ? Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent): 30;
+        const width = this._atlasPos.width,
+            height = this._atlasPos.height;
         return new Rectangle(this.x, this.y - height, width, height);
     }
 
@@ -158,63 +162,70 @@ export class DrawTextObject extends DrawShapeObject {
     set _textMetrics(value) {
         this.#textMetrics = value;
     }
-
     /**
      * @ignore
-     */
-    get _textureStorage() {
-        return this.#textureStorage;
-    }
-
-    /**
-     * @ignore
-     */
-    set _textureStorage(texture) {
-        this.#textureStorage = texture;
-    }
-
-    /**
-     * @ignore
+     * @returns {HTMLCanvasElement}
      */
     get _textureCanvas() {
         return this.#textureCanvas;
     }
 
     /**
+     * @ignore
+     * @returns {ImageAtlasPosition}
+     */
+    get _atlasPos() {
+        return this.#atlasPosition;
+    }
+
+    get _isTextureUpdated() {
+        return this.#isTextureUpdated;
+    }
+
+    _setTextureUpdated() {
+        this.#isTextureUpdated = false;
+    }
+
+    /**
      * 
      * @returns {void}
      */
-    #calculateCanvasTextureAndMeasurements() {
+    #calculateCanvasTextureAndMeasurements(atlasWidth, atlasHeight) {
         const ctx = this.#textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
         if (ctx) {
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
             this._textMetrics = ctx.measureText(this.text);
-            const boxWidth = this.boundariesBox.width, 
-                boxHeight = this.boundariesBox.height;
-            
-            ctx.canvas.width = boxWidth;
-            ctx.canvas.height = boxHeight;
+
+            if (this._atlasPos) {
+                atlasWidth = this._atlasPos.width;
+                atlasHeight = this._atlasPos.height;
+            } else {
+                if (!atlasWidth && !atlasHeight) {
+                    atlasWidth = Math.floor(this.textMetrics.width);
+                    atlasHeight = Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent);
+                }
+                this.#atlasPosition = new ImageAtlasPosition(atlasWidth, atlasHeight);
+            }
+
+            ctx.canvas.width = atlasWidth;
+            ctx.canvas.height = atlasHeight;
             // after canvas resize, have to cleanup and set the font again
-            ctx.clearRect(0, 0, boxWidth, boxHeight);
+            ctx.clearRect(0, 0, atlasWidth, atlasHeight);
             ctx.font = this.font;
             ctx.textBaseline = "bottom";// bottom
             if (this.fillStyle) {
                 ctx.fillStyle = this.fillStyle;
-                ctx.fillText(this.text, 0, boxHeight);
+                ctx.fillText(this.text, 0, atlasHeight);
             } 
             if (this.strokeStyle) {
                 ctx.strokeStyle = this.strokeStyle;
-                ctx.strokeText(this.text, 0, boxHeight);
+                ctx.strokeText(this.text, 0, atlasHeight);
             }
-            
-            if (this.#textureStorage) {
-                this.#textureStorage._isTextureRecalculated = true;
-            }
-
+            this.#isTextureUpdated = true;
             // debug canvas
-            // this.#textureCanvas.style.position = "absolute";
-            // document.body.appendChild(this.#textureCanvas);
+            //this.#textureCanvas.style.position = "absolute";
+            //document.body.appendChild(this.#textureCanvas);
             
         } else {
             Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");

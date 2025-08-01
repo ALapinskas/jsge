@@ -59,6 +59,9 @@ export class ISystem {
     #emitter = new EventTarget();
     /**
      * @hideconstructor
+     * @param {SystemSettings} systemSettings 
+     * @param {Map<string, Object>} registeredStages 
+     * @param {HTMLElement} canvasContainer 
      */
     constructor(systemSettings, registeredStages, canvasContainer) {
         if (!systemSettings) {

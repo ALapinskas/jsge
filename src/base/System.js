@@ -23,12 +23,12 @@ export class System {
      */
     #iSystem;
     /**
-     * @param {SystemSettings} iSystemSettings - holds iSystem settings
+     * @param {SystemSettings} SystemSettings - holds iSystem settings
      * @param {HTMLElement | null} [canvasContainer = null] - If it is not passed, iSystem will create div element and attach it to body
      */
-    constructor(iSystemSettings, canvasContainer) {
-        if (!iSystemSettings) {
-            Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "iSystemSettings should be passed to class instance");
+    constructor(SystemSettings, canvasContainer) {
+        if (!SystemSettings) {
+            Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "SystemSettings should be passed to class instance");
         }
         this.#registeredStages = new Map();
 
@@ -37,7 +37,7 @@ export class System {
             document.body.appendChild(canvasContainer);
         }
 
-        this.#iSystem = new ISystem(iSystemSettings, this.#registeredStages, canvasContainer);
+        this.#iSystem = new ISystem(SystemSettings, this.#registeredStages, canvasContainer);
 
         this.#addPreloadStage();
     }

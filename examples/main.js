@@ -12,6 +12,7 @@ import { Primitives } from "./primitives/primitives.js";
 import { CustomWebGlTestPage } from "./testCustomWebGl/index.js";
 import { CustomDrawObject, createCustomDrawObjectInstance, drawCustomObject } from "./testCustomWebGl/TestDrawObject.js";
 import { testVertexShader, testFragmentShader, testUniforms, testAttributes } from "./testCustomWebGl/TestDrawProgram.js";
+import { TextsPage } from "./texts/index.js";
 
 const START_PAGE_NAME = "start",
     DUNGEON_GAME = "dungeon",
@@ -22,7 +23,8 @@ const START_PAGE_NAME = "start",
     STRATEGY_GAME = "strategy_game",
     CUSTOM_WEBGL_PAGE = "custom_webgl",
     TANKS_PAGE = "tanks",
-    PRIMITIVES_PAGE = "primitives";
+    PRIMITIVES_PAGE = "primitives",
+    TEXTS_PAGE = "texts";
     
 const TEST_WEBGL_PROGRAM_KEY = "test",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
@@ -182,7 +184,7 @@ const processOptionsFormData = (e) => {
     }
 
     if (optimization !== CONST.OPTIMIZATION.NATIVE_JS.OPTIMIZED) {
-        SystemSettings.gameOptions.optimization = optimization;
+        SystemSettings.gameOptions.optimization = optimization.toString();
     }
 
     if (formData.get("drawLayerB")) {
@@ -216,7 +218,8 @@ function runApp(settings) {
     app.registerStage(STRATEGY_GAME, Strategy);
     app.registerStage(CUSTOM_WEBGL_PAGE, CustomWebGlTestPage);
     app.registerStage(TANKS_PAGE, Tanks);
-    app.registerStage(PRIMITIVES_PAGE, Primitives)
+    app.registerStage(PRIMITIVES_PAGE, Primitives);
+    app.registerStage(TEXTS_PAGE, TextsPage);
     
     // пробуем пользовательскую webgl программу
     app.iSystem.iExtension.registerAndCompileWebGlProgram(TEST_WEBGL_PROGRAM_KEY, testVertexShader, testFragmentShader, testUniforms, testAttributes);

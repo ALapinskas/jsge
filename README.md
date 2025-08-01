@@ -15,7 +15,7 @@ No external libraries are used for drawing, no TypeScript, strict OOP structure 
 * Frame animations for sprites and tiles
 * Spine 2D skeletal animation as a plugin
 * Collisions for tiles and objects
-* Boundary (collision shapes) drawing as a debug option
+* Boundaries (collision shapes) drawing as a debug option
 
 ![Boundaries draw](boundaries_draw.png?raw=true "Boundaries draw")
 

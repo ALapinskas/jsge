@@ -14,6 +14,7 @@ import { DrawTextObject } from "../2d/DrawTextObject.js";
 
 import AssetsManager from "../../../modules/assetsm/src/AssetsManager.js";
 import { utils } from "../../index.js";
+import { TextAtlas } from "../Temp/TextAtlas.js";
 
 export class WebGlEngine {
     /**
@@ -57,6 +58,14 @@ export class WebGlEngine {
      */
     #currentTextures = null;
     /**
+     * @type {Array<TextAtlas>}
+     */
+    #textAtlases = [];
+    /**
+     * @type {number}
+     */
+    #currentAtlasIndex = 0;
+    /**
      * @type {Map<string, WebGLProgram>}
      */
     #registeredWebGlPrograms = new Map();
@@ -87,6 +96,7 @@ export class WebGlEngine {
         this.#MAX_TEXTURE_SIZE = context.getParameter(context.MAX_TEXTURE_SIZE);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
+        this.#textAtlases[0] = new TextAtlas(gameOptions.render.textAtlasMaxSize, this.#gl.createTexture(), 0);
 
         this._registerObjectRender(DrawTextObject.name, this._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DrawRectObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
@@ -433,27 +443,7 @@ export class WebGlEngine {
                 }
                 break;
         }
-        
-        const c = Math.cos(renderObject.rotation),
-              s = Math.sin(renderObject.rotation),
-              translationMatrix = [
-                  1, 0, x,
-                  0, 1, y,
-                  0, 0, 1],
-              rotationMatrix = [
-                  c, -s, 0,
-                  s, c, 0,
-                  0, 0, 1
-              ],
-              scaleMatrix = [
-                  scale[0], 0, 0,
-                  0, scale[1], 0,
-                  0, 0, 1
-              ];
-        const matMultiply = utils.mat3Multiply(utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
-
-        
-        const verticesMat = utils.mat3MultiplyPosCoords(matMultiply, vertices);
+        const verticesMat = this.calculateTranslatedCoords(x, y, renderObject.rotation, scale, vertices);
         
         const nextObject = this.getNextRenderObject(renderObject, pageData);
         // 2. Is it have same texture and draw program?
@@ -574,95 +564,146 @@ export class WebGlEngine {
         return this._render(verticesNumber, gl.TRIANGLE_FAN);
     };
 
+    /**
+     * 
+     * @param {DrawTextObject} renderObject 
+     * @param {*} gl 
+     * @param {*} pageData 
+     * @param {*} program 
+     * @param {*} vars 
+     * @returns 
+     */
     _bindText = (renderObject, gl, pageData, program, vars) => {
-        const { u_translation: translationLocation,
-            u_rotation: rotationRotation,
-            u_scale: scaleLocation,
+        const { 
             u_resolution: resolutionUniformLocation,
             a_position: positionAttributeLocation,
             a_texCoord: texCoordLocation,
             u_image: u_imageLocation } = vars;
 
         const {width:boxWidth, height:boxHeight} = renderObject.boundariesBox,
-            image_name = renderObject.text,
             [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset - boxHeight,
-            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA];
-
-        const rotation = renderObject.rotation || 0,
-            scale = [1, 1];
-        const vecX1 = x,
-            vecY1 = y,
+            blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
+            rotation = renderObject.rotation || 0,
+            scale = [1, 1],
+            vecX1 = 0,
+            vecY1 = 0,
             vecX2 = vecX1 + boxWidth,
-            vecY2 = vecY1 + boxHeight;
+            vecY2 = vecY1 + boxHeight,
+            verticesBufferData = [
+                vecX1, vecY1,
+                vecX2, vecY1,
+                vecX1, vecY2,
+                vecX1, vecY2,
+                vecX2, vecY1,
+                vecX2, vecY2
+            ],
+            atlasPosition = renderObject._atlasPos;
 
-        const verticesBufferData = [
-            vecX1, vecY1,
-            vecX2, vecY1,
-            vecX1, vecY2,
-            vecX1, vecY2,
-            vecX2, vecY1,
-            vecX2, vecY2
-        ],
-        texturesBufferData = [
-            0, 0,
-            1, 0,
-            0, 1,
-            0, 1,
-            1, 0,
-            1, 1
-        ];
-        let verticesNumber = 0;
+        // x, y, width, height
+        let texturesCoords = [0, 0, 1, 1],
+            currentAtlasIndex = typeof atlasPosition.atlasIndex !== "undefined" ? atlasPosition.atlasIndex : this.#currentAtlasIndex,
+            currentAtlas = this.#textAtlases[currentAtlasIndex],
+            atlasW = boxWidth, 
+            atlasH = boxHeight,
+            atlasX, atlasY;
 
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-        
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verticesBufferData), gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+        if (atlasPosition.isMeasurementsSet === true) {
+            const atlasPos = renderObject._atlasPos;
+            // if we only change the texture - replace it with the new one
+            if (renderObject._isTextureUpdated === true) {
+                currentAtlas._updateTextImage(renderObject._textureCanvas, renderObject._atlasPos);
+                renderObject._setTextureUpdated();
+            }
 
-        //textures buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texturesBufferData), gl.STATIC_DRAW);
-
-        gl.enableVertexAttribArray(texCoordLocation);
-        gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-        
-        verticesNumber += 6;
-        // remove box
-        // fix text edges
-        gl.blendFunc(blend[0], blend[1]);
-        //
-        //var currentTexture = gl.getParameter(gl.TEXTURE_BINDING_2D);
-        
-        let textureStorage = renderObject._textureStorage;
-        if (!textureStorage) {
-            //const activeTexture = gl.getParameter(gl.ACTIVE_TEXTURE);
-            textureStorage = new ImageTempStorage(gl.createTexture());
-            renderObject._textureStorage = textureStorage;
-        }
-        if (textureStorage._isTextureRecalculated === true) {
-            this.#updateTextWebGlTexture(gl, textureStorage._texture, renderObject._textureCanvas);
-            textureStorage._isTextureRecalculated = false;
+            atlasX = atlasPos.x;
+            atlasY = atlasPos.y;
+            texturesCoords = [ atlasX, atlasY, atlasW, atlasH ];
+        // calculate and set atlas pos
         } else {
-            this.#bindTexture(gl, textureStorage._texture);
+            if (currentAtlas._isAddPossible(boxWidth, boxHeight)) {
+                [atlasX, atlasY] = currentAtlas._addNewTextImage(renderObject._textureCanvas, boxWidth, boxHeight);
+            } else {
+                // is current atlas is full, 
+                // create a new one
+                currentAtlas = new TextAtlas(this.#MAX_TEXTURE_SIZE, gl.createTexture(), currentAtlasIndex);
+                [atlasX, atlasY] = currentAtlas._addNewTextImage(renderObject._textureCanvas, boxWidth, boxHeight);
+                this.#currentAtlasIndex = currentAtlasIndex;
+                this.#textAtlases[currentAtlasIndex] = currentAtlas;
+            }
+            // set new atlas pos
+            atlasPosition._setMeasurements(currentAtlasIndex, atlasX, atlasY);
+
+            texturesCoords = [ atlasX, atlasY, atlasW, atlasH ];
         }
-        gl.uniform1i(u_imageLocation, textureStorage._textureIndex);
-        gl.depthMask(false);
-        return this._render(verticesNumber, gl.TRIANGLES);
-        
+    
+        const verticesMat = this.calculateTranslatedCoords(x, y, rotation, scale, verticesBufferData);
+        const texturesBufferData = this.calculateTextureCoords(currentAtlas._atlasImage, texturesCoords[0], texturesCoords[1], texturesCoords[2], texturesCoords[3]);
+
+        const nextObject = this.getNextRenderObject(renderObject, pageData);
+        // 2. Is it have same texture and no texture reattach needed?
+        if ((currentAtlas._isRecalculated === false) 
+            && nextObject 
+            && nextObject instanceof DrawTextObject
+            && this._canTextObjectsMerge(renderObject, nextObject)) {
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+                this.#currentTextures = texturesBufferData;
+                return Promise.resolve(0);
+            } else {
+                this.#currentVertices.push(...verticesMat);
+                this.#currentTextures.push(...texturesBufferData);
+                return Promise.resolve(0);
+            }
+        } else {
+            gl.useProgram(program);
+            // set the resolution
+            gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+            
+            if (this.#currentVertices === null) {
+                this.#currentVertices = verticesMat;
+                this.#currentTextures = texturesBufferData;
+            } else {
+                this.#currentVertices.push(...verticesMat);
+                this.#currentTextures.push(...texturesBufferData);
+            }
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentVertices), gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            //Tell the attribute how to get data out of positionBuffer
+            const size = 2,
+                type = gl.FLOAT, // data is 32bit floats
+                normalize = false,
+                stride = 0, // move forward size * sizeof(type) each iteration to get next position
+                offset = 0; // start of beginning of the buffer
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+            //textures buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.#texCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.#currentTextures), gl.STATIC_DRAW);
+
+            gl.enableVertexAttribArray(texCoordLocation);
+            gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
+            
+            const verticesNumber = this.#currentVertices.length / 2;
+            
+            gl.blendFunc(blend[0], blend[1]);
+            
+            if (currentAtlas._isRecalculated) {
+                this.#updateWebGlTexture(gl, currentAtlas._texture, currentAtlas._atlasImage, currentAtlas._textureIndex);
+                currentAtlas._isRecalculated = false;
+            } else {
+                this.#bindTexture(gl, currentAtlas._texture);
+            }
+            
+            gl.uniform1i(u_imageLocation, currentAtlas._textureIndex);
+            gl.depthMask(false);
+            
+            this.#currentVertices = null;
+            this.#currentTextures = null;
+            return this._render(verticesNumber, gl.TRIANGLES);
+        }
     };
 
     _bindImage = (renderObject, gl, pageData, program, vars) => {
@@ -710,43 +751,11 @@ export class WebGlEngine {
             imageY = rowNum * renderObject.height + (rowNum * spacing) + margin;
         }
 
-        // transform, scale and rotate should be done in js side
-        //gl.uniform2f(translationLocation, x, y);
-        //gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        //gl.uniform1f(rotationRotation, renderObject.rotation);
-        // multiple matrices:
-        const c = Math.cos(renderObject.rotation),
-              s = Math.sin(renderObject.rotation),
-              translationMatrix = [
-                  1, 0, x,
-                  0, 1, y,
-                  0, 0, 1],
-              rotationMatrix = [
-                  c, -s, 0,
-                  s, c, 0,
-                  0, 0, 1
-              ],
-              scaleMatrix = [
-                  scale[0], 0, 0,
-                  0, scale[1], 0,
-                  0, 0, 1
-              ];
-        const matMultiply = utils.mat3Multiply(utils.mat3Multiply(translationMatrix, rotationMatrix), scaleMatrix);
-
-        const posX = 0 - renderObject.width / 2,
-              posY = 0 - renderObject.height / 2;
-
-        const vecX1 = posX,
-              vecY1 = posY,
+        const vecX1 = 0 - renderObject.width / 2,
+              vecY1 = 0 - renderObject.height / 2,
               vecX2 = vecX1 + renderObject.width,
-              vecY2 = vecY1 + renderObject.height,
-              texX1 = 1 / atlasImage.width * imageX,
-              texY1 = 1 / atlasImage.height * imageY,
-              texX2 = texX1 + (1 / atlasImage.width * renderObject.width),
-              texY2 = texY1 + (1 / atlasImage.height * renderObject.height);
-        //console.log("mat1: ", matMult1);
-        //console.log("mat2: ", matMult2);
-        //console.log("x1y1: ", x1y1);
+              vecY2 = vecY1 + renderObject.height;
+        
         const verticesD =  [
             vecX1, vecY1,
             vecX2, vecY1,
@@ -755,20 +764,9 @@ export class WebGlEngine {
             vecX2, vecY1,
             vecX2, vecY2
         ];
-        const verticesMat = utils.mat3MultiplyPosCoords(matMultiply, verticesD),
-        textures = [
-            texX1, texY1,
-            texX2, texY1,
-            texX1, texY2,
-            texX1, texY2,
-            texX2, texY1,
-            texX2, texY2
-        ];
+        const verticesMat = this.calculateTranslatedCoords(x, y, renderObject.rotation, scale, verticesD),
+            textures = this.calculateTextureCoords(atlasImage, imageX, imageY, renderObject.width, renderObject.height);
         
-        //vec2 position = (u_transformMat * vec3(a_position, 1)).xy;
-        //console.log("translation x: ", x, " y: ", y);
-        //console.log("scale x: ", scale[0], " y: ", scale[1]);
-        //console.log("rotation: ", renderObject.rotation);
         // Determine could we merge next drawObject or not
         // 1. Find next object
         const nextObject = this.getNextRenderObject(renderObject, pageData);
@@ -855,6 +853,23 @@ export class WebGlEngine {
         if ((registeredO1.webglProgramName === registeredO2.webglProgramName)
             && (obj1.type === obj2.type)
             && (obj1.image === obj2.image)
+            && (obj2.isRemoved === false)) {
+                return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 
+     * @param {DrawTextObject} obj1 
+     * @param {DrawTextObject} obj2
+     * @returns {boolean} 
+     */
+    _canTextObjectsMerge = (obj1, obj2) => {
+        if ((obj2._atlasPos)
+            && (obj1._atlasPos.atlasIndex === obj2._atlasPos.atlasIndex)
+            && (obj2._atlasPos.isMeasurementsSet === true)
             && (obj2.isRemoved === false)) {
                 return true;
         } else {
@@ -1425,10 +1440,7 @@ export class WebGlEngine {
                                 vecY1 = mapPosY,
                                 vecX2 = mapPosX + tilesetwidth,
                                 vecY2 = mapPosY + tilesetheight,
-                                texX1 = (1 / atlasWidth) * atlasPosX,
-                                texY1 = (1 / atlasHeight) * atlasPosY,
-                                texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
-                                texY2 = texY1 + (1 / atlasHeight * tilesetheight);
+                                [texX1, texY1, texX2, texY2] = this.normalizeCoords(atlasWidth, atlasHeight, atlasPosX, atlasPosY, tilesetwidth, tilesetheight);
 
                             // 0 vecX1
                             v[filledSize] = vecX1;
@@ -1766,10 +1778,7 @@ export class WebGlEngine {
                                 vecY1 = row * dtheight - yOffset,
                                 vecX2 = vecX1 + tilesetwidth,
                                 vecY2 = vecY1 + tilesetheight,
-                                texX1 = 1 / atlasWidth * atlasPosX,
-                                texY1 = 1 / atlasHeight * atlasPosY,
-                                texX2 = texX1 + (1 / atlasWidth * tilesetwidth),
-                                texY2 = texY1 + (1 / atlasHeight * tilesetheight);
+                                [texX1, texY1, texX2, texY2] = this.normalizeCoords(atlasWidth, atlasHeight, atlasPosX, atlasPosY, tilesetwidth, tilesetheight);
                              
                             // 0 vecX1
                             v[filledSize] = vecX1;
@@ -2016,21 +2025,6 @@ export class WebGlEngine {
             new Float32Array(vertices),
             this.#gl.STATIC_DRAW);
     }
-
-    #setSingleRectangle(width, height) {
-        const x1 = 0,
-            x2 = 0 + width,
-            y1 = 0,
-            y2 = 0 + height;
-        this.#gl.bufferData(this.#gl.ARRAY_BUFFER, 
-            new Float32Array([
-                x1, y1,
-                x2, y1,
-                x1, y2,
-                x1, y2,
-                x2, y1,
-                x2, y2]), this.#gl.STATIC_DRAW);
-    }
     /*------------------------------------
      * End of Predefined Drawing programs
      -------------------------------------*/
@@ -2072,6 +2066,9 @@ export class WebGlEngine {
      * End Textures
     --------------------------------------*/
 
+    /*------------------------------------
+     * Help Methods
+    --------------------------------------*/
     isPowerOfTwo(value) {
         return (value & (value - 1)) === 0;
     }
@@ -2090,7 +2087,78 @@ export class WebGlEngine {
         return nextObject;
     }
 
+    /**
+     * 
+     * @param {number} atlasWidth 
+     * @param {number} atlasHeight 
+     * @param {number} posX 
+     * @param {number} posY 
+     * @param {number} imageWidth 
+     * @param {number} imageHeight 
+     * @returns {Array<number, number, number, number>}
+     */
+    normalizeCoords(atlasWidth, atlasHeight, posX, posY, imageWidth, imageHeight) {
+        const atlasNormWidth = 1 / atlasWidth,
+            atlasNormHeight = 1 / atlasHeight;
+
+        const texX1 = atlasNormWidth * posX,
+            texY1 = atlasNormHeight * posY,
+            texX2 = texX1 + (atlasNormWidth * imageWidth),
+            texY2 = texY1 + (atlasNormHeight * imageHeight);
+
+        return [texX1, texY1, texX2, texY2];
+    }
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} rotation 
+     * @param {Array<number, number>} scale 
+     * @param {Array<number>} vertices 
+     */
+    calculateTranslatedCoords = (x, y, rotation, scale, vertices) => {
+        const c = Math.cos(rotation),
+              s = Math.sin(rotation),
+              translationM = [1, 0, x, 0, 1, y, 0, 0, 1],
+              rotationM = [c, -s, 0, s, c, 0, 0, 0, 1],
+              scaleM = [scale[0], 0, 0, 0, scale[1], 0, 0, 0, 1];
+
+        const matMultiply = utils.mat3Multiply(utils.mat3Multiply(translationM, rotationM), scaleM);
+        return utils.mat3MultiplyPosCoords(matMultiply, vertices);
+    }
+
+    /**
+     * 
+     * @param {HTMLImageElement | HTMLCanvasElement} atlasImage 
+     * @param {number} imageX 
+     * @param {number} imageY 
+     * @param {number} imageWidth 
+     * @param {number} imageHight 
+     * @returns {Array<number>}
+     */
+    calculateTextureCoords = (atlasImage, imageX, imageY, imageWidth, imageHight) => {
+        const [ texX1, texY1, texX2, texY2 ] = this.normalizeCoords(atlasImage.width, atlasImage.height, imageX, imageY, imageWidth, imageHight);
+
+        return [
+            texX1, texY1,
+            texX2, texY1,
+            texX1, texY2,
+            texX1, texY2,
+            texX2, texY1,
+            texX2, texY2
+        ];
+    }
+
     #glTextureIndex = (activeTexture) => {
         return activeTexture - 33984;
     }
+
+    get maxTexture() {
+        return this.#MAX_TEXTURE_SIZE;
+    }
+
+    /*------------------------------------
+     * End Help Methods
+    --------------------------------------*/
 }
