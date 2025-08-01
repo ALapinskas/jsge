@@ -67,10 +67,12 @@ export class DrawObjectFactory {
      * @param {string} text 
      * @param {string} font - size fontFamily
      * @param {string} color - rgba(r,g,b,a)
+     * @param {number=} boxWidth - optional, sets the box width, by default boxWidth === text.boxWidth, and it can't be changed later
+     * @param {number=} boxHeight - optional, sets the box width, by default boxWidth === text.boxWidth, and it can't be changed later
      * @returns {DrawTextObject}
      */
-    text(x, y, text, font, color) {
-        const renderObject = new DrawTextObject(x, y, text, font, color);
+    text(x, y, text, font, color, boxWidth, boxHeight) {
+        const renderObject = new DrawTextObject(x, y, text, font, color, boxWidth, boxHeight);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }

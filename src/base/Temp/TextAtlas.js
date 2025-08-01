@@ -126,7 +126,7 @@ export class TextAtlas {
         // 
         this.#image = tempCanvas;
         //console.log(this.#image);
-        document.body.appendChild(this.#image);
+        //document.body.appendChild(this.#image);
         this._isRecalculated = true;
         this.#currentPos = [lastPosX, lastPosY];
         return [atlasPosX, atlasPosY];

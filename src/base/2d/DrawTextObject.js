@@ -201,8 +201,10 @@ export class DrawTextObject extends DrawShapeObject {
                 atlasWidth = this._atlasPos.width;
                 atlasHeight = this._atlasPos.height;
             } else {
-                if (!atlasWidth && !atlasHeight) {
+                if (!atlasWidth) {
                     atlasWidth = Math.floor(this.textMetrics.width);
+                } 
+                if (!atlasHeight) {
                     atlasHeight = Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent);
                 }
                 this.#atlasPosition = new ImageAtlasPosition(atlasWidth, atlasHeight);

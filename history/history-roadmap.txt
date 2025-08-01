@@ -4,6 +4,11 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.5.11:
+    r: DrawObjectFactory.text() boxWidth, boxHeight optional params introduced
+    r: boxWidth, boxHeight set separately
+    f: remove text debug canvas
+
 1.5.10:
     +: texts test page
     +: TextAtlas, ImageAtlasPosition introduced (adr#09)

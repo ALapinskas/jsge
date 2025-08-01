@@ -2108,8 +2108,10 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
                 atlasWidth = this._atlasPos.width;
                 atlasHeight = this._atlasPos.height;
             } else {
-                if (!atlasWidth && !atlasHeight) {
+                if (!atlasWidth) {
                     atlasWidth = Math.floor(this.textMetrics.width);
+                } 
+                if (!atlasHeight) {
                     atlasHeight = Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent);
                 }
                 this.#atlasPosition = new _Temp_ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_4__.ImageAtlasPosition(atlasWidth, atlasHeight);
@@ -2787,10 +2789,12 @@ class DrawObjectFactory {
      * @param {string} text 
      * @param {string} font - size fontFamily
      * @param {string} color - rgba(r,g,b,a)
+     * @param {number=} boxWidth - optional, sets the box width, by default boxWidth === text.boxWidth, and it can't be changed later
+     * @param {number=} boxHeight - optional, sets the box width, by default boxWidth === text.boxWidth, and it can't be changed later
      * @returns {DrawTextObject}
      */
-    text(x, y, text, font, color) {
-        const renderObject = new _2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawTextObject(x, y, text, font, color);
+    text(x, y, text, font, color, boxWidth, boxHeight) {
+        const renderObject = new _2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_1__.DrawTextObject(x, y, text, font, color, boxWidth, boxHeight);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }
@@ -6220,7 +6224,7 @@ class TextAtlas {
         // 
         this.#image = tempCanvas;
         //console.log(this.#image);
-        document.body.appendChild(this.#image);
+        //document.body.appendChild(this.#image);
         this._isRecalculated = true;
         this.#currentPos = [lastPosX, lastPosY];
         return [atlasPosX, atlasPosY];
