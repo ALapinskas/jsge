@@ -1,7 +1,7 @@
 # JavaScript Game Engine
 
 This engine was designed to simplify creating games in JavaScript.
-No external libraries are used for drawing, no TypeScript, strict OOP structure - no cyclic dependencies. It is easy to use and debug.
+No external libraries are used for drawing, no TypeScript, strict OOP structure. No cyclic dependencies, same codebase everywhere, easy to use and debug.
 
 ![Alt text](Debug.gif?raw=true "Title")
 

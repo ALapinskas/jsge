@@ -45,8 +45,9 @@ export class IRender {
      * @type {AssetsManager}
      */
     #loaderReference;
-    
-
+    /**
+     * @type {RenderLoop}
+     */
     #renderLoopInstance;
     /**
      * @type {boolean}

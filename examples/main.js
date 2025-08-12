@@ -13,6 +13,7 @@ import { CustomWebGlTestPage } from "./testCustomWebGl/index.js";
 import { CustomDrawObject, createCustomDrawObjectInstance, drawCustomObject } from "./testCustomWebGl/TestDrawObject.js";
 import { testVertexShader, testFragmentShader, testUniforms, testAttributes } from "./testCustomWebGl/TestDrawProgram.js";
 import { TextsPage } from "./texts/index.js";
+import { MatterPhysicsStage } from "./matterPhysics/index.js";
 
 const START_PAGE_NAME = "start",
     DUNGEON_GAME = "dungeon",
@@ -24,7 +25,8 @@ const START_PAGE_NAME = "start",
     CUSTOM_WEBGL_PAGE = "custom_webgl",
     TANKS_PAGE = "tanks",
     PRIMITIVES_PAGE = "primitives",
-    TEXTS_PAGE = "texts";
+    TEXTS_PAGE = "texts",
+    MATTER_PHYSICS_PAGE = "matter_physics";
     
 const TEST_WEBGL_PROGRAM_KEY = "test",
     TEST_CUSTOM_DRAW_OBJECT_KEY = "customDrawObject";
@@ -220,6 +222,7 @@ function runApp(settings) {
     app.registerStage(TANKS_PAGE, Tanks);
     app.registerStage(PRIMITIVES_PAGE, Primitives);
     app.registerStage(TEXTS_PAGE, TextsPage);
+    app.registerStage(MATTER_PHYSICS_PAGE, MatterPhysicsStage);
     
     // пробуем пользовательскую webgl программу
     app.iSystem.iExtension.registerAndCompileWebGlProgram(TEST_WEBGL_PROGRAM_KEY, testVertexShader, testFragmentShader, testUniforms, testAttributes);

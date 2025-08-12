@@ -21,15 +21,17 @@ const randTexts = [
 
 export class TextsPage extends GameStage {
 	#randomTexts = [];
+    tilemapKey = "dungeonGameMapTileset";
 	register() {
+        this.iLoader.addTileMap(this.tilemapKey, "./dungeon/map.tmj");
 		this.timer = null;
 		document.body.style.margin= 0;
 	}
     init() {
 		const [w, h] = this.stageData.canvasDimensions;
-        
-        this.background = this.draw.rect(0, 0, w, h, "rgba(120, 120, 120, 0.6)");
 
+        this.draw.tiledLayer("background", this.tilemapKey);
+        this.draw.tiledLayer("walls", this.tilemapKey);
 		let textsWidth = 0;
         for (let i = 0; i < 5; i++) {
             const text = this.draw.text(w/4 + textsWidth, h/2 - 200, utils.randomFromArray(randTexts), "16px sans-serif", "black");
@@ -96,6 +98,8 @@ export class TextsPage extends GameStage {
 		this.registerListeners();
     }
     start() {
+        const [w, h] = this.stageData.canvasDimensions;
+        
 		console.log("texts page started");
 		this.#registerMouseListeners();
     }

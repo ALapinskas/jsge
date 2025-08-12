@@ -16,7 +16,8 @@ const START_PAGE_NAME = "start",
     CUSTOM_WEBGL_PAGE = "custom_webgl",
     TANKS_PAGE = "tanks",
     PRIMITIVES_PAGE = "primitives",
-    TEXTS_PAGE = "texts"
+    TEXTS_PAGE = "texts",
+    MATTER_PHYSICS_PAGE = "matter_physics";
 
 const SPINE = {
     SpineTexture: "spineTexture",
@@ -59,6 +60,7 @@ export class StartPage extends GameStage {
         this.navTanksGame = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 130, "Tanks game", "20px sans-serif", "black");
         this.navPrimitivesGame = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 160, "Primitives draw", "20px sans-serif", "black");
         this.navTextsPage = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 190, "Texts page", "20px sans-serif", "black");
+        this.matterPhysics = this.draw.text(w/2 + LEFT_SHIFT, h/2 + 220, "Matter physics", "20px sans-serif", "black");
     
         //this.#createOptionsBlock();
         this.audio.registerAudio(MENU_CLICK_AUDIO_NAME);
@@ -93,7 +95,8 @@ export class StartPage extends GameStage {
             isNav7T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTanksGame.boundariesBox),
             isNav8T = isPointRectIntersect(event.offsetX, event.offsetY, this.navItemStrategy.boundariesBox),
             isNav9T = isPointRectIntersect(event.offsetX, event.offsetY, this.navPrimitivesGame.boundariesBox),
-            isNav10T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTextsPage.boundariesBox);
+            isNav10T = isPointRectIntersect(event.offsetX, event.offsetY, this.navTextsPage.boundariesBox),
+            isNav11T = isPointRectIntersect(event.offsetX, event.offsetY, this.matterPhysics.boundariesBox);
             
         if (isNav1Traversed) {
             this.navItemDun.strokeStyle = "rgba(0, 0, 0, 0.3)";
@@ -155,7 +158,13 @@ export class StartPage extends GameStage {
             this.navTextsPage.strokeStyle = undefined;
         }
 
-        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed || isNav5T || isNav6T || isNav7T || isNav8T || isNav9T || isNav10T) {
+        if (isNav11T) {
+            this.matterPhysics.strokeStyle = "rgba(0, 0, 0, 0.3)";
+        } else if (this.matterPhysics.strokeStyle) {
+            this.matterPhysics.strokeStyle = undefined;
+        }
+
+        if (isNav1Traversed || isNavP2PTraversed || isNav3Traversed || isNav4Traversed || isNav5T || isNav6T || isNav7T || isNav8T || isNav9T || isNav10T || isNav11T) {
             canvas.style.cursor = "pointer";
         } else {
             canvas.style.cursor = "default";
@@ -226,6 +235,12 @@ export class StartPage extends GameStage {
             this.#menuClickMediaElement.play();
             this.iSystem.stopGameStage(START_PAGE_NAME);
             this.iSystem.startGameStage(TEXTS_PAGE);
+        }
+
+        if (isPointRectIntersect(event.offsetX, event.offsetY, this.matterPhysics.boundariesBox)) {
+            this.#menuClickMediaElement.play();
+            this.iSystem.stopGameStage(START_PAGE_NAME);
+            this.iSystem.startGameStage(MATTER_PHYSICS_PAGE);
         }
     };
 

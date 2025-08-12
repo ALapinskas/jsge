@@ -1,0 +1,13 @@
+Date: August 08 2025
+jsge@1.5.11
+Adapt matter.js physics engine as a module / Прикрутить matter.js в качестве модуля к проекту
+
+Status: In Progress
+
+Context:
+    
+
+Decision:
+
+Impact:
+    No impact.

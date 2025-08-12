@@ -442,6 +442,8 @@ export class WebGlEngine {
                     return Promise.reject();
                 }
                 break;
+            default:
+                console.error("unknown primitive draw type");
         }
         const verticesMat = this.calculateTranslatedCoords(x, y, renderObject.rotation, scale, vertices);
         
