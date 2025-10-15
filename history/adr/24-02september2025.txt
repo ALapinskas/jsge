@@ -1,0 +1,13 @@
+Date: September 02 2025
+jsge@1.5.11
+Add resolution option  / Добавить опцию resolution
+
+Status: In Progress
+
+Context:
+    
+
+Decision:
+
+Impact:
+    No impact.

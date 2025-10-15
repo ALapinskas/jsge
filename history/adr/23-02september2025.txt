@@ -1,0 +1,17 @@
+Date: September 02 2025
+jsge@1.5.11
+Add scale() method to DrawObjects  / Добавить функцию scale() к DrawObjects
+
+Status: In Progress
+- 1.5.12: Added for DrawShapeObject and extended objects
+
+Context:
+    scale() должна пропорционально менять масштаб объекта, т.е. его длину и ширину.
+    Текстура должна быть пропорционально уменьшена/увеличена.
+    Boundaries также пересчитаны.
+    Также добавить тест на изменение масштабов
+
+Decision:
+
+Impact:
+    No impact.

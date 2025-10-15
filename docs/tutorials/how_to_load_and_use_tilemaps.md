@@ -57,3 +57,7 @@ Starting from jsge@1.4.0, support for the following features has been added:
 - [Tiled animations]{@link https://doc.mapeditor.org/en/stable/manual/editing-tilesets/#tile-animation-editor}.
 
 The engine will process these features automatically when the `tiledLayer` is created.
+<br />
+
+### Ask a question
+[https://github.com/ALapinskas/jsge/discussions/categories/q-a]{@link https://github.com/ALapinskas/jsge/discussions/categories/q-a}

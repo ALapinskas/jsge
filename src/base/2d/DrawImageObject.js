@@ -126,6 +126,19 @@ export class DrawImageObject extends DrawShapeObject {
         this.#image = value;
     }
 
+    get scale() {
+        return super.scale;
+    }
+    
+    set scale(value) {
+        if (this.#circleBoundaries) {
+            this.#circleBoundaries.r = this.#circleBoundaries.r * value;
+        } else {
+            this.#vertices = this._calculateRectVertices(this.width * value, this.height * value);
+        }
+        super.scale = value;
+    }
+
     /**
      * Current image index
      * @type {number}

@@ -48,3 +48,7 @@ this.audio.volume = 0.5;
   on <a href="https://codepen.io">CodePen</a>.</span>
 </p>
 <script async src="https://cpwebassets.codepen.io/assets/embed/ei.js"></script>
+<br />
+
+### Ask a question
+[https://github.com/ALapinskas/jsge/discussions/categories/q-a]{@link https://github.com/ALapinskas/jsge/discussions/categories/q-a}

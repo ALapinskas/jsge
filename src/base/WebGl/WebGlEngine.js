@@ -404,7 +404,7 @@ export class WebGlEngine {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
-            scale = [1, 1],
+            scale = renderObject.scale,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             { 
                 u_resolution: resolutionUniformLocation,
@@ -503,7 +503,7 @@ export class WebGlEngine {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
-            scale = [1, 1],
+            scale = renderObject.scale,
             rotation = renderObject.rotation,
             { 
                 u_translation: translationLocation,
@@ -586,7 +586,7 @@ export class WebGlEngine {
             y = renderObject.y - yOffset - boxHeight,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
             rotation = renderObject.rotation || 0,
-            scale = [1, 1],
+            scale = renderObject.scale,
             vecX1 = 0,
             vecY1 = 0,
             vecX2 = vecX1 + boxWidth,
@@ -600,7 +600,7 @@ export class WebGlEngine {
                 vecX2, vecY2
             ],
             atlasPosition = renderObject._atlasPos;
-
+            
         // x, y, width, height
         let texturesCoords = [0, 0, 1, 1],
             currentAtlasIndex = typeof atlasPosition.atlasIndex !== "undefined" ? atlasPosition.atlasIndex : this.#currentAtlasIndex,
@@ -736,7 +736,7 @@ export class WebGlEngine {
               spacing = renderObject.spacing,
               margin = renderObject.margin,
               blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
-              scale = [1, 1];
+              scale = renderObject.scale;
         
         let imageX = margin,
             imageY = margin,
@@ -948,7 +948,7 @@ export class WebGlEngine {
         }
         
         const translation = [0, 0],
-              scale = [1, 1],
+              scale = renderLayer.scale,
               rotation = renderLayer.rotation || 0,
               drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
               shapeMaskId = renderLayer._maskId;
@@ -1135,6 +1135,7 @@ export class WebGlEngine {
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
             rotation = renderObject.rotation || 0,
+            scale = renderObject.scale || [1, 1],
             vertices = renderObject.vertices,
             color =  this.#gameOptions.debug.boundaries.boundariesColor;
         const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
@@ -1155,7 +1156,7 @@ export class WebGlEngine {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
         gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, 1, 1);
+        gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
 
@@ -1190,7 +1191,7 @@ export class WebGlEngine {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
-            scale = [1, 1],
+            scale = renderObject.scale,
             rotation = renderObject.rotation,
             { 
                 u_translation: translationLocation,
@@ -1214,7 +1215,7 @@ export class WebGlEngine {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
         gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, 1, 1);
+        gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
 
@@ -2114,7 +2115,7 @@ export class WebGlEngine {
      * @param {number} x 
      * @param {number} y 
      * @param {number} rotation 
-     * @param {Array<number, number>} scale 
+     * @param {[number, number]} scale 
      * @param {Array<number>} vertices 
      */
     calculateTranslatedCoords = (x, y, rotation, scale, vertices) => {

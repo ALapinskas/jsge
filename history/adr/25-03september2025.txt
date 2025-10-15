@@ -1,0 +1,13 @@
+Date: September 03 2025
+jsge@1.5.11
+Add anchor property to DrawObjects  / Добавить anchor свойство к DrawObjects
+
+Status: In Progress
+
+Context:
+    
+
+Decision:
+
+Impact:
+    No impact.

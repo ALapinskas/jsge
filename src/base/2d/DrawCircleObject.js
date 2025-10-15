@@ -25,6 +25,13 @@ export class DrawCircleObject extends DrawShapeObject {
         this.#radius = radius;
         this.#vertices = this._interpolateConus(radius);
     }
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        this.#vertices = this._interpolateConus(this.#radius * value);
+        super.scale = value;
+    }
 
     /**
      * Array of [x,y] cords.

@@ -148,6 +148,12 @@ export class DrawTextObject extends DrawShapeObject {
             this.#calculateCanvasTextureAndMeasurements();
         }
     }
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
+    }
 
     /**
      * @type {TextMetrics}

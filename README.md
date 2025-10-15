@@ -36,7 +36,8 @@ No external libraries are used for drawing, no TypeScript, strict OOP structure 
 3. `npm start`
 4. Visit `localhost:9000`
 
-**API docs and tutorials:** [jsge.reslc.ru](https://jsge.reslc.ru)  
+**API docs and tutorials:** [https://jsge.reslc.ru](https://jsge.reslc.ru)  
 **GitHub:** [https://github.com/ALapinskas/jsge](https://github.com/ALapinskas/jsge)  
-**Issues:** [https://github.com/ALapinskas/jsge/issues](https://github.com/ALapinskas/jsge/issues)  
+**Issues:** [https://github.com/ALapinskas/jsge/issues](https://github.com/ALapinskas/jsge/issues) 
+**Discussions/Help**: [https://github.com/ALapinskas/jsge/discussions](https://github.com/ALapinskas/jsge/discussions)
 **NPM:** [https://www.npmjs.com/package/jsge](https://www.npmjs.com/package/jsge)

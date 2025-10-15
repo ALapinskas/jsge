@@ -1,0 +1,13 @@
+Date: August 20 2025
+jsge@1.5.11
+Add ability to upload and use custom fonts / Добавить возможность загружать кастомные шрифты
+
+Status: In Progress
+
+Context:
+
+
+Decision:
+
+Impact:
+    No impact.

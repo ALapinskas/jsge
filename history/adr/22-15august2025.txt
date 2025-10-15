@@ -1,0 +1,13 @@
+Date: August 20 2025
+jsge@1.5.11
+Add matrix transforms to DrawObjects  / Добавить возможность добавлять матрицы преобразования к DrawObjects
+
+Status: In Progress
+
+Context:
+    
+
+Decision:
+
+Impact:
+    No impact.

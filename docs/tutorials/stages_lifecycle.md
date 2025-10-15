@@ -14,3 +14,8 @@ Nothing special happens here.
 All methods above can be overwritten.
 
 <img src="lifecycle.png">
+
+<br />
+
+### Ask a question
+[https://github.com/ALapinskas/jsge/discussions/categories/q-a]{@link https://github.com/ALapinskas/jsge/discussions/categories/q-a}

@@ -1,0 +1,13 @@
+Date: September 04 2025
+jsge@1.5.11
+Make settings parameter optional "new System(settings, canvas)"  / При создании "new System(settings, canvas)" сделать первый параметр settings - необязательным
+
+Done: (1.5.12)
+
+Context:
+    
+
+Decision:
+
+Impact:
+    No impact.

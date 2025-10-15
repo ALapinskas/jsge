@@ -45,3 +45,7 @@ start() {
     stage.draw.image(100, 300, 38, 38, "tankBody_blue");
 }
 ```
+<br />
+
+### Ask a question
+[https://github.com/ALapinskas/jsge/discussions/categories/q-a]{@link https://github.com/ALapinskas/jsge/discussions/categories/q-a}

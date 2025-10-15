@@ -1,0 +1,16 @@
+Date: August 20 2025
+jsge@1.5.11
+Adapt the work of the atlas for texts (DrawTextObject) to images (DrawImageObject) / Адаптировать работу атласа для текстов(DrawTextObject) на изображения (DrawImageObject) и Тайлмапы (DrawTiledLayer)
+
+Status: In Progress
+
+Context:
+    При добавлении новых изображений DrawTextObject либо DrawTiledLayer с отдельным image, 
+    мержить их в один атлас, также как сделано рисование DrawTextObject(adr#9) для различных текстов,
+    это позволить смержить все вызовы отрисовки использующие изображения в один вызов(draw call).
+    Также нужно будет убрать возможность изменения размеров объектов(resize)
+
+Decision:
+
+Impact:
+    Количество draw calls уменьшится, скорость рендеринга вырастет.

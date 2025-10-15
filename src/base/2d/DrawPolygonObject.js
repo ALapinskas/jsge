@@ -19,6 +19,13 @@ export class DrawPolygonObject extends DrawShapeObject {
         this.#vertices = this._convertVerticesArray(vertices);
     }
 
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
+    }
+
     /**
      * @type {Array<Array<number>>}
      */

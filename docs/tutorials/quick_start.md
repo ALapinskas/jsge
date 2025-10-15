@@ -90,3 +90,7 @@ move attached object on the screen changing `x`, `y`, or `rotation` properties
   on <a href="https://codepen.io">CodePen</a>.</span>
 </p>
 <script async src="https://cpwebassets.codepen.io/assets/embed/ei.js"></script>
+<br />
+
+### Ask a question
+[https://github.com/ALapinskas/jsge/discussions/categories/q-a]{@link https://github.com/ALapinskas/jsge/discussions/categories/q-a}

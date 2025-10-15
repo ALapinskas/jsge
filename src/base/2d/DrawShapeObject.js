@@ -28,6 +28,10 @@ export class DrawShapeObject {
      */
     #rotation = 0;
     /**
+     * @type {[number, number]}
+     */
+    #scale = [1, 1];
+    /**
      * @type {number}
      */
     #id = utils.generateUniqId();
@@ -47,11 +51,6 @@ export class DrawShapeObject {
      * @type {boolean}
      */
     #isOffsetTurnedOff = false;
-
-    /**
-     * @type {boolean}
-     */
-    #isChanged = false;
     /**
      * @hideconstructor
      */
@@ -134,6 +133,24 @@ export class DrawShapeObject {
     }
 
     /**
+     * @type {[number, number]}
+     */
+    get scale() {
+        return this.#scale;
+    }
+
+    /**
+     * @type {number | [number, number]}
+     */
+    set scale(value) {
+        if (typeof value === "number") {
+            this.#scale = [value, value];
+        } else if (Array.isArray(value)) {
+            this.#scale = value;
+        }
+    }
+
+    /**
      * @type {number}
      */
     get id() {
@@ -206,6 +223,7 @@ export class DrawShapeObject {
     _calculateRectVertices = (width, height) => {
         const halfW = width/2,
             halfH = height/2;
+            
         return [[-halfW, -halfH], [halfW, -halfH], [halfW, halfH], [-halfW, halfH]];
     };
 

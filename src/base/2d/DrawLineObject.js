@@ -20,6 +20,13 @@ export class DrawLineObject extends DrawShapeObject {
         this.#vertices = vertices;
     }
 
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
+    }
+
     /**
      * @type {Array<Array<number>>}
      */

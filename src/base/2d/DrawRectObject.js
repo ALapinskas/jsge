@@ -29,6 +29,13 @@ export class DrawRectObject extends DrawShapeObject {
         this.#vertices = this._calculateRectVertices(w,h);
     }
 
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
+    }
+
     /**
      * @type {Array<Array<number>>}
      */

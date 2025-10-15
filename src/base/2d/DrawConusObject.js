@@ -35,6 +35,15 @@ export class DrawConusObject extends DrawShapeObject {
         this.#vertices = this._interpolateConus(radius, angle);
     }
 
+    get scale() {
+        return super.scale;
+    }
+    
+    set scale(value) {
+        this.#vertices = this._interpolateConus(this.#radius * value, this.#angle);
+        super.scale = value;
+    }
+
     /**
      * Array of [x,y] cords.
      * @type {Array<number>}
