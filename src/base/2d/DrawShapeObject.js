@@ -133,7 +133,7 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {[number, number]}
+     * @type {number | number[]}
      */
     get scale() {
         return this.#scale;
