@@ -28,7 +28,7 @@ export class DrawShapeObject {
      */
     #rotation = 0;
     /**
-     * @type {[number, number]}
+     * @type {number | number[]}
      */
     #scale = [1, 1];
     /**
@@ -140,7 +140,7 @@ export class DrawShapeObject {
     }
 
     /**
-     * @type {number | [number, number]}
+     * @type {number | number[]}
      */
     set scale(value) {
         if (typeof value === "number") {
