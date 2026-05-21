@@ -997,6 +997,13 @@ class DrawCircleObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.
         this.#radius = radius;
         this.#vertices = this._interpolateConus(radius);
     }
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        this.#vertices = this._interpolateConus(this.#radius * value);
+        super.scale = value;
+    }
 
     /**
      * Array of [x,y] cords.
@@ -1067,6 +1074,15 @@ class DrawConusObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.D
         this.#angle = angle;
         this.#fade_min = fade;
         this.#vertices = this._interpolateConus(radius, angle);
+    }
+
+    get scale() {
+        return super.scale;
+    }
+    
+    set scale(value) {
+        this.#vertices = this._interpolateConus(this.#radius * value, this.#angle);
+        super.scale = value;
     }
 
     /**
@@ -1253,6 +1269,19 @@ class DrawImageObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_2__.D
         }
 
         this.#image = value;
+    }
+
+    get scale() {
+        return super.scale;
+    }
+    
+    set scale(value) {
+        if (this.#circleBoundaries) {
+            this.#circleBoundaries.r = this.#circleBoundaries.r * value;
+        } else {
+            this.#vertices = this._calculateRectVertices(this.width * value, this.height * value);
+        }
+        super.scale = value;
     }
 
     /**
@@ -1475,6 +1504,13 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
         this.#vertices = vertices;
     }
 
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
+    }
+
     /**
      * @type {Array<Array<number>>}
      */
@@ -1520,6 +1556,13 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
     constructor(vertices, bgColor) {
         super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
         this.#vertices = this._convertVerticesArray(vertices);
+    }
+
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
     }
 
     /**
@@ -1577,6 +1620,13 @@ class DrawRectObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
         this.#w = w;
         this.#h = h;
         this.#vertices = this._calculateRectVertices(w,h);
+    }
+
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
     }
 
     /**
@@ -1652,6 +1702,10 @@ class DrawShapeObject {
      */
     #rotation = 0;
     /**
+     * @type {number | number[]}
+     */
+    #scale = [1, 1];
+    /**
      * @type {number}
      */
     #id = _index_js__WEBPACK_IMPORTED_MODULE_1__.utils.generateUniqId();
@@ -1671,11 +1725,6 @@ class DrawShapeObject {
      * @type {boolean}
      */
     #isOffsetTurnedOff = false;
-
-    /**
-     * @type {boolean}
-     */
-    #isChanged = false;
     /**
      * @hideconstructor
      */
@@ -1758,6 +1807,24 @@ class DrawShapeObject {
     }
 
     /**
+     * @type {number | number[]}
+     */
+    get scale() {
+        return this.#scale;
+    }
+
+    /**
+     * @type {number | number[]}
+     */
+    set scale(value) {
+        if (typeof value === "number") {
+            this.#scale = [value, value];
+        } else if (Array.isArray(value)) {
+            this.#scale = value;
+        }
+    }
+
+    /**
      * @type {number}
      */
     get id() {
@@ -1830,6 +1897,7 @@ class DrawShapeObject {
     _calculateRectVertices = (width, height) => {
         const halfW = width/2,
             halfH = height/2;
+            
         return [[-halfW, -halfH], [halfW, -halfH], [halfW, halfH], [-halfW, halfH]];
     };
 
@@ -2054,6 +2122,12 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
             this.#strokeStyle = value;
             this.#calculateCanvasTextureAndMeasurements();
         }
+    }
+    get scale() {
+        return super.scale;
+    }
+    set scale(value) {
+        super.scale = value;
     }
 
     /**
@@ -4464,11 +4538,9 @@ class INetwork extends EventTarget {
     }
 
     init() {
-        __webpack_require__.e(/*! import() */ "vendors-node_modules_socket_io-client_build_esm_index_js").then(__webpack_require__.bind(__webpack_require__, /*! socket.io-client */ "./node_modules/socket.io-client/build/esm/index.js")).then((module) => {
-            this.#socket = module.io(this.#systemSettings.network.address, {withCredentials: true});
-            
-            this.#registerSocketListeners();
-        });
+        const url = this.#systemSettings.network.address;
+        this.#socket = new WebSocket(url);
+        this.#registerSocketListeners();
     }
 
     /**
@@ -4979,7 +5051,7 @@ class ISystem {
     
     #modules = new Map();
     /**
-     * @type {Map<string, Object>}
+     * @type {Map<string, GameStage>}
      */
     #registeredStagesReference;
     /**
@@ -4989,15 +5061,12 @@ class ISystem {
     /**
      * @hideconstructor
      * @param {SystemSettings} systemSettings 
-     * @param {Map<string, Object>} registeredStages 
+     * @param {Map<string, GameStage>} registeredStages 
      * @param {HTMLElement} canvasContainer 
      */
     constructor(systemSettings, registeredStages, canvasContainer) {
-        if (!systemSettings) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
-        }
         this.#systemSettings = systemSettings;
-        
+
         this.#systemAudioInterface = new _ISystemAudio_js__WEBPACK_IMPORTED_MODULE_3__.ISystemAudio(this.iLoader);
         this.#systemServerConnection = systemSettings.network.enabled ? new _INetwork_js__WEBPACK_IMPORTED_MODULE_2__.INetwork(systemSettings) : null;
         this.#iRender = new _IRender_js__WEBPACK_IMPORTED_MODULE_8__.IRender(this.systemSettings, this.iLoader, canvasContainer);
@@ -5137,7 +5206,7 @@ class ISystem {
             }
             
         } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.VIEW_NOT_EXIST, "Stage " + gameStageName + " is not registered!");
+            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.STAGE_NOT_EXIST, "Stage " + gameStageName + " is not registered!");
         }
     };
 
@@ -5829,14 +5898,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "System": () => (/* binding */ System)
 /* harmony export */ });
-/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants.js */ "./src/constants.js");
-/* harmony import */ var _Exception_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Exception.js */ "./src/base/Exception.js");
-/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
-/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
-/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
-/* harmony import */ var _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../design/LoadingStage.js */ "./src/design/LoadingStage.js");
-
-
+/* harmony import */ var _GameStage_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./GameStage.js */ "./src/base/GameStage.js");
+/* harmony import */ var _ISystem_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ISystem.js */ "./src/base/ISystem.js");
+/* harmony import */ var _configs_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../configs.js */ "./src/configs.js");
+/* harmony import */ var _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../design/LoadingStage.js */ "./src/design/LoadingStage.js");
 
 
 
@@ -5860,13 +5925,14 @@ class System {
      */
     #iSystem;
     /**
-     * @param {SystemSettings} SystemSettings - holds iSystem settings
-     * @param {HTMLElement | null} [canvasContainer = null] - If it is not passed, iSystem will create div element and attach it to body
+     * @param {Object=} [CustomSettings = {}] - holds iSystem settings
+     * @param {HTMLElement | null} canvasContainer - If it is not passed, iSystem will create div element and attach it to body
      */
-    constructor(SystemSettings, canvasContainer) {
-        if (!SystemSettings) {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "SystemSettings should be passed to class instance");
+    constructor(CustomSettings, canvasContainer = null) {
+        if (!CustomSettings) {
+            CustomSettings = {};
         }
+        const settings = Object.assign(_configs_js__WEBPACK_IMPORTED_MODULE_2__.SystemSettings, CustomSettings);
         this.#registeredStages = new Map();
 
         if (!canvasContainer) {
@@ -5874,7 +5940,7 @@ class System {
             document.body.appendChild(canvasContainer);
         }
 
-        this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_3__.ISystem(SystemSettings, this.#registeredStages, canvasContainer);
+        this.#iSystem = new _ISystem_js__WEBPACK_IMPORTED_MODULE_1__.ISystem(settings, this.#registeredStages, canvasContainer);
 
         this.#addPreloadStage();
     }
@@ -5890,16 +5956,12 @@ class System {
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {Object} extendedGameStage - extended GameStage class(not an instance!)
+     * @param {GameStage} extendedGameStage - extended GameStage class(not an instance!)
      */
     registerStage(screenPageName, extendedGameStage) {
-        if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
-            const stageInstance = new extendedGameStage();
-            stageInstance._register(screenPageName, this.iSystem);
-            this.#registeredStages.set(screenPageName, stageInstance);
-        } else {
-            (0,_Exception_js__WEBPACK_IMPORTED_MODULE_1__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
-        }
+        const stageInstance = new extendedGameStage();
+        stageInstance._register(screenPageName, this.iSystem);
+        this.#registeredStages.set(screenPageName, stageInstance);
     }
 
     /**
@@ -5911,7 +5973,7 @@ class System {
     }
 
     #addPreloadStage() {
-        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_5__.LoadingStage);
+        this.registerStage(loadingPageName, _design_LoadingStage_js__WEBPACK_IMPORTED_MODULE_3__.LoadingStage);
 
         this.#iSystem.iLoader.addEventListener("loadstart", this.#loadStart);
         this.#iSystem.iLoader.addEventListener("progress", this.#loadProgress);
@@ -6983,7 +7045,7 @@ class WebGlEngine {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
-            scale = [1, 1],
+            scale = renderObject.scale,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA],
             { 
                 u_resolution: resolutionUniformLocation,
@@ -7082,7 +7144,7 @@ class WebGlEngine {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
-            scale = [1, 1],
+            scale = renderObject.scale,
             rotation = renderObject.rotation,
             { 
                 u_translation: translationLocation,
@@ -7165,7 +7227,7 @@ class WebGlEngine {
             y = renderObject.y - yOffset - boxHeight,
             blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
             rotation = renderObject.rotation || 0,
-            scale = [1, 1],
+            scale = renderObject.scale,
             vecX1 = 0,
             vecY1 = 0,
             vecX2 = vecX1 + boxWidth,
@@ -7179,7 +7241,7 @@ class WebGlEngine {
                 vecX2, vecY2
             ],
             atlasPosition = renderObject._atlasPos;
-
+            
         // x, y, width, height
         let texturesCoords = [0, 0, 1, 1],
             currentAtlasIndex = typeof atlasPosition.atlasIndex !== "undefined" ? atlasPosition.atlasIndex : this.#currentAtlasIndex,
@@ -7315,7 +7377,7 @@ class WebGlEngine {
               spacing = renderObject.spacing,
               margin = renderObject.margin,
               blend = renderObject.blendFunc ? renderObject.blendFunc : [gl.ONE, gl.ONE_MINUS_SRC_ALPHA],
-              scale = [1, 1];
+              scale = renderObject.scale;
         
         let imageX = margin,
             imageY = margin,
@@ -7527,7 +7589,7 @@ class WebGlEngine {
         }
         
         const translation = [0, 0],
-              scale = [1, 1],
+              scale = renderLayer.scale,
               rotation = renderLayer.rotation || 0,
               drawMask = ["ONE", "ONE_MINUS_SRC_ALPHA"],
               shapeMaskId = renderLayer._maskId;
@@ -7714,6 +7776,7 @@ class WebGlEngine {
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
             rotation = renderObject.rotation || 0,
+            scale = renderObject.scale || [1, 1],
             vertices = renderObject.vertices,
             color =  this.#gameOptions.debug.boundaries.boundariesColor;
         const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
@@ -7734,7 +7797,7 @@ class WebGlEngine {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
         gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, 1, 1);
+        gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
 
@@ -7769,7 +7832,7 @@ class WebGlEngine {
         const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
             x = renderObject.x - xOffset,
             y = renderObject.y - yOffset,
-            scale = [1, 1],
+            scale = renderObject.scale,
             rotation = renderObject.rotation,
             { 
                 u_translation: translationLocation,
@@ -7793,7 +7856,7 @@ class WebGlEngine {
         gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
         gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, 1, 1);
+        gl.uniform2f(scaleLocation, scale[0], scale[1]);
         gl.uniform1f(rotationRotation, rotation);
         gl.uniform1f(fadeMinLocation, 0);
 
@@ -8693,7 +8756,7 @@ class WebGlEngine {
      * @param {number} x 
      * @param {number} y 
      * @param {number} rotation 
-     * @param {Array<number, number>} scale 
+     * @param {[number, number]} scale 
      * @param {Array<number>} vertices 
      */
     calculateTranslatedCoords = (x, y, rotation, scale, vertices) => {
@@ -9146,7 +9209,6 @@ const DRAW_TYPE = {
 };
 
 const ERROR_CODES = {
-    CREATE_INSTANCE_ERROR: "CREATE_INSTANCE_ERROR",
     STAGE_NOT_EXIST: "STAGE_NOT_EXIST",
     ELEMENT_NOT_EXIST: "ELEMENT_NOT_EXIST",
     FILE_NOT_EXIST: "FILE_NOT_EXIST",
@@ -9187,7 +9249,7 @@ const WARNING_CODES =  {
     MODULE_ALREADY_INSTALLED: "MODULE_ALREADY_INSTALLED",
     DEPRECATED_PARAMETER: "DEPRECATED_PARAMETER",
     NEW_BEHAVIOR_INTRODUCED: "NEW_BEHAVIOR_INTRODUCED",
-    TEXTURE_IMAGE_TEMP_OVERFLOW: "TEXTURE_IMAGE_TEMP_OVERFLOW",
+    TEXTURE_IMAGE_OVERFLOW: "TEXTURE_IMAGE_OVERFLOW",
     TRIANGULATE_ISSUE: "TRIANGULATE_ISSUE"
 };
 
@@ -9908,9 +9970,6 @@ function mat3MultiplyPosCoords (mat3, vec3) {
 /******/ 	return module.exports;
 /******/ }
 /******/ 
-/******/ // expose the modules object (__webpack_modules__)
-/******/ __webpack_require__.m = __webpack_modules__;
-/******/ 
 /************************************************************************/
 /******/ /* webpack/runtime/define property getters */
 /******/ (() => {
@@ -9924,76 +9983,9 @@ function mat3MultiplyPosCoords (mat3, vec3) {
 /******/ 	};
 /******/ })();
 /******/ 
-/******/ /* webpack/runtime/ensure chunk */
-/******/ (() => {
-/******/ 	__webpack_require__.f = {};
-/******/ 	// This file contains only the entry chunk.
-/******/ 	// The chunk loading function for additional chunks
-/******/ 	__webpack_require__.e = (chunkId) => {
-/******/ 		return Promise.all(Object.keys(__webpack_require__.f).reduce((promises, key) => {
-/******/ 			__webpack_require__.f[key](chunkId, promises);
-/******/ 			return promises;
-/******/ 		}, []));
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/get javascript chunk filename */
-/******/ (() => {
-/******/ 	// This function allow to reference async chunks
-/******/ 	__webpack_require__.u = (chunkId) => {
-/******/ 		// return url for filenames based on template
-/******/ 		return "" + chunkId + ".index.es6.js";
-/******/ 	};
-/******/ })();
-/******/ 
 /******/ /* webpack/runtime/hasOwnProperty shorthand */
 /******/ (() => {
 /******/ 	__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/load script */
-/******/ (() => {
-/******/ 	var inProgress = {};
-/******/ 	var dataWebpackPrefix = "jsge:";
-/******/ 	// loadScript function to load a script via script tag
-/******/ 	__webpack_require__.l = (url, done, key, chunkId) => {
-/******/ 		if(inProgress[url]) { inProgress[url].push(done); return; }
-/******/ 		var script, needAttach;
-/******/ 		if(key !== undefined) {
-/******/ 			var scripts = document.getElementsByTagName("script");
-/******/ 			for(var i = 0; i < scripts.length; i++) {
-/******/ 				var s = scripts[i];
-/******/ 				if(s.getAttribute("src") == url || s.getAttribute("data-webpack") == dataWebpackPrefix + key) { script = s; break; }
-/******/ 			}
-/******/ 		}
-/******/ 		if(!script) {
-/******/ 			needAttach = true;
-/******/ 			script = document.createElement('script');
-/******/ 			script.type = "module";
-/******/ 			script.charset = 'utf-8';
-/******/ 			script.timeout = 120;
-/******/ 			if (__webpack_require__.nc) {
-/******/ 				script.setAttribute("nonce", __webpack_require__.nc);
-/******/ 			}
-/******/ 			script.setAttribute("data-webpack", dataWebpackPrefix + key);
-/******/ 			script.src = url;
-/******/ 		}
-/******/ 		inProgress[url] = [done];
-/******/ 		var onScriptComplete = (prev, event) => {
-/******/ 			// avoid mem leaks in IE.
-/******/ 			script.onerror = script.onload = null;
-/******/ 			clearTimeout(timeout);
-/******/ 			var doneFns = inProgress[url];
-/******/ 			delete inProgress[url];
-/******/ 			script.parentNode && script.parentNode.removeChild(script);
-/******/ 			doneFns && doneFns.forEach((fn) => (fn(event)));
-/******/ 			if(prev) return prev(event);
-/******/ 		};
-/******/ 		var timeout = setTimeout(onScriptComplete.bind(null, undefined, { type: 'timeout', target: script }), 120000);
-/******/ 		script.onerror = onScriptComplete.bind(null, script.onerror);
-/******/ 		script.onload = onScriptComplete.bind(null, script.onload);
-/******/ 		needAttach && document.head.appendChild(script);
-/******/ 	};
 /******/ })();
 /******/ 
 /******/ /* webpack/runtime/make namespace object */
@@ -10005,107 +9997,6 @@ function mat3MultiplyPosCoords (mat3, vec3) {
 /******/ 		}
 /******/ 		Object.defineProperty(exports, '__esModule', { value: true });
 /******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/publicPath */
-/******/ (() => {
-/******/ 	var scriptUrl;
-/******/ 	if (typeof import.meta.url === "string") scriptUrl = import.meta.url
-/******/ 	// When supporting browsers where an automatic publicPath is not supported you must specify an output.publicPath manually via configuration
-/******/ 	// or pass an empty string ("") and set the __webpack_public_path__ variable from your code to use your own logic.
-/******/ 	if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");
-/******/ 	scriptUrl = scriptUrl.replace(/#.*$/, "").replace(/\?.*$/, "").replace(/\/[^\/]+$/, "/");
-/******/ 	__webpack_require__.p = scriptUrl;
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/jsonp chunk loading */
-/******/ (() => {
-/******/ 	// no baseURI
-/******/ 	
-/******/ 	// object to store loaded and loading chunks
-/******/ 	// undefined = chunk not loaded, null = chunk preloaded/prefetched
-/******/ 	// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
-/******/ 	var installedChunks = {
-/******/ 		"main": 0
-/******/ 	};
-/******/ 	
-/******/ 	__webpack_require__.f.j = (chunkId, promises) => {
-/******/ 			// JSONP chunk loading for javascript
-/******/ 			var installedChunkData = __webpack_require__.o(installedChunks, chunkId) ? installedChunks[chunkId] : undefined;
-/******/ 			if(installedChunkData !== 0) { // 0 means "already installed".
-/******/ 	
-/******/ 				// a Promise means "currently loading".
-/******/ 				if(installedChunkData) {
-/******/ 					promises.push(installedChunkData[2]);
-/******/ 				} else {
-/******/ 					if(true) { // all chunks have JS
-/******/ 						// setup Promise in chunk cache
-/******/ 						var promise = new Promise((resolve, reject) => (installedChunkData = installedChunks[chunkId] = [resolve, reject]));
-/******/ 						promises.push(installedChunkData[2] = promise);
-/******/ 	
-/******/ 						// start chunk loading
-/******/ 						var url = __webpack_require__.p + __webpack_require__.u(chunkId);
-/******/ 						// create error before stack unwound to get useful stacktrace later
-/******/ 						var error = new Error();
-/******/ 						var loadingEnded = (event) => {
-/******/ 							if(__webpack_require__.o(installedChunks, chunkId)) {
-/******/ 								installedChunkData = installedChunks[chunkId];
-/******/ 								if(installedChunkData !== 0) installedChunks[chunkId] = undefined;
-/******/ 								if(installedChunkData) {
-/******/ 									var errorType = event && (event.type === 'load' ? 'missing' : event.type);
-/******/ 									var realSrc = event && event.target && event.target.src;
-/******/ 									error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
-/******/ 									error.name = 'ChunkLoadError';
-/******/ 									error.type = errorType;
-/******/ 									error.request = realSrc;
-/******/ 									installedChunkData[1](error);
-/******/ 								}
-/******/ 							}
-/******/ 						};
-/******/ 						__webpack_require__.l(url, loadingEnded, "chunk-" + chunkId, chunkId);
-/******/ 					} else installedChunks[chunkId] = 0;
-/******/ 				}
-/******/ 			}
-/******/ 	};
-/******/ 	
-/******/ 	// no prefetching
-/******/ 	
-/******/ 	// no preloaded
-/******/ 	
-/******/ 	// no HMR
-/******/ 	
-/******/ 	// no HMR manifest
-/******/ 	
-/******/ 	// no on chunks loaded
-/******/ 	
-/******/ 	// install a JSONP callback for chunk loading
-/******/ 	var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
-/******/ 		var [chunkIds, moreModules, runtime] = data;
-/******/ 		// add "moreModules" to the modules object,
-/******/ 		// then flag all "chunkIds" as loaded and fire callback
-/******/ 		var moduleId, chunkId, i = 0;
-/******/ 		if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
-/******/ 			for(moduleId in moreModules) {
-/******/ 				if(__webpack_require__.o(moreModules, moduleId)) {
-/******/ 					__webpack_require__.m[moduleId] = moreModules[moduleId];
-/******/ 				}
-/******/ 			}
-/******/ 			if(runtime) var result = runtime(__webpack_require__);
-/******/ 		}
-/******/ 		if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
-/******/ 		for(;i < chunkIds.length; i++) {
-/******/ 			chunkId = chunkIds[i];
-/******/ 			if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
-/******/ 				installedChunks[chunkId][0]();
-/******/ 			}
-/******/ 			installedChunks[chunkId] = 0;
-/******/ 		}
-/******/ 	
-/******/ 	}
-/******/ 	
-/******/ 	var chunkLoadingGlobal = self["webpackChunkjsge"] = self["webpackChunkjsge"] || [];
-/******/ 	chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
-/******/ 	chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
 /******/ })();
 /******/ 
 /************************************************************************/

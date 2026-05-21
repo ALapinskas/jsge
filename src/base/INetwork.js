@@ -32,11 +32,9 @@ export class INetwork extends EventTarget {
     }
 
     init() {
-        import("socket.io-client").then((module) => {
-            this.#socket = module.io(this.#systemSettings.network.address, {withCredentials: true});
-            
-            this.#registerSocketListeners();
-        });
+        const url = this.#systemSettings.network.address;
+        this.#socket = new WebSocket(url);
+        this.#registerSocketListeners();
     }
 
     /**

@@ -1,5 +1,3 @@
-import { ERROR_CODES } from "../constants.js";
-import { Exception } from "./Exception.js";
 import { GameStage } from "./GameStage.js";
 import { ISystem } from "./ISystem.js";
 import { SystemSettings } from "../configs.js";
@@ -24,9 +22,9 @@ export class System {
     #iSystem;
     /**
      * @param {Object=} [CustomSettings = {}] - holds iSystem settings
-     * @param {HTMLElement=} canvasContainer - If it is not passed, iSystem will create div element and attach it to body
+     * @param {HTMLElement | null} canvasContainer - If it is not passed, iSystem will create div element and attach it to body
      */
-    constructor(CustomSettings, canvasContainer) {
+    constructor(CustomSettings, canvasContainer = null) {
         if (!CustomSettings) {
             CustomSettings = {};
         }
@@ -54,16 +52,12 @@ export class System {
      * A main factory method for create GameStage instances, <br>
      * register them in a System and call GameStage.register() stage
      * @param {string} screenPageName
-     * @param {Object} extendedGameStage - extended GameStage class(not an instance!)
+     * @param {GameStage} extendedGameStage - extended GameStage class(not an instance!)
      */
     registerStage(screenPageName, extendedGameStage) {
-        if (screenPageName && typeof screenPageName === "string" && screenPageName.trim().length > 0) {
-            const stageInstance = new extendedGameStage();
-            stageInstance._register(screenPageName, this.iSystem);
-            this.#registeredStages.set(screenPageName, stageInstance);
-        } else {
-            Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "valid class name should be provided");
-        }
+        const stageInstance = new extendedGameStage();
+        stageInstance._register(screenPageName, this.iSystem);
+        this.#registeredStages.set(screenPageName, stageInstance);
     }
 
     /**

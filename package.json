@@ -1,6 +1,6 @@
 {
     "name": "jsge",
-    "version": "1.5.12",
+    "version": "1.6.0",
     "description": "Javascript Game Engine",
     "main": "src/index.js",
     "type": "module",
@@ -15,7 +15,8 @@
         "render",
         "rendering",
         "spine",
-        "animations"
+        "animations",
+        "no libs"
     ],
     "scripts": {
         "start": "http-server -c-1 -p 9000 -o /examples",
@@ -29,9 +30,6 @@
     },
     "author": "Arturas-Alfredas Lapinskas",
     "license": "MIT",
-    "dependencies": {
-        "socket.io-client": "4.5.4"
-    },
     "devDependencies": {
         "eslint": "8.36.0",
         "eslint-plugin-jsdoc": "46.4.5",

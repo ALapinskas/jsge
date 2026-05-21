@@ -4,6 +4,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.6.0:
+    r: socket.io replaced with native WebSocket()
+
 1.5.12:
     +: added scale property for DrawShapeObject and extended objects
     r: new System(settings, canvas), settings object is now optional

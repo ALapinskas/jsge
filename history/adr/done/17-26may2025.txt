@@ -2,7 +2,7 @@ Date: May 26 2025
 jsge@1.5.81
 Max texture size check add / Добавить проверку максимально возможной текстуры
 
-Status: In Progress
+Status: Reject(Chrome has error which points on texture oversize)
 
 Context:
     При превышении этого параметра, текстура не рендерится нормально, 
@@ -12,6 +12,9 @@ Context:
     в отладочном режиме.
 
 Decision:
+    В Хроме есть ошибка, явно указывающая на превышение максимально возможной текстуры,
+    start.js:119 WebGL: INVALID_VALUE: texImage2D: width or height out of range,
+    Добавление проверки не требуется.
 
 Impact:
     No impact.

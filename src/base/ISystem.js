@@ -50,7 +50,7 @@ export class ISystem {
     
     #modules = new Map();
     /**
-     * @type {Map<string, Object>}
+     * @type {Map<string, GameStage>}
      */
     #registeredStagesReference;
     /**
@@ -60,15 +60,12 @@ export class ISystem {
     /**
      * @hideconstructor
      * @param {SystemSettings} systemSettings 
-     * @param {Map<string, Object>} registeredStages 
+     * @param {Map<string, GameStage>} registeredStages 
      * @param {HTMLElement} canvasContainer 
      */
     constructor(systemSettings, registeredStages, canvasContainer) {
-        if (!systemSettings) {
-            Exception(ERROR_CODES.CREATE_INSTANCE_ERROR, "systemSettings should be passed to class instance");
-        }
         this.#systemSettings = systemSettings;
-        
+
         this.#systemAudioInterface = new ISystemAudio(this.iLoader);
         this.#systemServerConnection = systemSettings.network.enabled ? new INetwork(systemSettings) : null;
         this.#iRender = new IRender(this.systemSettings, this.iLoader, canvasContainer);
@@ -208,7 +205,7 @@ export class ISystem {
             }
             
         } else {
-            Exception(ERROR_CODES.VIEW_NOT_EXIST, "Stage " + gameStageName + " is not registered!");
+            Exception(ERROR_CODES.STAGE_NOT_EXIST, "Stage " + gameStageName + " is not registered!");
         }
     };
 

@@ -1,12 +1,13 @@
 # JavaScript Game Engine
 
 This engine was designed to simplify creating games in JavaScript.
-No external libraries are used for drawing, no TypeScript, strict OOP structure - no cyclic dependencies. It is easy to use and debug.
+No external libraries are used, no TypeScript, strict OOP structure - no cyclic dependencies. It is easy to use and debug.
 
 ![Alt text](Debug.gif?raw=true "Title")
 
 ### Advantages:
 * OOP modular structure
+* No external dependencies, only native Javascript 
 * WebGL 1 under the hood, wide browser support
 * Masks and WebGL [blend effects](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/blendFunc)
 * Assets manager for file preloading: Images, Audio, Image Atlas (Atlas.xml), etc.

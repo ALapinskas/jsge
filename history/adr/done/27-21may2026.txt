@@ -1,0 +1,23 @@
+Date: May 21 2026
+jsge@1.5.12
+Remove socket.io dependency
+
+Status: Done(1.6.0)
+
+Context:
+    As Socket.io library just a simple wrapper for native WebSocket, 
+    and it has a lot of dependencies itself, also depending
+    npm audit it has a lot of vulnerabilities. For these reasons, 
+    the decision was made to replace it with native WebSockets.
+
+    Socket.io просто обертка для нативного WebSocket, 
+    она имеет, огромное количество зависимостей,
+    а также, судя по сообщениям npm audit, имеет большое количество 
+    уязвимостей. По этим причинам было принято решение 
+    заменить ее на нативный WebSocket.
+
+Decision:
+    Replace socket.io with native WebSocket()
+
+Impact:
+    Повлияет на тех кто использует socket.io

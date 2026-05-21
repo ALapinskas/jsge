@@ -1,0 +1,16 @@
+Date: January 09 2026
+jsge@1.5.12
+Create base class for module class  / Сделать базовый класс для класса модуля
+
+Status: In Progress
+
+Context:
+    It’s unclear how to create a module for the engine, 
+    what parameters it should receive, and which methods it can implement.
+    Непонятно как создавать модуль к движку,
+    какие параметры он должен получать и какие методы может реализовывать.
+
+Decision:
+
+Impact:
+    No impact.
