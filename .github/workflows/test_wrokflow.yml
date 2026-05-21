@@ -26,6 +26,9 @@ jobs:
     - name: Fix version in examples
       run: | 
         sed -i 's/r=[^"].*"/r=${{ env.current_version }}"/' ./examples/index.html
+    - name: Install node modules
+      run: |
+        npm i
     - name: Install submodules
       run: |
         git submodule init
