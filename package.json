@@ -34,6 +34,7 @@
         "dist",
         "src",
         "modules",
+        "LICENSE",
         "README.md"
     ],
     "devDependencies": {

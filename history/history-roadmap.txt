@@ -4,6 +4,9 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.6.21:
+    f: added "files" section to the package.json, reduced package size
+
 1.6.0:
     r: socket.io replaced with native WebSocket()
 
