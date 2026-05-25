@@ -1,6 +1,6 @@
 {
     "name": "jsge",
-    "version": "1.6.2",
+    "version": "1.6.21",
     "description": "Javascript Game Engine",
     "main": "src/index.js",
     "type": "module",
@@ -30,6 +30,12 @@
     },
     "author": "Arturas-Alfredas Lapinskas",
     "license": "MIT",
+    "files": [
+        "dist",
+        "src",
+        "modules",
+        "README.md"
+    ],
     "devDependencies": {
         "eslint": "8.36.0",
         "eslint-plugin-jsdoc": "46.4.5",
