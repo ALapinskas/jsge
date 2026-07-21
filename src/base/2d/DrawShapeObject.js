@@ -54,7 +54,7 @@ export class DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(type, mapX, mapY, bgColor) {
+    constructor(type, mapX = 0, mapY = 0, bgColor) {
         this.#x = mapX;
         this.#y = mapY;
         this.#bg = bgColor;

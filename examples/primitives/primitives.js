@@ -14,6 +14,7 @@ export class Primitives extends GameStage {
         this.conus = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5)", 1.3 * Math.PI);
         this.incorrectLine = this.draw.line([0, 0, 600, 300], "rgba(0,0,0,1)");
         this.line = this.draw.line([[0, 0], [600, 300]], "rgba(0,0,0,1)");
+        this.line1 = this.draw.line([[100, 0], [600, 300]], "rgba(0,200,0,1)");
         this.line2 = this.draw.line([[100, 200], [200, 400], [300, 100]], "rgba(200,100,0,1)");
         this.line2.lineWidth = 5;
         this.triangle.x = 100;

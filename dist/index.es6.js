@@ -1497,20 +1497,17 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
     #vertices;
 
     /**
+     * @type {Number}
+     */
+    #lineWidth = 1;
+
+    /**
      * @hideconstructor
      */
-    constructor(vertices, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE, vertices[0][0], vertices[0][1], bgColor);
+    constructor(x, y, vertices, bgColor) {
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE, x, y, bgColor);
         this.#vertices = vertices;
     }
-
-    get scale() {
-        return super.scale;
-    }
-    set scale(value) {
-        super.scale = value;
-    }
-
     /**
      * @type {Array<Array<number>>}
      */
@@ -1520,6 +1517,17 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
 
     set vertices(value) {
         this.#vertices = value;
+    }
+
+    /**
+     * @type {Number}
+     */
+    get lineWidth() {
+        return this.#lineWidth;
+    }
+
+    set lineWidth(value) {
+        this.#lineWidth = value;
     }
 }
 
@@ -1553,8 +1561,8 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
     /**
      * @hideconstructor
      */
-    constructor(vertices, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
+    constructor(x, y, vertices, bgColor) {
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON, x, y, bgColor);
         this.#vertices = this._convertVerticesArray(vertices);
     }
 
@@ -2127,7 +2135,10 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         return super.scale;
     }
     set scale(value) {
-        super.scale = value;
+        if (value !== this.scale) {
+            super.scale = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -2172,23 +2183,24 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
      * @returns {void}
      */
     #calculateCanvasTextureAndMeasurements(atlasWidth, atlasHeight) {
-        const ctx = this.#textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
+        const ctx = this._textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
         if (ctx) {
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
-            this._textMetrics = ctx.measureText(this.text);
-
-            if (this._atlasPos) {
+            const newTextMetrics = ctx.measureText(this.text);
+            
+            if (this._atlasPos && this.#isTextMetricsNotChanged(newTextMetrics)) {
                 atlasWidth = this._atlasPos.width;
                 atlasHeight = this._atlasPos.height;
             } else {
                 if (!atlasWidth) {
-                    atlasWidth = Math.floor(this.textMetrics.width);
+                    atlasWidth = Math.floor(newTextMetrics.width);
                 } 
                 if (!atlasHeight) {
-                    atlasHeight = Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent);
+                    atlasHeight = Math.floor(newTextMetrics.fontBoundingBoxAscent + newTextMetrics.fontBoundingBoxDescent);
                 }
                 this.#atlasPosition = new _Temp_ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_4__.ImageAtlasPosition(atlasWidth, atlasHeight);
+                this._textMetrics = newTextMetrics;
             }
 
             ctx.canvas.width = atlasWidth;
@@ -2213,6 +2225,10 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_3__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }
+    }
+
+    #isTextMetricsNotChanged(newTextMetrics) {
+        return (newTextMetrics.fontBoundingBoxAscent === this.textMetrics.fontBoundingBoxAscent);
     }
 }
 
@@ -2925,12 +2941,15 @@ class DrawObjectFactory {
     }
 
     /**
-     * @param {Array<number>} vertices 
+     * @param {Array<number<number>>} vertices
      * @param {string} color - rgba(r,g,b,a)
      * @returns {DrawLineObject}
      */
     line(vertices, color) {
-        const renderObject = new _2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__.DrawLineObject(vertices, color);
+        if (vertices[0][0] === undefined) {
+            console.warn(_constants_js__WEBPACK_IMPORTED_MODULE_11__.WARNING_CODES.LINE_VERTICES_NOT_CORRECT, "vertices should be a 2 dimensional array");
+        }
+        const renderObject = new _2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__.DrawLineObject(0, 0, vertices, color);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }
@@ -2941,7 +2960,7 @@ class DrawObjectFactory {
      * @returns {DrawPolygonObject}
      */
     polygon(vertices, bgColor) {
-        const renderObject = new _2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__.DrawPolygonObject(vertices, bgColor);
+        const renderObject = new _2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__.DrawPolygonObject(0, 0, vertices, bgColor);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }
@@ -6744,7 +6763,7 @@ class WebGlEngine {
         this._registerObjectRender(_2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_9__.DrawPolygonObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
         this._registerObjectRender(_2d_DrawCircleObject_js__WEBPACK_IMPORTED_MODULE_6__.DrawCircleObject.name, this._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(_2d_DrawConusObject_js__WEBPACK_IMPORTED_MODULE_7__.DrawConusObject.name, this._bindConus, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(_2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_8__.DrawLineObject.name, this._bindLine, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(_2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_8__.DrawLineObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
         this._registerObjectRender(_2d_DrawTiledLayer_js__WEBPACK_IMPORTED_MODULE_5__.DrawTiledLayer.name, this._bindTileImages, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.IMAGE, this._bindImage, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
@@ -7081,6 +7100,45 @@ class WebGlEngine {
                 if (len % 3 !== 0) {
                     (0,_Exception_js__WEBPACK_IMPORTED_MODULE_2__.Warning)(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
                     return Promise.reject();
+                }
+                break;
+            case _constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE:
+                const points = renderObject.vertices; // [[x0, y0], [x1, y1], ...]
+                const thickness = renderObject.lineWidth;
+                const halfThickness = thickness / 2;
+
+                for (let i = 0; i < points.length - 1; i += 1) {
+                    const xStart = points[i][0];
+                    const yStart = points[i][1];
+                    const xEnd = points[i + 1][0];
+                    const yEnd = points[i + 1][1];
+
+                    // 1. Calculate direction vector of the segment
+                    const dx = xEnd - xStart;
+                    const dy = yEnd - yStart;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+
+                    if (len === 0) continue; // Skip identical overlapping points
+
+                    // 2. Calculate the normalized perpendicular (normal) vector
+                    const nx = (-dy / len) * halfThickness;
+                    const ny = (dx / len) * halfThickness;
+
+                    // 3. Generate 4 corners of the quad (rectangle segment)
+                    const p0x = xStart + nx; const p0y = yStart + ny;
+                    const p1x = xStart - nx; const p1y = yStart - ny;
+                    const p2x = xEnd + nx;   const p2y = yEnd + ny;
+                    const p3x = xEnd - nx;   const p3y = yEnd - ny;
+
+                    // 4. Push 2 triangles (6 vertices total) to your array
+                    vertices.push(
+                        p0x, p0y,  // Triangle 1
+                        p1x, p1y,
+                        p2x, p2y,
+                        p2x, p2y,  // Triangle 2
+                        p1x, p1y,
+                        p3x, p3y
+                    );
                 }
                 break;
         }
@@ -7827,64 +7885,6 @@ class WebGlEngine {
 
         this._render(verticesNumber, gl.TRIANGLES);
     }
-
-    _bindLine = (renderObject, gl, pageData, program, vars) => {
-        const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
-            x = renderObject.x - xOffset,
-            y = renderObject.y - yOffset,
-            scale = renderObject.scale,
-            rotation = renderObject.rotation,
-            { 
-                u_translation: translationLocation,
-                u_rotation: rotationRotation,
-                u_scale: scaleLocation,
-                u_resolution: resolutionUniformLocation,
-                u_color: colorUniformLocation,
-                a_position: positionAttributeLocation,
-                u_fade_max: fadeMaxLocation,
-                u_fade_min: fadeMinLocation
-            } = vars,
-            coords = renderObject.vertices,
-            fillStyle = renderObject.bgColor,
-            fade_min = renderObject.fade_min,
-            fadeLen = renderObject.radius,
-            lineWidth = this.#gameOptions.debug.boundaries.boundariesWidth;
-        let verticesNumber = 0;
-
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-        gl.uniform1f(fadeMinLocation, 0);
-
-        gl.enableVertexAttribArray(positionAttributeLocation);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-
-        gl.bufferData(
-            gl.ARRAY_BUFFER, 
-            new Float32Array(coords),
-            gl.STATIC_DRAW);
-
-        verticesNumber += coords.length / 2;
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-        const colorArray = this.#rgbaToArray(fillStyle);
-        gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
-        
-        gl.lineWidth(lineWidth);
-
-        return this._render(0, gl.LINES);
-    };
     
     _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const program = this.getProgram(_constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
@@ -9246,6 +9246,7 @@ const WARNING_CODES =  {
     UNKNOWN_DRAW_OBJECT: "UNKNOWN_DRAW_OBJECT",
     METHOD_NOT_IMPLEMENTED: "METHOD_NOT_IMPLEMENTED",
     POLYGON_VERTICES_NOT_CORRECT: "POLYGON_VERTICES_NOT_CORRECT",
+    LINE_VERTICES_NOT_CORRECT: "LINE_VERTICES_NOT_CORRECT",
     MODULE_ALREADY_INSTALLED: "MODULE_ALREADY_INSTALLED",
     DEPRECATED_PARAMETER: "DEPRECATED_PARAMETER",
     NEW_BEHAVIOR_INTRODUCED: "NEW_BEHAVIOR_INTRODUCED",

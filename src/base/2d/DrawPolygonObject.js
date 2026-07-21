@@ -15,7 +15,7 @@ export class DrawPolygonObject extends DrawShapeObject {
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
-        super(DRAW_TYPE.POLYGON, vertices[0].x, vertices[0].y, bgColor);
+        super(DRAW_TYPE.POLYGON, bgColor);
         this.#vertices = this._convertVerticesArray(vertices);
     }
 

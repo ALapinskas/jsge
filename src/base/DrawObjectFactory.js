@@ -129,7 +129,7 @@ export class DrawObjectFactory {
     }
 
     /**
-     * @param {Array<number<number>>} vertices 
+     * @param {Array<number<number>>} vertices
      * @param {string} color - rgba(r,g,b,a)
      * @returns {DrawLineObject}
      */

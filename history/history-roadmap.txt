@@ -4,6 +4,11 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.7.1:
+    f: fixed draw.line() x, y calculation
+    f: fixed draw.polygon() x, y calculation
+    f: set default DrawShapeObject x, y to 0
+
 1.7.0:
     f: fixed github actions publish_docs task and publish_docs task variables
     f: issue #8, fixed text scaling and changing fond size bounding box recalculation
