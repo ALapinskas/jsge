@@ -4,6 +4,14 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.7.0:
+    f: fixed github actions publish_docs task and publish_docs task variables
+    f: issue #8, fixed text scaling and changing fond size bounding box recalculation
+    f: issue #9, fixed this.draw.line()
+    r: webGl.drawLine() method replaced with webGl._bindPrimitives()
+    +: added ability to draw lines with more then 2 points 
+    +: added line.lineWidth property
+
 1.6.21:
     f: added "files" section to the package.json, reduced package size
 

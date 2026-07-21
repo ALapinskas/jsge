@@ -2,7 +2,6 @@ import { GameStage, CONST, System, SystemSettings } from "../../src/index.js";
 import { utils } from "../../src/index.js";
 import { randomFromArray } from "../../src/utils.js";
 
-
 const randTexts = [
     "This",
     "Item",
@@ -91,6 +90,8 @@ export class TextsPage extends GameStage {
             textsHeight -= (text.boundariesBox.height + 20);
         }
 
+        this.#randomTexts[0].scale = 2;
+        this.#randomTexts[1].font = "32px sans-serif"
 		this.navItemBack = this.draw.text(w - 200, 30, "Main menu", "18px sans-serif", "black");
         this.navItemBack.turnOffOffset();
 		this.registerListeners();
@@ -108,10 +109,10 @@ export class TextsPage extends GameStage {
 		//console.log("render");
 		this.#randomTexts.forEach((text, idx) => {
 			text.rotation += 0.05;
-            if (idx === 6 || idx === 20 || idx === 28 || idx === 48) {
-                //console.log("change text");
-                text.text = randomFromArray(randTexts);
-            }
+            //if (idx === 6 || idx === 20 || idx === 28 || idx === 48) {
+            //    console.log("change text");
+            //    text.text = randomFromArray(randTexts);
+            //}
 		});
 	}
 	

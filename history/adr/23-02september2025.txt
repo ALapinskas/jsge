@@ -4,6 +4,7 @@ Add scale() method to DrawObjects  / Добавить функцию scale() к 
 
 Status: In Progress
 - 1.5.12: Added for DrawShapeObject and extended objects
+- 1.6.22: fixed scale() for DrawTextObject
 
 Context:
     scale() должна пропорционально менять масштаб объекта, т.е. его длину и ширину.

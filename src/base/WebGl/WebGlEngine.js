@@ -103,7 +103,7 @@ export class WebGlEngine {
         this._registerObjectRender(DrawPolygonObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
         this._registerObjectRender(DrawCircleObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
         this._registerObjectRender(DrawConusObject.name, this._bindConus, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
-        this._registerObjectRender(DrawLineObject.name, this._bindLine, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);
+        this._registerObjectRender(DrawLineObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
         this._registerObjectRender(DrawTiledLayer.name, this._bindTileImages, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DRAW_TYPE.IMAGE, this._bindImage, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
     }
@@ -440,6 +440,45 @@ export class WebGlEngine {
                 if (len % 3 !== 0) {
                     Warning(WARNING_CODES.POLYGON_VERTICES_NOT_CORRECT, `polygons ${renderObject.id}, vertices are not correct, skip drawing`);
                     return Promise.reject();
+                }
+                break;
+            case DRAW_TYPE.LINE:
+                const points = renderObject.vertices; // [[x0, y0], [x1, y1], ...]
+                const thickness = renderObject.lineWidth;
+                const halfThickness = thickness / 2;
+
+                for (let i = 0; i < points.length - 1; i += 1) {
+                    const xStart = points[i][0];
+                    const yStart = points[i][1];
+                    const xEnd = points[i + 1][0];
+                    const yEnd = points[i + 1][1];
+
+                    // 1. Calculate direction vector of the segment
+                    const dx = xEnd - xStart;
+                    const dy = yEnd - yStart;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+
+                    if (len === 0) continue; // Skip identical overlapping points
+
+                    // 2. Calculate the normalized perpendicular (normal) vector
+                    const nx = (-dy / len) * halfThickness;
+                    const ny = (dx / len) * halfThickness;
+
+                    // 3. Generate 4 corners of the quad (rectangle segment)
+                    const p0x = xStart + nx; const p0y = yStart + ny;
+                    const p1x = xStart - nx; const p1y = yStart - ny;
+                    const p2x = xEnd + nx;   const p2y = yEnd + ny;
+                    const p3x = xEnd - nx;   const p3y = yEnd - ny;
+
+                    // 4. Push 2 triangles (6 vertices total) to your array
+                    vertices.push(
+                        p0x, p0y,  // Triangle 1
+                        p1x, p1y,
+                        p2x, p2y,
+                        p2x, p2y,  // Triangle 2
+                        p1x, p1y,
+                        p3x, p3y
+                    );
                 }
                 break;
         }
@@ -1186,64 +1225,6 @@ export class WebGlEngine {
 
         this._render(verticesNumber, gl.TRIANGLES);
     }
-
-    _bindLine = (renderObject, gl, pageData, program, vars) => {
-        const [ xOffset, yOffset ] = renderObject.isOffsetTurnedOff === true ? [0,0] : pageData.worldOffset,
-            x = renderObject.x - xOffset,
-            y = renderObject.y - yOffset,
-            scale = renderObject.scale,
-            rotation = renderObject.rotation,
-            { 
-                u_translation: translationLocation,
-                u_rotation: rotationRotation,
-                u_scale: scaleLocation,
-                u_resolution: resolutionUniformLocation,
-                u_color: colorUniformLocation,
-                a_position: positionAttributeLocation,
-                u_fade_max: fadeMaxLocation,
-                u_fade_min: fadeMinLocation
-            } = vars,
-            coords = renderObject.vertices,
-            fillStyle = renderObject.bgColor,
-            fade_min = renderObject.fade_min,
-            fadeLen = renderObject.radius,
-            lineWidth = this.#gameOptions.debug.boundaries.boundariesWidth;
-        let verticesNumber = 0;
-
-        gl.useProgram(program);
-        // set the resolution
-        gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-
-        gl.uniform2f(translationLocation, x, y);
-        gl.uniform2f(scaleLocation, scale[0], scale[1]);
-        gl.uniform1f(rotationRotation, rotation);
-        gl.uniform1f(fadeMinLocation, 0);
-
-        gl.enableVertexAttribArray(positionAttributeLocation);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.#positionBuffer);
-
-        gl.bufferData(
-            gl.ARRAY_BUFFER, 
-            new Float32Array(coords),
-            gl.STATIC_DRAW);
-
-        verticesNumber += coords.length / 2;
-        //Tell the attribute how to get data out of positionBuffer
-        const size = 2,
-            type = gl.FLOAT, // data is 32bit floats
-            normalize = false,
-            stride = 0, // move forward size * sizeof(type) each iteration to get next position
-            offset = 0; // start of beginning of the buffer
-        gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
-
-        const colorArray = this.#rgbaToArray(fillStyle);
-        gl.uniform4f(colorUniformLocation, colorArray[0]/255, colorArray[1]/255, colorArray[2]/255, colorArray[3]);
-        
-        gl.lineWidth(lineWidth);
-
-        return this._render(0, gl.LINES);
-    };
     
     _drawLines(linesArray, color, lineWidth = 1, rotation = 0, translation = [0, 0]) {
         const program = this.getProgram(CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES);

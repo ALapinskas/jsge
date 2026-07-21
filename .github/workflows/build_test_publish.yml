@@ -81,11 +81,11 @@ jobs:
 
   publish_docs:
     runs-on: ubuntu-latest
+    environment: production
     env:
-        SSH_KEY_PATH: ${{ vars.SSH_KEY_PATH }}
-        REMOTE_SERVER: ${{ vars.REMOTE_SERVER }}
-        REMOTE_USER: ${{ vars.REMOTE_USER }}
-        REMOTE_DIR: ${{ vars.REMOTE_DIR }}
+        REMOTE_SERVER: ${{ secrets.REMOTE_SERVER }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_DIR: ${{ secrets.REMOTE_DIR }}
     needs: publish_npm
     steps:
       - name: Retrieve saved Artifact
@@ -93,17 +93,13 @@ jobs:
         with:
           name: jsge_build_artifact
           path: ./
-      - name: Set up SSH
-        env:
+
+      - name: Upload Docs to Server via Rsync
+        uses: easingthemes/ssh-deploy@v5.1.0
+        with:
           SSH_PRIVATE_KEY: ${{ secrets.TW_DEPLOY_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/"$SSH_KEY_PATH"
-          chmod 600 ~/"$SSH_KEY_PATH"
-          ssh-keyscan "$REMOTE_SERVER" >> ~/.ssh/known_hosts
-      - name: Clear remote docs dir
-        run: |
-          ssh -i ~/"$SSH_KEY_PATH" "$REMOTE_USER"@"$REMOTE_SERVER" "rm -rf $REMOTE_DIR/*"
-      - name: Upload files to server
-        run:  |
-          scp -v -i ~/"$SSH_KEY_PATH" -r ./docs/build/* "$REMOTE_USER"@"$REMOTE_SERVER":"$REMOTE_DIR"
+          REMOTE_HOST: ${{ secrets.REMOTE_SERVER }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          REMOTE_DIR: ${{ secrets.REMOTE_DIR }}
+          # Указываем rsync брать файлы строго из папки сборки документации
+          SOURCE: "docs/build/"

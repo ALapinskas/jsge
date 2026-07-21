@@ -129,11 +129,14 @@ export class DrawObjectFactory {
     }
 
     /**
-     * @param {Array<number>} vertices 
+     * @param {Array<number<number>>} vertices 
      * @param {string} color - rgba(r,g,b,a)
      * @returns {DrawLineObject}
      */
     line(vertices, color) {
+        if (vertices[0][0] === undefined) {
+            console.warn(WARNING_CODES.LINE_VERTICES_NOT_CORRECT, "vertices should be a 2 dimensional array");
+        }
         const renderObject = new DrawLineObject(vertices, color);
         this.#addObjectToPageData(renderObject);
         return renderObject;

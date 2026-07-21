@@ -13,6 +13,11 @@ export class DrawLineObject extends DrawShapeObject {
     #vertices;
 
     /**
+     * @type {Number}
+     */
+    #lineWidth = 1;
+
+    /**
      * @hideconstructor
      */
     constructor(vertices, bgColor) {
@@ -36,5 +41,16 @@ export class DrawLineObject extends DrawShapeObject {
 
     set vertices(value) {
         this.#vertices = value;
+    }
+
+    /**
+     * @type {Number}
+     */
+    get lineWidth() {
+        return this.#lineWidth;
+    }
+
+    set lineWidth(value) {
+        this.#lineWidth = value;
     }
 }

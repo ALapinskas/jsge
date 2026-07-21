@@ -152,7 +152,10 @@ export class DrawTextObject extends DrawShapeObject {
         return super.scale;
     }
     set scale(value) {
-        super.scale = value;
+        if (value !== this.scale) {
+            super.scale = value;
+            this.#calculateCanvasTextureAndMeasurements();
+        }
     }
 
     /**
@@ -197,23 +200,24 @@ export class DrawTextObject extends DrawShapeObject {
      * @returns {void}
      */
     #calculateCanvasTextureAndMeasurements(atlasWidth, atlasHeight) {
-        const ctx = this.#textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
+        const ctx = this._textureCanvas.getContext("2d", { willReadFrequently: true }); // cpu counting instead gpu
         if (ctx) {
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
-            this._textMetrics = ctx.measureText(this.text);
-
-            if (this._atlasPos) {
+            const newTextMetrics = ctx.measureText(this.text);
+            
+            if (this._atlasPos && this.#isTextMetricsNotChanged(newTextMetrics)) {
                 atlasWidth = this._atlasPos.width;
                 atlasHeight = this._atlasPos.height;
             } else {
                 if (!atlasWidth) {
-                    atlasWidth = Math.floor(this.textMetrics.width);
+                    atlasWidth = Math.floor(newTextMetrics.width);
                 } 
                 if (!atlasHeight) {
-                    atlasHeight = Math.floor(this.textMetrics.fontBoundingBoxAscent + this.textMetrics.fontBoundingBoxDescent);
+                    atlasHeight = Math.floor(newTextMetrics.fontBoundingBoxAscent + newTextMetrics.fontBoundingBoxDescent);
                 }
                 this.#atlasPosition = new ImageAtlasPosition(atlasWidth, atlasHeight);
+                this._textMetrics = newTextMetrics;
             }
 
             ctx.canvas.width = atlasWidth;
@@ -238,5 +242,9 @@ export class DrawTextObject extends DrawShapeObject {
         } else {
             Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }
+    }
+
+    #isTextMetricsNotChanged(newTextMetrics) {
+        return (newTextMetrics.fontBoundingBoxAscent === this.textMetrics.fontBoundingBoxAscent);
     }
 }
