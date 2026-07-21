@@ -1504,8 +1504,8 @@ class DrawLineObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__.Dr
     /**
      * @hideconstructor
      */
-    constructor(x, y, vertices, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE, x, y, bgColor);
+    constructor(vertices, bgColor) {
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.LINE, 0, 0, bgColor);
         this.#vertices = vertices;
     }
     /**
@@ -1561,8 +1561,8 @@ class DrawPolygonObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_1__
     /**
      * @hideconstructor
      */
-    constructor(x, y, vertices, bgColor) {
-        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON, x, y, bgColor);
+    constructor(vertices, bgColor) {
+        super(_constants_js__WEBPACK_IMPORTED_MODULE_0__.DRAW_TYPE.POLYGON, 0, 0, bgColor);
         this.#vertices = this._convertVerticesArray(vertices);
     }
 
@@ -1736,7 +1736,7 @@ class DrawShapeObject {
     /**
      * @hideconstructor
      */
-    constructor(type, mapX, mapY, bgColor) {
+    constructor(type, mapX = 0, mapY = 0, bgColor) {
         this.#x = mapX;
         this.#y = mapY;
         this.#bg = bgColor;
@@ -2949,7 +2949,7 @@ class DrawObjectFactory {
         if (vertices[0][0] === undefined) {
             console.warn(_constants_js__WEBPACK_IMPORTED_MODULE_11__.WARNING_CODES.LINE_VERTICES_NOT_CORRECT, "vertices should be a 2 dimensional array");
         }
-        const renderObject = new _2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__.DrawLineObject(0, 0, vertices, color);
+        const renderObject = new _2d_DrawLineObject_js__WEBPACK_IMPORTED_MODULE_4__.DrawLineObject(vertices, color);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }
@@ -2960,7 +2960,7 @@ class DrawObjectFactory {
      * @returns {DrawPolygonObject}
      */
     polygon(vertices, bgColor) {
-        const renderObject = new _2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__.DrawPolygonObject(0, 0, vertices, bgColor);
+        const renderObject = new _2d_DrawPolygonObject_js__WEBPACK_IMPORTED_MODULE_5__.DrawPolygonObject(vertices, bgColor);
         this.#addObjectToPageData(renderObject);
         return renderObject;
     }

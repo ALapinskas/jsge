@@ -10,7 +10,7 @@ export class Primitives extends GameStage {
         this.navItemBack.turnOffOffset();
 
         this.triangle = this.draw.polygon([{x:0, y:0}, {x:100, y:0}, {x:60, y:60}], "rgba(130,30,130,1)");
-        this.rect = this.draw.rect(100, 400, 400, 200, "rgba(200,200, 200, 1");
+        this.rect = this.draw.rect(100, 400, 400, 200, "rgba(200,200, 200, 1)");
         this.conus = this.draw.conus(315, 369, 100, "rgba(0,128,0,0.5)", 1.3 * Math.PI);
         this.incorrectLine = this.draw.line([0, 0, 600, 300], "rgba(0,0,0,1)");
         this.line = this.draw.line([[0, 0], [600, 300]], "rgba(0,0,0,1)");
