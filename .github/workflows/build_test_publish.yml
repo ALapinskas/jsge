@@ -72,10 +72,16 @@ jobs:
         with:
           name: jsge_build_artifact
           path: ./
+      - name: Take version number
+        run: |
+          echo "current_version=$(grep '"version"' ./package.json | sed -E 's/.*"version": "([^"]+)".*/\1/')" >> $GITHUB_ENV
+
       - name: Log in to npm
+        if: github.event.head_commit.message == env.current_version
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
       - name: Publish npm
+        if: github.event.head_commit.message == env.current_version
         run:  |
           npm publish
 
@@ -85,7 +91,7 @@ jobs:
     env:
         REMOTE_SERVER: ${{ secrets.REMOTE_SERVER }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        REMOTE_DIR: ${{ secrets.REMOTE_DIR }}
+        TARGET: ${{ secrets.TARGET }}
     needs: publish_npm
     steps:
       - name: Retrieve saved Artifact
@@ -100,6 +106,6 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.TW_DEPLOY_KEY }}
           REMOTE_HOST: ${{ secrets.REMOTE_SERVER }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          REMOTE_DIR: ${{ secrets.REMOTE_DIR }}
+          TARGET: ${{ secrets.TARGET }}
           # Указываем rsync брать файлы строго из папки сборки документации
           SOURCE: "docs/build/"
