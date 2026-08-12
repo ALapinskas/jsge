@@ -56,7 +56,6 @@ import { CONST } from "./constants.js";
  * @typedef {Object} render
  * @property {cyclesTimeCalc} cyclesTimeCalc - DEBUG/PRODUCTION, debug mode system Logger will show debug information in the console
  * @property {boundaries} boundaries
- * @property {number} textAtlasMaxSize
  */
 
 /**
@@ -125,8 +124,7 @@ const SystemSettings = {
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,
                 wholeWorldPrecalculations: false
-            },
-            textAtlasMaxSize: 500 // pixels.
+            }
         },
         debug: {
             preserveDrawingBuffer: false, // this option is used in testing environment
@@ -153,8 +151,8 @@ const SystemSettings = {
     },
 
     canvasMaxSize: {
-        width: 1800,
-        height: 1800
+        width: window.innerWidth,
+        height: window.innerHeight
     },
 
     /**

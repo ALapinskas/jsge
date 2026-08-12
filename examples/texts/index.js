@@ -20,6 +20,7 @@ const randTexts = [
 
 export class TextsPage extends GameStage {
 	#randomTexts = [];
+    #longLongText;
 	register() {
 		this.timer = null;
 		document.body.style.margin= 0;
@@ -89,6 +90,8 @@ export class TextsPage extends GameStage {
             this.#randomTexts[i + rTextsLen] = text;
             textsHeight -= (text.boundariesBox.height + 20);
         }
+
+        this.#longLongText = this.draw.text(10, h / 2, "Bla-bla-bla\n bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla\n bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-bla bla-bla-blav", "48px sans-serif", "black")
 
         this.#randomTexts[0].scale = 2;
         this.#randomTexts[1].font = "32px sans-serif"

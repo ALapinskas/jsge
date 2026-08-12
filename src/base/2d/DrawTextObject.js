@@ -14,8 +14,12 @@ export class DrawTextObject extends DrawShapeObject {
     #textBaseline;
     #fillStyle;
     #strokeStyle;
+
+    /**
+     * @type {number}
+     */
+    #lineHeight = 1;
     #text;
-    #textMetrics;
     /**
      * @type {HTMLCanvasElement}
      */
@@ -38,7 +42,6 @@ export class DrawTextObject extends DrawShapeObject {
         this.#text = text;
         this.#font = font;
         this.#fillStyle = fillStyle;
-        this.#textMetrics;
         this.#calculateCanvasTextureAndMeasurements(boxWidth, boxHeight);
     }
 
@@ -159,19 +162,6 @@ export class DrawTextObject extends DrawShapeObject {
     }
 
     /**
-     * @type {TextMetrics}
-     */
-    get textMetrics() {
-        return this.#textMetrics;
-    }
-
-    /**
-     * @ignore
-     */
-    set _textMetrics(value) {
-        this.#textMetrics = value;
-    }
-    /**
      * @ignore
      * @returns {HTMLCanvasElement}
      */
@@ -191,6 +181,12 @@ export class DrawTextObject extends DrawShapeObject {
         return this.#isTextureUpdated;
     }
 
+    /**
+     * @param {number} value 
+     */
+    set lineHeight(value) {
+        this.#lineHeight = value;
+    }
     _setTextureUpdated() {
         this.#isTextureUpdated = false;
     }
@@ -204,20 +200,26 @@ export class DrawTextObject extends DrawShapeObject {
         if (ctx) {
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
-            const newTextMetrics = ctx.measureText(this.text);
-            
-            if (this._atlasPos && this.#isTextMetricsNotChanged(newTextMetrics)) {
-                atlasWidth = this._atlasPos.width;
-                atlasHeight = this._atlasPos.height;
-            } else {
-                if (!atlasWidth) {
-                    atlasWidth = Math.floor(newTextMetrics.width);
-                } 
-                if (!atlasHeight) {
-                    atlasHeight = Math.floor(newTextMetrics.fontBoundingBoxAscent + newTextMetrics.fontBoundingBoxDescent);
+
+            let atlasWidth = 0, 
+                atlasHeight = 0,
+                linePosY = [];
+            const lines = this.text.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const metrics = ctx.measureText(lines[i]);
+                const lineWidth =  metrics.width;
+                if (lineWidth > atlasWidth) {
+                    atlasWidth = Math.floor(lineWidth);
                 }
+                const fontHeight = Math.floor( metrics.fontBoundingBoxAscent +  metrics.fontBoundingBoxDescent);
+                const actualLineHeight = fontHeight * this.#lineHeight;
+                
+                atlasHeight += actualLineHeight;
+                linePosY[i] = atlasHeight;
+            }
+            
+            if (!this._atlasPos || (this._atlasPos.width !== atlasWidth && this._atlasPos.height !== atlasHeight)) {
                 this.#atlasPosition = new ImageAtlasPosition(atlasWidth, atlasHeight);
-                this._textMetrics = newTextMetrics;
             }
 
             ctx.canvas.width = atlasWidth;
@@ -228,11 +230,20 @@ export class DrawTextObject extends DrawShapeObject {
             ctx.textBaseline = "bottom";// bottom
             if (this.fillStyle) {
                 ctx.fillStyle = this.fillStyle;
-                ctx.fillText(this.text, 0, atlasHeight);
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.fillText(lines[i], 0, linePosY[i]);
+                }
             } 
+
+            // 6. Отрисовка обводки (strokeText) для всех строк
             if (this.strokeStyle) {
                 ctx.strokeStyle = this.strokeStyle;
-                ctx.strokeText(this.text, 0, atlasHeight);
+                // Обязательно дублируем настройки lineWidth / lineJoin, если они у вас есть
+                if (this.lineWidth) ctx.lineWidth = this.lineWidth; 
+                
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.strokeText(lines[i], 0, linePosY[i]);
+                }
             }
             this.#isTextureUpdated = true;
             // debug canvas
@@ -242,9 +253,5 @@ export class DrawTextObject extends DrawShapeObject {
         } else {
             Exception(ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }
-    }
-
-    #isTextMetricsNotChanged(newTextMetrics) {
-        return (newTextMetrics.fontBoundingBoxAscent === this.textMetrics.fontBoundingBoxAscent);
     }
 }

@@ -96,7 +96,8 @@ export class WebGlEngine {
         this.#MAX_TEXTURE_SIZE = context.getParameter(context.MAX_TEXTURE_SIZE);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
-        this.#textAtlases[0] = new TextAtlas(gameOptions.render.textAtlasMaxSize, this.#gl.createTexture(), 0);
+        
+        this.#textAtlases[0] = new TextAtlas(this.#MAX_TEXTURE_SIZE, this.#gl.createTexture(), 0);
 
         this._registerObjectRender(DrawTextObject.name, this._bindText, CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(DrawRectObject.name, this._bindPrimitives, CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);

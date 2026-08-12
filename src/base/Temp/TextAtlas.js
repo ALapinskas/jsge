@@ -1,3 +1,5 @@
+import { WARNING_CODES } from "../../constants.js";
+import { CONST } from "../../index.js";
 import { ImageAtlasPosition } from "./ImageAtlasPosition.js";
 
 /**
@@ -143,6 +145,12 @@ export class TextAtlas {
             atlasW = atlasPos.width,
             atlasH = atlasPos.height;
         
+        if (this.#maxTextureSize < atlasW) {
+            console.warn(WARNING_CODES.TEXT_BOX_OVERFLOW, "Text box width exceeds the max possible texture width");
+        }
+        if (this.#maxTextureSize < atlasH) {
+            console.warn(WARNING_CODES.TEXT_BOX_OVERFLOW, "Text box width exceeds the max possible texture height");
+        }
         const ctx = this.#image.getContext('2d');
         ctx.clearRect(atlasX, atlasY, atlasW, atlasH);
         ctx.drawImage(imageAdd, atlasX, atlasY);

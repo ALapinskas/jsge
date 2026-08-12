@@ -16,7 +16,6 @@ export class CustomWebGlTestPage extends GameStage {
     	// x, y, width, height, imageKey
        	//const background = this.draw.tiledLayer("ground", "big_map");
        	//const walls = this.draw.tiledLayer("walls", "big_map");
-       	
 		const noiseImg = this.iLoader.getImage("noise"),
 			picImg = this.iLoader.getImage("pic"),
 			rocksImg = this.iLoader.getImage("rocks");

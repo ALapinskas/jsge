@@ -224,10 +224,14 @@ export class IRender {
         }
     }
 
+    /**
+     * fits canvas size to settings.canvasMaxSize. If settings.canvasMaxSize not, set to window.innerWidth/window.innerHeight
+     * @returns {Promise}
+     */
     fixCanvasSize = () => {
         const settings = this.systemSettings, 
-            canvasWidth = settings.canvasMaxSize.width && (settings.canvasMaxSize.width < window.innerWidth) ? settings.canvasMaxSize.width : window.innerWidth,
-            canvasHeight = settings.canvasMaxSize.height && (settings.canvasMaxSize.height < window.innerHeight) ? settings.canvasMaxSize.height : window.innerHeight;
+            canvasWidth = settings.canvasMaxSize.width ? settings.canvasMaxSize.width : window.innerWidth,
+            canvasHeight = settings.canvasMaxSize.height ? settings.canvasMaxSize.height : window.innerHeight;
         this.setCanvasSize(canvasWidth, canvasHeight);
         return Promise.resolve();
     };
@@ -251,7 +255,6 @@ export class IRender {
      * @param {GameStageData} stageData 
      */
     _startRender = async (/*time*/stageData) => {
-        this.fixCanvasSize();
         this.#currentGameStageData = stageData;
         switch (this.systemSettings.gameOptions.library) {
         case CONST.LIBRARY.WEBGL:

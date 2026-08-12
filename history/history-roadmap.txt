@@ -4,6 +4,14 @@ r: code refactoring
 f: fixed defects
 
 # History
+1.8.0:
+    +: added \n processing for DrawTextObject(). Multiline texts are now allowed
+    +: added #lineHeight property and set lineHeight() for setting line height multiplier
+    r: settings.textAtlasMaxSize removed, and replaced with context.MAX_TEXTURE_SIZE
+    r: added a warning when overflowing context.MAX_TEXTURE_SIZE with text string
+    f: text lines bigger then settings.textAtlasMaxSize drawn with artifacts
+    f: #10 - fixed setting canvas size to this.iSystem.systemSettings.canvasMaxSize right after GameStage start
+    
 1.7.1:
     f: fixed draw.line() x, y calculation
     f: fixed draw.polygon() x, y calculation

@@ -1997,8 +1997,12 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     #textBaseline;
     #fillStyle;
     #strokeStyle;
+
+    /**
+     * @type {number}
+     */
+    #lineHeight = 1;
     #text;
-    #textMetrics;
     /**
      * @type {HTMLCanvasElement}
      */
@@ -2021,7 +2025,6 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         this.#text = text;
         this.#font = font;
         this.#fillStyle = fillStyle;
-        this.#textMetrics;
         this.#calculateCanvasTextureAndMeasurements(boxWidth, boxHeight);
     }
 
@@ -2142,19 +2145,6 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
     }
 
     /**
-     * @type {TextMetrics}
-     */
-    get textMetrics() {
-        return this.#textMetrics;
-    }
-
-    /**
-     * @ignore
-     */
-    set _textMetrics(value) {
-        this.#textMetrics = value;
-    }
-    /**
      * @ignore
      * @returns {HTMLCanvasElement}
      */
@@ -2174,6 +2164,12 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         return this.#isTextureUpdated;
     }
 
+    /**
+     * @param {number} value 
+     */
+    set lineHeight(value) {
+        this.#lineHeight = value;
+    }
     _setTextureUpdated() {
         this.#isTextureUpdated = false;
     }
@@ -2187,20 +2183,26 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         if (ctx) {
             //ctx.clearRect(0, 0, this.#textureCanvas.width, this.#textureCanvas.height);
             ctx.font = this.font;
-            const newTextMetrics = ctx.measureText(this.text);
-            
-            if (this._atlasPos && this.#isTextMetricsNotChanged(newTextMetrics)) {
-                atlasWidth = this._atlasPos.width;
-                atlasHeight = this._atlasPos.height;
-            } else {
-                if (!atlasWidth) {
-                    atlasWidth = Math.floor(newTextMetrics.width);
-                } 
-                if (!atlasHeight) {
-                    atlasHeight = Math.floor(newTextMetrics.fontBoundingBoxAscent + newTextMetrics.fontBoundingBoxDescent);
+
+            let atlasWidth = 0, 
+                atlasHeight = 0,
+                linePosY = [];
+            const lines = this.text.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const metrics = ctx.measureText(lines[i]);
+                const lineWidth =  metrics.width;
+                if (lineWidth > atlasWidth) {
+                    atlasWidth = Math.floor(lineWidth);
                 }
+                const fontHeight = Math.floor( metrics.fontBoundingBoxAscent +  metrics.fontBoundingBoxDescent);
+                const actualLineHeight = fontHeight * this.#lineHeight;
+                
+                atlasHeight += actualLineHeight;
+                linePosY[i] = atlasHeight;
+            }
+            
+            if (!this._atlasPos || (this._atlasPos.width !== atlasWidth && this._atlasPos.height !== atlasHeight)) {
                 this.#atlasPosition = new _Temp_ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_4__.ImageAtlasPosition(atlasWidth, atlasHeight);
-                this._textMetrics = newTextMetrics;
             }
 
             ctx.canvas.width = atlasWidth;
@@ -2211,11 +2213,20 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
             ctx.textBaseline = "bottom";// bottom
             if (this.fillStyle) {
                 ctx.fillStyle = this.fillStyle;
-                ctx.fillText(this.text, 0, atlasHeight);
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.fillText(lines[i], 0, linePosY[i]);
+                }
             } 
+
+            // 6. Отрисовка обводки (strokeText) для всех строк
             if (this.strokeStyle) {
                 ctx.strokeStyle = this.strokeStyle;
-                ctx.strokeText(this.text, 0, atlasHeight);
+                // Обязательно дублируем настройки lineWidth / lineJoin, если они у вас есть
+                if (this.lineWidth) ctx.lineWidth = this.lineWidth; 
+                
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.strokeText(lines[i], 0, linePosY[i]);
+                }
             }
             this.#isTextureUpdated = true;
             // debug canvas
@@ -2225,10 +2236,6 @@ class DrawTextObject extends _DrawShapeObject_js__WEBPACK_IMPORTED_MODULE_0__.Dr
         } else {
             (0,_Exception_js__WEBPACK_IMPORTED_MODULE_3__.Exception)(_constants_js__WEBPACK_IMPORTED_MODULE_2__.ERROR_CODES.UNHANDLED_EXCEPTION, "can't getContext('2d')");
         }
-    }
-
-    #isTextMetricsNotChanged(newTextMetrics) {
-        return (newTextMetrics.fontBoundingBoxAscent === this.textMetrics.fontBoundingBoxAscent);
     }
 }
 
@@ -4914,10 +4921,14 @@ class IRender {
         }
     }
 
+    /**
+     * fits canvas size to settings.canvasMaxSize. If settings.canvasMaxSize not, set to window.innerWidth/window.innerHeight
+     * @returns {Promise}
+     */
     fixCanvasSize = () => {
         const settings = this.systemSettings, 
-            canvasWidth = settings.canvasMaxSize.width && (settings.canvasMaxSize.width < window.innerWidth) ? settings.canvasMaxSize.width : window.innerWidth,
-            canvasHeight = settings.canvasMaxSize.height && (settings.canvasMaxSize.height < window.innerHeight) ? settings.canvasMaxSize.height : window.innerHeight;
+            canvasWidth = settings.canvasMaxSize.width ? settings.canvasMaxSize.width : window.innerWidth,
+            canvasHeight = settings.canvasMaxSize.height ? settings.canvasMaxSize.height : window.innerHeight;
         this.setCanvasSize(canvasWidth, canvasHeight);
         return Promise.resolve();
     };
@@ -4941,7 +4952,6 @@ class IRender {
      * @param {GameStageData} stageData 
      */
     _startRender = async (/*time*/stageData) => {
-        this.fixCanvasSize();
         this.#currentGameStageData = stageData;
         switch (this.systemSettings.gameOptions.library) {
         case _constants_js__WEBPACK_IMPORTED_MODULE_1__.CONST.LIBRARY.WEBGL:
@@ -6176,7 +6186,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "TextAtlas": () => (/* binding */ TextAtlas)
 /* harmony export */ });
-/* harmony import */ var _ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ImageAtlasPosition.js */ "./src/base/Temp/ImageAtlasPosition.js");
+/* harmony import */ var _constants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../constants.js */ "./src/constants.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../index.js */ "./src/index.js");
+/* harmony import */ var _ImageAtlasPosition_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ImageAtlasPosition.js */ "./src/base/Temp/ImageAtlasPosition.js");
+
+
 
 
 /**
@@ -6322,6 +6336,12 @@ class TextAtlas {
             atlasW = atlasPos.width,
             atlasH = atlasPos.height;
         
+        if (this.#maxTextureSize < atlasW) {
+            console.warn(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.TEXT_BOX_OVERFLOW, "Text box width exceeds the max possible texture width");
+        }
+        if (this.#maxTextureSize < atlasH) {
+            console.warn(_constants_js__WEBPACK_IMPORTED_MODULE_0__.WARNING_CODES.TEXT_BOX_OVERFLOW, "Text box width exceeds the max possible texture height");
+        }
         const ctx = this.#image.getContext('2d');
         ctx.clearRect(atlasX, atlasY, atlasW, atlasH);
         ctx.drawImage(imageAdd, atlasX, atlasY);
@@ -6756,7 +6776,8 @@ class WebGlEngine {
         this.#MAX_TEXTURE_SIZE = context.getParameter(context.MAX_TEXTURE_SIZE);
         this.#positionBuffer = context.createBuffer();
         this.#texCoordBuffer = context.createBuffer();
-        this.#textAtlases[0] = new _Temp_TextAtlas_js__WEBPACK_IMPORTED_MODULE_14__.TextAtlas(gameOptions.render.textAtlasMaxSize, this.#gl.createTexture(), 0);
+        
+        this.#textAtlases[0] = new _Temp_TextAtlas_js__WEBPACK_IMPORTED_MODULE_14__.TextAtlas(this.#MAX_TEXTURE_SIZE, this.#gl.createTexture(), 0);
 
         this._registerObjectRender(_2d_DrawTextObject_js__WEBPACK_IMPORTED_MODULE_11__.DrawTextObject.name, this._bindText, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.IMAGES_M);
         this._registerObjectRender(_2d_DrawRectObject_js__WEBPACK_IMPORTED_MODULE_10__.DrawRectObject.name, this._bindPrimitives, _constants_js__WEBPACK_IMPORTED_MODULE_0__.CONST.WEBGL.DRAW_PROGRAMS.PRIMITIVES_M);
@@ -8876,7 +8897,6 @@ __webpack_require__.r(__webpack_exports__);
  * @typedef {Object} render
  * @property {cyclesTimeCalc} cyclesTimeCalc - DEBUG/PRODUCTION, debug mode system Logger will show debug information in the console
  * @property {boundaries} boundaries
- * @property {number} textAtlasMaxSize
  */
 
 /**
@@ -8945,8 +8965,7 @@ const SystemSettings = {
                 mapBoundariesEnabled: true,
                 realtimeCalculations: true,
                 wholeWorldPrecalculations: false
-            },
-            textAtlasMaxSize: 500 // pixels.
+            }
         },
         debug: {
             preserveDrawingBuffer: false, // this option is used in testing environment
@@ -8973,8 +8992,8 @@ const SystemSettings = {
     },
 
     canvasMaxSize: {
-        width: 1800,
-        height: 1800
+        width: window.innerWidth,
+        height: window.innerHeight
     },
 
     /**
@@ -9239,6 +9258,7 @@ const WARNING_CODES =  {
     WORLD_DIMENSIONS_NOT_SET: "WORLD_DIMENSIONS_NOT_SET",
     INCORRECT_RENDER_TYPE: "INCORRECT_RENDER_TYPE",
     UNHANDLED_DRAW_ISSUE: "UNHANDLED_DRAW_ISSUE",
+    TEXT_BOX_OVERFLOW: "TEXT_BOX_OVERFLOW",
     UNEXPECTED_WORLD_SIZE: "UNEXPECTED_WORLD_SIZE",
     AUDIO_ALREADY_REGISTERED: "AUDIO_ALREADY_REGISTERED",
     AUDIO_NOT_REGISTERED: "AUDIO_NOT_REGISTERED",
