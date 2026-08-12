@@ -77,11 +77,12 @@ jobs:
           echo "current_version=$(grep '"version"' ./package.json | sed -E 's/.*"version": "([^"]+)".*/\1/')" >> $GITHUB_ENV
 
       - name: Log in to npm
-        if: github.event.head_commit.message == env.current_version
+        
+        if: ${{ contains(github.event.head_commit.message, env.current_version) }}
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
       - name: Publish npm
-        if: github.event.head_commit.message == env.current_version
+        if: ${{ contains(github.event.head_commit.message, env.current_version) }}
         run:  |
           npm publish
 
