@@ -480,11 +480,11 @@ const TIMEOUT = 50;
             console.log(`${request.failure().errorText} ${request.url()}`);
         });
 
-    // Navigate to the test page
-    await page.goto('http://127.0.0.1:9000/examples/');
-
     // Set browser viewport size
     await page.setViewport({width: 1080, height: 1024});
+
+    // Navigate to the test page
+    await page.goto('http://127.0.0.1:9000/examples/');
 
     // Enable preserveDrawingBuffer for WebGL pixel reading
     const preserveDrawingBufferCheckbox = await page.$("#preserveDrawingBuffer");
